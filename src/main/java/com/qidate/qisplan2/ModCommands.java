@@ -10,6 +10,8 @@ import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.RegisterCommandsEvent;
 
+import java.util.concurrent.CompletableFuture;
+
 @EventBusSubscriber(modid = QisPlan2.MODID)
 public class ModCommands {
 
@@ -28,19 +30,31 @@ public class ModCommands {
         String message = StringArgumentType.getString(context, "message");
         CommandSourceStack source = context.getSource();
 
-        // 输出到控制台（IDEA 的 Run 窗口或日志）
-        QisPlan2.LOGGER.info("[玩家消息] " + message);
-
-        // 获取API Key
+        // 1. 从配置中读取 API Key 和模型名称
         String apiKey = QisConfig.CLIENT.API_KEY.get();
-
-        // 获取选择的模型名称
         String modelName = QisConfig.CLIENT.MODEL_NAME.get();
 
-        QisPlan2.LOGGER.info("当前配置 - 模型: {}, API Key: {}", modelName, apiKey);
+        // 2. 检查 API Key 是否已配置
+        if (apiKey == null || apiKey.isEmpty()) {
+            source.sendFailure(Component.literal("§c错误: 请先在模组配置中设置 API Key！"));
+            return 0;
+        }
 
-        // 可选：给执行者一个反馈
-        source.sendSuccess(() -> Component.literal("消息已发送至控制台: " + message), true);
+        // 3. 给玩家一个反馈，表示指令已被接收
+        source.sendSuccess(() -> Component.literal("§e正在思考，请稍候..."), false);
+
+        // 4. 异步调用 DeepSeek API
+        CompletableFuture<String> future = DeepSeekService.sendMessage(message, apiKey, modelName);
+
+        // 5. 当 API 响应完成时，处理结果
+        future.thenAcceptAsync(reply -> {
+            // 在游戏主线程中发送消息
+            source.sendSuccess(() -> Component.literal("§a[DeepSeek] " + reply), false);
+        }).exceptionally(throwable -> {
+            // 处理可能出现的异常
+            source.sendFailure(Component.literal("§c处理请求时发生错误: " + throwable.getMessage()));
+            return null;
+        });
 
         return 1; // 命令执行成功
     }
