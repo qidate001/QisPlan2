@@ -31,6 +31,14 @@ public class ModCommands {
         // 输出到控制台（IDEA 的 Run 窗口或日志）
         QisPlan2.LOGGER.info("[玩家消息] " + message);
 
+        // 获取API Key
+        String apiKey = QisConfig.CLIENT.API_KEY.get();
+
+        // 获取选择的模型名称
+        String modelName = QisConfig.CLIENT.MODEL_NAME.get();
+
+        QisPlan2.LOGGER.info("当前配置 - 模型: {}, API Key: {}", modelName, apiKey);
+
         // 可选：给执行者一个反馈
         source.sendSuccess(() -> Component.literal("消息已发送至控制台: " + message), true);
 
