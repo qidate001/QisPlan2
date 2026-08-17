@@ -1,5 +1,6 @@
 package com.qidate.qisplan2;
 
+import com.qidate.qisplan2.core.QisConfig;
 import net.minecraft.world.level.GameRules;
 import org.slf4j.Logger;
 
@@ -30,8 +31,6 @@ import net.neoforged.neoforge.registries.DeferredBlock;
 import net.neoforged.neoforge.registries.DeferredHolder;
 import net.neoforged.neoforge.registries.DeferredItem;
 import net.neoforged.neoforge.registries.DeferredRegister;
-import net.neoforged.fml.common.Mod;
-import net.neoforged.fml.ModContainer;
 
 // The value here should match an entry in the META-INF/neoforge.mods.toml file
 @Mod(QisPlan2.MODID)

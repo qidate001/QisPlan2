@@ -1,4 +1,4 @@
-package com.qidate.qisplan2;
+package com.qidate.qisplan2.core;
 
 import net.neoforged.neoforge.common.ModConfigSpec;
 
