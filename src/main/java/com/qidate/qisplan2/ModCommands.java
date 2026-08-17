@@ -9,11 +9,14 @@ import net.minecraft.network.chat.Component;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.RegisterCommandsEvent;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 
 import java.util.concurrent.CompletableFuture;
 
 @EventBusSubscriber(modid = QisPlan2.MODID)
 public class ModCommands {
+    private static final ObjectMapper MAPPER = new ObjectMapper();
 
     @SubscribeEvent
     public static void onRegisterCommands(RegisterCommandsEvent event) {
@@ -30,32 +33,76 @@ public class ModCommands {
         String message = StringArgumentType.getString(context, "message");
         CommandSourceStack source = context.getSource();
 
-        // 1. 从配置中读取 API Key 和模型名称
         String apiKey = QisConfig.CLIENT.API_KEY.get();
         String modelName = QisConfig.CLIENT.MODEL_NAME.get();
 
-        // 2. 检查 API Key 是否已配置
         if (apiKey == null || apiKey.isEmpty()) {
             source.sendFailure(Component.literal("§c错误: 请先在模组配置中设置 API Key！"));
             return 0;
         }
 
-        // 3. 给玩家一个反馈，表示指令已被接收
         source.sendSuccess(() -> Component.literal("§e正在思考，请稍候..."), false);
 
-        // 4. 异步调用 DeepSeek API
         CompletableFuture<String> future = DeepSeekService.sendMessage(message, apiKey, modelName);
 
-        // 5. 当 API 响应完成时，处理结果
         future.thenAcceptAsync(reply -> {
-            // 在游戏主线程中发送消息
-            source.sendSuccess(() -> Component.literal("§a[DeepSeek] " + reply), false);
+            try {
+                // 解析 JSON
+                ObjectNode root = (ObjectNode) MAPPER.readTree(reply);
+                String action = root.path("action").asText();
+                ObjectNode params = (ObjectNode) root.path("params");
+
+                // 所有游戏操作必须在主线程执行
+                source.getServer().execute(() -> {
+                    switch (action) {
+                        case "weather" -> {
+                            String weather = params.path("weather").asText();
+                            // 直接使用 source 执行命令
+                            source.getServer().getCommands().performPrefixedCommand(
+                                    source,
+                                    "weather " + weather
+                            );
+                        }
+                        case "time" -> {
+                            String time = params.path("time").asText();
+                            source.getServer().getCommands().performPrefixedCommand(
+                                    source,
+                                    "time set " + time
+                            );
+                        }
+                        case "say" -> {
+                            String msg = params.path("message").asText();
+                            source.sendSuccess(() -> Component.literal("[DeepSeek] " + msg), false);
+                        }
+                        case "give" -> {
+                            String item = params.path("item").asText();
+                            int count = params.path("count").asInt(1);
+                            source.getServer().getCommands().performPrefixedCommand(
+                                    source,
+                                    "give @s " + item + " " + count
+                            );
+                        }
+                        case "teleport" -> {
+                            double x = params.path("x").asDouble();
+                            double y = params.path("y").asDouble();
+                            double z = params.path("z").asDouble();
+                            source.getServer().getCommands().performPrefixedCommand(
+                                    source,
+                                    "tp @s " + x + " " + y + " " + z
+                            );
+                        }
+                        default -> source.sendFailure(Component.literal("§c未知动作: " + action));
+                    }
+                });
+            } catch (Exception e) {
+                // 解析失败，当作普通文本回复
+                source.sendSuccess(() -> Component.literal("§a[DeepSeek] " + reply), false);
+            }
         }).exceptionally(throwable -> {
-            // 处理可能出现的异常
             source.sendFailure(Component.literal("§c处理请求时发生错误: " + throwable.getMessage()));
             return null;
         });
 
-        return 1; // 命令执行成功
+        return 1;
     }
 }

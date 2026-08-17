@@ -23,7 +23,7 @@ public class QisConfig {
 
             MODEL_NAME = builder
                     .comment("选择要使用的大模型")
-                    .define("modelName", "deepseek");
+                    .define("modelName", "deepseek-v4-flash");
         }
     }
 }

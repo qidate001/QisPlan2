@@ -30,8 +30,26 @@ public class DeepSeekService {
             try {
                 // 1. 构建请求体 (JSON)
                 // 创建 messages 数组
+                // 构建 messages 数组
                 ArrayNode messagesArray = MAPPER.createArrayNode();
-                // 添加用户消息
+
+                // 添加 system 提示
+                ObjectNode systemMessage = MAPPER.createObjectNode();
+                systemMessage.put("role", "system");
+                systemMessage.put("content",
+                        "你是一个 Minecraft 助手。用户会向你许愿，你需要理解他们的愿望，并返回一个 JSON 对象，包含 action 和 params。\n" +
+                                "当前支持的 action：\n" +
+                                "1. weather: 改变天气，params 包含 weather 字段，值为 'clear'、'rain' 或 'thunder'。\n" +
+                                "2. time: 设置时间，params 包含 time 字段，值为 'day'、'night' 或数字（0-24000）。\n" +
+                                "3. say: 发送聊天消息，params 包含 message 字段。\n" +
+                                "4. give: 给予物品，params 包含 item 和 count（可选）。\n" +
+                                "5. teleport: 传送，params 包含 x, y, z。\n" +
+                                "如果无法理解愿望，返回 {\"action\": \"say\", \"params\": {\"message\": \"抱歉，我无法执行该愿望\"}}。\n" +
+                                "只返回 JSON，不要有其他文字。"
+                );
+                messagesArray.add(systemMessage);
+
+                // 然后添加用户消息（原有代码）
                 ObjectNode userMessageNode = MAPPER.createObjectNode();
                 userMessageNode.put("role", "user");
                 userMessageNode.put("content", userMessage);
