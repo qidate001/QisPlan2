@@ -1,4 +1,6 @@
 {
   "qisplan2.configuration.apiKey": "API 密钥",
-  "qisplan2.configuration.modelName": "模型名称"
+  "qisplan2.configuration.modelName": "模型名称",
+
+  "item.qisplan2.death_curse_sword": "Death Curse Sword"
 }
