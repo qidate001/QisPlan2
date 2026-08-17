@@ -2,6 +2,7 @@ package com.qidate.qisplan2;
 
 import com.qidate.qisplan2.core.QisConfig;
 import com.qidate.qisplan2.item.DeathCurseSword;
+import com.qidate.qisplan2.item.GhostCoin;
 import net.minecraft.world.level.GameRules;
 import org.slf4j.Logger;
 
@@ -44,13 +45,33 @@ public class QisPlan2 {
     public static final DeferredRegister.Blocks BLOCKS = DeferredRegister.createBlocks(MODID);
     // Create a Deferred Register to hold Items which will all be registered under the "examplemod" namespace
     public static final DeferredRegister.Items ITEMS = DeferredRegister.createItems(MODID);
-    // Create a Deferred Register to hold CreativeModeTabs which will all be registered under the "examplemod" namespace
+
+    public static final DeferredItem<DeathCurseSword> DEATH_CURSE_SWORD =
+            ITEMS.register(
+                    "death_curse_sword",
+                    () -> new DeathCurseSword(new Item.Properties())
+            );
+
+    public static final DeferredItem<GhostCoin> GHOST_COIN =
+            ITEMS.register(
+                    "ghost_coin",
+                    () -> new GhostCoin(new Item.Properties())
+            );
+
+
+    // 创造物品栏
     public static final DeferredRegister<CreativeModeTab> CREATIVE_MODE_TABS = DeferredRegister.create(Registries.CREATIVE_MODE_TAB, MODID);
 
-    public static final DeferredItem<DeathCurseSword> DEATH_CURSE_SWORD = ITEMS.register(
-            "death_curse_sword",
-            () -> new DeathCurseSword(new Item.Properties().durability(10))
-    );
+    public static final DeferredHolder<CreativeModeTab, CreativeModeTab> QIS_PLAN_TAB =
+            CREATIVE_MODE_TABS.register("qis_plan", () -> CreativeModeTab.builder()
+                    .title(Component.literal("齐计划"))
+                    .icon(() -> GHOST_COIN.get().getDefaultInstance())
+                    .displayItems((parameters, output) -> {
+                        output.accept(DEATH_CURSE_SWORD);
+                        output.accept(GHOST_COIN);
+                    })
+                    .build()
+            );
 
 
 
@@ -71,20 +92,10 @@ public class QisPlan2 {
         // Note that this is necessary if and only if we want *this* class (ExampleMod) to respond directly to events.
         // Do not add this line if there are no @SubscribeEvent-annotated functions in this class, like onServerStarting() below.
         NeoForge.EVENT_BUS.register(this);
-
-        // Register the item to a creative tab
-        modEventBus.addListener(this::addCreative);
     }
 
     private void commonSetup(FMLCommonSetupEvent event) {
 
-    }
-
-    // Add the example block item to the building blocks tab
-    private void addCreative(BuildCreativeModeTabContentsEvent event) {
-        if (event.getTabKey() == CreativeModeTabs.COMBAT) {
-            event.accept(DEATH_CURSE_SWORD);
-        }
     }
 
     // 声明游戏规则 Key
