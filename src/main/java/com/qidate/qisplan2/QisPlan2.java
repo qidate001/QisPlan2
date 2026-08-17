@@ -1,5 +1,6 @@
 package com.qidate.qisplan2;
 
+import net.minecraft.world.level.GameRules;
 import org.slf4j.Logger;
 
 import com.mojang.logging.LogUtils;
@@ -110,10 +111,15 @@ public class QisPlan2 {
         }
     }
 
+    // 声明游戏规则 Key
+    public static final GameRules.Key<GameRules.BooleanValue> ISAY_ENABLED =
+            GameRules.register("isayEnabled", GameRules.Category.MISC, GameRules.BooleanValue.create(true));
+
     // You can use SubscribeEvent and let the Event Bus discover methods to call
     @SubscribeEvent
     public void onServerStarting(ServerStartingEvent event) {
         // Do something when the server starts
         LOGGER.info("HELLO from server starting");
+        LOGGER.info("Isay game rule registered: {}", ISAY_ENABLED.getId());
     }
 }

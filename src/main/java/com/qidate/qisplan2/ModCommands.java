@@ -6,6 +6,7 @@ import com.mojang.brigadier.context.CommandContext;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.network.chat.Component;
+import net.minecraft.world.level.Level;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.RegisterCommandsEvent;
@@ -30,8 +31,22 @@ public class ModCommands {
     }
 
     private static int executeIsay(CommandContext<CommandSourceStack> context) {
-        String message = StringArgumentType.getString(context, "message");
         CommandSourceStack source = context.getSource();
+        Level level = source.getLevel();
+        if (level == null) {
+            source.sendFailure(Component.literal("§c该命令只能由玩家执行"));
+            return 0;
+        }
+
+        // 检查游戏规则
+        if (!level.getGameRules().getBoolean(QisPlan2.ISAY_ENABLED)) {
+            source.sendFailure(Component.literal("§c/isay 功能已被管理员禁用"));
+            return 0;
+        }
+
+
+
+        String message = StringArgumentType.getString(context, "message");
 
         String apiKey = QisConfig.CLIENT.API_KEY.get();
         String modelName = QisConfig.CLIENT.MODEL_NAME.get();
