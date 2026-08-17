@@ -48,8 +48,8 @@ public class GhostCarpetHandler {
     /**
      * 日志节流。
      */
-    private static final Map<UUID, Long> LAST_LOG_TIME =
-            new HashMap<>();
+//    private static final Map<UUID, Long> LAST_LOG_TIME =
+//            new HashMap<>();
 
 
     @SubscribeEvent
@@ -141,33 +141,33 @@ public class GhostCarpetHandler {
          * =========================
          */
 
-        long lastLog =
-                LAST_LOG_TIME.getOrDefault(
-                        uuid,
-                        -20L
-                );
+//        long lastLog =
+//                LAST_LOG_TIME.getOrDefault(
+//                        uuid,
+//                        -20L
+//                );
 
-        long gameTime =
-                entity.level().getGameTime();
+//        long gameTime =
+//                entity.level().getGameTime();
 
-        if (gameTime - lastLog >= 20) {
-
-            LAST_LOG_TIME.put(
-                    uuid,
-                    gameTime
-            );
-
-            long seconds =
-                    ticks / 20;
-
-            System.out.println(
-                    "[QisPlan2][GhostCarpet] "
-                            + entity.getName().getString()
-                            + " 鬼地毯累计踩踏："
-                            + seconds
-                            + "/15 秒"
-            );
-        }
+//        if (gameTime - lastLog >= 20) {
+//
+//            LAST_LOG_TIME.put(
+//                    uuid,
+//                    gameTime
+//            );
+//
+//            long seconds =
+//                    ticks / 20;
+//
+//            System.out.println(
+//                    "[QisPlan2][GhostCarpet] "
+//                            + entity.getName().getString()
+//                            + " 鬼地毯累计踩踏："
+//                            + seconds
+//                            + "/15 秒"
+//            );
+//        }
 
 
         /*
@@ -178,12 +178,12 @@ public class GhostCarpetHandler {
 
         if (ticks >= TRIGGER_TICKS) {
 
-            System.out.println(
-                    "[QisPlan2][GhostCarpet] "
-                            + "！！！15秒累计踩踏完成！！！"
-                            + " 实体="
-                            + entity.getName().getString()
-            );
+//            System.out.println(
+//                    "[QisPlan2][GhostCarpet] "
+//                            + "！！！15秒累计踩踏完成！！！"
+//                            + " 实体="
+//                            + entity.getName().getString()
+//            );
 
             applyGhostCarpetCurse(entity);
 
@@ -208,12 +208,12 @@ public class GhostCarpetHandler {
          * ========================================
          */
 
-        System.out.println(
-                "[QisPlan2][GhostCarpet] "
-                        + "鬼地毯诅咒触发！"
-                        + " 实体="
-                        + entity.getName().getString()
-        );
+//        System.out.println(
+//                "[QisPlan2][GhostCarpet] "
+//                        + "鬼地毯诅咒触发！"
+//                        + " 实体="
+//                        + entity.getName().getString()
+//        );
 
 
         /*
@@ -266,22 +266,22 @@ public class GhostCarpetHandler {
          * ========================================
          */
 
-        if (killed) {
-
-            System.out.println(
-                    "[QisPlan2][GhostCarpet] "
-                            + "鬼地毯死亡成功："
-                            + entity.getName().getString()
-            );
-
-        } else {
-
-            System.out.println(
-                    "[QisPlan2][GhostCarpet] "
-                            + "鬼地毯死亡被抵消："
-                            + entity.getName().getString()
-            );
-        }
+//        if (killed) {
+//
+//            System.out.println(
+//                    "[QisPlan2][GhostCarpet] "
+//                            + "鬼地毯死亡成功："
+//                            + entity.getName().getString()
+//            );
+//
+//        } else {
+//
+//            System.out.println(
+//                    "[QisPlan2][GhostCarpet] "
+//                            + "鬼地毯死亡被抵消："
+//                            + entity.getName().getString()
+//            );
+//        }
     }
 
 
@@ -301,6 +301,6 @@ public class GhostCarpetHandler {
 
         CARPET_TICKS.remove(uuid);
         TRIGGERED.remove(uuid);
-        LAST_LOG_TIME.remove(uuid);
+//        LAST_LOG_TIME.remove(uuid);
     }
 }
