@@ -23,6 +23,17 @@ public class ModDamageTypes {
             );
 
 
+
+    public static final ResourceKey<DamageType> DEATH_CURSE =
+            ResourceKey.create(
+                    Registries.DAMAGE_TYPE,
+                    ResourceLocation.fromNamespaceAndPath(
+                            QisPlan2.MODID,
+                            "death_curse"
+                    )
+            );
+
+
     /**
      * 创建鬼地毯死亡 DamageSource
      */
@@ -34,6 +45,17 @@ public class ModDamageTypes {
                         .registryOrThrow(Registries.DAMAGE_TYPE)
                         .getHolderOrThrow(GHOST_CARPET),
 
+                entity
+        );
+    }
+
+    public static DamageSource deathCurse(Entity entity) {
+
+        return new DamageSource(
+                entity.level()
+                        .registryAccess()
+                        .registryOrThrow(Registries.DAMAGE_TYPE)
+                        .getHolderOrThrow(DEATH_CURSE),
                 entity
         );
     }
