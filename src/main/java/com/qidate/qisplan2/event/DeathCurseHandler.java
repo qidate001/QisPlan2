@@ -16,6 +16,7 @@ import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.entity.living.LivingDamageEvent;
 import net.minecraft.core.particles.ItemParticleOption;
+import net.neoforged.neoforge.event.entity.player.PlayerEvent;
 
 @EventBusSubscriber(modid = QisPlan2.MODID)
 public class DeathCurseHandler {
@@ -57,44 +58,8 @@ public class DeathCurseHandler {
             // 触发死亡诅咒
             target.setHealth(0.0F);
 
-            // 播放物品损坏音效
-            player.level().playSound(
-                    null,
-                    player.getX(),
-                    player.getY(),
-                    player.getZ(),
-                    SoundEvents.ITEM_BREAK,
-                    SoundSource.PLAYERS,
-                    1.0F,
-                    1.0F
-            );
-
-            // 生成死亡诅咒之剑的破碎粒子
-            if (player.level() instanceof ServerLevel serverLevel) {
-
-                ItemParticleOption itemParticle = new ItemParticleOption(
-                        ParticleTypes.ITEM,
-                        stack
-                );
-
-                serverLevel.sendParticles(
-                        itemParticle,
-                        player.getX(),
-                        player.getY() + 1.0D,
-                        player.getZ(),
-                        10,
-                        0.2D,
-                        0.3D,
-                        0.2D,
-                        0.1D
-                );
-            }
-
-            // 移除剑
-            player.setItemSlot(
-                    EquipmentSlot.MAINHAND,
-                    ItemStack.EMPTY
-            );
+            // 剑因诅咒反噬而损坏
+            breakDeathCurseSword(player, stack);
 
             // 清除诅咒层数
             data.remove(CURSE_TAG);
@@ -117,5 +82,87 @@ public class DeathCurseHandler {
                     )
             );
         }
+
+        // 50% 概率让攻击者自己沾染一道死亡诅咒
+        if (player.getRandom().nextFloat() < 0.5F) {
+            CompoundTag playerData = player.getPersistentData();
+
+            int playerCurseCount = playerData.getInt(CURSE_TAG);
+            playerCurseCount++;
+
+            if (playerCurseCount >= 10) {
+                // 清除诅咒
+                playerData.remove(CURSE_TAG);
+
+                // 剑也因诅咒反噬而损坏
+                breakDeathCurseSword(player, stack);
+
+                // 玩家死亡
+                player.sendSystemMessage(
+                        Component.literal("§8☠ 死亡诅咒反噬！")
+                );
+
+                player.setHealth(0.0F);
+            } else {
+                playerData.putInt(CURSE_TAG, playerCurseCount);
+
+                player.sendSystemMessage(
+                        Component.literal(
+                                String.format(
+                                        "§8☠ 你沾染了一道死亡诅咒！当前层数: %d/10",
+                                        playerCurseCount
+                                )
+                        )
+                );
+            }
+        }
+    }
+
+    @SubscribeEvent
+    public static void onPlayerClone(PlayerEvent.Clone event) {
+        CompoundTag data = event.getEntity().getPersistentData();
+        data.remove(CURSE_TAG);
+    }
+
+
+
+    private static void breakDeathCurseSword(Player player, ItemStack stack) {
+        // 播放物品损坏音效
+        player.level().playSound(
+                null,
+                player.getX(),
+                player.getY(),
+                player.getZ(),
+                SoundEvents.ITEM_BREAK,
+                SoundSource.PLAYERS,
+                1.0F,
+                1.0F
+        );
+
+        // 生成死亡诅咒之剑的破碎粒子
+        if (player.level() instanceof ServerLevel serverLevel) {
+            ItemParticleOption itemParticle = new ItemParticleOption(
+                    ParticleTypes.ITEM,
+                    stack
+            );
+
+            serverLevel.sendParticles(
+                    itemParticle,
+                    player.getX(),
+                    player.getY() + 1.0D,
+                    player.getZ(),
+                    10,
+                    0.2D,
+                    0.3D,
+                    0.2D,
+                    0.1D
+            );
+        }
+
+        // 从主手移除
+        player.setItemSlot(
+                EquipmentSlot.MAINHAND,
+                ItemStack.EMPTY
+        );
     }
 }
