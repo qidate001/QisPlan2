@@ -1,9 +1,11 @@
 package com.qidate.qisplan2;
 
+import com.qidate.qisplan2.block.GhostCarpetBlock;
 import com.qidate.qisplan2.core.QisConfig;
 import com.qidate.qisplan2.item.DeathCurseSword;
 import com.qidate.qisplan2.item.GhostCoin;
 import net.minecraft.world.level.GameRules;
+import net.minecraft.world.level.block.SoundType;
 import org.slf4j.Logger;
 
 import com.mojang.logging.LogUtils;
@@ -58,6 +60,20 @@ public class QisPlan2 {
                     () -> new GhostCoin(new Item.Properties())
             );
 
+    public static final DeferredBlock<GhostCarpetBlock> GHOST_CARPET =
+            BLOCKS.registerBlock(
+                    "ghost_carpet",
+                    GhostCarpetBlock::new,
+                    BlockBehaviour.Properties.of()
+                            .mapColor(MapColor.COLOR_BLACK)
+                            .destroyTime(0.1F)
+                            .explosionResistance(0.1F)
+                            .sound(SoundType.WOOL)
+            );
+
+    public static final DeferredItem<BlockItem> GHOST_CARPET_ITEM =
+            ITEMS.registerSimpleBlockItem(GHOST_CARPET);
+
 
     // 创造物品栏
     public static final DeferredRegister<CreativeModeTab> CREATIVE_MODE_TABS = DeferredRegister.create(Registries.CREATIVE_MODE_TAB, MODID);
@@ -67,8 +83,9 @@ public class QisPlan2 {
                     .title(Component.literal("齐计划"))
                     .icon(() -> GHOST_COIN.get().getDefaultInstance())
                     .displayItems((parameters, output) -> {
-                        output.accept(DEATH_CURSE_SWORD);
                         output.accept(GHOST_COIN);
+                        output.accept(DEATH_CURSE_SWORD);
+                        output.accept(GHOST_CARPET_ITEM);
                     })
                     .build()
             );

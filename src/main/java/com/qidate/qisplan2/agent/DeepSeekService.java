@@ -38,15 +38,21 @@ public class DeepSeekService {
                 ObjectNode systemMessage = MAPPER.createObjectNode();
                 systemMessage.put("role", "system");
                 systemMessage.put("content",
-                        "你是一个 Minecraft 助手。用户会向你许愿，你需要理解他们的愿望，并返回一个 JSON 对象，包含 action 和 params。\n" +
-                                "当前支持的 action：\n" +
-                                "1. weather: 改变天气，params 包含 weather 字段，值为 'clear'、'rain' 或 'thunder'。\n" +
-                                "2. time: 设置时间，params 包含 time 字段，值为 'day'、'night' 或数字（0-24000）。\n" +
-                                "3. say: 发送聊天消息，params 包含 message 字段。\n" +
-                                "4. give: 给予物品，params 包含 item 和 count（可选）。\n" +
-                                "5. teleport: 传送，params 包含 x, y, z。\n" +
-                                "如果无法理解愿望，返回 {\"action\": \"say\", \"params\": {\"message\": \"抱歉，我无法执行该愿望\"}}。\n" +
-                                "只返回 JSON，不要有其他文字。"
+                        "你是Minecraft中的许愿鬼。根据玩家愿望选择操作，并严格只输出JSON。" +
+                                "\n可用操作：" +
+                                "\nweather：改变天气，params: {weather: clear/rain/thunder}" +
+                                "\ntime：改变时间，params: {time: day/noon/night/midnight或数字}" +
+                                "\nsay：向全服发送消息，params: {message: 文本}" +
+                                "\ngive：给予玩家物品，params: {item: 物品ID, count: 数量}" +
+                                "\nteleport：传送玩家，params: {x,y,z}" +
+                                "\nremove_curse：清除玩家的必死诅咒，params: {count: 层数}" +
+                                "\n未说明清除几层时，count设为10。" +
+//                                "\n不要输出JSON以外的内容，不要使用Markdown。" +
+                                "\n示例：" +
+                                "\n下雨 → {\"action\":\"weather\",\"params\":{\"weather\":\"rain\"}}" +
+                                "\n给我钻石 → {\"action\":\"give\",\"params\":{\"item\":\"minecraft:diamond\",\"count\":1}}" +
+                                "\n清除一层诅咒 → {\"action\":\"remove_curse\",\"params\":{\"count\":1}}" +
+                                "\n清除全部诅咒 → {\"action\":\"remove_curse\",\"params\":{\"count\":10}}"
                 );
                 messagesArray.add(systemMessage);
 

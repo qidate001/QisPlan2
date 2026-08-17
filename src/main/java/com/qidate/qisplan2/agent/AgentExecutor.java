@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.qidate.qisplan2.QisPlan2;
 import net.minecraft.commands.CommandSourceStack;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -24,6 +25,7 @@ public class AgentExecutor {
     private static final int COST_TELEPORT = 20;
     private static final int COST_GIVE_BASE = 100;
     private static final int COST_GIVE_PER_ITEM = 5;
+    private static final int COST_REMOVE_CURSE_PER_LEVEL = 5;
 
     private static int getWishCost(String action, ObjectNode params) {
         return switch (action) {
@@ -149,7 +151,7 @@ public class AgentExecutor {
                     case "say" -> {
                         String msg = params.path("message").asText();
                         source.getServer().getPlayerList().broadcastSystemMessage(
-                                Component.literal("§d[DeepSeek] " + msg), false
+                                Component.literal("§d[许愿鬼] " + msg), false
                         );
                     }
                     case "give" -> {
@@ -174,6 +176,21 @@ public class AgentExecutor {
                         double z = params.path("z").asDouble();
                         teleportPlayer(_player, x, y, z);
                         source.sendSuccess(() -> Component.literal("§a已传送至 (" + x + ", " + y + ", " + z + ")"), false);
+                    }
+                    case "remove_curse" -> {
+                        ServerPlayer _player =
+                                source.getEntity() instanceof ServerPlayer p ? p : null;
+
+                        if (_player == null) {
+                            source.sendFailure(
+                                    Component.literal("§c该愿望需要玩家身份")
+                            );
+                            return;
+                        }
+
+                        int count = params.path("count").asInt(1);
+
+                        removeCurse(_player, count);
                     }
                     default -> source.sendFailure(Component.literal("§c未知动作: " + action));
                 }
@@ -239,5 +256,64 @@ public class AgentExecutor {
 
     private static void teleportPlayer(ServerPlayer player, double x, double y, double z) {
         player.teleportTo(x, y, z);
+    }
+
+    private static void removeCurse(
+            ServerPlayer player,
+            int requestedCount
+    ) {
+        final String CURSE_TAG = "death_curse_count";
+
+        var data = player.getPersistentData();
+
+        int currentCount = data.getInt(CURSE_TAG);
+
+        if (currentCount <= 0) {
+            player.sendSystemMessage(
+                    Component.literal("§a你身上没有必死诅咒。")
+            );
+            return;
+        }
+
+        // 至少清除 1 层，最多清除当前全部层数
+        int removeCount = Math.max(
+                1,
+                Math.min(requestedCount, currentCount)
+        );
+
+        int cost = removeCount * COST_REMOVE_CURSE_PER_LEVEL;
+
+        // 创造模式免费
+        if (!player.isCreative()) {
+            if (!consumeGhostCoins(player, cost)) {
+                cursePlayer(player, cost);
+                return;
+            }
+        }
+
+        int remaining = currentCount - removeCount;
+
+        if (remaining <= 0) {
+            data.remove(CURSE_TAG);
+        } else {
+            data.putInt(CURSE_TAG, remaining);
+        }
+
+        player.sendSystemMessage(
+                Component.literal(
+                        "§a☠ 许愿鬼收取了 " + cost +
+                                " 枚鬼金币。"
+                )
+        );
+
+        player.sendSystemMessage(
+                Component.literal(
+                        "§7必死诅咒减少了 " +
+                                removeCount +
+                                " 层，当前：" +
+                                remaining +
+                                "/10"
+                )
+        );
     }
 }
