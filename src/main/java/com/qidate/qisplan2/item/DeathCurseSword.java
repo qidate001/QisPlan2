@@ -13,7 +13,7 @@ public class DeathCurseSword extends SwordItem {
 
         @Override
         public int getUses() {
-            return 20;
+            return 15;
         }
 
         @Override
