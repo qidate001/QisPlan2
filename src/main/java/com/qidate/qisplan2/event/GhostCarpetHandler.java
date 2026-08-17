@@ -1,6 +1,8 @@
 package com.qidate.qisplan2.event;
 
 import com.qidate.qisplan2.QisPlan2;
+import com.qidate.qisplan2.death.ModDamageTypes;
+import com.qidate.qisplan2.death.SupernaturalDeathHandler;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.nbt.CompoundTag;
@@ -200,37 +202,28 @@ public class GhostCarpetHandler {
             LivingEntity entity
     ) {
 
-        CompoundTag data =
-                entity.getPersistentData();
-
-        int oldCount =
-                data.getInt(
-                        GHOST_CARPET_CURSE_COUNT
-                );
-
-        int newCount =
-                oldCount + 1;
-
-        data.putInt(
-                GHOST_CARPET_CURSE_COUNT,
-                newCount
-        );
+        /*
+         * ========================================
+         * 鬼地毯诅咒触发
+         * ========================================
+         */
 
         System.out.println(
                 "[QisPlan2][GhostCarpet] "
                         + "鬼地毯诅咒触发！"
                         + " 实体="
                         + entity.getName().getString()
-                        + " 原层数="
-                        + oldCount
-                        + " 新层数="
-                        + newCount
         );
 
 
+        /*
+         * ========================================
+         * 粒子
+         * ========================================
+         */
+
         if (entity.level() instanceof ServerLevel serverLevel) {
 
-            // 鬼魂粒子
             serverLevel.sendParticles(
                     ParticleTypes.SOUL,
                     entity.getX(),
@@ -243,7 +236,6 @@ public class GhostCarpetHandler {
                     0.05
             );
 
-            // 灵魂音效
             serverLevel.playSound(
                     null,
                     entity.blockPosition(),
@@ -256,17 +248,40 @@ public class GhostCarpetHandler {
 
 
         /*
-         * =========================
-         * 立即死亡
-         * =========================
+         * ========================================
+         * 请求灵异死亡
+         * ========================================
          */
 
-        System.out.println(
-                "[QisPlan2][GhostCarpet] "
-                        + "鬼地毯必死诅咒：立即死亡！"
-        );
+        boolean killed =
+                SupernaturalDeathHandler.tryKill(
+                        entity,
+                        ModDamageTypes.ghostCarpet(entity)
+                );
 
-        entity.kill();
+
+        /*
+         * ========================================
+         * 日志
+         * ========================================
+         */
+
+        if (killed) {
+
+            System.out.println(
+                    "[QisPlan2][GhostCarpet] "
+                            + "鬼地毯死亡成功："
+                            + entity.getName().getString()
+            );
+
+        } else {
+
+            System.out.println(
+                    "[QisPlan2][GhostCarpet] "
+                            + "鬼地毯死亡被抵消："
+                            + entity.getName().getString()
+            );
+        }
     }
 
 

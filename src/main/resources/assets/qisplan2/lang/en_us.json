@@ -5,5 +5,7 @@
   "block.qisplan2.ghost_carpet": "Ghost Carpet",
 
   "item.qisplan2.death_curse_sword": "Death Curse Sword",
-  "item.qisplan2.ghost_coin": "Ghost Coin"
+  "item.qisplan2.ghost_coin": "Ghost Coin",
+
+  "death.attack.ghost_carpet": "%1$s 踏入了不该踏入的地方。"
 }
