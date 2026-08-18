@@ -25,7 +25,6 @@
   "death.attack.ghost_stove": "%1$s has been turned into delicious food by the ghost stove.",
 
   "qisplan2.death_curse.triggered": "☠ The Death Curse has been triggered! The Death Curse Sword has shattered!",
-  "qisplan2.death_curse.count": "Curse stacks: %1$d/10",
   "qisplan2.death_curse.reflection": "☠ The Death Curse has rebounded!",
   "qisplan2.death_curse.infected": "☠ You have been infected with a Death Curse! Current stacks: %1$d/10"
 }

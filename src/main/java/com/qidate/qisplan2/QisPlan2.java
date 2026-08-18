@@ -1,14 +1,18 @@
 package com.qidate.qisplan2;
 
+import com.mojang.serialization.Codec;
 import com.qidate.qisplan2.block.GhostCarpetBlock;
 import com.qidate.qisplan2.block.GhostDoorBlock;
 import com.qidate.qisplan2.block.GhostStoveBlock;
 import com.qidate.qisplan2.core.QisConfig;
 import com.qidate.qisplan2.item.DeathCurseSword;
 import com.qidate.qisplan2.item.GhostCoin;
+import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.world.level.GameRules;
 import net.minecraft.world.level.block.SoundType;
 import net.minecraft.world.level.block.state.properties.BlockSetType;
+import net.neoforged.neoforge.attachment.AttachmentType;
+import net.neoforged.neoforge.registries.NeoForgeRegistries;
 import org.slf4j.Logger;
 
 import com.mojang.logging.LogUtils;
@@ -50,6 +54,20 @@ public class QisPlan2 {
     public static final DeferredRegister.Blocks BLOCKS = DeferredRegister.createBlocks(MODID);
     // Create a Deferred Register to hold Items which will all be registered under the "examplemod" namespace
     public static final DeferredRegister.Items ITEMS = DeferredRegister.createItems(MODID);
+
+    // 附件类型注册表
+    public static final DeferredRegister<AttachmentType<?>> ATTACHMENT_TYPES =
+            DeferredRegister.create(NeoForgeRegistries.ATTACHMENT_TYPES, MODID);
+
+    // 必死诅咒层数（0~10，同步到客户端供骷髅条显示）
+    public static final DeferredHolder<AttachmentType<?>, AttachmentType<Integer>> DEATH_CURSE_COUNT =
+            ATTACHMENT_TYPES.register(
+                    "death_curse_count",
+                    () -> AttachmentType.builder(() -> 0)
+                            .serialize(Codec.INT)        // 存档用
+                            .sync(ByteBufCodecs.VAR_INT) // 同步到客户端用
+                            .build()
+            );
 
     public static final DeferredItem<DeathCurseSword> DEATH_CURSE_SWORD =
             ITEMS.register(
@@ -179,6 +197,8 @@ public class QisPlan2 {
         BLOCKS.register(modEventBus);
         // Register the Deferred Register to the mod event bus so items get registered
         ITEMS.register(modEventBus);
+        // Register the Deferred Register to the mod event bus so attachment types get registered
+        ATTACHMENT_TYPES.register(modEventBus);
         // Register the Deferred Register to the mod event bus so tabs get registered
         CREATIVE_MODE_TABS.register(modEventBus);
 

@@ -25,7 +25,6 @@
   "death.attack.ghost_stove": "%1$s 被鬼灶台变成了可口食物。",
 
   "qisplan2.death_curse.triggered": "☠ 死亡诅咒触发！死亡诅咒之剑已损坏！",
-  "qisplan2.death_curse.count": "诅咒层数：%1$d/10",
   "qisplan2.death_curse.reflection": "☠ 死亡诅咒反噬！",
   "qisplan2.death_curse.infected": "☠ 你沾染了一道死亡诅咒！当前层数：%1$d/10"
 }

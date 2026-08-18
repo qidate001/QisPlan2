@@ -8,7 +8,6 @@ import com.qidate.qisplan2.item.DeathCurseSword;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.particles.ItemParticleOption;
 import net.minecraft.core.particles.ParticleTypes;
-import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvents;
@@ -20,14 +19,13 @@ import net.minecraft.world.item.ItemStack;
 
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.neoforge.attachment.AttachmentSync;
 import net.neoforged.neoforge.event.entity.living.LivingDamageEvent;
 import net.neoforged.neoforge.event.entity.player.PlayerEvent;
 
 
 @EventBusSubscriber(modid = QisPlan2.MODID)
 public class DeathCurseHandler {
-
-    private static final String CURSE_TAG = "death_curse_count";
 
     private static final int MAX_CURSE_COUNT = 10;
 
@@ -68,11 +66,8 @@ public class DeathCurseHandler {
          * ========================================
          */
 
-        CompoundTag targetData =
-                target.getPersistentData();
-
         int count =
-                targetData.getInt(CURSE_TAG) + 1;
+                target.getData(QisPlan2.DEATH_CURSE_COUNT.get()) + 1;
 
 
         if (count >= MAX_CURSE_COUNT) {
@@ -83,7 +78,7 @@ public class DeathCurseHandler {
              * → 触发灵异即死
              */
 
-            targetData.remove(CURSE_TAG);
+            target.removeData(QisPlan2.DEATH_CURSE_COUNT.get());
 
             breakDeathCurseSword(
                     player,
@@ -105,18 +100,9 @@ public class DeathCurseHandler {
 
         } else {
 
-            targetData.putInt(
-                    CURSE_TAG,
+            target.setData(
+                    QisPlan2.DEATH_CURSE_COUNT.get(),
                     count
-            );
-
-            player.sendSystemMessage(
-                    Component.translatable(
-                            "qisplan2.death_curse.count",
-                            count
-                    ).withStyle(
-                            ChatFormatting.YELLOW
-                    )
             );
         }
 
@@ -129,11 +115,8 @@ public class DeathCurseHandler {
 
         if (player.getRandom().nextFloat() < 0.5F) {
 
-            CompoundTag playerData =
-                    player.getPersistentData();
-
             int playerCurseCount =
-                    playerData.getInt(CURSE_TAG) + 1;
+                    player.getData(QisPlan2.DEATH_CURSE_COUNT.get()) + 1;
 
 
             if (playerCurseCount >= MAX_CURSE_COUNT) {
@@ -142,7 +125,12 @@ public class DeathCurseHandler {
                  * 攻击者自己的诅咒达到 10 层
                  */
 
-                playerData.remove(CURSE_TAG);
+                player.removeData(QisPlan2.DEATH_CURSE_COUNT.get());
+
+                AttachmentSync.syncEntityUpdate(
+                        player,
+                        QisPlan2.DEATH_CURSE_COUNT.get()
+                );
 
                 breakDeathCurseSword(
                         player,
@@ -164,8 +152,18 @@ public class DeathCurseHandler {
 
             } else {
 
-                playerData.putInt(
-                        CURSE_TAG,
+                player.setData(
+                        QisPlan2.DEATH_CURSE_COUNT.get(),
+                        playerCurseCount
+                );
+
+                AttachmentSync.syncEntityUpdate(
+                        player,
+                        QisPlan2.DEATH_CURSE_COUNT.get()
+                );
+
+                QisPlan2.LOGGER.info(
+                        "[QisPlan2] DeathCurse reflection synced, server player curse = {}",
                         playerCurseCount
                 );
 
@@ -190,11 +188,8 @@ public class DeathCurseHandler {
             PlayerEvent.Clone event
     ) {
 
-        CompoundTag data =
-                event.getEntity()
-                        .getPersistentData();
-
-        data.remove(CURSE_TAG);
+        event.getEntity()
+                .removeData(QisPlan2.DEATH_CURSE_COUNT.get());
     }
 
 
