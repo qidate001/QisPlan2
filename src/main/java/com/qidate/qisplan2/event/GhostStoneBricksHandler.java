@@ -6,7 +6,6 @@ import com.qidate.qisplan2.death.SupernaturalDeathHandler;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
 
 import net.neoforged.bus.api.SubscribeEvent;
@@ -36,21 +35,26 @@ public class GhostStoneBricksHandler {
         }
 
         /*
-         * ========================================
-         * 鬼石砖诅咒
-         * ========================================
-         *
          * 玩家尝试破坏鬼石砖
+         *
+         * 成功杀死玩家
          * ↓
-         * 触发独立的鬼石砖诅咒
+         * 取消这次方块破坏
          * ↓
-         * SupernaturalDeathHandler
+         * 鬼石砖保持原样
          */
 
-        SupernaturalDeathHandler.tryKill(
-                player,
-                ModDamageTypes.ghostStoneBricks(player)
-        );
+        boolean killed =
+                SupernaturalDeathHandler.tryKill(
+                        player,
+                        ModDamageTypes.ghostStoneBricks(player)
+                );
+
+        if (killed) {
+
+            // 阻止 Minecraft 继续执行破坏方块
+            event.setCanceled(true);
+        }
     }
 
 
