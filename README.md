@@ -1,25 +1,113 @@
+# 齐计划 II
 
-Installation information
-=======
+> 一个以“规则即恐怖”为核心的我的世界模组。  
+> 设定大量借鉴小说《神秘复苏》
 
-This template repository can be directly cloned to get you started with a new
-mod. Simply create a new repository cloned from this one, by following the
-instructions provided by [GitHub](https://docs.github.com/en/repositories/creating-and-managing-repositories/creating-a-repository-from-a-template).
+---
 
-Once you have your clone, simply open the repository in the IDE of your choice. The usual recommendation for an IDE is either IntelliJ IDEA or Eclipse.
+## 简介
 
-If at any point you are missing libraries in your IDE, or you've run into problems you can
-run `gradlew --refresh-dependencies` to refresh the local cache. `gradlew clean` to reset everything 
-{this does not affect your code} and then start the process again.
+齐计划 II 是“齐计划”的续作，但与原作无关。  
+模组包含两条路线：
 
-Mapping Names:
-============
-By default, the MDK is configured to use the official mapping names from Mojang for methods and fields 
-in the Minecraft codebase. These names are covered by a specific license. All modders should be aware of this
-license. For the latest license text, refer to the mapping file itself, or the reference copy here:
-https://github.com/NeoForged/NeoForm/blob/main/Mojang.md
+- **灵异路线**：驾驭鬼，平衡鬼与鬼，用规则和代价换命。
+- **唯物路线**：口袋空间、工业、量产，用工程与空间技术在鬼的世界里建立秩序。
 
-Additional Resources: 
-==========
-Community Documentation: https://docs.neoforged.net/  
-NeoForged Discord: https://discord.neoforged.net/
+本模组不是恐怖地图，也不是单纯的打怪模组。  
+它是一个以“规则”为核心的生存模组。
+
+---
+
+## 当前实现内容
+
+### 已实装鬼物
+
+#### 鬼地毯
+
+- **杀人规律**：杀死站立在上面累计 15 秒的生命。
+- **破解方法**：绕开，别踩上去。
+- 备注：会留下脚印，脚印即诅咒。踩得越多，诅咒越深。
+
+---
+
+#### 鬼石砖
+
+- **杀人规律**：杀死试图破坏石砖的生命。
+- **特殊规律**：硬抗一次灵异袭击即可摧毁鬼石砖。
+- **破解方法**：别尝试破坏。
+
+---
+
+#### 鬼灶台
+
+- **杀人规律**：杀死所有接近 5 格内携带食物的生命。
+- **破解方法**：别携带食物接近。
+- 备注：鬼灶台可作为特殊工作台使用，能制作灵异产品。
+
+---
+
+#### 必死诅咒之剑
+
+- **杀人规律**：杀死被叠加 10 层必死诅咒者。
+- **破解方法**：靠其他灵异抵挡。
+- 备注：攻击时会给目标叠加必死诅咒，同时有概率给自己叠加。
+
+---
+
+## 设计理念
+
+本模组的鬼不靠血量、攻击力、生成率来制造恐怖。  
+每只鬼都是一条“规则”。
+
+玩家要做的不仅是变强，还需：
+
+- 判断规则
+- 避免触发
+- 在规则之间活下来
+- 在适当时利用规则
+
+---
+
+## 路线规划
+
+### 灵异路线
+
+- 驾驭鬼
+- 利用鬼器
+- 承担诅咒与代价
+- 追求高风险高回报
+
+### 唯物路线
+
+- 挖掘与工业
+- 口袋空间扩建
+- 自动化生产
+- 追求稳定与秩序
+
+---
+
+## 开发中内容
+
+- 鬼门系鬼
+- 鬼草坪与鬼草丛
+- 大坟场
+- 庄园多层结构
+- 鬼书（皮皮纸）
+- 鬼新娘体系
+- 鬼女工作品
+
+以上内容处于设计或开发阶段，后续版本逐步加入。
+
+---
+
+## 注意
+
+本模组的鬼并非传统怪物。  
+它们没有血条，也不一定会主动攻击。  
+如果你把它当普通刷怪模组玩，会死得很快，而且不知道自己怎么死的。
+
+请保持冷静，注意观察，记住规则。
+
+> 鬼无法被杀死\
+> 能对付鬼的只有鬼\
+> 洞察它们的规律，活下来

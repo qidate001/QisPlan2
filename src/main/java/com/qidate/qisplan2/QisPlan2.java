@@ -55,12 +55,26 @@ public class QisPlan2 {
                     () -> new DeathCurseSword(new Item.Properties())
             );
 
+    // 鬼金币
     public static final DeferredItem<GhostCoin> GHOST_COIN =
             ITEMS.register(
                     "ghost_coin",
                     () -> new GhostCoin(new Item.Properties())
             );
 
+    // 鬼石指
+    public static final DeferredItem<Item> GHOST_STONE_FINGER =
+            ITEMS.registerSimpleItem(
+                    "ghost_stone_finger"
+            );
+
+    // 香火灰
+    public static final DeferredItem<Item> INCENSE_ASH =
+            ITEMS.registerSimpleItem(
+                    "incense_ash"
+            );
+
+    // 鬼地毯
     public static final DeferredBlock<GhostCarpetBlock> GHOST_CARPET =
             BLOCKS.registerBlock(
                     "ghost_carpet",
@@ -98,14 +112,13 @@ public class QisPlan2 {
                     () -> new GhostStoveBlock(
                             BlockBehaviour.Properties.of()
                                     .strength(1.5F, 6.0F)
-                                    .requiresCorrectToolForDrops()
                     )
             );
 
     public static final DeferredItem<BlockItem> GHOST_STOVE_ITEM =
             ITEMS.registerSimpleBlockItem(GHOST_STOVE);
 
-
+    // 创造物品栏
     public static final DeferredRegister<CreativeModeTab> CREATIVE_MODE_TABS =
             DeferredRegister.create(Registries.CREATIVE_MODE_TAB, MODID);
 
@@ -123,12 +136,15 @@ public class QisPlan2 {
                     .build()
             );
 
+    // 创造物品栏（齐计划2：灵异材料）
     public static final DeferredHolder<CreativeModeTab, CreativeModeTab> QIS_PLAN_GHOST_ITEM_TAB =
             CREATIVE_MODE_TABS.register("qis_plan_ghost_items", () -> CreativeModeTab.builder()
                     .title(Component.translatable("itemGroup.qisplan2.qis_plan_ghost_items"))
                     .icon(() -> GHOST_COIN.get().getDefaultInstance())
                     .displayItems((parameters, output) -> {
                         output.accept(GHOST_COIN);
+                        output.accept(GHOST_STONE_FINGER);
+                        output.accept(INCENSE_ASH);
                     })
                     .build()
             );
