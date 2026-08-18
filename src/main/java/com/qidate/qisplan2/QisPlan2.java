@@ -175,8 +175,18 @@ public class QisPlan2 {
     }
 
     // 声明游戏规则 Key
+
+    /**
+     * 启用/禁用 许愿鬼
+     */
     public static final GameRules.Key<GameRules.BooleanValue> ISAY_ENABLED =
             GameRules.register("isayEnabled", GameRules.Category.MISC, GameRules.BooleanValue.create(true));
+
+    /**
+     * 鬼地毯灵异叠加花费时间
+     */
+    public static final GameRules.Key<GameRules.IntegerValue> GHOST_CARPET_KILL_TIME =
+            GameRules.register("ghostCarpetKillTime", GameRules.Category.MISC, GameRules.IntegerValue.create(300));
 
     // You can use SubscribeEvent and let the Event Bus discover methods to call
     @SubscribeEvent

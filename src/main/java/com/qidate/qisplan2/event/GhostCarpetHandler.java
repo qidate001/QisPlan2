@@ -22,12 +22,6 @@ import java.util.UUID;
 
 @EventBusSubscriber(modid = QisPlan2.MODID)
 public class GhostCarpetHandler {
-
-    /**
-     * 15秒 = 300 ticks
-     */
-    private static final long TRIGGER_TICKS = 15L * 20L;
-
     /**
      * 鬼地毯诅咒的数据标签。
      */
@@ -177,7 +171,12 @@ public class GhostCarpetHandler {
          * =========================
          */
 
-        if (ticks >= TRIGGER_TICKS) {
+        int triggerTicks =
+                entity.level()
+                        .getGameRules()
+                        .getInt(QisPlan2.GHOST_CARPET_KILL_TIME);
+
+        if (ticks >= triggerTicks) {
 
 //            System.out.println(
 //                    "[QisPlan2][GhostCarpet] "

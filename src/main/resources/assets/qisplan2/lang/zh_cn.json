@@ -5,6 +5,9 @@
   "qisplan2.configuration.apiKey": "API 密钥",
   "qisplan2.configuration.modelName": "模型名称",
 
+  "gamerule.isayEnabled": "启用许愿鬼",
+  "gamerule.ghostCarpetKillTime": "鬼地毯灵异叠加耗时",
+
   "block.qisplan2.ghost_carpet": "鬼地毯",
   "block.qisplan2.ghost_stone_bricks": "鬼石砖",
   "block.qisplan2.ghost_stove": "鬼灶台",

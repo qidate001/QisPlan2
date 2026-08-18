@@ -5,6 +5,9 @@
   "qisplan2.configuration.apiKey": "API Key",
   "qisplan2.configuration.modelName": "Model Name",
 
+  "gamerule.isayEnabled": "Enable Wish Ghost",
+  "gamerule.ghostCarpetKillTime": "Time-Consuming Haunted Carpet Overlay",
+
   "block.qisplan2.ghost_carpet": "Ghost Carpet",
   "block.qisplan2.ghost_stone_bricks": "Ghost Stone Bricks",
   "block.qisplan2.ghost_stove": "Ghost Stove",
