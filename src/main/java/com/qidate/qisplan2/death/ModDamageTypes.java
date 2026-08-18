@@ -86,4 +86,37 @@ public class ModDamageTypes {
                 entity
         );
     }
+
+    /**
+     * 鬼灶台诅咒
+     */
+    public static final ResourceKey<DamageType> GHOST_STOVE =
+            ResourceKey.create(
+                    Registries.DAMAGE_TYPE,
+                    ResourceLocation.fromNamespaceAndPath(
+                            QisPlan2.MODID,
+                            "ghost_stove"
+                    )
+            );
+
+
+    /**
+     * 创建鬼灶台死亡 DamageSource
+     */
+    public static DamageSource ghostStove(Entity entity) {
+
+        return new DamageSource(
+                entity.level()
+                        .registryAccess()
+                        .registryOrThrow(
+                                Registries.DAMAGE_TYPE
+                        )
+                        .getHolderOrThrow(
+                                GHOST_STOVE
+                        ),
+                entity
+        );
+    }
+
+
 }

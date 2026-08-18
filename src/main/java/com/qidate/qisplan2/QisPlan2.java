@@ -106,19 +106,29 @@ public class QisPlan2 {
             ITEMS.registerSimpleBlockItem(GHOST_STOVE);
 
 
-    // 创造物品栏
-    public static final DeferredRegister<CreativeModeTab> CREATIVE_MODE_TABS = DeferredRegister.create(Registries.CREATIVE_MODE_TAB, MODID);
+    public static final DeferredRegister<CreativeModeTab> CREATIVE_MODE_TABS =
+            DeferredRegister.create(Registries.CREATIVE_MODE_TAB, MODID);
 
-    public static final DeferredHolder<CreativeModeTab, CreativeModeTab> QIS_PLAN_TAB =
-            CREATIVE_MODE_TABS.register("qis_plan", () -> CreativeModeTab.builder()
-                    .title(Component.literal("齐计划"))
-                    .icon(() -> GHOST_COIN.get().getDefaultInstance())
+    // 创造物品栏（齐计划2：鬼）
+    public static final DeferredHolder<CreativeModeTab, CreativeModeTab> QIS_PLAN_GHOST_TAB =
+            CREATIVE_MODE_TABS.register("qis_plan_ghost", () -> CreativeModeTab.builder()
+                    .title(Component.translatable("itemGroup.qisplan2.qis_plan_ghost"))
+                    .icon(() -> GHOST_CARPET_ITEM.get().getDefaultInstance())
                     .displayItems((parameters, output) -> {
-                        output.accept(GHOST_COIN);
                         output.accept(DEATH_CURSE_SWORD);
                         output.accept(GHOST_CARPET_ITEM);
                         output.accept(GHOST_STONE_BRICKS_ITEM);
                         output.accept(GHOST_STOVE_ITEM);
+                    })
+                    .build()
+            );
+
+    public static final DeferredHolder<CreativeModeTab, CreativeModeTab> QIS_PLAN_GHOST_ITEM_TAB =
+            CREATIVE_MODE_TABS.register("qis_plan_ghost_items", () -> CreativeModeTab.builder()
+                    .title(Component.translatable("itemGroup.qisplan2.qis_plan_ghost_items"))
+                    .icon(() -> GHOST_COIN.get().getDefaultInstance())
+                    .displayItems((parameters, output) -> {
+                        output.accept(GHOST_COIN);
                     })
                     .build()
             );
