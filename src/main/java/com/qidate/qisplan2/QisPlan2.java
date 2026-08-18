@@ -74,6 +74,19 @@ public class QisPlan2 {
     public static final DeferredItem<BlockItem> GHOST_CARPET_ITEM =
             ITEMS.registerSimpleBlockItem(GHOST_CARPET);
 
+    public static final DeferredBlock<Block> GHOST_STONE_BRICKS =
+            BLOCKS.register(
+                    "ghost_stone_bricks",
+                    () -> new Block(
+                            BlockBehaviour.Properties.of()
+                                    .strength(1.5F, 6.0F)
+                                    .requiresCorrectToolForDrops()
+                    )
+            );
+
+    public static final DeferredItem<BlockItem> GHOST_STONE_BRICKS_ITEM =
+            ITEMS.registerSimpleBlockItem(GHOST_STONE_BRICKS);
+
 
     // 创造物品栏
     public static final DeferredRegister<CreativeModeTab> CREATIVE_MODE_TABS = DeferredRegister.create(Registries.CREATIVE_MODE_TAB, MODID);
@@ -86,6 +99,7 @@ public class QisPlan2 {
                         output.accept(GHOST_COIN);
                         output.accept(DEATH_CURSE_SWORD);
                         output.accept(GHOST_CARPET_ITEM);
+                        output.accept(GHOST_STONE_BRICKS_ITEM);
                     })
                     .build()
             );

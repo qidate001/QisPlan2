@@ -34,6 +34,17 @@ public class ModDamageTypes {
             );
 
 
+
+    public static final ResourceKey<DamageType> GHOST_STONE_BRICKS =
+            ResourceKey.create(
+                    Registries.DAMAGE_TYPE,
+                    ResourceLocation.fromNamespaceAndPath(
+                            QisPlan2.MODID,
+                            "ghost_stone_bricks"
+                    )
+            );
+
+
     /**
      * 创建鬼地毯死亡 DamageSource
      */
@@ -56,6 +67,22 @@ public class ModDamageTypes {
                         .registryAccess()
                         .registryOrThrow(Registries.DAMAGE_TYPE)
                         .getHolderOrThrow(DEATH_CURSE),
+                entity
+        );
+    }
+
+    public static DamageSource ghostStoneBricks(
+            Entity entity
+    ) {
+        return new DamageSource(
+                entity.level()
+                        .registryAccess()
+                        .registryOrThrow(
+                                Registries.DAMAGE_TYPE
+                        )
+                        .getHolderOrThrow(
+                                GHOST_STONE_BRICKS
+                        ),
                 entity
         );
     }
