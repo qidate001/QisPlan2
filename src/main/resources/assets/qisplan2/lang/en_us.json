@@ -12,6 +12,7 @@
   "death.attack.ghost_carpet": "%1$s was erased by the Ghost Carpet beneath them.",
   "death.attack.death_curse": "%1$s was consumed by the Death Curse.",
   "death.attack.ghost_stone_bricks": "%1$s broke something that should never have been broken.",
+  "death.attack.ghost_stove": "%1$s has been turned into delicious food by the ghost stove.",
 
   "qisplan2.death_curse.triggered": "☠ The Death Curse has been triggered! The Death Curse Sword has shattered!",
   "qisplan2.death_curse.count": "Curse stacks: %1$d/10",

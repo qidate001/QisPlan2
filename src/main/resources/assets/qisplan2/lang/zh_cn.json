@@ -12,6 +12,7 @@
   "death.attack.ghost_carpet": "%1$s 被脚下的鬼地毯当场抹杀。",
   "death.attack.death_curse": "%1$s 被死亡诅咒吞噬。",
   "death.attack.ghost_stone_bricks": "%1$s 触碰了不该破坏的东西。",
+  "death.attack.ghost_stove": "%1$s 被鬼灶台变成了可口食物。",
 
   "qisplan2.death_curse.triggered": "☠ 死亡诅咒触发！死亡诅咒之剑已损坏！",
   "qisplan2.death_curse.count": "诅咒层数：%1$d/10",
