@@ -1,0 +1,7 @@
+{
+  "parent": "minecraft:block/door_top_right_open",
+  "textures": {
+    "bottom": "qisplan2:block/ghost_door_bottom",
+    "top": "qisplan2:block/ghost_door_top"
+  }
+}
