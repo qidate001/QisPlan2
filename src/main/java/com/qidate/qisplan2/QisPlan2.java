@@ -1,12 +1,14 @@
 package com.qidate.qisplan2;
 
 import com.qidate.qisplan2.block.GhostCarpetBlock;
+import com.qidate.qisplan2.block.GhostDoorBlock;
 import com.qidate.qisplan2.block.GhostStoveBlock;
 import com.qidate.qisplan2.core.QisConfig;
 import com.qidate.qisplan2.item.DeathCurseSword;
 import com.qidate.qisplan2.item.GhostCoin;
 import net.minecraft.world.level.GameRules;
 import net.minecraft.world.level.block.SoundType;
+import net.minecraft.world.level.block.state.properties.BlockSetType;
 import org.slf4j.Logger;
 
 import com.mojang.logging.LogUtils;
@@ -118,6 +120,21 @@ public class QisPlan2 {
     public static final DeferredItem<BlockItem> GHOST_STOVE_ITEM =
             ITEMS.registerSimpleBlockItem(GHOST_STOVE);
 
+    // 鬼门
+    public static final DeferredBlock<Block> GHOST_DOOR =
+            BLOCKS.register(
+                    "ghost_door",
+                    () -> new GhostDoorBlock(
+                            BlockSetType.OAK,
+                            BlockBehaviour.Properties.of()
+                                    .strength(-1.0F, 3600000.0F)
+                                    .noOcclusion()
+                    )
+            );
+
+    public static final DeferredItem<BlockItem> GHOST_DOOR_ITEM =
+            ITEMS.registerSimpleBlockItem(GHOST_DOOR);
+
     // 创造物品栏
     public static final DeferredRegister<CreativeModeTab> CREATIVE_MODE_TABS =
             DeferredRegister.create(Registries.CREATIVE_MODE_TAB, MODID);
@@ -132,6 +149,7 @@ public class QisPlan2 {
                         output.accept(GHOST_CARPET_ITEM);
                         output.accept(GHOST_STONE_BRICKS_ITEM);
                         output.accept(GHOST_STOVE_ITEM);
+                        output.accept(GHOST_DOOR_ITEM);
                     })
                     .build()
             );
