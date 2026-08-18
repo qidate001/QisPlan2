@@ -3,6 +3,11 @@
 > 一个以“规则即恐怖”为核心的我的世界模组。  
 > 设定大量借鉴小说《神秘复苏》
 
+![Java](https://img.shields.io/badge/Java-21-blue?style=for-the-badge)
+![Minecraft](https://img.shields.io/badge/Minecraft-1.21.1-green?style=for-the-badge)
+![NeoForge](https://img.shields.io/badge/NeoForge-%E2%89%A521.1.248-orange?style=for-the-badge)
+![License](https://img.shields.io/badge/License-MIT-yellow?style=for-the-badge)
+
 ---
 
 ## 简介
@@ -100,6 +105,15 @@
 
 ---
 
+## 技术信息
+
+- **开发语言**：Java
+- **模组加载器**：NeoForge（需 ≥ 21.1.248）
+- **运行版本**：Minecraft 1.21.1
+- **开源协议**：MIT License
+
+---
+
 ## 注意
 
 本模组的鬼并非传统怪物。  
@@ -108,6 +122,6 @@
 
 请保持冷静，注意观察，记住规则。
 
-> 鬼无法被杀死\
-> 能对付鬼的只有鬼\
+> 鬼无法被杀死  
+> 能对付鬼的只有鬼  
 > 洞察它们的规律，活下来
