@@ -1,7 +1,9 @@
 package com.qidate.qisplan2.death;
 
+import com.qidate.qisplan2.QisPlan2;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.player.Player;
 
 public class SupernaturalDeathHandler {
 
@@ -20,41 +22,46 @@ public class SupernaturalDeathHandler {
             return false;
         }
 
-        /*
-         * ========================================
-         * 以后所有“死亡抵消”机制都放这里
-         * ========================================
-         *
-         * 例如：
-         *
-         * if (hasDeathProtection(entity)) {
-         *     consumeDeathProtection(entity);
-         *     return false;
-         * }
-         */
-
 
         /*
          * ========================================
          * 执行死亡
          * ========================================
-         *
-         * 使用 DamageSource，而不是 entity.kill()
-         *
-         * 这样 Minecraft 才能知道：
-         *
-         * “这个人是被 ghost_carpet 杀死的”
-         *
-         * 从而自动使用：
-         *
-         * death.attack.ghost_carpet
          */
         entity.hurt(
                 damageSource,
                 Float.MAX_VALUE
         );
 
-        entity.setHealth(0.0F);
+        boolean instantlyKill =
+                entity.level()
+                        .getGameRules()
+                        .getRule(
+                                QisPlan2.GHOST_DAMAGE_INSTANTLY_KILL
+                        )
+                        .get();
+
+        /*
+         * 创造模式 + 未开启强制抹杀
+         *
+         * 直接抵消灵异攻击。
+         */
+        if (entity instanceof Player player
+                && player.isCreative()
+                && !instantlyKill) {
+
+            return false;
+        }
+
+        /*
+         * 开启强制抹杀
+         */
+        if (instantlyKill) {
+
+            entity.setHealth(0.0F);
+
+            return true;
+        }
 
         return !entity.isAlive();
     }

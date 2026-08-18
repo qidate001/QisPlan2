@@ -7,13 +7,14 @@
 
   "gamerule.isayEnabled": "Enable Wish Ghost",
   "gamerule.ghostCarpetKillTime": "Time-Consuming Haunted Carpet Overlay",
+  "gamerule.ghostDamageInstantlyKill": "Ghost damage instantly kills",
 
-  "block.qisplan2.ghost_carpet": "Ghost Carpet",
-  "block.qisplan2.ghost_stone_bricks": "Ghost Stone Bricks",
-  "block.qisplan2.ghost_stove": "Ghost Stove",
-  "block.qisplan2.ghost_door": "Ghost Door",
+  "block.qisplan2.ghost_carpet": "§4Ghost Carpet",
+  "block.qisplan2.ghost_stone_bricks": "§4Ghost Stone Bricks",
+  "block.qisplan2.ghost_stove": "§4Ghost Stove",
+  "block.qisplan2.ghost_door": "§4Ghost Door",
 
-  "item.qisplan2.death_curse_sword": "Death Curse Sword",
+  "item.qisplan2.death_curse_sword": "§4Death Curse Sword",
   "item.qisplan2.ghost_coin": "Ghost Coin",
   "item.qisplan2.ghost_stone_finger": "Ghost Stone Finger",
   "item.qisplan2.incense_ash": "Incense Ash",

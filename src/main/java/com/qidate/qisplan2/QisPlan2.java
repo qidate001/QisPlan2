@@ -195,6 +195,12 @@ public class QisPlan2 {
     // 声明游戏规则 Key
 
     /**
+     * 灵异攻击是否强制抹杀玩家
+     */
+    public static final GameRules.Key<GameRules.BooleanValue> GHOST_DAMAGE_INSTANTLY_KILL =
+            GameRules.register("ghostDamageInstantlyKill", GameRules.Category.MISC, GameRules.BooleanValue.create(true));
+
+    /**
      * 启用/禁用 许愿鬼
      */
     public static final GameRules.Key<GameRules.BooleanValue> ISAY_ENABLED =
