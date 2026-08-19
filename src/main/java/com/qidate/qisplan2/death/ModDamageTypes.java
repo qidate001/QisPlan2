@@ -70,6 +70,19 @@ public class ModDamageTypes {
 
 
     /**
+     * 夜游鬼灵异攻击
+     */
+    public static final ResourceKey<DamageType> GHOST_NIGHT_WANDERER =
+            ResourceKey.create(
+                    Registries.DAMAGE_TYPE,
+                    ResourceLocation.fromNamespaceAndPath(
+                            QisPlan2.MODID,
+                            "ghost_night_wanderer"
+                    )
+            );
+
+
+    /**
      * 创建鬼地毯死亡 DamageSource
      */
     public static DamageSource ghostCarpet(Entity entity) {
@@ -143,6 +156,25 @@ public class ModDamageTypes {
                         )
                         .getHolderOrThrow(
                                 GHOST_GRASS
+                        ),
+                entity
+        );
+    }
+
+    /**
+     * 创建夜游鬼灵异攻击 DamageSource
+     */
+    public static DamageSource ghostNightWanderer(
+            Entity entity
+    ) {
+        return new DamageSource(
+                entity.level()
+                        .registryAccess()
+                        .registryOrThrow(
+                                Registries.DAMAGE_TYPE
+                        )
+                        .getHolderOrThrow(
+                                GHOST_NIGHT_WANDERER
                         ),
                 entity
         );
