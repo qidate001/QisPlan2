@@ -1,0 +1,6 @@
+{
+  "type": "qisplan2:ghost_temple",
+  "biomes": "#qisplan2:has_structure/ghost_temple",
+  "spawn_overrides": {},
+  "step": "surface_structures"
+}
