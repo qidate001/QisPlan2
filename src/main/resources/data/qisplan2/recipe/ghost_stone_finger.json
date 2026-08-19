@@ -1,0 +1,27 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    " S ",
+    "SAS",
+    "XBX"
+  ],
+  "key": {
+    "A": {
+      "item": "minecraft:wooden_sword"
+    },
+    "S": {
+      "item": "qisplan2:ghost_stone_finger"
+    },
+    "X": {
+      "item": "qisplan2:incense_ash"
+    },
+    "B": {
+      "item": "minecraft:bone"
+    }
+  },
+  "result": {
+    "id": "qisplan2:death_curse_sword",
+    "count": 1
+  }
+}

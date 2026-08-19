@@ -13,6 +13,7 @@
   "block.qisplan2.ghost_stone_bricks": "§4鬼石砖",
   "block.qisplan2.ghost_stove": "§4鬼灶台",
   "block.qisplan2.ghost_door": "§4鬼门",
+  "block.qisplan2.ghost_grass": "§4鬼草丛",
 
   "item.qisplan2.death_curse_sword": "§4必死诅咒之剑",
   "item.qisplan2.ghost_coin": "鬼金币",
@@ -23,6 +24,7 @@
   "death.attack.death_curse": "%1$s 被死亡诅咒吞噬。",
   "death.attack.ghost_stone_bricks": "%1$s 试图破坏不应该破坏的东西。",
   "death.attack.ghost_stove": "%1$s 被§4鬼灶台§r变成了可口食物。",
+  "death.attack.ghost_grass": "%1$s 被§4鬼草丛§r变成了养分。",
 
   "qisplan2.death_curse.triggered": "☠ §4死亡诅咒§r触发！§4死亡诅咒之剑§r已损坏！",
   "qisplan2.death_curse.reflection": "☠ §4死亡诅咒§r反噬！",

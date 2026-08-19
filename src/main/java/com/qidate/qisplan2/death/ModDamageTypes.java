@@ -44,6 +44,30 @@ public class ModDamageTypes {
                     )
             );
 
+    /**
+     * 鬼灶台诅咒
+     */
+    public static final ResourceKey<DamageType> GHOST_STOVE =
+            ResourceKey.create(
+                    Registries.DAMAGE_TYPE,
+                    ResourceLocation.fromNamespaceAndPath(
+                            QisPlan2.MODID,
+                            "ghost_stove"
+                    )
+            );
+
+    /**
+     * 鬼草丛诅咒
+     */
+    public static final ResourceKey<DamageType> GHOST_GRASS =
+            ResourceKey.create(
+                    Registries.DAMAGE_TYPE,
+                    ResourceLocation.fromNamespaceAndPath(
+                            QisPlan2.MODID,
+                            "ghost_grass"
+                    )
+            );
+
 
     /**
      * 创建鬼地毯死亡 DamageSource
@@ -87,18 +111,6 @@ public class ModDamageTypes {
         );
     }
 
-    /**
-     * 鬼灶台诅咒
-     */
-    public static final ResourceKey<DamageType> GHOST_STOVE =
-            ResourceKey.create(
-                    Registries.DAMAGE_TYPE,
-                    ResourceLocation.fromNamespaceAndPath(
-                            QisPlan2.MODID,
-                            "ghost_stove"
-                    )
-            );
-
 
     /**
      * 创建鬼灶台死亡 DamageSource
@@ -118,5 +130,21 @@ public class ModDamageTypes {
         );
     }
 
+    /**
+     * 创建鬼草丛死亡 DamageSource
+     */
+    public static DamageSource ghostGrass(Entity entity) {
 
+        return new DamageSource(
+                entity.level()
+                        .registryAccess()
+                        .registryOrThrow(
+                                Registries.DAMAGE_TYPE
+                        )
+                        .getHolderOrThrow(
+                                GHOST_GRASS
+                        ),
+                entity
+        );
+    }
 }
