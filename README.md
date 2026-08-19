@@ -117,7 +117,8 @@
 ## 鸣谢
 
 - **美术鸣谢**：感谢 [一只屑System32](https://github.com/uzjhf-836/) 绘制的“必死诅咒之剑”纹理
-- **建筑鸣谢**：感谢 [何喻逸林](https://space.bilibili.com/275630606/) 的鬼寺庙[建筑原型]((https://www.bilibili.com/video/BV1uH4y157X4/))，十分感谢。
+- **建筑鸣谢**：感谢 [何喻逸林](https://space.bilibili.com/275630606/) 的鬼寺庙 [建筑原型](https://www.bilibili.com/video/BV1uH4y157X4/)，十分感谢。
+- **建筑鸣谢**：感谢 [Pixel轩](https://space.bilibili.com/275630606/) 的鬼灶台木屋 [建筑原型](https://www.bilibili.com/video/BV1F8Nu6GECy/)，十分感谢。
 - **代码鸣谢**：感谢 [一只屑System32](https://github.com/uzjhf-836/) 为“必死诅咒之剑”HUD做出的贡献
 - **测试鸣谢**：感谢 [一只屑System32](https://github.com/uzjhf-836/) 为模组测试与反馈做出的贡献
 - **灵感鸣谢**：感谢小说《神秘复苏》作者 佛前献花 —— 为本模组的灵异世界观提供了深厚的土壤
