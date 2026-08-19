@@ -6,6 +6,7 @@ import com.qidate.qisplan2.block.GhostDoorBlock;
 import com.qidate.qisplan2.block.GhostGrassBlock;
 import com.qidate.qisplan2.block.GhostStoveBlock;
 import com.qidate.qisplan2.core.QisConfig;
+import com.qidate.qisplan2.death.SupernaturalEntity;
 import com.qidate.qisplan2.entity.NightWanderer;
 import com.qidate.qisplan2.item.DeathCurseSword;
 import com.qidate.qisplan2.item.GhostCoin;
@@ -15,16 +16,19 @@ import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.MobCategory;
 import net.minecraft.world.level.GameRules;
 import net.minecraft.world.level.block.SoundType;
 import net.minecraft.world.level.block.state.properties.BlockSetType;
+import net.minecraft.world.phys.AABB;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.fml.config.ModConfig;
 import net.neoforged.neoforge.attachment.AttachmentType;
 import net.neoforged.neoforge.event.RegisterCommandsEvent;
 import net.neoforged.neoforge.event.entity.EntityAttributeCreationEvent;
 import net.neoforged.neoforge.registries.NeoForgeRegistries;
+import com.mojang.brigadier.arguments.DoubleArgumentType;
 import org.slf4j.Logger;
 
 import com.mojang.logging.LogUtils;
@@ -295,6 +299,139 @@ public class QisPlan2 {
      */
     public static final GameRules.Key<GameRules.IntegerValue> GHOST_CARPET_KILL_TIME =
             GameRules.register("ghostCarpetKillTime", GameRules.Category.MISC, GameRules.IntegerValue.create(300));
+
+    @SubscribeEvent
+    public void registerCommands(RegisterCommandsEvent event) {
+
+        event.getDispatcher().register(
+                Commands.literal("qis_kill_ghosts")
+                        .requires(source -> source.hasPermission(2))
+
+                        // 默认 32 格
+                        .executes(context -> {
+
+                            var source = context.getSource();
+
+                            if (source.getEntity() == null) {
+                                source.sendFailure(
+                                        Component.literal(
+                                                "这个命令必须由实体执行。"
+                                        )
+                                );
+
+                                return 0;
+                            }
+
+                            var entity = source.getEntity();
+
+                            AABB area =
+                                    entity.getBoundingBox()
+                                            .inflate(32.0D);
+
+                            var ghosts =
+                                    entity.level()
+                                            .getEntitiesOfClass(
+                                                    LivingEntity.class,
+                                                    area,
+                                                    target ->
+                                                            target
+                                                                    instanceof SupernaturalEntity
+                                            );
+
+                            int count = 0;
+
+                            for (LivingEntity ghost : ghosts) {
+
+                                ghost.discard();
+                                count++;
+                            }
+
+                            final int finalCount = count;
+
+                            source.sendSuccess(
+                                    () -> Component.literal(
+                                            "已清除附近 "
+                                                    + finalCount
+                                                    + " 个灵异实体。"
+                                    ),
+                                    true
+                            );
+
+                            return count;
+                        })
+
+                        // /qis_kill_ghosts <radius>
+                        .then(
+                                Commands.argument(
+                                                "radius",
+                                                DoubleArgumentType.doubleArg(
+                                                        1.0D,
+                                                        256.0D
+                                                )
+                                        )
+                                        .executes(context -> {
+
+                                            var source =
+                                                    context.getSource();
+
+                                            if (source.getEntity() == null) {
+                                                source.sendFailure(
+                                                        Component.literal(
+                                                                "这个命令必须由实体执行。"
+                                                        )
+                                                );
+
+                                                return 0;
+                                            }
+
+                                            var entity =
+                                                    source.getEntity();
+
+                                            double radius =
+                                                    DoubleArgumentType.getDouble(
+                                                            context,
+                                                            "radius"
+                                                    );
+
+                                            AABB area =
+                                                    entity.getBoundingBox()
+                                                            .inflate(radius);
+
+                                            var ghosts =
+                                                    entity.level()
+                                                            .getEntitiesOfClass(
+                                                                    LivingEntity.class,
+                                                                    area,
+                                                                    target ->
+                                                                            target instanceof SupernaturalEntity
+                                                            );
+
+                                            int count = 0;
+
+                                            for (LivingEntity ghost : ghosts) {
+
+                                                ghost.discard();
+                                                count++;
+                                            }
+
+                                            final int finalCount = count;
+
+                                            source.sendSuccess(
+                                                    () -> Component.literal(
+                                                            "已清除 "
+                                                                    + radius
+                                                                    + " 格内的 "
+                                                                    + finalCount
+                                                                    + " 个灵异实体。"
+                                                    ),
+                                                    true
+                                            );
+
+                                            return count;
+                                        })
+                        )
+        );
+    }
 
     // You can use SubscribeEvent and let the Event Bus discover methods to call
     @SubscribeEvent

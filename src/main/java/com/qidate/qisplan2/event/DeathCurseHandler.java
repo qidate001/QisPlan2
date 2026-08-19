@@ -29,6 +29,11 @@ public class DeathCurseHandler {
 
     private static final int MAX_CURSE_COUNT = 10;
 
+    /**
+     * 灵异袭击强度
+     */
+    private static final double SUPERNATURAL_ATTACK_STRENGTH = 1.5D;
+
 
     /**
      * 死亡诅咒之剑攻击事件
@@ -95,7 +100,8 @@ public class DeathCurseHandler {
 
             SupernaturalDeathHandler.tryKill(
                     target,
-                    ModDamageTypes.deathCurse(target)
+                    ModDamageTypes.deathCurse(target),
+                    SUPERNATURAL_ATTACK_STRENGTH
             );
 
         } else {
@@ -147,7 +153,8 @@ public class DeathCurseHandler {
 
                 SupernaturalDeathHandler.tryKill(
                         player,
-                        ModDamageTypes.deathCurse(player)
+                        ModDamageTypes.deathCurse(player),
+                        SUPERNATURAL_ATTACK_STRENGTH
                 );
 
             } else {

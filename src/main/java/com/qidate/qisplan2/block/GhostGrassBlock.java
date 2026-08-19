@@ -24,6 +24,11 @@ public class GhostGrassBlock extends Block {
     private static final String COOLDOWN_KEY =
             "qisplan2_ghost_grass_curse";
 
+    /**
+     * 灵异袭击强度
+     */
+    private static final double SUPERNATURAL_ATTACK_STRENGTH = 0.3D;
+
     public GhostGrassBlock(Properties properties) {
         super(properties);
     }
@@ -68,7 +73,8 @@ public class GhostGrassBlock extends Block {
          */
         SupernaturalDeathHandler.tryKill(
                 livingEntity,
-                ModDamageTypes.ghostGrass(livingEntity)
+                ModDamageTypes.ghostGrass(livingEntity),
+                SUPERNATURAL_ATTACK_STRENGTH
         );
     }
 }

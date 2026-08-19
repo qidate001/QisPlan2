@@ -23,12 +23,6 @@ import java.util.UUID;
 @EventBusSubscriber(modid = QisPlan2.MODID)
 public class GhostCarpetHandler {
     /**
-     * 鬼地毯诅咒的数据标签。
-     */
-//    public static final String GHOST_CARPET_CURSE_COUNT =
-//            "ghost_carpet_curse_count";
-
-    /**
      * 每个实体已经累计踩了多少 tick。
      */
     private static final Map<UUID, Long> CARPET_TICKS =
@@ -39,6 +33,11 @@ public class GhostCarpetHandler {
      */
     private static final Map<UUID, Boolean> TRIGGERED =
             new HashMap<>();
+
+    /**
+     * 灵异强度
+     */
+    private static final double SUPERNATURAL_ATTACK_STRENGTH = 1.0D;
 
 
     @SubscribeEvent
@@ -165,7 +164,8 @@ public class GhostCarpetHandler {
         boolean killed =
                 SupernaturalDeathHandler.tryKill(
                         entity,
-                        ModDamageTypes.ghostCarpet(entity)
+                        ModDamageTypes.ghostCarpet(entity),
+                        SUPERNATURAL_ATTACK_STRENGTH
                 );
 
         if (killed) {
