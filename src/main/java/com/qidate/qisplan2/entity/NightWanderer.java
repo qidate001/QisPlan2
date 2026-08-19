@@ -80,6 +80,20 @@ public class NightWanderer
      */
     private int supernaturalAttackCooldown = 0;
 
+
+    /**
+     * 灵异攻击强度
+     */
+    private static final double SUPERNATURAL_ATTACK_STRENGTH = 0.4D;
+    private static final double SUPERNATURAL_DEFENSE = 1.0D;
+
+    @Override
+    public double getSupernaturalDefense() {
+        return SUPERNATURAL_DEFENSE;
+    }
+
+
+
     public NightWanderer(
             EntityType<? extends NightWanderer> entityType,
             Level level
@@ -462,9 +476,8 @@ public class NightWanderer
 
             SupernaturalDeathHandler.tryKill(
                     target,
-                    ModDamageTypes.ghostNightWanderer(
-                            target
-                    )
+                    ModDamageTypes.ghostNightWanderer(mob),
+                    SUPERNATURAL_ATTACK_STRENGTH
             );
 
             /*
