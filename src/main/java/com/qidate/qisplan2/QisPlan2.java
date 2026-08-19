@@ -1,5 +1,6 @@
 package com.qidate.qisplan2;
 
+import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.serialization.Codec;
 import com.qidate.qisplan2.block.GhostCarpetBlock;
 import com.qidate.qisplan2.block.GhostDoorBlock;
@@ -7,14 +8,25 @@ import com.qidate.qisplan2.block.GhostStoveBlock;
 import com.qidate.qisplan2.core.QisConfig;
 import com.qidate.qisplan2.item.DeathCurseSword;
 import com.qidate.qisplan2.item.GhostCoin;
-import com.qidate.qisplan2.worldgen.GhostTempleStructure;
+import net.minecraft.commands.CommandSourceStack;
+import net.minecraft.commands.Commands;
+import net.minecraft.core.BlockPos;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.NbtAccounter;
+import net.minecraft.nbt.NbtIo;
 import net.minecraft.network.codec.ByteBufCodecs;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.level.GameRules;
 import net.minecraft.world.level.block.SoundType;
 import net.minecraft.world.level.block.state.properties.BlockSetType;
 import net.minecraft.world.level.levelgen.structure.StructureType;
 import net.minecraft.world.level.levelgen.structure.pieces.StructurePieceType;
+import net.minecraft.world.level.levelgen.structure.templatesystem.StructurePlaceSettings;
+import net.minecraft.world.level.levelgen.structure.templatesystem.StructureTemplate;
+import net.minecraft.world.level.levelgen.structure.templatesystem.StructureTemplateManager;
 import net.neoforged.neoforge.attachment.AttachmentType;
+import net.neoforged.neoforge.event.RegisterCommandsEvent;
 import net.neoforged.neoforge.registries.NeoForgeRegistries;
 import org.slf4j.Logger;
 
@@ -46,16 +58,14 @@ import net.neoforged.neoforge.registries.DeferredHolder;
 import net.neoforged.neoforge.registries.DeferredItem;
 import net.neoforged.neoforge.registries.DeferredRegister;
 
+import java.util.Optional;
+
 // The value here should match an entry in the META-INF/neoforge.mods.toml file
 @Mod(QisPlan2.MODID)
 public class QisPlan2 {
-    // Define mod id in a common place for everything to reference
     public static final String MODID = "qisplan2";
-    // Directly reference a slf4j logger
     public static final Logger LOGGER = LogUtils.getLogger();
-    // Create a Deferred Register to hold Blocks which will all be registered under the "examplemod" namespace
     public static final DeferredRegister.Blocks BLOCKS = DeferredRegister.createBlocks(MODID);
-    // Create a Deferred Register to hold Items which will all be registered under the "examplemod" namespace
     public static final DeferredRegister.Items ITEMS = DeferredRegister.createItems(MODID);
 
     // 附件类型注册表
@@ -188,40 +198,6 @@ public class QisPlan2 {
                     .build()
             );
 
-    public static final DeferredRegister<StructureType<?>> STRUCTURE_TYPES =
-            DeferredRegister.create(
-                    BuiltInRegistries.STRUCTURE_TYPE,
-                    MODID
-            );
-
-    public static final DeferredHolder<
-            StructureType<?>,
-            StructureType<GhostTempleStructure>
-            > GHOST_TEMPLE_STRUCTURE_TYPE =
-            STRUCTURE_TYPES.register(
-                    "ghost_temple",
-                    () -> () -> GhostTempleStructure.CODEC
-            );
-
-    public static final DeferredRegister<StructurePieceType> STRUCTURE_PIECE_TYPES =
-            DeferredRegister.create(
-                    BuiltInRegistries.STRUCTURE_PIECE,
-                    MODID
-            );
-
-    public static final DeferredHolder<
-            StructurePieceType,
-            StructurePieceType
-            > GHOST_TEMPLE_PIECE =
-            STRUCTURE_PIECE_TYPES.register(
-                    "ghost_temple",
-                    () -> (context, tag) ->
-                            new GhostTempleStructure.GhostTemplePiece(
-                                    tag,
-                                    context.structureTemplateManager()
-                            )
-            );
-
 
 
     // The constructor for the mod class is the first code that is run when your mod is loaded.
@@ -239,9 +215,9 @@ public class QisPlan2 {
         // Register the Deferred Register to the mod event bus so tabs get registered
         CREATIVE_MODE_TABS.register(modEventBus);
 
-        STRUCTURE_TYPES.register(modEventBus);
+//        STRUCTURE_TYPES.register(modEventBus);
 
-        STRUCTURE_PIECE_TYPES.register(modEventBus);
+//        STRUCTURE_PIECE_TYPES.register(modEventBus);
 
         // Register ourselves for server and other game events we are interested in.
         // Note that this is necessary if and only if we want *this* class (ExampleMod) to respond directly to events.
@@ -279,5 +255,171 @@ public class QisPlan2 {
         // Do something when the server starts
         LOGGER.info("HELLO from server starting");
         LOGGER.info("Isay game rule registered: {}", ISAY_ENABLED.getId());
+    }
+
+    @SubscribeEvent
+    public void registerCommands(RegisterCommandsEvent event) {
+
+        CommandDispatcher<CommandSourceStack> dispatcher =
+                event.getDispatcher();
+
+        dispatcher.register(
+                Commands.literal("qisplan2_test")
+                        .requires(source -> source.hasPermission(2))
+                        .executes(context -> {
+
+                            ServerPlayer player =
+                                    context.getSource()
+                                            .getPlayerOrException();
+
+                            var server = player.server;
+                            var resourceManager = server.getResourceManager();
+
+                            LOGGER.info(
+                                    "========== 结构生成测试 =========="
+                            );
+
+                            ResourceLocation resourceId =
+                                    ResourceLocation.parse(
+                                            "qisplan2:structures/ghost_temple.nbt"
+                                    );
+
+                            resourceManager
+                                    .getResource(resourceId)
+                                    .ifPresentOrElse(resource -> {
+
+                                        try {
+
+                                            // ==============================
+                                            // 1. 读取 NBT
+                                            // ==============================
+
+                                            LOGGER.info(
+                                                    "[QisPlan2] ResourceManager 找到了: {}",
+                                                    resourceId
+                                            );
+
+                                            CompoundTag tag =
+                                                    NbtIo.readCompressed(
+                                                            resource.open(),
+                                                            NbtAccounter.unlimitedHeap()
+                                                    );
+
+                                            LOGGER.info(
+                                                    "[QisPlan2] NBT 读取成功"
+                                            );
+
+                                            // ==============================
+                                            // 2. 转换成 StructureTemplate
+                                            // ==============================
+
+                                            StructureTemplateManager manager =
+                                                    player.serverLevel()
+                                                            .getStructureManager();
+
+                                            StructureTemplate template =
+                                                    manager.readStructure(tag);
+
+                                            LOGGER.info(
+                                                    "[QisPlan2] StructureTemplate 解析成功"
+                                            );
+
+                                            LOGGER.info(
+                                                    "[QisPlan2] 结构大小: {}",
+                                                    template.getSize()
+                                            );
+
+                                            // ==============================
+                                            // 3. 设置生成位置
+                                            // ==============================
+
+                                            BlockPos pos =
+                                                    player.blockPosition();
+
+                                            LOGGER.info(
+                                                    "[QisPlan2] 生成位置: {}",
+                                                    pos
+                                            );
+
+                                            // ==============================
+                                            // 4. 生成结构
+                                            // ==============================
+
+                                            StructurePlaceSettings settings =
+                                                    new StructurePlaceSettings();
+
+                                            boolean success =
+                                                    template.placeInWorld(
+                                                            player.serverLevel(),
+                                                            pos,
+                                                            pos,
+                                                            settings,
+                                                            player.serverLevel().random,
+                                                            2
+                                                    );
+
+                                            LOGGER.info(
+                                                    "[QisPlan2] 结构生成结果: {}",
+                                                    success
+                                            );
+
+                                            // ==============================
+                                            // 5. 给玩家反馈
+                                            // ==============================
+
+                                            if (success) {
+
+                                                context.getSource().sendSuccess(
+                                                        () -> Component.literal(
+                                                                "鬼庙生成成功！大小: "
+                                                                        + template.getSize()
+                                                        ),
+                                                        true
+                                                );
+
+                                            } else {
+
+                                                context.getSource().sendFailure(
+                                                        Component.literal(
+                                                                "结构生成失败！"
+                                                        )
+                                                );
+                                            }
+
+                                        } catch (Exception e) {
+
+                                            LOGGER.error(
+                                                    "[QisPlan2] 结构生成过程中发生异常",
+                                                    e
+                                            );
+
+                                            context.getSource().sendFailure(
+                                                    Component.literal(
+                                                            "结构生成异常，请查看控制台"
+                                                    )
+                                            );
+                                        }
+
+                                    }, () -> {
+
+                                        LOGGER.error(
+                                                "[QisPlan2] ResourceManager 找不到: {}",
+                                                resourceId
+                                        );
+
+                                        context.getSource().sendFailure(
+                                                Component.literal(
+                                                        "找不到结构 NBT"
+                                                )
+                                        );
+                                    });
+
+                            LOGGER.info(
+                                    "===================================="
+                            );
+
+                            return 1;
+                        })
+        );
     }
 }
