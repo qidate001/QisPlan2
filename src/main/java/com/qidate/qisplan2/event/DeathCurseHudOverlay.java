@@ -11,7 +11,7 @@ import net.minecraft.world.item.Items;
 import net.neoforged.neoforge.client.event.RegisterGuiLayersEvent;
 
 /**
- * 心形条上方的必死诅咒骷髅条
+ * 必死诅咒骷髅条
  *
  * 使用 NeoForge HUD Layer 系统进行渲染。
  */
@@ -26,8 +26,6 @@ public class DeathCurseHudOverlay {
 
     /**
      * 注册 HUD 图层
-     *
-     * 由 QisPlan2 主类通过 Mod Event Bus 调用。
      */
     public static void registerDeathCurseLayer(RegisterGuiLayersEvent event) {
 
@@ -68,21 +66,27 @@ public class DeathCurseHudOverlay {
         // 防止异常数据超过最大值
         curse = Math.min(curse, MAX_CURSE);
 
-        // 心形条 y
-        int heartTop = guiGraphics.guiHeight() - 39;
+        /*
+         * ==============================
+         * HUD 位置
+         * ==============================
+         *
+         * 改到左上角，避免挡住：
+         * - 快捷栏
+         * - 选中物品名称
+         * - 经验条
+         * - 生命值 / 饥饿值
+         */
 
-        // 骷髅条位于心形条正上方
-        int y = heartTop - SLOT_SIZE - 1;
-
-        // 10 格水平居中
-        int totalWidth = (MAX_CURSE - 1) * SLOT_SPACING + SLOT_SIZE;
-        int startX = guiGraphics.guiWidth() / 2 - totalWidth / 2;
+        int startX = 8;
+        int startY = 8;
 
         ItemStack skull = new ItemStack(Items.SKELETON_SKULL);
 
         for (int i = 0; i < MAX_CURSE; i++) {
 
             int x = startX + i * SLOT_SPACING;
+            int y = startY;
 
             // 当前诅咒数量以外的格子显示为较暗状态
             boolean empty = i >= curse;
