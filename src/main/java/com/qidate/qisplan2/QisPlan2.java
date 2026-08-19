@@ -8,6 +8,7 @@ import com.qidate.qisplan2.block.GhostStoveBlock;
 import com.qidate.qisplan2.core.QisConfig;
 import com.qidate.qisplan2.item.DeathCurseSword;
 import com.qidate.qisplan2.item.GhostCoin;
+import com.qidate.qisplan2.util.StructureDebug;
 import com.qidate.qisplan2.util.StructureUtil;
 import com.qidate.qisplan2.worldgen.GhostTempleGeneration;
 import net.minecraft.commands.CommandSourceStack;
@@ -241,9 +242,11 @@ public class QisPlan2 {
         // Do not add this line if there are no @SubscribeEvent-annotated functions in this class, like onServerStarting() below.
         NeoForge.EVENT_BUS.register(this);
 
-        NeoForge.EVENT_BUS.register(
-                GhostTempleGeneration.class
-        );
+//        NeoForge.EVENT_BUS.register(
+//                GhostTempleGeneration.class
+//        );
+
+
     }
 
     private void commonSetup(FMLCommonSetupEvent event) {
@@ -316,6 +319,35 @@ public class QisPlan2 {
                             }
 
                             return success ? 1 : 0;
+                        })
+        );
+    }
+
+    @SubscribeEvent
+    public void onRegisterCommands(
+            net.neoforged.neoforge.event.RegisterCommandsEvent event
+    ) {
+        event.getDispatcher().register(
+                net.minecraft.commands.Commands.literal("qis_debug_structure")
+                        .requires(source -> source.hasPermission(2))
+                        .executes(context -> {
+
+                            var player =
+                                    context.getSource().getPlayerOrException();
+
+                            StructureDebug.test(
+                                    player.serverLevel(),
+                                    player.blockPosition()
+                            );
+
+                            context.getSource().sendSuccess(
+                                    () -> Component.literal(
+                                            "结构调试信息已输出到控制台"
+                                    ),
+                                    false
+                            );
+
+                            return 1;
                         })
         );
     }
