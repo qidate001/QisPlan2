@@ -329,6 +329,19 @@ public class NightWanderer
     }
 
     /**
+     * 夜游鬼白天自动消失
+     */
+    @Override
+    public void tick() {
+        super.tick();
+
+        // 白天自动消失
+        if (!level().isClientSide() && level().isDay()) {
+            discard();
+        }
+    }
+
+    /**
      * 实体属性。
      */
     public static AttributeSupplier.Builder createAttributes() {
