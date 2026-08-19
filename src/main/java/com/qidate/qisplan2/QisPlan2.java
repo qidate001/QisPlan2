@@ -6,17 +6,24 @@ import com.qidate.qisplan2.block.GhostDoorBlock;
 import com.qidate.qisplan2.block.GhostGrassBlock;
 import com.qidate.qisplan2.block.GhostStoveBlock;
 import com.qidate.qisplan2.core.QisConfig;
+import com.qidate.qisplan2.entity.NightWanderer;
 import com.qidate.qisplan2.item.DeathCurseSword;
 import com.qidate.qisplan2.item.GhostCoin;
 import com.qidate.qisplan2.util.StructureUtil;
 import net.minecraft.commands.Commands;
 import net.minecraft.network.codec.ByteBufCodecs;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.MobCategory;
 import net.minecraft.world.level.GameRules;
 import net.minecraft.world.level.block.SoundType;
 import net.minecraft.world.level.block.state.properties.BlockSetType;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.fml.config.ModConfig;
 import net.neoforged.neoforge.attachment.AttachmentType;
 import net.neoforged.neoforge.event.RegisterCommandsEvent;
+import net.neoforged.neoforge.event.entity.EntityAttributeCreationEvent;
 import net.neoforged.neoforge.registries.NeoForgeRegistries;
 import org.slf4j.Logger;
 
@@ -49,6 +56,11 @@ public class QisPlan2 {
     public static final Logger LOGGER = LogUtils.getLogger();
     public static final DeferredRegister.Blocks BLOCKS = DeferredRegister.createBlocks(MODID);
     public static final DeferredRegister.Items ITEMS = DeferredRegister.createItems(MODID);
+    public static final DeferredRegister<EntityType<?>> ENTITY_TYPES =
+            DeferredRegister.create(
+                    Registries.ENTITY_TYPE,
+                    MODID
+            );
 
     // 附件类型注册表
     public static final DeferredRegister<AttachmentType<?>> ATTACHMENT_TYPES =
@@ -178,6 +190,22 @@ public class QisPlan2 {
     public static final DeferredItem<BlockItem> GHOST_GRASS_ITEM =
             ITEMS.registerSimpleBlockItem(GHOST_GRASS);
 
+    // 夜游鬼
+    public static final DeferredHolder<EntityType<?>, EntityType<NightWanderer>> NIGHT_WANDERER =
+            ENTITY_TYPES.register(
+                    "night_wanderer",
+                    () -> EntityType.Builder
+                            .of(NightWanderer::new, MobCategory.MONSTER)
+                            .sized(0.6F, 1.8F)
+                            .clientTrackingRange(8)
+                            .updateInterval(3)
+                            .build(
+                                    ResourceLocation.fromNamespaceAndPath(
+                                            MODID,
+                                            "night_wanderer"
+                                    ).toString()
+                            )
+            );
     // 创造物品栏
     public static final DeferredRegister<CreativeModeTab> CREATIVE_MODE_TABS =
             DeferredRegister.create(Registries.CREATIVE_MODE_TAB, MODID);
@@ -219,29 +247,29 @@ public class QisPlan2 {
         // Register the commonSetup method for modloading
         modContainer.registerConfig(net.neoforged.fml.config.ModConfig.Type.CLIENT, QisConfig.CLIENT_SPEC);
 
-        // Register the Deferred Register to the mod event bus so blocks get registered
         BLOCKS.register(modEventBus);
-        // Register the Deferred Register to the mod event bus so items get registered
         ITEMS.register(modEventBus);
-        // Register the Deferred Register to the mod event bus so attachment types get registered
         ATTACHMENT_TYPES.register(modEventBus);
-        // Register the Deferred Register to the mod event bus so tabs get registered
         CREATIVE_MODE_TABS.register(modEventBus);
+        ENTITY_TYPES.register(modEventBus);
 
-//        STRUCTURE_TYPES.register(modEventBus);
+        // 实体属性注册
+        modEventBus.addListener(this::onEntityAttributeCreation);
 
-//        STRUCTURE_PIECE_TYPES.register(modEventBus);
-
-        // Register ourselves for server and other game events we are interested in.
-        // Note that this is necessary if and only if we want *this* class (ExampleMod) to respond directly to events.
-        // Do not add this line if there are no @SubscribeEvent-annotated functions in this class, like onServerStarting() below.
+        // Mod Event Bus 事件
         NeoForge.EVENT_BUS.register(this);
 
-//        NeoForge.EVENT_BUS.register(
-//                GhostTempleGeneration.class
-//        );
+        // 普通 NeoForge 游戏事件
+        NeoForge.EVENT_BUS.register(this);
+    }
 
-
+    private void onEntityAttributeCreation(
+            EntityAttributeCreationEvent event
+    ) {
+        event.put(
+                NIGHT_WANDERER.get(),
+                NightWanderer.createAttributes().build()
+        );
     }
 
     private void commonSetup(FMLCommonSetupEvent event) {
