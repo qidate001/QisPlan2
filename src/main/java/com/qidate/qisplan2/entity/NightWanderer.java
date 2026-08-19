@@ -2,22 +2,72 @@ package com.qidate.qisplan2.entity;
 
 import com.qidate.qisplan2.death.ModDamageTypes;
 import com.qidate.qisplan2.death.SupernaturalDeathHandler;
+import com.qidate.qisplan2.death.SupernaturalEntity;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.PathfinderMob;
+import net.minecraft.world.entity.ai.attributes.AttributeInstance;
+import net.minecraft.world.entity.ai.attributes.AttributeModifier;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.ai.goal.Goal;
 import net.minecraft.world.entity.ai.goal.target.NearestAttackableTargetGoal;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.LightLayer;
 
 import java.util.EnumSet;
 
-public class NightWanderer extends PathfinderMob {
+public class NightWanderer
+        extends PathfinderMob
+        implements SupernaturalEntity
+{
+
+    private static final double NORMAL_SPEED = 0.25D;
+    private static final double DARK_SPEED = 0.8D;
+    private static final double LIGHT_SPEED = 0.12D;
+
+    private static final ResourceLocation DARK_SPEED_MODIFIER_ID =
+            ResourceLocation.fromNamespaceAndPath(
+                    "qisplan2",
+                    "night_wanderer_dark_speed"
+            );
+
+    private static final ResourceLocation LIGHT_SPEED_MODIFIER_ID =
+            ResourceLocation.fromNamespaceAndPath(
+                    "qisplan2",
+                    "night_wanderer_light_speed"
+            );
+
+    private static final AttributeModifier DARK_SPEED_MODIFIER =
+            new AttributeModifier(
+                    DARK_SPEED_MODIFIER_ID,
+                    DARK_SPEED - NORMAL_SPEED,
+                    AttributeModifier.Operation.ADD_VALUE
+            );
+
+    private static final AttributeModifier LIGHT_SPEED_MODIFIER =
+            new AttributeModifier(
+                    LIGHT_SPEED_MODIFIER_ID,
+                    LIGHT_SPEED - NORMAL_SPEED,
+                    AttributeModifier.Operation.ADD_VALUE
+            );
+
+    /**
+     * 灵异攻击后的停滞时间。
+     *
+     * 10 秒 = 200 tick
+     */
+    private static final int SUPERNATURAL_STUN_TIME = 100;
+
+    /**
+     * 当前剩余停滞时间。
+     */
+    private int supernaturalStunTicks = 0;
 
     /**
      * 灵异攻击后的休息时间：
@@ -35,6 +85,10 @@ public class NightWanderer extends PathfinderMob {
             Level level
     ) {
         super(entityType, level);
+    }
+
+    public boolean isSupernaturalStunned() {
+        return supernaturalStunTicks > 0;
     }
 
     @Override
@@ -90,10 +144,148 @@ public class NightWanderer extends PathfinderMob {
      */
     @Override
     public void aiStep() {
+
+        // 停滞期间仍然需要更新实体本身
         super.aiStep();
 
+        /*
+         * ========================================
+         * 灵异攻击停滞
+         * ========================================
+         */
+        if (supernaturalStunTicks > 0) {
+
+            supernaturalStunTicks--;
+
+            // 完全停止移动
+            getNavigation().stop();
+
+            // 不允许攻击
+            setAggressive(false);
+
+            return;
+        }
+
+        /*
+         * ========================================
+         * 灵异攻击冷却
+         * ========================================
+         */
         if (supernaturalAttackCooldown > 0) {
             supernaturalAttackCooldown--;
+        }
+
+        /*
+         * ========================================
+         * 根据环境亮度调整移速
+         * ========================================
+         */
+        updateMovementSpeed();
+    }
+
+    private void updateMovementSpeed() {
+
+        if (level().isClientSide()) {
+            return;
+        }
+
+        AttributeInstance speedAttribute =
+                getAttribute(Attributes.MOVEMENT_SPEED);
+
+        if (speedAttribute == null) {
+            return;
+        }
+
+        int blockLight =
+                level().getBrightness(
+                        LightLayer.BLOCK,
+                        blockPosition()
+                );
+
+        int skyLight =
+                level().getBrightness(
+                        LightLayer.SKY,
+                        blockPosition()
+                );
+
+        boolean isDay =
+                level().isDay();
+
+        /*
+         * ========================================
+         * 亮处
+         * ========================================
+         *
+         * 1. 方块光很强：火把、灯笼、萤石等
+         * 2. 白天天空光很强：露天环境
+         */
+        boolean bright =
+                blockLight >= 8
+                        || (isDay && skyLight >= 8);
+
+        /*
+         * ========================================
+         * 暗处
+         * ========================================
+         *
+         * 1. 方块光很低
+         * 2. 夜晚不考虑天空光本身
+         *
+         * 因此夜晚露天也可以进入高速状态。
+         */
+        boolean dark =
+                blockLight <= 3
+                        && (!isDay || skyLight <= 3);
+
+        if (dark) {
+
+            // 移除减速
+            removeLightSpeedModifier(speedAttribute);
+
+            // 添加高速
+            if (!speedAttribute.hasModifier(
+                    DARK_SPEED_MODIFIER_ID
+            )) {
+                speedAttribute.addTransientModifier(
+                        DARK_SPEED_MODIFIER
+                );
+            }
+
+        } else if (bright) {
+
+            // 移除高速
+            removeDarkSpeedModifier(speedAttribute);
+
+            // 添加减速
+            if (!speedAttribute.hasModifier(
+                    LIGHT_SPEED_MODIFIER_ID
+            )) {
+                speedAttribute.addTransientModifier(
+                        LIGHT_SPEED_MODIFIER
+                );
+            }
+
+        } else {
+
+            // 普通环境
+            removeDarkSpeedModifier(speedAttribute);
+            removeLightSpeedModifier(speedAttribute);
+        }
+    }
+
+    private void removeDarkSpeedModifier(
+            AttributeInstance attribute
+    ) {
+        if (attribute.hasModifier(DARK_SPEED_MODIFIER_ID)) {
+            attribute.removeModifier(DARK_SPEED_MODIFIER_ID);
+        }
+    }
+
+    private void removeLightSpeedModifier(
+            AttributeInstance attribute
+    ) {
+        if (attribute.hasModifier(LIGHT_SPEED_MODIFIER_ID)) {
+            attribute.removeModifier(LIGHT_SPEED_MODIFIER_ID);
         }
     }
 
@@ -103,6 +295,23 @@ public class NightWanderer extends PathfinderMob {
     @Override
     public boolean isInvulnerableTo(DamageSource damageSource) {
         return true;
+    }
+
+    @Override
+    public void onSupernaturalAttack(int ticks) {
+        supernaturalStunTicks = Math.max(
+                supernaturalStunTicks,
+                ticks
+        );
+
+        // 停止移动
+        getNavigation().stop();
+
+        // 清除当前攻击目标
+        setTarget(null);
+
+        // 停止当前 AI 行为
+        setAggressive(false);
     }
 
     /**
@@ -116,7 +325,7 @@ public class NightWanderer extends PathfinderMob {
                 )
                 .add(
                         Attributes.MOVEMENT_SPEED,
-                        0.25D
+                        NORMAL_SPEED
                 )
                 .add(
                         Attributes.FOLLOW_RANGE,
@@ -161,7 +370,8 @@ public class NightWanderer extends PathfinderMob {
             LivingEntity target =
                     mob.getTarget();
 
-            return mob.supernaturalAttackCooldown <= 0
+            return !mob.isSupernaturalStunned()
+                    && mob.supernaturalAttackCooldown <= 0
                     && target != null
                     && target.isAlive();
         }
@@ -175,7 +385,8 @@ public class NightWanderer extends PathfinderMob {
             LivingEntity target =
                     mob.getTarget();
 
-            return mob.supernaturalAttackCooldown <= 0
+            return !mob.isSupernaturalStunned()
+                    && mob.supernaturalAttackCooldown <= 0
                     && target != null
                     && target.isAlive();
         }

@@ -25,8 +25,8 @@ public class GhostCarpetHandler {
     /**
      * 鬼地毯诅咒的数据标签。
      */
-    public static final String GHOST_CARPET_CURSE_COUNT =
-            "ghost_carpet_curse_count";
+//    public static final String GHOST_CARPET_CURSE_COUNT =
+//            "ghost_carpet_curse_count";
 
     /**
      * 每个实体已经累计踩了多少 tick。
@@ -39,12 +39,6 @@ public class GhostCarpetHandler {
      */
     private static final Map<UUID, Boolean> TRIGGERED =
             new HashMap<>();
-
-    /**
-     * 日志节流。
-     */
-//    private static final Map<UUID, Long> LAST_LOG_TIME =
-//            new HashMap<>();
 
 
     @SubscribeEvent
@@ -61,9 +55,7 @@ public class GhostCarpetHandler {
         UUID uuid = entity.getUUID();
 
         /*
-         * =========================
-         * 死亡 → 清空鬼地毯进度
-         * =========================
+         * 死亡 → 清空数据
          */
         if (!entity.isAlive()) {
             reset(entity);
@@ -71,12 +63,10 @@ public class GhostCarpetHandler {
         }
 
         /*
-         * =========================
          * 检查鬼地毯
-         * =========================
          */
-
-        BlockPos entityPos = entity.blockPosition();
+        BlockPos entityPos =
+                entity.blockPosition();
 
         BlockState currentState =
                 entity.level().getBlockState(entityPos);
@@ -88,109 +78,43 @@ public class GhostCarpetHandler {
                 currentState.is(QisPlan2.GHOST_CARPET.get())
                         || belowState.is(QisPlan2.GHOST_CARPET.get());
 
-
         /*
-         * =========================
-         * 已经触发
-         * =========================
+         * 没踩鬼地毯 → 清空累计时间
          */
-
-        if (TRIGGERED.getOrDefault(uuid, false)) {
-            return;
-        }
-
-
-        /*
-         * =========================
-         * 没踩鬼地毯，暂停。
-         * =========================
-         */
-
         if (!onGhostCarpet) {
+            reset(entity);
             return;
         }
 
-
         /*
-         * =========================
-         * 正在踩鬼地毯
-         *
-         * 每 tick +1
-         * =========================
+         * 正在踩鬼地毯 → 累计时间
          */
-
         long ticks =
                 CARPET_TICKS.getOrDefault(uuid, 0L);
 
         ticks++;
 
-        CARPET_TICKS.put(
-                uuid,
-                ticks
-        );
-
+        CARPET_TICKS.put(uuid, ticks);
 
         /*
-         * =========================
-         * 日志
-         * =========================
+         * 获取触发时间
          */
-
-//        long lastLog =
-//                LAST_LOG_TIME.getOrDefault(
-//                        uuid,
-//                        -20L
-//                );
-
-//        long gameTime =
-//                entity.level().getGameTime();
-
-//        if (gameTime - lastLog >= 20) {
-//
-//            LAST_LOG_TIME.put(
-//                    uuid,
-//                    gameTime
-//            );
-//
-//            long seconds =
-//                    ticks / 20;
-//
-//            System.out.println(
-//                    "[QisPlan2][GhostCarpet] "
-//                            + entity.getName().getString()
-//                            + " 鬼地毯累计踩踏："
-//                            + seconds
-//                            + "/15 秒"
-//            );
-//        }
-
-
-        /*
-         * =========================
-         * 达到15秒
-         * =========================
-         */
-
         int triggerTicks =
                 entity.level()
                         .getGameRules()
                         .getInt(QisPlan2.GHOST_CARPET_KILL_TIME);
 
+        /*
+         * 达到触发时间
+         */
         if (ticks >= triggerTicks) {
-
-//            System.out.println(
-//                    "[QisPlan2][GhostCarpet] "
-//                            + "！！！15秒累计踩踏完成！！！"
-//                            + " 实体="
-//                            + entity.getName().getString()
-//            );
 
             applyGhostCarpetCurse(entity);
 
-            TRIGGERED.put(
-                    uuid,
-                    true
-            );
+            /*
+             * 攻击结束，重新开始下一轮 15 秒。
+             */
+            CARPET_TICKS.put(uuid, 0L);
         }
     }
 
@@ -201,21 +125,6 @@ public class GhostCarpetHandler {
     private static void applyGhostCarpetCurse(
             LivingEntity entity
     ) {
-
-        /*
-         * ========================================
-         * 鬼地毯诅咒触发
-         * ========================================
-         */
-
-//        System.out.println(
-//                "[QisPlan2][GhostCarpet] "
-//                        + "鬼地毯诅咒触发！"
-//                        + " 实体="
-//                        + entity.getName().getString()
-//        );
-
-
         /*
          * ========================================
          * 粒子
@@ -262,30 +171,6 @@ public class GhostCarpetHandler {
         if (killed) {
             spreadGhostCarpet(entity);
         }
-
-
-        /*
-         * ========================================
-         * 日志
-         * ========================================
-         */
-
-//        if (killed) {
-//
-//            System.out.println(
-//                    "[QisPlan2][GhostCarpet] "
-//                            + "鬼地毯死亡成功："
-//                            + entity.getName().getString()
-//            );
-//
-//        } else {
-//
-//            System.out.println(
-//                    "[QisPlan2][GhostCarpet] "
-//                            + "鬼地毯死亡被抵消："
-//                            + entity.getName().getString()
-//            );
-//        }
     }
 
     /*
