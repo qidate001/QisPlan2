@@ -8,6 +8,8 @@ import com.qidate.qisplan2.block.GhostStoveBlock;
 import com.qidate.qisplan2.core.QisConfig;
 import com.qidate.qisplan2.item.DeathCurseSword;
 import com.qidate.qisplan2.item.GhostCoin;
+import com.qidate.qisplan2.util.StructureUtil;
+import com.qidate.qisplan2.worldgen.GhostTempleGeneration;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.core.BlockPos;
@@ -223,6 +225,10 @@ public class QisPlan2 {
         // Note that this is necessary if and only if we want *this* class (ExampleMod) to respond directly to events.
         // Do not add this line if there are no @SubscribeEvent-annotated functions in this class, like onServerStarting() below.
         NeoForge.EVENT_BUS.register(this);
+
+        NeoForge.EVENT_BUS.register(
+                GhostTempleGeneration.class
+        );
     }
 
     private void commonSetup(FMLCommonSetupEvent event) {
@@ -260,10 +266,7 @@ public class QisPlan2 {
     @SubscribeEvent
     public void registerCommands(RegisterCommandsEvent event) {
 
-        CommandDispatcher<CommandSourceStack> dispatcher =
-                event.getDispatcher();
-
-        dispatcher.register(
+        event.getDispatcher().register(
                 Commands.literal("qisplan2_test")
                         .requires(source -> source.hasPermission(2))
                         .executes(context -> {
@@ -272,153 +275,32 @@ public class QisPlan2 {
                                     context.getSource()
                                             .getPlayerOrException();
 
-                            var server = player.server;
-                            var resourceManager = server.getResourceManager();
-
-                            LOGGER.info(
-                                    "========== 结构生成测试 =========="
-                            );
-
-                            ResourceLocation resourceId =
-                                    ResourceLocation.parse(
-                                            "qisplan2:structures/ghost_temple.nbt"
+                            boolean success =
+                                    StructureUtil.placeStructure(
+                                            player.serverLevel(),
+                                            player.blockPosition().above(),
+                                            "qisplan2:ghost_temple"
                                     );
 
-                            resourceManager
-                                    .getResource(resourceId)
-                                    .ifPresentOrElse(resource -> {
+                            if (success) {
 
-                                        try {
+                                context.getSource().sendSuccess(
+                                        () -> Component.literal(
+                                                "鬼庙生成成功！"
+                                        ),
+                                        true
+                                );
 
-                                            // ==============================
-                                            // 1. 读取 NBT
-                                            // ==============================
+                            } else {
 
-                                            LOGGER.info(
-                                                    "[QisPlan2] ResourceManager 找到了: {}",
-                                                    resourceId
-                                            );
+                                context.getSource().sendFailure(
+                                        Component.literal(
+                                                "鬼庙生成失败，请查看控制台。"
+                                        )
+                                );
+                            }
 
-                                            CompoundTag tag =
-                                                    NbtIo.readCompressed(
-                                                            resource.open(),
-                                                            NbtAccounter.unlimitedHeap()
-                                                    );
-
-                                            LOGGER.info(
-                                                    "[QisPlan2] NBT 读取成功"
-                                            );
-
-                                            // ==============================
-                                            // 2. 转换成 StructureTemplate
-                                            // ==============================
-
-                                            StructureTemplateManager manager =
-                                                    player.serverLevel()
-                                                            .getStructureManager();
-
-                                            StructureTemplate template =
-                                                    manager.readStructure(tag);
-
-                                            LOGGER.info(
-                                                    "[QisPlan2] StructureTemplate 解析成功"
-                                            );
-
-                                            LOGGER.info(
-                                                    "[QisPlan2] 结构大小: {}",
-                                                    template.getSize()
-                                            );
-
-                                            // ==============================
-                                            // 3. 设置生成位置
-                                            // ==============================
-
-                                            BlockPos pos =
-                                                    player.blockPosition();
-
-                                            LOGGER.info(
-                                                    "[QisPlan2] 生成位置: {}",
-                                                    pos
-                                            );
-
-                                            // ==============================
-                                            // 4. 生成结构
-                                            // ==============================
-
-                                            StructurePlaceSettings settings =
-                                                    new StructurePlaceSettings();
-
-                                            boolean success =
-                                                    template.placeInWorld(
-                                                            player.serverLevel(),
-                                                            pos,
-                                                            pos,
-                                                            settings,
-                                                            player.serverLevel().random,
-                                                            2
-                                                    );
-
-                                            LOGGER.info(
-                                                    "[QisPlan2] 结构生成结果: {}",
-                                                    success
-                                            );
-
-                                            // ==============================
-                                            // 5. 给玩家反馈
-                                            // ==============================
-
-                                            if (success) {
-
-                                                context.getSource().sendSuccess(
-                                                        () -> Component.literal(
-                                                                "鬼庙生成成功！大小: "
-                                                                        + template.getSize()
-                                                        ),
-                                                        true
-                                                );
-
-                                            } else {
-
-                                                context.getSource().sendFailure(
-                                                        Component.literal(
-                                                                "结构生成失败！"
-                                                        )
-                                                );
-                                            }
-
-                                        } catch (Exception e) {
-
-                                            LOGGER.error(
-                                                    "[QisPlan2] 结构生成过程中发生异常",
-                                                    e
-                                            );
-
-                                            context.getSource().sendFailure(
-                                                    Component.literal(
-                                                            "结构生成异常，请查看控制台"
-                                                    )
-                                            );
-                                        }
-
-                                    }, () -> {
-
-                                        LOGGER.error(
-                                                "[QisPlan2] ResourceManager 找不到: {}",
-                                                resourceId
-                                        );
-
-                                        context.getSource().sendFailure(
-                                                Component.literal(
-                                                        "找不到结构 NBT"
-                                                )
-                                        );
-                                    });
-
-                            LOGGER.info(
-                                    "===================================="
-                            );
-
-                            return 1;
+                            return success ? 1 : 0;
                         })
         );
     }
