@@ -23,11 +23,67 @@ public class StructureDebug {
         ResourceLocation id =
                 ResourceLocation.fromNamespaceAndPath(
                         QisPlan2.MODID,
-                        "ghost_temple"
+                        "ghost_temple_test"
                 );
 
         StructureTemplateManager manager =
                 level.getStructureManager();
+
+        QisPlan2.LOGGER.info(
+                "[DEBUG] StructureTemplateManager 中的结构列表："
+        );
+
+        var resourceManager =
+                level.getServer().getResourceManager();
+
+        resourceManager
+                .listResources(
+                        "structures",
+                        location ->
+                                location.getPath().endsWith(".nbt")
+                                        && location.getNamespace()
+                                        .equals(QisPlan2.MODID)
+                )
+                .forEach((location, resource) ->
+                        QisPlan2.LOGGER.info(
+                                "[DEBUG] ResourceManager 列表发现: {}",
+                                location
+                        )
+                );
+
+        manager.listTemplates().forEach(
+                templateId -> {
+                    if (templateId.getNamespace().equals(QisPlan2.MODID)) {
+                        QisPlan2.LOGGER.info(
+                                "[DEBUG] 找到模板: {}",
+                                templateId
+                        );
+                    }
+                }
+        );
+
+        ResourceLocation resourceId =
+                ResourceLocation.fromNamespaceAndPath(
+                        QisPlan2.MODID,
+                        "structures/ghost_temple.nbt"
+                );
+
+        var resource =
+                level.getServer()
+                        .getResourceManager()
+                        .getResource(resourceId);
+
+        if (resource.isPresent()) {
+            QisPlan2.LOGGER.info(
+                    "[DEBUG] ResourceManager ✅ 找到: {}",
+                    resourceId
+            );
+        } else {
+            QisPlan2.LOGGER.error(
+                    "[DEBUG] ResourceManager ❌ 找不到: {}",
+                    resourceId
+            );
+        }
 
         // -------------------------------------------------
         // 1. StructureTemplateManager
