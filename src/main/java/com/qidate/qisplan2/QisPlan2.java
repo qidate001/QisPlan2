@@ -3,6 +3,7 @@ package com.qidate.qisplan2;
 import com.mojang.serialization.Codec;
 import com.qidate.qisplan2.block.GhostCarpetBlock;
 import com.qidate.qisplan2.block.GhostDoorBlock;
+import com.qidate.qisplan2.block.GhostGrassBlock;
 import com.qidate.qisplan2.block.GhostStoveBlock;
 import com.qidate.qisplan2.core.QisConfig;
 import com.qidate.qisplan2.item.DeathCurseSword;
@@ -162,6 +163,21 @@ public class QisPlan2 {
     public static final DeferredItem<BlockItem> GHOST_DOOR_ITEM =
             ITEMS.registerSimpleBlockItem(GHOST_DOOR);
 
+    // 鬼草丛
+    public static final DeferredBlock<GhostGrassBlock> GHOST_GRASS =
+            BLOCKS.registerBlock(
+                    "ghost_grass",
+                    GhostGrassBlock::new,
+                    BlockBehaviour.Properties.of()
+                            .noCollission()
+                            .noOcclusion()
+                            .instabreak()
+                            .sound(SoundType.GRASS)
+            );
+
+    public static final DeferredItem<BlockItem> GHOST_GRASS_ITEM =
+            ITEMS.registerSimpleBlockItem(GHOST_GRASS);
+
     // 创造物品栏
     public static final DeferredRegister<CreativeModeTab> CREATIVE_MODE_TABS =
             DeferredRegister.create(Registries.CREATIVE_MODE_TAB, MODID);
@@ -177,6 +193,7 @@ public class QisPlan2 {
                         output.accept(GHOST_STONE_BRICKS_ITEM);
                         output.accept(GHOST_STOVE_ITEM);
                         output.accept(GHOST_DOOR_ITEM);
+                        output.accept(GHOST_GRASS_ITEM);
                     })
                     .build()
             );
