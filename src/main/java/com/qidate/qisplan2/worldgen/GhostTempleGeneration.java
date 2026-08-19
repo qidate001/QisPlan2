@@ -4,8 +4,8 @@ import com.qidate.qisplan2.QisPlan2;
 import com.qidate.qisplan2.util.StructureUtil;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.util.Mth;
 import net.minecraft.world.level.chunk.LevelChunk;
+import net.minecraft.world.level.levelgen.Heightmap;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.neoforge.event.level.ChunkEvent;
 
@@ -14,17 +14,16 @@ import java.util.Random;
 public class GhostTempleGeneration {
 
     /**
-     * 一个生成区域的大小。
+     * 一个生成区域 = 32 × 32 个区块
      *
-     * 512 方块 = 32 个区块
+     * 也就是 512 × 512 方块
      */
     private static final int REGION_SIZE = 32;
 
     /**
-     * 生成概率。
+     * 每个区域生成鬼庙的概率。
      *
-     * 4 = 1 / 4
-     * 也就是 25%
+     * 1 / 4 = 25%
      */
     private static final int TEMPLE_CHANCE = 4;
 
@@ -32,15 +31,17 @@ public class GhostTempleGeneration {
     @SubscribeEvent
     public static void onChunkLoad(ChunkEvent.Load event) {
 
+        // 只处理 LevelChunk
         if (!(event.getChunk() instanceof LevelChunk chunk)) {
             return;
         }
 
+        // 只处理服务端
         if (!(event.getLevel() instanceof ServerLevel level)) {
             return;
         }
 
-        // 目前只在主世界生成
+        // 只在主世界生成
         if (level.dimension() != ServerLevel.OVERWORLD) {
             return;
         }
@@ -51,21 +52,24 @@ public class GhostTempleGeneration {
         int chunkX = chunk.getPos().x;
         int chunkZ = chunk.getPos().z;
 
+
         /*
-         * 把世界划分成 32×32 区块的大区域。
+         * ========================================
+         * 1. 判断这个区块是不是候选区块
+         * ========================================
+         *
+         * 每 32×32 区块作为一个区域。
+         *
+         * 每个区域只让左下角（localX=0, localZ=0）
+         * 的区块负责进行一次判断。
          */
+
         int regionX =
                 Math.floorDiv(chunkX, REGION_SIZE);
 
         int regionZ =
                 Math.floorDiv(chunkZ, REGION_SIZE);
 
-        /*
-         * 只有这个区域的“候选区块”负责触发生成。
-         *
-         * 这样一个区域只会检查一次，而不是
-         * 里面 1024 个区块全部检查。
-         */
         int localX =
                 Math.floorMod(chunkX, REGION_SIZE);
 
@@ -76,39 +80,82 @@ public class GhostTempleGeneration {
             return;
         }
 
+
         /*
-         * 根据：
-         *
-         * 世界种子
-         * +
-         * 区域坐标
-         *
-         * 创建稳定随机数。
+         * ========================================
+         * 2. 检查这个区块是否已经处理过
+         * ========================================
          */
-        long seed =
+
+        Boolean generated =
+                chunk.getData(
+                        QisPlan2.GHOST_TEMPLE_GENERATED
+                );
+
+        if (Boolean.TRUE.equals(generated)) {
+
+            // 已经处理过，绝对不再生成
+            return;
+        }
+
+
+        /*
+         * ========================================
+         * 3. 标记为“已经检查过”
+         * ========================================
+         *
+         * 注意：
+         * 无论最后有没有鬼庙，这个区域都只检查一次。
+         */
+
+        chunk.setData(
+                QisPlan2.GHOST_TEMPLE_GENERATED,
+                true
+        );
+
+
+        /*
+         * ========================================
+         * 4. 根据世界种子计算固定随机数
+         * ========================================
+         */
+
+        long worldSeed =
                 level.getSeed();
 
         long regionSeed =
-                seed
+                worldSeed
                         + regionX * 341873128712L
                         + regionZ * 132897987541L;
 
         Random random =
                 new Random(regionSeed);
 
+
         /*
-         * 决定这个区域有没有鬼庙。
+         * ========================================
+         * 5. 判断这个区域有没有鬼庙
+         * ========================================
          */
+
         if (random.nextInt(TEMPLE_CHANCE) != 0) {
+
+            QisPlan2.LOGGER.debug(
+                    "[QisPlan2] 区域 {}, {} 没有生成鬼庙",
+                    regionX,
+                    regionZ
+            );
+
             return;
         }
 
+
         /*
-         * 在这个 512×512 区域中选择一个固定位置。
-         *
-         * 注意：这是由世界种子决定的，
-         * 所以每次都会得到完全一样的位置。
+         * ========================================
+         * 6. 确定鬼庙所在区块
+         * ========================================
          */
+
         int targetChunkX =
                 regionX * REGION_SIZE
                         + random.nextInt(REGION_SIZE);
@@ -117,8 +164,9 @@ public class GhostTempleGeneration {
                 regionZ * REGION_SIZE
                         + random.nextInt(REGION_SIZE);
 
+
         /*
-         * 转换成方块坐标。
+         * 在目标区块内部确定位置
          */
         int x =
                 targetChunkX * 16
@@ -128,18 +176,23 @@ public class GhostTempleGeneration {
                 targetChunkZ * 16
                         + random.nextInt(16);
 
+
         /*
-         * 找到地面高度。
+         * ========================================
+         * 7. 找地面
+         * ========================================
          */
+
         int y =
                 level.getHeight(
-                        net.minecraft.world.level.levelgen.Heightmap.Types.MOTION_BLOCKING_NO_LEAVES,
+                        Heightmap.Types.MOTION_BLOCKING_NO_LEAVES,
                         x,
                         z
                 );
 
         BlockPos pos =
                 new BlockPos(x, y, z);
+
 
         QisPlan2.LOGGER.info(
                 "[QisPlan2] 发现鬼庙生成位置: {} {} {}",
@@ -148,9 +201,13 @@ public class GhostTempleGeneration {
                 z
         );
 
+
         /*
-         * 生成鬼庙。
+         * ========================================
+         * 8. 生成鬼庙
+         * ========================================
          */
+
         boolean success =
                 StructureUtil.placeStructure(
                         level,
@@ -158,9 +215,30 @@ public class GhostTempleGeneration {
                         "qisplan2:ghost_temple"
                 );
 
-        QisPlan2.LOGGER.info(
-                "[QisPlan2] 鬼庙生成结果: {}",
-                success
-        );
+
+        /*
+         * ========================================
+         * 9. 输出结果
+         * ========================================
+         */
+
+        if (success) {
+
+            QisPlan2.LOGGER.info(
+                    "[QisPlan2] 鬼庙生成成功！位置: {} {} {}",
+                    x,
+                    y,
+                    z
+            );
+
+        } else {
+
+            QisPlan2.LOGGER.error(
+                    "[QisPlan2] 鬼庙生成失败！位置: {} {} {}",
+                    x,
+                    y,
+                    z
+            );
+        }
     }
 }

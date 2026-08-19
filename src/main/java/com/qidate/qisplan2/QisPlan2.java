@@ -74,6 +74,21 @@ public class QisPlan2 {
     public static final DeferredRegister<AttachmentType<?>> ATTACHMENT_TYPES =
             DeferredRegister.create(NeoForgeRegistries.ATTACHMENT_TYPES, MODID);
 
+    /**
+     * 鬼庙生成检查标记
+     *
+     * true  = 这个候选区块已经处理过
+     * false = 尚未处理
+     */
+    public static final DeferredHolder<AttachmentType<?>, AttachmentType<Boolean>>
+            GHOST_TEMPLE_GENERATED =
+            ATTACHMENT_TYPES.register(
+                    "ghost_temple_generated",
+                    () -> AttachmentType.builder(() -> false)
+                            .serialize(Codec.BOOL)
+                            .build()
+            );
+
     // 必死诅咒层数（0~10，同步到客户端供骷髅条显示）
     public static final DeferredHolder<AttachmentType<?>, AttachmentType<Integer>> DEATH_CURSE_COUNT =
             ATTACHMENT_TYPES.register(
