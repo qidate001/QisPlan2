@@ -7,10 +7,13 @@ import com.qidate.qisplan2.block.GhostStoveBlock;
 import com.qidate.qisplan2.core.QisConfig;
 import com.qidate.qisplan2.item.DeathCurseSword;
 import com.qidate.qisplan2.item.GhostCoin;
+import com.qidate.qisplan2.worldgen.GhostTempleStructure;
 import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.world.level.GameRules;
 import net.minecraft.world.level.block.SoundType;
 import net.minecraft.world.level.block.state.properties.BlockSetType;
+import net.minecraft.world.level.levelgen.structure.StructureType;
+import net.minecraft.world.level.levelgen.structure.pieces.StructurePieceType;
 import net.neoforged.neoforge.attachment.AttachmentType;
 import net.neoforged.neoforge.registries.NeoForgeRegistries;
 import org.slf4j.Logger;
@@ -185,6 +188,40 @@ public class QisPlan2 {
                     .build()
             );
 
+    public static final DeferredRegister<StructureType<?>> STRUCTURE_TYPES =
+            DeferredRegister.create(
+                    BuiltInRegistries.STRUCTURE_TYPE,
+                    MODID
+            );
+
+    public static final DeferredHolder<
+            StructureType<?>,
+            StructureType<GhostTempleStructure>
+            > GHOST_TEMPLE_STRUCTURE_TYPE =
+            STRUCTURE_TYPES.register(
+                    "ghost_temple",
+                    () -> () -> GhostTempleStructure.CODEC
+            );
+
+    public static final DeferredRegister<StructurePieceType> STRUCTURE_PIECE_TYPES =
+            DeferredRegister.create(
+                    BuiltInRegistries.STRUCTURE_PIECE,
+                    MODID
+            );
+
+    public static final DeferredHolder<
+            StructurePieceType,
+            StructurePieceType
+            > GHOST_TEMPLE_PIECE =
+            STRUCTURE_PIECE_TYPES.register(
+                    "ghost_temple",
+                    () -> (context, tag) ->
+                            new GhostTempleStructure.GhostTemplePiece(
+                                    tag,
+                                    context.structureTemplateManager()
+                            )
+            );
+
 
 
     // The constructor for the mod class is the first code that is run when your mod is loaded.
@@ -201,6 +238,10 @@ public class QisPlan2 {
         ATTACHMENT_TYPES.register(modEventBus);
         // Register the Deferred Register to the mod event bus so tabs get registered
         CREATIVE_MODE_TABS.register(modEventBus);
+
+        STRUCTURE_TYPES.register(modEventBus);
+
+        STRUCTURE_PIECE_TYPES.register(modEventBus);
 
         // Register ourselves for server and other game events we are interested in.
         // Note that this is necessary if and only if we want *this* class (ExampleMod) to respond directly to events.

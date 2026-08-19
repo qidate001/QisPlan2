@@ -1,0 +1,15 @@
+{
+  "structures": [
+    {
+      "structure": "qisplan2:ghost_temple",
+      "weight": 1
+    }
+  ],
+  "placement": {
+    "type": "minecraft:random_spread",
+    "salt": 184736291,
+    "spacing": 48,
+    "separation": 24,
+    "spread_type": "linear"
+  }
+}
