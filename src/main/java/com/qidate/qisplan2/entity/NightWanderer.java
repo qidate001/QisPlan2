@@ -1,5 +1,6 @@
 package com.qidate.qisplan2.entity;
 
+import com.qidate.qisplan2.QisPlan2;
 import com.qidate.qisplan2.death.ModDamageTypes;
 import com.qidate.qisplan2.death.SupernaturalCombatHandler;
 import com.qidate.qisplan2.death.SupernaturalDeathHandler;
@@ -149,17 +150,28 @@ public class NightWanderer
          * ========================================
          */
 
-        // 玩家优先
-        this.targetSelector.addGoal(
-                1,
-                new NearestAttackableTargetGoal<>(
-                        this,
-                        Player.class,
-                        true
-                )
-        );
+        /*
+         * ========================================
+         * 玩家优先
+         * ========================================
+         */
+//        this.targetSelector.addGoal(
+//                1,
+//                new NearestAttackableTargetGoal<>(
+//                        this,
+//                        Player.class,
+//                        32,
+//                        true,
+//                        false,
+//                        target -> target instanceof Player
+//                )
+//        );
 
-        // 没有玩家时，攻击其他 LivingEntity
+        /*
+         * ========================================
+         * 没有玩家时，攻击其他 LivingEntity
+         * ========================================
+         */
         this.targetSelector.addGoal(
                 2,
                 new NearestAttackableTargetGoal<>(
@@ -182,44 +194,64 @@ public class NightWanderer
         super.aiStep();
 
         /*
-         * ========================================
-         * 永久死机
-         * ========================================
+         * ==============================
+         * 死机状态
+         * ==============================
          */
+
         if (permanentSupernaturalStun) {
-
             getNavigation().stop();
             setTarget(null);
             setAggressive(false);
-
             return;
         }
 
-        /*
-         * ========================================
-         * 普通死机
-         * ========================================
-         */
         if (supernaturalStunTicks > 0) {
-
             supernaturalStunTicks--;
-
             getNavigation().stop();
             setTarget(null);
             setAggressive(false);
-
             return;
         }
 
         /*
-         * ========================================
-         * 正常状态
-         * ========================================
+         * ==============================
+         * 玩家优先
+         * ==============================
+         */
+
+        if (!level().isClientSide()) {
+
+            Player player =
+                    level().getNearestPlayer(
+                            this,
+                            32.0D
+                    );
+
+            if (player != null
+                    && player.isAlive()
+                    && !player.isSpectator()
+                    && !player.isCreative()) {
+
+                setTarget(player);
+            }
+        }
+
+        /*
+         * ==============================
+         * 自身攻击冷却
+         * ==============================
          */
 
         if (supernaturalAttackCooldown > 0) {
             supernaturalAttackCooldown--;
         }
+
+        /*
+         * ==============================
+         * 光照移速
+         * ==============================
+         */
 
         updateMovementSpeed();
     }
@@ -349,18 +381,16 @@ public class NightWanderer
      */
     @Override
     public void onSupernaturalAttack(int ticks) {
-        supernaturalStunTicks = Math.max(
-                supernaturalStunTicks,
-                ticks
-        );
 
-        // 停止移动
+        supernaturalStunTicks =
+                (int) Math.min(
+                        Integer.MAX_VALUE,
+                        (long) supernaturalStunTicks
+                                + ticks
+                );
+
         getNavigation().stop();
-
-        // 清除当前攻击目标
         setTarget(null);
-
-        // 停止当前 AI 行为
         setAggressive(false);
     }
 
