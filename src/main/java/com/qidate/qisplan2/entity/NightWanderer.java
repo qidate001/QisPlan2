@@ -3,6 +3,7 @@ package com.qidate.qisplan2.entity;
 import com.qidate.qisplan2.death.ModDamageTypes;
 import com.qidate.qisplan2.death.SupernaturalDeathHandler;
 import com.qidate.qisplan2.death.SupernaturalEntity;
+import com.qidate.qisplan2.item.DeathCurseSword;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.damagesource.DamageSource;
@@ -308,6 +309,32 @@ public class NightWanderer
      */
     @Override
     public boolean isInvulnerableTo(DamageSource damageSource) {
+
+        /*
+         * ========================================
+         * 死亡诅咒之剑
+         * ========================================
+         *
+         * 死亡诅咒之剑的普通攻击需要能够
+         * 进入 LivingDamageEvent.Pre，
+         * 这样 DeathCurseHandler 才能给目标叠加诅咒。
+         */
+        if (damageSource.getEntity() instanceof Player player) {
+
+            if (player.getMainHandItem().getItem()
+                    instanceof DeathCurseSword) {
+
+                return false;
+            }
+        }
+
+        /*
+         * ========================================
+         * 其他伤害
+         * ========================================
+         *
+         * 夜游鬼仍然完全无敌。
+         */
         return true;
     }
 

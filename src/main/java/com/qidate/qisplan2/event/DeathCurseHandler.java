@@ -3,6 +3,7 @@ package com.qidate.qisplan2.event;
 import com.qidate.qisplan2.QisPlan2;
 import com.qidate.qisplan2.death.ModDamageTypes;
 import com.qidate.qisplan2.death.SupernaturalDeathHandler;
+import com.qidate.qisplan2.death.SupernaturalEntity;
 import com.qidate.qisplan2.item.DeathCurseSword;
 
 import net.minecraft.ChatFormatting;
@@ -55,8 +56,12 @@ public class DeathCurseHandler {
             return;
         }
 
-        // 本次攻击固定造成 1 点普通伤害
-        event.setNewDamage(1.0F);
+        // 本次攻击正常命中，但灵异实体不掉血
+        if (event.getEntity() instanceof SupernaturalEntity) {
+            event.setNewDamage(0.0F);
+        } else {
+            event.setNewDamage(1.0F);
+        }
 
         LivingEntity target = event.getEntity();
 
