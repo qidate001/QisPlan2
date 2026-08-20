@@ -88,7 +88,14 @@ public class DeathCurseHandler {
              * → 触发灵异即死
              */
 
-            target.removeData(QisPlan2.DEATH_CURSE_COUNT.get());
+            target.removeData(
+                    QisPlan2.DEATH_CURSE_COUNT.get()
+            );
+
+            AttachmentSync.syncEntityUpdate(
+                    target,
+                    QisPlan2.DEATH_CURSE_COUNT.get()
+            );
 
             breakDeathCurseSword(
                     player,
@@ -115,6 +122,11 @@ public class DeathCurseHandler {
                     QisPlan2.DEATH_CURSE_COUNT.get(),
                     count
             );
+
+            AttachmentSync.syncEntityUpdate(
+                    target,
+                    QisPlan2.DEATH_CURSE_COUNT.get()
+            );
         }
 
 
@@ -136,7 +148,9 @@ public class DeathCurseHandler {
                  * 攻击者自己的诅咒达到 10 层
                  */
 
-                player.removeData(QisPlan2.DEATH_CURSE_COUNT.get());
+                player.removeData(
+                        QisPlan2.DEATH_CURSE_COUNT.get()
+                );
 
                 AttachmentSync.syncEntityUpdate(
                         player,
@@ -174,19 +188,19 @@ public class DeathCurseHandler {
                         QisPlan2.DEATH_CURSE_COUNT.get()
                 );
 
-                QisPlan2.LOGGER.info(
-                        "[QisPlan2] DeathCurse reflection synced, server player curse = {}",
-                        playerCurseCount
-                );
+//                QisPlan2.LOGGER.info(
+//                        "[QisPlan2] DeathCurse reflection synced, server player curse = {}",
+//                        playerCurseCount
+//                );
 
-                player.sendSystemMessage(
-                        Component.translatable(
-                                "qisplan2.death_curse.infected",
-                                playerCurseCount
-                        ).withStyle(
-                                ChatFormatting.DARK_GRAY
-                        )
-                );
+//                player.sendSystemMessage(
+//                        Component.translatable(
+//                                "qisplan2.death_curse.infected",
+//                                playerCurseCount
+//                        ).withStyle(
+//                                ChatFormatting.DARK_GRAY
+//                        )
+//                );
             }
         }
     }
@@ -199,7 +213,6 @@ public class DeathCurseHandler {
     public static void onPlayerClone(
             PlayerEvent.Clone event
     ) {
-
         event.getEntity()
                 .removeData(QisPlan2.DEATH_CURSE_COUNT.get());
     }

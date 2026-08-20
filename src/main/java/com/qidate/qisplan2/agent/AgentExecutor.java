@@ -14,6 +14,7 @@ import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
 import com.qidate.qisplan2.QisPlan2;
 import net.minecraft.world.entity.player.Inventory;
+import net.neoforged.neoforge.attachment.AttachmentSync;
 
 import java.util.Objects;
 
@@ -262,57 +263,97 @@ public class AgentExecutor {
             ServerPlayer player,
             int requestedCount
     ) {
-        final String CURSE_TAG = "death_curse_count";
 
-        var data = player.getPersistentData();
-
-        int currentCount = data.getInt(CURSE_TAG);
+        /*
+         * 从 Attachment 获取当前诅咒层数
+         */
+        int currentCount =
+                player.getData(
+                        QisPlan2.DEATH_CURSE_COUNT.get()
+                );
 
         if (currentCount <= 0) {
+
             player.sendSystemMessage(
-                    Component.literal("§a你身上没有必死诅咒。")
+                    Component.literal(
+                            "§a你身上没有必死诅咒。"
+                    )
             );
+
             return;
         }
 
-        // 至少清除 1 层，最多清除当前全部层数
+        /*
+         * 至少清除 1 层，
+         * 最多清除当前全部层数
+         */
         int removeCount = Math.max(
                 1,
-                Math.min(requestedCount, currentCount)
+                Math.min(
+                        requestedCount,
+                        currentCount
+                )
         );
 
-        int cost = removeCount * COST_REMOVE_CURSE_PER_LEVEL;
+        int cost =
+                removeCount
+                        * COST_REMOVE_CURSE_PER_LEVEL;
 
-        // 创造模式免费
+        /*
+         * 创造模式免费
+         */
         if (!player.isCreative()) {
+
             if (!consumeGhostCoins(player, cost)) {
+
                 cursePlayer(player, cost);
                 return;
             }
         }
 
-        int remaining = currentCount - removeCount;
+        /*
+         * 计算剩余诅咒
+         */
+        int remaining =
+                currentCount - removeCount;
 
-        if (remaining <= 0) {
-            data.remove(CURSE_TAG);
-        } else {
-            data.putInt(CURSE_TAG, remaining);
-        }
+        /*
+         * 写回 Attachment
+         */
+        player.setData(
+                QisPlan2.DEATH_CURSE_COUNT.get(),
+                remaining
+        );
 
+        /*
+         * 同步到客户端 HUD
+         */
+        AttachmentSync.syncEntityUpdate(
+                player,
+                QisPlan2.DEATH_CURSE_COUNT.get()
+        );
+
+        /*
+         * 提示扣除金币
+         */
         player.sendSystemMessage(
                 Component.literal(
-                        "§a☠ 许愿鬼收取了 " + cost +
-                                " 枚鬼金币。"
+                        "§a☠ 许愿鬼收取了 "
+                                + cost
+                                + " 枚鬼金币。"
                 )
         );
 
+        /*
+         * 提示当前诅咒
+         */
         player.sendSystemMessage(
                 Component.literal(
-                        "§7必死诅咒减少了 " +
-                                removeCount +
-                                " 层，当前：" +
-                                remaining +
-                                "/10"
+                        "§7必死诅咒减少了 "
+                                + removeCount
+                                + " 层，当前："
+                                + remaining
+                                + "/10"
                 )
         );
     }
