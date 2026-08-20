@@ -2,6 +2,7 @@ package com.qidate.qisplan2.event;
 
 import com.qidate.qisplan2.QisPlan2;
 import com.qidate.qisplan2.entity.NightWanderer;
+import com.qidate.qisplan2.ghost.PossessionHandler;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerLevel;
@@ -9,6 +10,7 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.level.LightLayer;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.levelgen.Heightmap;
+import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
@@ -20,9 +22,7 @@ import java.util.List;
 public class NightWandererSpawnHandler {
 
     /**
-     * 玩家周围最小生成距离。
-     *
-     * 要求大于 32 格。
+     * 最小生成距离。
      */
     private static final double MIN_DISTANCE = 40.0D;
 
@@ -32,19 +32,12 @@ public class NightWandererSpawnHandler {
     private static final double MAX_DISTANCE = 64.0D;
 
     /**
-     * 每隔多少 tick 检查一次。
-     *
-     * 20 tick = 1 秒
+     * 每秒检查一次。
      */
     private static final int CHECK_INTERVAL = 20;
 
     /**
-     * 每个玩家附近最多存在多少只夜游鬼。
-     */
-    private static final int MAX_NEARBY = 1;
-
-    /**
-     * 一次寻找生成位置时最多尝试多少次。
+     * 寻找生成位置时最多尝试次数。
      */
     private static final int MAX_ATTEMPTS = 32;
 
@@ -60,80 +53,95 @@ public class NightWandererSpawnHandler {
         }
 
         /*
-         * 遍历所有服务器玩家。
+         * 主世界。
+         */
+        ServerLevel level =
+                event.getServer().overworld();
+
+        /*
+         * 白天不生成。
+         */
+        if (level.isDay()) {
+            return;
+        }
+
+        /*
+         * ========================================
+         * 全世界最多只能有 1 只夜游鬼
+         * ========================================
+         */
+        List<NightWanderer> existing =
+                level.getEntitiesOfClass(
+                        NightWanderer.class,
+                        new AABB(
+                                level.getWorldBorder().getMinX(),
+                                level.getMinBuildHeight(),
+                                level.getWorldBorder().getMinZ(),
+                                level.getWorldBorder().getMaxX(),
+                                level.getMaxBuildHeight(),
+                                level.getWorldBorder().getMaxZ()
+                        ),
+                        entity -> entity.isAlive()
+                );
+
+        if (!existing.isEmpty()) {
+            return;
+        }
+
+        /*
+         * ========================================
+         * 找一个适合生成的玩家
+         * ========================================
          */
         for (ServerPlayer player :
-                event.getServer().getPlayerList().getPlayers()) {
-
-            ServerLevel level = player.serverLevel();
+                event.getServer()
+                        .getPlayerList()
+                        .getPlayers()) {
 
             /*
-             * 只在主世界生成。
+             * 只处理主世界玩家。
              */
-            if (level.dimension() != ServerLevel.OVERWORLD) {
+            if (player.serverLevel() != level) {
                 continue;
             }
 
             /*
-             * 白天不生成。
+             * 驭鬼夜游鬼的玩家周围不再生成。
              */
-            if (level.isDay()) {
+            if (PossessionHandler.hasGhost(
+                    player,
+                    PossessionHandler.NIGHT_WANDERER
+            )) {
                 continue;
             }
 
             /*
-             * 当前玩家附近已经存在的夜游鬼。
+             * 尝试寻找生成点。
              */
-            List<NightWanderer> nearby =
-                    level.getEntitiesOfClass(
-                            NightWanderer.class,
-                            player.getBoundingBox()
-                                    .inflate(MAX_DISTANCE),
-                            entity -> entity.isAlive()
+            BlockPos spawnPos =
+                    findSpawnPosition(
+                            level,
+                            player
                     );
 
-            /*
-             * 达到数量上限。
-             */
-            if (nearby.size() >= MAX_NEARBY) {
+            if (spawnPos == null) {
                 continue;
             }
 
-            /*
-             * 还缺多少只。
-             */
-            int amountToSpawn =
-                    MAX_NEARBY - nearby.size();
+            spawnNightWanderer(
+                    level,
+                    spawnPos
+            );
 
             /*
-             * 尝试补满。
+             * 已经生成唯一的一只，
+             * 本次服务器 Tick 结束。
              */
-            for (int i = 0;
-                 i < amountToSpawn;
-                 i++) {
-
-                BlockPos spawnPos =
-                        findSpawnPosition(
-                                level,
-                                player
-                        );
-
-                if (spawnPos == null) {
-                    break;
-                }
-
-                spawnNightWanderer(
-                        level,
-                        spawnPos
-                );
-            }
+            return;
         }
     }
 
 
-    /**
-     * 寻找一个适合生成的位置。
-     */
     private static BlockPos findSpawnPosition(
             ServerLevel level,
             ServerPlayer player
@@ -146,16 +154,10 @@ public class NightWandererSpawnHandler {
              attempt < MAX_ATTEMPTS;
              attempt++) {
 
-            /*
-             * 随机角度。
-             */
             double angle =
                     level.random.nextDouble()
                             * Math.PI * 2.0D;
 
-            /*
-             * 40 ~ 64 格。
-             */
             double distance =
                     MIN_DISTANCE
                             + level.random.nextDouble()
@@ -175,9 +177,6 @@ public class NightWandererSpawnHandler {
                                     * distance
                     );
 
-            /*
-             * 找地表。
-             */
             int y =
                     level.getHeight(
                             Heightmap.Types.MOTION_BLOCKING_NO_LEAVES,
@@ -192,19 +191,10 @@ public class NightWandererSpawnHandler {
             BlockPos pos =
                     new BlockPos(x, y, z);
 
-            /*
-             * 检查位置。
-             */
-            if (!isValidSpawnPosition(
-                    level,
-                    pos
-            )) {
+            if (!isValidSpawnPosition(level, pos)) {
                 continue;
             }
 
-            /*
-             * 最终确认距离。
-             */
             double distanceSqr =
                     pos.distSqr(
                             player.blockPosition()
@@ -227,24 +217,16 @@ public class NightWandererSpawnHandler {
     }
 
 
-    /**
-     * 判断位置能不能生成夜游鬼。
-     */
     private static boolean isValidSpawnPosition(
             ServerLevel level,
             BlockPos pos
     ) {
 
-        /*
-         * 地面必须稳固。
-         */
         BlockPos groundPos =
                 pos.below();
 
         BlockState ground =
-                level.getBlockState(
-                        groundPos
-                );
+                level.getBlockState(groundPos);
 
         if (!ground.isFaceSturdy(
                 level,
@@ -254,16 +236,10 @@ public class NightWandererSpawnHandler {
             return false;
         }
 
-        /*
-         * 身体位置必须为空气。
-         */
         if (!level.getBlockState(pos).isAir()) {
             return false;
         }
 
-        /*
-         * 头部也必须为空气。
-         */
         if (!level.getBlockState(
                 pos.above()
         ).isAir()) {
@@ -271,9 +247,7 @@ public class NightWandererSpawnHandler {
         }
 
         /*
-         * 夜游鬼怕光。
-         *
-         * 方块光 > 3 就不生成。
+         * 光源附近不生成。
          */
         int blockLight =
                 level.getBrightness(
@@ -281,17 +255,10 @@ public class NightWandererSpawnHandler {
                         pos
                 );
 
-        if (blockLight > 3) {
-            return false;
-        }
-
-        return true;
+        return blockLight <= 3;
     }
 
 
-    /**
-     * 创建并生成夜游鬼。
-     */
     private static void spawnNightWanderer(
             ServerLevel level,
             BlockPos pos

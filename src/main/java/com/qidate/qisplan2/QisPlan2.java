@@ -234,12 +234,11 @@ public class QisPlan2 {
     public static final DeferredItem<BlockItem> GHOST_GRASS_ITEM =
             ITEMS.registerSimpleBlockItem(GHOST_GRASS);
 
-    // 夜游鬼
     public static final DeferredHolder<EntityType<?>, EntityType<NightWanderer>> NIGHT_WANDERER =
             ENTITY_TYPES.register(
                     "night_wanderer",
                     () -> EntityType.Builder
-                            .of(NightWanderer::new, MobCategory.MONSTER)
+                            .of(NightWanderer::new, MobCategory.MISC)
                             .sized(0.6F, 1.8F)
                             .clientTrackingRange(8)
                             .updateInterval(3)
@@ -250,6 +249,7 @@ public class QisPlan2 {
                                     ).toString()
                             )
             );
+
     // 创造物品栏
     public static final DeferredRegister<CreativeModeTab> CREATIVE_MODE_TABS =
             DeferredRegister.create(Registries.CREATIVE_MODE_TAB, MODID);
