@@ -8,6 +8,7 @@ import com.qidate.qisplan2.block.GhostStoveBlock;
 import com.qidate.qisplan2.core.QisConfig;
 import com.qidate.qisplan2.death.SupernaturalEntity;
 import com.qidate.qisplan2.entity.NightWanderer;
+import com.qidate.qisplan2.event.PossessionHudOverlay;
 import com.qidate.qisplan2.ghost.PossessedGhostState;
 import com.qidate.qisplan2.ghost.PossessionHandler;
 import com.qidate.qisplan2.item.DeathCurseSword;
@@ -121,6 +122,14 @@ public class QisPlan2 {
                                     Codec.unboundedMap(
                                             ResourceLocation.CODEC,
                                             PossessedGhostState.CODEC
+                                    )
+                            )
+                            .sync(
+                                    ByteBufCodecs.map(
+                                            HashMap::new,
+                                            ResourceLocation.STREAM_CODEC,
+                                            PossessedGhostState.STREAM_CODEC,
+                                            32
                                     )
                             )
                             .build()
@@ -313,6 +322,9 @@ public class QisPlan2 {
 
         // 实体属性注册
         modEventBus.addListener(this::onEntityAttributeCreation);
+
+        // 驭鬼 HUD 注册
+        NeoForge.EVENT_BUS.addListener(PossessionHudOverlay::render);
 
         // Mod Event Bus 事件
         NeoForge.EVENT_BUS.register(this);
