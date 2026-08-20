@@ -43,14 +43,73 @@ public final class PossessionHandler {
     public static final double RAPID_REVIVAL_GAIN = 0.30D;
 
     /**
-     * 复苏速度：
-     *
-     * 每 10 秒恢复 1%。
-     *
-     * 100% 大约需要 16 分 40 秒。
+     * 夜晚复苏速度：
+     * 1% / 10 秒
      */
-    public static final double REVIVAL_RECOVERY_PER_TICK =
+    private static final double NIGHT_REVIVAL_PER_TICK =
             0.01D / 200.0D;
+
+    /**
+     * 白天浅死机值增长：
+     * 1 点 / 10 秒
+     */
+    private static final double DAY_SHALLOW_STUN_PER_TICK =
+            1.0D / 200.0D;
+
+    /**
+     * 复苏值最大 100%
+     */
+    private static final double MAX_REVIVAL =
+            1.0D;
+
+
+    private static PossessedGhostState addRevival(
+            PossessedGhostState state,
+            double revivalPercent
+    ) {
+
+        if (revivalPercent <= 0.0D) {
+            return state;
+        }
+
+        double revival =
+                state.revival();
+
+        double shallowStun =
+                state.shallowStun();
+
+        /*
+         * 先消耗浅死机值。
+         */
+        double consumed =
+                Math.min(
+                        shallowStun,
+                        revivalPercent
+                );
+
+        shallowStun -= consumed;
+
+        double actualRevival =
+                revivalPercent - consumed;
+
+        /*
+         * 剩余部分才真正增加复苏值。
+         */
+        revival +=
+                actualRevival / 100.0D;
+
+        revival =
+                Math.min(
+                        1.0D,
+                        revival
+                );
+
+        return new PossessedGhostState(
+                revival,
+                shallowStun,
+                state.lastAbilityUseTick()
+        );
+    }
 
 
     /**
@@ -142,12 +201,7 @@ public final class PossessionHandler {
     }
 
 
-    /**
-     * 每 tick 更新所有鬼的复苏值。
-     */
-    public static void tick(
-            ServerPlayer player
-    ) {
+    public static void tick(ServerPlayer player) {
 
         Map<ResourceLocation, PossessedGhostState> oldData =
                 player.getData(QisPlan2.POSSESSED_GHOSTS);
@@ -158,6 +212,9 @@ public final class PossessionHandler {
 
         Map<ResourceLocation, PossessedGhostState> data =
                 new HashMap<>(oldData);
+
+        boolean isDay =
+                player.level().isDay();
 
         boolean changed = false;
 
@@ -172,43 +229,78 @@ public final class PossessionHandler {
             double revival =
                     state.revival();
 
+            double shallowStun =
+                    state.shallowStun();
+
             /*
-             * 鬼逐渐复苏。
+             * ========================================
+             * 夜晚：复苏值 +0.1% / 秒
+             * ========================================
              */
-            revival +=
-                    REVIVAL_RECOVERY_PER_TICK;
+            if (!isDay) {
+                /*
+                 * 0.1% / 秒
+                 *
+                 * 先由浅死机值抵消。
+                 */
+                PossessedGhostState newState =
+                        addRevival(
+                                state,
+                                0.1D / 20.0D
+                        );
 
-            revival =
-                    Math.min(
-                            1.0D,
-                            revival
-                    );
+                revival =
+                        newState.revival();
 
-            if (revival != state.revival()) {
+                shallowStun =
+                        newState.shallowStun();
 
-                changed = true;
-
-                data.put(
-                        ghost,
-                        new PossessedGhostState(
-                                revival,
-                                state.lastAbilityUseTick()
-                        )
-                );
             }
 
             /*
-             * 达到 100%。
+             * ========================================
+             * 白天：复苏值不变
+             *
+             * 浅死机值缓慢增加
+             * ========================================
              */
+            else {
+
+                shallowStun +=
+                        DAY_SHALLOW_STUN_PER_TICK;
+            }
+
+            /*
+             * ========================================
+             * 100% → 玩家死亡
+             * ========================================
+             */
+
             if (revival >= 1.0D) {
 
                 player.setHealth(0.0F);
 
                 return;
             }
+
+            if (revival != state.revival()
+                    || shallowStun != state.shallowStun()) {
+
+                data.put(
+                        ghost,
+                        new PossessedGhostState(
+                                revival,
+                                shallowStun,
+                                state.lastAbilityUseTick()
+                        )
+                );
+
+                changed = true;
+            }
         }
 
         if (changed) {
+
             player.setData(
                     QisPlan2.POSSESSED_GHOSTS,
                     data
@@ -216,10 +308,52 @@ public final class PossessionHandler {
         }
 
         /*
-         * 夜游鬼目前的能力
-         * 继续调用你之前的效果处理。
+         * 夜游鬼能力
          */
-        updateNightWandererEffects(player);
+        if (hasGhost(
+                player,
+                NIGHT_WANDERER
+        )) {
+
+            updateNightWandererEffects(player);
+
+        } else {
+
+            removeNightWandererEffect(player);
+        }
+    }
+
+
+    private static void removeNightWandererEffect(
+            ServerPlayer player
+    ) {
+        /*
+         * ========================================
+         * 移除夜视/失明
+         * ========================================
+         */
+        player.removeEffect(
+                MobEffects.NIGHT_VISION
+        );
+
+        player.removeEffect(
+                MobEffects.BLINDNESS
+        );
+
+        /*
+         * ========================================
+         * 移除夜游鬼移速修饰器
+         * ========================================
+         */
+        AttributeInstance speed =
+                player.getAttribute(
+                        Attributes.MOVEMENT_SPEED
+                );
+
+        if (speed != null) {
+            removeNightWandererDarkModifier(speed);
+            removeNightWandererLightModifier(speed);
+        }
     }
 
 
@@ -233,10 +367,13 @@ public final class PossessionHandler {
             ServerPlayer player,
             LivingEntity target
     ) {
+        ResourceLocation ghost = NIGHT_WANDERER;
 
-        ResourceLocation ghost =
-                NIGHT_WANDERER;
-
+        /*
+         * ========================================
+         * 检查是否驾驭夜游鬼
+         * ========================================
+         */
         PossessedGhostState state =
                 getState(player, ghost);
 
@@ -244,12 +381,24 @@ public final class PossessionHandler {
             return false;
         }
 
+        /*
+         * ========================================
+         * 当前时间
+         * ========================================
+         */
         long now =
-                player.serverLevel()
-                        .getGameTime();
+                player.serverLevel().getGameTime();
 
         /*
-         * 判断是不是 10 秒内再次使用。
+         * ========================================
+         * 判断是不是 10 秒内再次使用
+         *
+         * 第一次：
+         *     +10%
+         *
+         * 10 秒内再次使用：
+         *     +30%
+         * ========================================
          */
         boolean rapid =
                 now - state.lastAbilityUseTick()
@@ -257,18 +406,42 @@ public final class PossessionHandler {
 
         double revivalGain =
                 rapid
-                        ? RAPID_REVIVAL_GAIN
-                        : NORMAL_REVIVAL_GAIN;
+                        ? 30.0D
+                        : 10.0D;
 
-        double revival =
-                Math.min(
-                        1.0D,
-                        state.revival()
-                                + revivalGain
+        /*
+         * ========================================
+         * 先通过统一方法处理复苏值
+         *
+         * 它会：
+         *
+         * 1. 先扣浅死机值
+         * 2. 浅死机值不够时
+         *    剩余部分才增加复苏值
+         * ========================================
+         */
+        PossessedGhostState newState =
+                addRevival(
+                        state,
+                        revivalGain
                 );
 
         /*
-         * 更新复苏值和时间。
+         * ========================================
+         * 更新本次使用时间
+         * ========================================
+         */
+        newState =
+                new PossessedGhostState(
+                        newState.revival(),
+                        newState.shallowStun(),
+                        now
+                );
+
+        /*
+         * ========================================
+         * 保存夜游鬼状态
+         * ========================================
          */
         Map<ResourceLocation, PossessedGhostState> data =
                 new HashMap<>(
@@ -279,10 +452,7 @@ public final class PossessionHandler {
 
         data.put(
                 ghost,
-                new PossessedGhostState(
-                        revival,
-                        now
-                )
+                newState
         );
 
         player.setData(
@@ -292,21 +462,26 @@ public final class PossessionHandler {
 
         /*
          * ========================================
-         * 100% → 玩家死亡
+         * 复苏达到 100%
+         *
+         * 玩家死亡
          * ========================================
          */
+        if (newState.revival() >= 1.0D) {
 
-        if (revival >= 1.0D) {
             player.setHealth(0.0F);
+
             return true;
         }
 
         /*
          * ========================================
-         * 夜游鬼的灵异攻击
+         * 发动夜游鬼的灵异攻击
          * ========================================
+         *
+         * 夜游鬼驾驭后的攻击强度：
+         * 0.4
          */
-
         SupernaturalDeathHandler.tryKill(
                 target,
                 ModDamageTypes.ghostNightWanderer(player),
