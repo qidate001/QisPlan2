@@ -1,14 +1,17 @@
 package com.qidate.qisplan2.event;
 
 import com.qidate.qisplan2.QisPlan2;
+import com.qidate.qisplan2.item.DeathCurseSword;
 import net.minecraft.client.DeltaTracker;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.core.component.DataComponents;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
+import net.minecraft.world.item.component.ResolvableProfile;
 import net.neoforged.neoforge.client.event.RegisterGuiLayersEvent;
 
 /**
@@ -23,11 +26,14 @@ import net.neoforged.neoforge.client.event.RegisterGuiLayersEvent;
 public class DeathCurseHudOverlay {
 
     private static final int MAX_CURSE = 10;
-    private static final int SLOT_SIZE = 12;
+    private static final int SLOT_SIZE = 16;
     private static final int SLOT_SPACING = 12;
 
     // 空骷髅的亮度系数
     private static final float EMPTY_SLOT_BRIGHTNESS = 0.4F;
+
+    private static final int HUD_HIDE_DELAY_TICKS = 100;
+    private static long lastSwordHeldTime = -1;
 
     /**
      * 注册 HUD 图层
@@ -57,14 +63,38 @@ public class DeathCurseHudOverlay {
             DeltaTracker deltaTracker
     ) {
 
-        Minecraft minecraft =
-                Minecraft.getInstance();
-
-        Player player =
-                minecraft.player;
+        Minecraft minecraft = Minecraft.getInstance();
+        Player player = minecraft.player;
 
         if (player == null || minecraft.level == null) {
             return;
+        }
+
+        /*
+         * ========================================
+         * 判断是否拿着死亡诅咒之剑
+         * ========================================
+         */
+
+        boolean holdingSword =
+                player.getMainHandItem().getItem()
+                        instanceof DeathCurseSword;
+
+        long gameTime = minecraft.level.getGameTime();
+
+        if (holdingSword) {
+
+            lastSwordHeldTime = gameTime;
+
+        } else {
+
+            if (lastSwordHeldTime < 0) {
+                return;
+            }
+
+            if (gameTime - lastSwordHeldTime >= HUD_HIDE_DELAY_TICKS) {
+                return;
+            }
         }
 
 
@@ -87,11 +117,12 @@ public class DeathCurseHudOverlay {
                             MAX_CURSE
                     );
 
-            renderCurseBar(
+            renderPlayerCurseBar(
                     guiGraphics,
                     playerCurse,
                     8,
-                    8
+                    8,
+                    player
             );
         }
 
@@ -143,7 +174,7 @@ public class DeathCurseHudOverlay {
                 );
 
         /*
-         * 目标没有诅咒时不显示
+         * 目标没有诅咒时不显示右侧
          */
         if (targetCurse <= 0) {
             return;
@@ -176,7 +207,7 @@ public class DeathCurseHudOverlay {
 
         int startY = 8;
 
-        renderCurseBar(
+        renderTargetCurseBar(
                 guiGraphics,
                 targetCurse,
                 startX,
@@ -185,9 +216,94 @@ public class DeathCurseHudOverlay {
     }
 
     /**
-     * 渲染一条诅咒骷髅
+     * 动态创建玩家头
+     *
+     * @param player 玩家
+     * @return 玩家头
      */
-    private static void renderCurseBar(
+    private static ItemStack createPlayerHead(Player player) {
+
+        ItemStack head =
+                new ItemStack(Items.PLAYER_HEAD);
+
+        head.set(
+                DataComponents.PROFILE,
+                new ResolvableProfile(
+                        player.getGameProfile()
+                )
+        );
+
+        return head;
+    }
+
+    /**
+     * 渲染自己的诅咒条
+     *
+     * 10 个位置全部使用玩家头颅。
+     */
+    private static void renderPlayerCurseBar(
+            GuiGraphics guiGraphics,
+            int curse,
+            int startX,
+            int startY,
+            Player player
+    ) {
+
+        ItemStack head =
+                createPlayerHead(player);
+
+        for (int i = 0; i < MAX_CURSE; i++) {
+
+            int x =
+                    startX
+                            + i * SLOT_SPACING;
+
+            int y =
+                    startY;
+
+            boolean empty =
+                    i >= curse;
+
+            /*
+             * 当前诅咒数量以外的头像变暗
+             */
+            if (empty) {
+
+                guiGraphics.setColor(
+                        EMPTY_SLOT_BRIGHTNESS,
+                        EMPTY_SLOT_BRIGHTNESS,
+                        EMPTY_SLOT_BRIGHTNESS,
+                        1.0F
+                );
+            }
+
+            guiGraphics.renderItem(
+                    head,
+                    x,
+                    y
+            );
+
+            /*
+             * 恢复默认颜色
+             */
+            if (empty) {
+
+                guiGraphics.setColor(
+                        1.0F,
+                        1.0F,
+                        1.0F,
+                        1.0F
+                );
+            }
+        }
+    }
+
+    /**
+     * 渲染目标诅咒条
+     *
+     * 10 个位置全部使用骷髅头。
+     */
+    private static void renderTargetCurseBar(
             GuiGraphics guiGraphics,
             int curse,
             int startX,
@@ -231,7 +347,7 @@ public class DeathCurseHudOverlay {
             );
 
             /*
-             * 恢复颜色
+             * 恢复默认颜色
              */
             if (empty) {
 
