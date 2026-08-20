@@ -8,6 +8,7 @@ import com.qidate.qisplan2.block.GhostStoveBlock;
 import com.qidate.qisplan2.core.QisConfig;
 import com.qidate.qisplan2.death.SupernaturalEntity;
 import com.qidate.qisplan2.entity.NightWanderer;
+import com.qidate.qisplan2.ghost.PossessedGhostState;
 import com.qidate.qisplan2.ghost.PossessionHandler;
 import com.qidate.qisplan2.item.DeathCurseSword;
 import com.qidate.qisplan2.item.GhostCoin;
@@ -55,7 +56,9 @@ import net.neoforged.neoforge.registries.DeferredItem;
 import net.neoforged.neoforge.registries.DeferredRegister;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 // The value here should match an entry in the META-INF/neoforge.mods.toml file
 @Mod(QisPlan2.MODID)
@@ -90,22 +93,33 @@ public class QisPlan2 {
             );
 
     /**
-     * 玩家当前驾驭的厉鬼列表。
+     * 玩家当前驾驭的鬼及其状态。
      *
-     * 一个玩家可以同时驾驭多个不同的鬼。
+     * Key：
+     *     鬼的 ResourceLocation
+     *
+     * Value：
+     *     该鬼的复苏值、上次使用时间等状态
+     *
+     * 因此玩家可以同时驾驭多只鬼。
      */
     public static final DeferredHolder<
             AttachmentType<?>,
-            AttachmentType<List<ResourceLocation>>
+            AttachmentType<Map<ResourceLocation, PossessedGhostState>>
             > POSSESSED_GHOSTS =
             ATTACHMENT_TYPES.register(
                     "possessed_ghosts",
-                    () -> AttachmentType.<List<ResourceLocation>>builder(
-                                    () -> new ArrayList<ResourceLocation>()
+                    () -> AttachmentType
+                            .<Map<ResourceLocation, PossessedGhostState>>builder(
+                                    (java.util.function.Supplier<
+                                            Map<ResourceLocation, PossessedGhostState>
+                                            >)
+                                            HashMap::new
                             )
                             .serialize(
-                                    Codec.list(
-                                            ResourceLocation.CODEC
+                                    Codec.unboundedMap(
+                                            ResourceLocation.CODEC,
+                                            PossessedGhostState.CODEC
                                     )
                             )
                             .build()
@@ -546,7 +560,7 @@ public class QisPlan2 {
                                     context.getSource()
                                             .getPlayerOrException();
 
-                            List<ResourceLocation> ghosts =
+                            Map<ResourceLocation, PossessedGhostState> ghosts =
                                     player.getData(
                                             QisPlan2.POSSESSED_GHOSTS
                                     );
@@ -564,12 +578,35 @@ public class QisPlan2 {
                                 return 0;
                             }
 
+                            StringBuilder message =
+                                    new StringBuilder("当前驾驭：");
+
+                            for (var entry : ghosts.entrySet()) {
+
+                                ResourceLocation ghost =
+                                        entry.getKey();
+
+                                PossessedGhostState state =
+                                        entry.getValue();
+
+                                message.append("\n")
+                                        .append("§e")
+                                        .append(ghost)
+                                        .append(" §f- 复苏值：")
+                                        .append(
+                                                String.format(
+                                                        "%.1f%%",
+                                                        state.revival() * 100.0D
+                                                )
+                                        );
+                            }
+
+                            String result =
+                                    message.toString();
+
                             context.getSource()
                                     .sendSuccess(
-                                            () -> Component.literal(
-                                                    "当前驾驭："
-                                                            + ghosts
-                                            ),
+                                            () -> Component.literal(result),
                                             false
                                     );
 
