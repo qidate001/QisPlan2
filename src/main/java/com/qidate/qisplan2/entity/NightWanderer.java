@@ -1,10 +1,16 @@
 package com.qidate.qisplan2.entity;
 
 import com.qidate.qisplan2.death.ModDamageTypes;
+import com.qidate.qisplan2.death.SupernaturalCombatHandler;
 import com.qidate.qisplan2.death.SupernaturalDeathHandler;
 import com.qidate.qisplan2.death.SupernaturalEntity;
 import com.qidate.qisplan2.item.DeathCurseSword;
+import net.minecraft.core.particles.ParticleTypes;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.EntityType;
@@ -59,16 +65,21 @@ public class NightWanderer
             );
 
     /**
-     * 灵异攻击后的停滞时间。
+     * 灵异攻击后的死机时间。
      *
      * 10 秒 = 200 tick
      */
     private static final int SUPERNATURAL_STUN_TIME = 100;
 
     /**
-     * 当前剩余停滞时间。
+     * 当前剩余死机时间。
      */
     private int supernaturalStunTicks = 0;
+
+    /**
+     * 是否永久死机。
+     */
+    private boolean permanentSupernaturalStun = false;
 
     /**
      * 灵异攻击后的休息时间：
@@ -81,12 +92,20 @@ public class NightWanderer
      */
     private int supernaturalAttackCooldown = 0;
 
-
     /**
      * 灵异攻击强度
      */
-    private static final double SUPERNATURAL_ATTACK_STRENGTH = 0.4D;
+    private static final double SUPERNATURAL_ATTACK_STRENGTH = 0.6D;
     private static final double SUPERNATURAL_DEFENSE = 1.0D;
+
+    /**
+     * 永久储存NBT
+     */
+    private static final String NBT_STUN_TICKS =
+            "QisPlan2SupernaturalStunTicks";
+
+    private static final String NBT_PERMANENT_STUN =
+            "QisPlan2SupernaturalStunTicks";
 
     @Override
     public double getSupernaturalDefense() {
@@ -160,22 +179,17 @@ public class NightWanderer
     @Override
     public void aiStep() {
 
-        // 停滞期间仍然需要更新实体本身
         super.aiStep();
 
         /*
          * ========================================
-         * 灵异攻击停滞
+         * 永久死机
          * ========================================
          */
-        if (supernaturalStunTicks > 0) {
+        if (permanentSupernaturalStun) {
 
-            supernaturalStunTicks--;
-
-            // 完全停止移动
             getNavigation().stop();
-
-            // 不允许攻击
+            setTarget(null);
             setAggressive(false);
 
             return;
@@ -183,18 +197,30 @@ public class NightWanderer
 
         /*
          * ========================================
-         * 灵异攻击冷却
+         * 普通死机
          * ========================================
          */
-        if (supernaturalAttackCooldown > 0) {
-            supernaturalAttackCooldown--;
+        if (supernaturalStunTicks > 0) {
+
+            supernaturalStunTicks--;
+
+            getNavigation().stop();
+            setTarget(null);
+            setAggressive(false);
+
+            return;
         }
 
         /*
          * ========================================
-         * 根据环境亮度调整移速
+         * 正常状态
          * ========================================
          */
+
+        if (supernaturalAttackCooldown > 0) {
+            supernaturalAttackCooldown--;
+        }
+
         updateMovementSpeed();
     }
 
@@ -308,36 +334,19 @@ public class NightWanderer
      * 夜游鬼无敌。
      */
     @Override
-    public boolean isInvulnerableTo(DamageSource damageSource) {
-
-        /*
-         * ========================================
-         * 死亡诅咒之剑
-         * ========================================
-         *
-         * 死亡诅咒之剑的普通攻击需要能够
-         * 进入 LivingDamageEvent.Pre，
-         * 这样 DeathCurseHandler 才能给目标叠加诅咒。
-         */
-        if (damageSource.getEntity() instanceof Player player) {
-
-            if (player.getMainHandItem().getItem()
-                    instanceof DeathCurseSword) {
-
-                return false;
-            }
-        }
-
-        /*
-         * ========================================
-         * 其他伤害
-         * ========================================
-         *
-         * 夜游鬼仍然完全无敌。
-         */
-        return true;
+    public boolean isInvulnerableTo(
+            DamageSource damageSource
+    ) {
+        return SupernaturalCombatHandler.isInvulnerableTo(
+                this,
+                damageSource
+        );
     }
 
+    /**
+     * 普通死机
+     * @param ticks 死机时间
+     */
     @Override
     public void onSupernaturalAttack(int ticks) {
         supernaturalStunTicks = Math.max(
@@ -353,6 +362,33 @@ public class NightWanderer
 
         // 停止当前 AI 行为
         setAggressive(false);
+    }
+
+    /**
+     * 永久死机
+     */
+    @Override
+    public void onPermanentSupernaturalAttack() {
+
+        permanentSupernaturalStun = true;
+
+        // 永久死机不需要倒计时
+        supernaturalStunTicks = 0;
+
+        getNavigation().stop();
+        setTarget(null);
+        setAggressive(false);
+    }
+
+    @Override
+    public boolean isSupernaturallyStunned() {
+        return permanentSupernaturalStun
+                || supernaturalStunTicks > 0;
+    }
+
+    @Override
+    public boolean isPermanentlySupernaturallyStunned() {
+        return permanentSupernaturalStun;
     }
 
     /**
@@ -424,7 +460,7 @@ public class NightWanderer
             LivingEntity target =
                     mob.getTarget();
 
-            return !mob.isSupernaturalStunned()
+            return !mob.isSupernaturallyStunned()
                     && mob.supernaturalAttackCooldown <= 0
                     && target != null
                     && target.isAlive();
@@ -439,7 +475,7 @@ public class NightWanderer
             LivingEntity target =
                     mob.getTarget();
 
-            return !mob.isSupernaturalStunned()
+            return !mob.isSupernaturallyStunned()
                     && mob.supernaturalAttackCooldown <= 0
                     && target != null
                     && target.isAlive();
@@ -528,6 +564,51 @@ public class NightWanderer
 
             mob.supernaturalAttackCooldown =
                     SUPERNATURAL_ATTACK_COOLDOWN;
+        }
+    }
+
+    @Override
+    public void addAdditionalSaveData(
+            CompoundTag tag
+    ) {
+        super.addAdditionalSaveData(tag);
+
+        tag.putInt(
+                NBT_STUN_TICKS,
+                supernaturalStunTicks
+        );
+
+        tag.putBoolean(
+                NBT_PERMANENT_STUN,
+                permanentSupernaturalStun
+        );
+    }
+
+    @Override
+    public void readAdditionalSaveData(
+            CompoundTag tag
+    ) {
+        super.readAdditionalSaveData(tag);
+
+        supernaturalStunTicks =
+                Math.max(
+                        0,
+                        tag.getInt(NBT_STUN_TICKS)
+                );
+
+        permanentSupernaturalStun =
+                tag.getBoolean(
+                        NBT_PERMANENT_STUN
+                );
+
+        /*
+         * 永久死机优先。
+         *
+         * 读取到永久死机后，
+         * 不需要保留普通死机倒计时。
+         */
+        if (permanentSupernaturalStun) {
+            supernaturalStunTicks = 0;
         }
     }
 }

@@ -17,13 +17,10 @@ public class PossessionAbilityHandler {
             AttackEntityEvent event
     ) {
 
-        ServerPlayer player =
-                event.getEntity()
-                        instanceof ServerPlayer serverPlayer
-                        ? serverPlayer
-                        : null;
-
-        if (player == null) {
+        /*
+         * 必须是服务器玩家。
+         */
+        if (!(event.getEntity() instanceof ServerPlayer player)) {
             return;
         }
 
@@ -38,7 +35,7 @@ public class PossessionAbilityHandler {
         }
 
         /*
-         * 当前目标必须是 LivingEntity。
+         * 目标必须是 LivingEntity。
          */
         if (!(event.getTarget()
                 instanceof LivingEntity target)) {
@@ -46,7 +43,7 @@ public class PossessionAbilityHandler {
         }
 
         /*
-         * 目前只处理夜游鬼。
+         * 当前必须驾驭夜游鬼。
          */
         if (!PossessionHandler.hasGhost(
                 player,
@@ -56,13 +53,15 @@ public class PossessionAbilityHandler {
         }
 
         /*
-         * 阻止原版普通空手攻击。
+         * ========================================
+         * 这次不是普通拳击
+         *
+         * 而是夜游鬼能力。
+         * ========================================
          */
+
         event.setCanceled(true);
 
-        /*
-         * 使用夜游鬼能力。
-         */
         PossessionHandler.useNightWandererAbility(
                 player,
                 target
