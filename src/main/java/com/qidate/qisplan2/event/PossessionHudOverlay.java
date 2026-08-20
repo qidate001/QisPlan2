@@ -33,6 +33,11 @@ public class PossessionHudOverlay {
 
     private static final int ICON_SIZE = 23;
 
+    private static final int SHALLOW_STUN_COLOR = (int) 0xFF6AA6FF;
+    private static final int STUN_COLOR = (int) 0xFFE5484D;
+    private static final int PERMANENT_STUN_COLOR = (int) 0xFFFFC83D;
+
+
 
     /*
      * ==============================
@@ -194,15 +199,81 @@ public class PossessionHudOverlay {
         );
 
         /*
-         * 浅死机值
+         * ========================================
+         * 第二状态条
+         *
+         * 正常：
+         *     浅死机值 → 蓝色
+         *
+         * 普通死机：
+         *     剩余死机时间 → 红色
+         *
+         * 永久死机：
+         *     ∞ → 金色
+         * ========================================
          */
-        double shallowStun = state.shallowStun();
 
-        double stunProgress =
-                Math.min(
-                        1.0D,
-                        shallowStun / MAX_SHALLOW_STUN
-                );
+        String stunValueText;
+        double stunProgress;
+        int stunColor;
+
+        if (state.isPermanentlyStunned()) {
+
+            /*
+             * 永久死机
+             */
+            stunValueText = "∞";
+            stunProgress = 1.0D;
+            stunColor = (int) 0xFFFFC83D;
+
+        } else if (state.isStunned()) {
+
+            /*
+             * 普通死机
+             */
+            double seconds =
+                    state.stunTicks() / 20.0D;
+
+            stunValueText =
+                    String.format(
+                            "%.1fs",
+                            seconds
+                    );
+
+            /*
+             * 10 秒 = 满条
+             */
+            stunProgress =
+                    Math.min(
+                            1.0D,
+                            seconds / 10.0D
+                    );
+
+            stunColor = (int) 0xFFE5484D;
+
+        } else {
+
+            /*
+             * 正常状态：
+             * 显示浅死机值
+             */
+            double shallowStun =
+                    state.shallowStun();
+
+            stunValueText =
+                    String.format(
+                            "%.0f",
+                            shallowStun
+                    );
+
+            stunProgress =
+                    Math.min(
+                            1.0D,
+                            shallowStun / MAX_SHALLOW_STUN
+                    );
+
+            stunColor = (int) 0xFF6AA6FF;
+        }
 
         graphics.drawString(
                 font,
@@ -213,6 +284,11 @@ public class PossessionHudOverlay {
                 true
         );
 
+        /*
+         * x + 53
+         * 宽度 43
+         * 高度 4
+         */
         drawProgressBar(
                 graphics,
                 x + 53,
@@ -220,15 +296,12 @@ public class PossessionHudOverlay {
                 43,
                 4,
                 stunProgress,
-                (int) 0xFF6AA6FF
+                stunColor
         );
 
         graphics.drawString(
                 font,
-                String.format(
-                        "%.0f",
-                        shallowStun
-                ),
+                stunValueText,
                 x + 99,
                 y + 28,
                 0xFFFFFFFF,
@@ -239,9 +312,6 @@ public class PossessionHudOverlay {
 
     /**
      * 绘制一个简单圆角卡片。
-     *
-     * 这里暂时不用贴图，
-     * 先保证布局可以调。
      */
     private static void drawRoundedPanel(
             GuiGraphics graphics,

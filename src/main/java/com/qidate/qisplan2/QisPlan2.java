@@ -1,5 +1,6 @@
 package com.qidate.qisplan2;
 
+import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.serialization.Codec;
 import com.qidate.qisplan2.block.GhostCarpetBlock;
 import com.qidate.qisplan2.block.GhostDoorBlock;
@@ -641,7 +642,105 @@ public class QisPlan2 {
         );
 
 
+        event.getDispatcher().register(
+                Commands.literal("qis_ghost_stun")
+                        .requires(source -> source.hasPermission(2))
+                        .then(
+                                Commands.literal("night_wanderer")
+                                        .then(
+                                                Commands.argument(
+                                                                "seconds",
+                                                                IntegerArgumentType.integer(
+                                                                        1,
+                                                                        3600
+                                                                )
+                                                        )
+                                                        .executes(context -> {
 
+                                                            ServerPlayer player =
+                                                                    context.getSource()
+                                                                            .getPlayerOrException();
+
+                                                            int seconds =
+                                                                    IntegerArgumentType.getInteger(
+                                                                            context,
+                                                                            "seconds"
+                                                                    );
+
+                                                            boolean success =
+                                                                    PossessionHandler.testStun(
+                                                                            player,
+                                                                            PossessionHandler.NIGHT_WANDERER,
+                                                                            seconds * 20L
+                                                                    );
+
+                                                            if (!success) {
+                                                                context.getSource()
+                                                                        .sendFailure(
+                                                                                Component.literal(
+                                                                                        "你没有驾驭夜游鬼。"
+                                                                                )
+                                                                        );
+
+                                                                return 0;
+                                                            }
+
+                                                            context.getSource()
+                                                                    .sendSuccess(
+                                                                            () -> Component.literal(
+                                                                                    "夜游鬼已进入普通死机 "
+                                                                                            + seconds
+                                                                                            + " 秒。"
+                                                                            ),
+                                                                            true
+                                                                    );
+
+                                                            return 1;
+                                                        })
+                                        )
+                        )
+        );
+
+        event.getDispatcher().register(
+                Commands.literal("qis_ghost_permanent_stun")
+                        .requires(source -> source.hasPermission(2))
+                        .then(
+                                Commands.literal("night_wanderer")
+                                        .executes(context -> {
+
+                                            ServerPlayer player =
+                                                    context.getSource()
+                                                            .getPlayerOrException();
+
+                                            boolean success =
+                                                    PossessionHandler.testPermanentStun(
+                                                            player,
+                                                            PossessionHandler.NIGHT_WANDERER
+                                                    );
+
+                                            if (!success) {
+                                                context.getSource()
+                                                        .sendFailure(
+                                                                Component.literal(
+                                                                        "你没有驾驭夜游鬼。"
+                                                                )
+                                                        );
+
+                                                return 0;
+                                            }
+
+                                            context.getSource()
+                                                    .sendSuccess(
+                                                            () -> Component.literal(
+                                                                    "夜游鬼已进入永久死机。"
+                                                            ),
+                                                            true
+                                                    );
+
+                                            return 1;
+                                        })
+                        )
+        );
     }
 
     // You can use SubscribeEvent and let the Event Bus discover methods to call
