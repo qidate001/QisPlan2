@@ -20,6 +20,7 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.MobCategory;
+import net.minecraft.world.item.SpawnEggItem;
 import net.minecraft.world.level.GameRules;
 import net.minecraft.world.level.block.SoundType;
 import net.minecraft.world.level.block.state.properties.BlockSetType;
@@ -250,6 +251,18 @@ public class QisPlan2 {
                             )
             );
 
+    public static final DeferredItem<SpawnEggItem> NIGHT_WANDERER_SPAWN_EGG =
+            ITEMS.register(
+                    "night_wanderer_spawn_egg",
+                    () -> new SpawnEggItem(
+                            NIGHT_WANDERER.get(),
+                            0x191919, // 基础颜色
+                            0x6B6B6B, // 斑点颜色
+                            new Item.Properties()
+                    )
+            );
+
+
     // 创造物品栏
     public static final DeferredRegister<CreativeModeTab> CREATIVE_MODE_TABS =
             DeferredRegister.create(Registries.CREATIVE_MODE_TAB, MODID);
@@ -266,6 +279,7 @@ public class QisPlan2 {
                         output.accept(GHOST_STOVE_ITEM);
                         output.accept(GHOST_DOOR_ITEM);
                         output.accept(GHOST_GRASS_ITEM);
+                        output.accept(NIGHT_WANDERER_SPAWN_EGG);
                     })
                     .build()
             );
