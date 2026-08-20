@@ -8,6 +8,7 @@ import com.qidate.qisplan2.block.GhostStoveBlock;
 import com.qidate.qisplan2.core.QisConfig;
 import com.qidate.qisplan2.death.SupernaturalEntity;
 import com.qidate.qisplan2.entity.NightWanderer;
+import com.qidate.qisplan2.ghost.PossessionHandler;
 import com.qidate.qisplan2.item.DeathCurseSword;
 import com.qidate.qisplan2.item.GhostCoin;
 import com.qidate.qisplan2.util.StructureUtil;
@@ -53,6 +54,9 @@ import net.neoforged.neoforge.registries.DeferredHolder;
 import net.neoforged.neoforge.registries.DeferredItem;
 import net.neoforged.neoforge.registries.DeferredRegister;
 
+import java.util.ArrayList;
+import java.util.List;
+
 // The value here should match an entry in the META-INF/neoforge.mods.toml file
 @Mod(QisPlan2.MODID)
 public class QisPlan2 {
@@ -82,6 +86,28 @@ public class QisPlan2 {
                     "ghost_temple_generated",
                     () -> AttachmentType.builder(() -> false)
                             .serialize(Codec.BOOL)
+                            .build()
+            );
+
+    /**
+     * 玩家当前驾驭的厉鬼列表。
+     *
+     * 一个玩家可以同时驾驭多个不同的鬼。
+     */
+    public static final DeferredHolder<
+            AttachmentType<?>,
+            AttachmentType<List<ResourceLocation>>
+            > POSSESSED_GHOSTS =
+            ATTACHMENT_TYPES.register(
+                    "possessed_ghosts",
+                    () -> AttachmentType.<List<ResourceLocation>>builder(
+                                    () -> new ArrayList<ResourceLocation>()
+                            )
+                            .serialize(
+                                    Codec.list(
+                                            ResourceLocation.CODEC
+                                    )
+                            )
                             .build()
             );
 
@@ -307,7 +333,6 @@ public class QisPlan2 {
                 Commands.literal("qis_kill_ghosts")
                         .requires(source -> source.hasPermission(2))
 
-                        // 默认 32 格
                         .executes(context -> {
 
                             var source = context.getSource();
@@ -334,14 +359,12 @@ public class QisPlan2 {
                                                     LivingEntity.class,
                                                     area,
                                                     target ->
-                                                            target
-                                                                    instanceof SupernaturalEntity
+                                                            target instanceof SupernaturalEntity
                                             );
 
                             int count = 0;
 
                             for (LivingEntity ghost : ghosts) {
-
                                 ghost.discard();
                                 count++;
                             }
@@ -360,7 +383,6 @@ public class QisPlan2 {
                             return count;
                         })
 
-                        // /qis_kill_ghosts <radius>
                         .then(
                                 Commands.argument(
                                                 "radius",
@@ -409,7 +431,6 @@ public class QisPlan2 {
                                             int count = 0;
 
                                             for (LivingEntity ghost : ghosts) {
-
                                                 ghost.discard();
                                                 count++;
                                             }
@@ -431,6 +452,133 @@ public class QisPlan2 {
                                         })
                         )
         );
+
+        event.getDispatcher().register(
+                Commands.literal("qis_possess")
+                        .requires(source -> source.hasPermission(2))
+                        .then(
+                                Commands.literal("night_wanderer")
+                                        .executes(context -> {
+
+                                            ServerPlayer player =
+                                                    context.getSource()
+                                                            .getPlayerOrException();
+
+                                            boolean success =
+                                                    PossessionHandler.possess(
+                                                            player,
+                                                            PossessionHandler.NIGHT_WANDERER
+                                                    );
+
+                                            if (success) {
+
+                                                context.getSource()
+                                                        .sendSuccess(
+                                                                () -> Component.literal(
+                                                                        "成功驾驭夜游鬼。"
+                                                                ),
+                                                                true
+                                                        );
+
+                                                return 1;
+                                            }
+
+                                            context.getSource()
+                                                    .sendFailure(
+                                                            Component.literal(
+                                                                    "你已经驾驭了夜游鬼。"
+                                                            )
+                                                    );
+
+                                            return 0;
+                                        })
+                        )
+        );
+
+        event.getDispatcher().register(
+                Commands.literal("qis_release")
+                        .requires(source -> source.hasPermission(2))
+                        .then(
+                                Commands.literal("night_wanderer")
+                                        .executes(context -> {
+
+                                            ServerPlayer player =
+                                                    context.getSource()
+                                                            .getPlayerOrException();
+
+                                            boolean success =
+                                                    PossessionHandler.release(
+                                                            player,
+                                                            PossessionHandler.NIGHT_WANDERER
+                                                    );
+
+                                            if (success) {
+
+                                                context.getSource()
+                                                        .sendSuccess(
+                                                                () -> Component.literal(
+                                                                        "已解除夜游鬼驾驭。"
+                                                                ),
+                                                                true
+                                                        );
+
+                                                return 1;
+                                            }
+
+                                            context.getSource()
+                                                    .sendFailure(
+                                                            Component.literal(
+                                                                    "你没有驾驭夜游鬼。"
+                                                            )
+                                                    );
+
+                                            return 0;
+                                        })
+                        )
+        );
+
+        event.getDispatcher().register(
+                Commands.literal("qis_possessed")
+                        .requires(source -> source.hasPermission(2))
+                        .executes(context -> {
+
+                            ServerPlayer player =
+                                    context.getSource()
+                                            .getPlayerOrException();
+
+                            List<ResourceLocation> ghosts =
+                                    player.getData(
+                                            QisPlan2.POSSESSED_GHOSTS
+                                    );
+
+                            if (ghosts.isEmpty()) {
+
+                                context.getSource()
+                                        .sendSuccess(
+                                                () -> Component.literal(
+                                                        "当前没有驾驭任何鬼。"
+                                                ),
+                                                false
+                                        );
+
+                                return 0;
+                            }
+
+                            context.getSource()
+                                    .sendSuccess(
+                                            () -> Component.literal(
+                                                    "当前驾驭："
+                                                            + ghosts
+                                            ),
+                                            false
+                                    );
+
+                            return ghosts.size();
+                        })
+        );
+
+
+
     }
 
     // You can use SubscribeEvent and let the Event Bus discover methods to call
