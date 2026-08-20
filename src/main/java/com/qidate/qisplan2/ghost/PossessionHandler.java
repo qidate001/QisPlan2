@@ -67,8 +67,22 @@ public final class PossessionHandler {
             PossessedGhostState state,
             double revivalPercent
     ) {
-
         if (revivalPercent <= 0.0D) {
+            return state;
+        }
+
+        /*
+         * ========================================
+         * 死机状态
+         * ========================================
+         *
+         * 死机期间：
+         * 可以使用技能，
+         * 但任何复苏增长都无效。
+         *
+         * 浅死机值也不会被消耗。
+         */
+        if (state.isAnyStun()) {
             return state;
         }
 
@@ -78,8 +92,14 @@ public final class PossessionHandler {
         double shallowStun =
                 state.shallowStun();
 
+
         /*
-         * 先消耗浅死机值。
+         * ========================================
+         * 先由浅死机值抵消复苏增长
+         *
+         * 1 点浅死机
+         * = 抵消 1% 复苏增长
+         * ========================================
          */
         double consumed =
                 Math.min(
@@ -93,7 +113,10 @@ public final class PossessionHandler {
                 revivalPercent - consumed;
 
         /*
-         * 剩余部分才真正增加复苏值。
+         * ========================================
+         * 浅死机值抵消不完的部分，
+         * 才真正进入复苏值
+         * ========================================
          */
         revival +=
                 actualRevival / 100.0D;
@@ -107,6 +130,8 @@ public final class PossessionHandler {
         return new PossessedGhostState(
                 revival,
                 shallowStun,
+                state.stunTicks(),
+                state.permanentStun(),
                 state.lastAbilityUseTick()
         );
     }
@@ -200,9 +225,86 @@ public final class PossessionHandler {
         ).get(ghost);
     }
 
+    public static boolean testStun(
+            ServerPlayer player,
+            ResourceLocation ghost,
+            long ticks
+    ) {
+        Map<ResourceLocation, PossessedGhostState> data =
+                new HashMap<>(
+                        player.getData(
+                                QisPlan2.POSSESSED_GHOSTS
+                        )
+                );
 
-    public static void tick(ServerPlayer player) {
+        PossessedGhostState state =
+                data.get(ghost);
 
+        if (state == null) {
+            return false;
+        }
+
+        data.put(
+                ghost,
+                new PossessedGhostState(
+                        state.revival(),
+                        state.shallowStun(),
+                        Math.max(1L, ticks),
+                        false,
+                        state.lastAbilityUseTick()
+                )
+        );
+
+        player.setData(
+                QisPlan2.POSSESSED_GHOSTS,
+                data
+        );
+
+        return true;
+    }
+
+
+    public static boolean testPermanentStun(
+            ServerPlayer player,
+            ResourceLocation ghost
+    ) {
+        Map<ResourceLocation, PossessedGhostState> data =
+                new HashMap<>(
+                        player.getData(
+                                QisPlan2.POSSESSED_GHOSTS
+                        )
+                );
+
+        PossessedGhostState state =
+                data.get(ghost);
+
+        if (state == null) {
+            return false;
+        }
+
+        data.put(
+                ghost,
+                new PossessedGhostState(
+                        state.revival(),
+                        state.shallowStun(),
+                        0L,
+                        true,
+                        state.lastAbilityUseTick()
+                )
+        );
+
+        player.setData(
+                QisPlan2.POSSESSED_GHOSTS,
+                data
+        );
+
+        return true;
+    }
+
+
+    public static void tick(
+            ServerPlayer player
+    ) {
         Map<ResourceLocation, PossessedGhostState> oldData =
                 player.getData(QisPlan2.POSSESSED_GHOSTS);
 
@@ -213,10 +315,10 @@ public final class PossessionHandler {
         Map<ResourceLocation, PossessedGhostState> data =
                 new HashMap<>(oldData);
 
+        boolean changed = false;
+
         boolean isDay =
                 player.level().isDay();
-
-        boolean changed = false;
 
         for (var entry : oldData.entrySet()) {
 
@@ -232,50 +334,83 @@ public final class PossessionHandler {
             double shallowStun =
                     state.shallowStun();
 
+            long stunTicks =
+                    state.stunTicks();
+
+            boolean permanentStun =
+                    state.permanentStun();
+
             /*
              * ========================================
-             * 夜晚：复苏值 +0.1% / 秒
+             * 永久死机
              * ========================================
+             *
+             * 完全不复苏。
              */
-            if (!isDay) {
-                /*
-                 * 0.1% / 秒
-                 *
-                 * 先由浅死机值抵消。
-                 */
-                PossessedGhostState newState =
-                        addRevival(
-                                state,
-                                0.1D / 20.0D
-                        );
+            if (permanentStun) {
 
-                revival =
-                        newState.revival();
-
-                shallowStun =
-                        newState.shallowStun();
+                // 什么都不处理
 
             }
-
             /*
              * ========================================
-             * 白天：复苏值不变
+             * 普通死机
+             * ========================================
              *
-             * 浅死机值缓慢增加
+             * 死机期间：
+             * 不复苏
+             * 不增加浅死机
+             */
+            else if (stunTicks > 0) {
+
+                stunTicks--;
+
+            }
+            /*
+             * ========================================
+             * 正常状态
              * ========================================
              */
             else {
 
-                shallowStun +=
-                        DAY_SHALLOW_STUN_PER_TICK;
+                /*
+                 * 夜晚：
+                 * 每秒自然复苏 0.1%
+                 *
+                 * 复苏增长先由浅死机抵消。
+                 */
+                if (!isDay) {
+
+                    PossessedGhostState newState =
+                            addRevival(
+                                    state,
+                                    0.1D / 20.0D
+                            );
+
+                    revival =
+                            newState.revival();
+
+                    shallowStun =
+                            newState.shallowStun();
+                }
+
+                /*
+                 * 白天：
+                 * 不复苏
+                 * 浅死机缓慢增加
+                 */
+                else {
+
+                    shallowStun +=
+                            DAY_SHALLOW_STUN_PER_TICK;
+                }
             }
 
             /*
              * ========================================
-             * 100% → 玩家死亡
+             * 复苏达到 100%
              * ========================================
              */
-
             if (revival >= 1.0D) {
 
                 player.setHealth(0.0F);
@@ -283,24 +418,36 @@ public final class PossessionHandler {
                 return;
             }
 
-            if (revival != state.revival()
-                    || shallowStun != state.shallowStun()) {
+            /*
+             * 保存新的状态
+             */
+            PossessedGhostState newState =
+                    new PossessedGhostState(
+                            revival,
+                            shallowStun,
+                            stunTicks,
+                            permanentStun,
+                            state.lastAbilityUseTick()
+                    );
 
-                data.put(
-                        ghost,
-                        new PossessedGhostState(
-                                revival,
-                                shallowStun,
-                                state.lastAbilityUseTick()
-                        )
-                );
+            data.put(
+                    ghost,
+                    newState
+            );
+
+            /*
+             * 判断是否变化
+             */
+            if (revival != state.revival()
+                    || shallowStun != state.shallowStun()
+                    || stunTicks != state.stunTicks()
+                    || permanentStun != state.permanentStun()) {
 
                 changed = true;
             }
         }
 
         if (changed) {
-
             player.setData(
                     QisPlan2.POSSESSED_GHOSTS,
                     data
@@ -308,17 +455,16 @@ public final class PossessionHandler {
         }
 
         /*
+         * ========================================
          * 夜游鬼能力
+         * ========================================
          */
         if (hasGhost(
                 player,
                 NIGHT_WANDERER
         )) {
-
             updateNightWandererEffects(player);
-
         } else {
-
             removeNightWandererEffect(player);
         }
     }
@@ -435,6 +581,8 @@ public final class PossessionHandler {
                 new PossessedGhostState(
                         newState.revival(),
                         newState.shallowStun(),
+                        newState.stunTicks(),
+                        newState.permanentStun(),
                         now
                 );
 
