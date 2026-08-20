@@ -3,8 +3,12 @@ package com.qidate.qisplan2.ghost;
 import com.qidate.qisplan2.QisPlan2;
 import com.qidate.qisplan2.death.ModDamageTypes;
 import com.qidate.qisplan2.death.SupernaturalDeathHandler;
+import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.LivingEntity;
@@ -626,14 +630,35 @@ public final class PossessionHandler {
          * ========================================
          * 发动夜游鬼的灵异攻击
          * ========================================
-         *
-         * 夜游鬼驾驭后的攻击强度：
-         * 0.4
          */
+        if (player.level() instanceof ServerLevel serverLevel) {
+
+            serverLevel.sendParticles(
+                    ParticleTypes.SOUL,
+                    target.getX(),
+                    target.getY() + target.getBbHeight() * 0.5D,
+                    target.getZ(),
+                    12,
+                    0.35D,
+                    0.45D,
+                    0.35D,
+                    0.03D
+            );
+
+            serverLevel.playSound(
+                    null,
+                    target.blockPosition(),
+                    SoundEvents.SOUL_ESCAPE.value(),
+                    SoundSource.HOSTILE,
+                    0.8F,
+                    0.7F
+            );
+        }
+
         SupernaturalDeathHandler.tryKill(
                 target,
                 ModDamageTypes.ghostNightWanderer(player),
-                0.4D
+                0.6D
         );
 
         return true;

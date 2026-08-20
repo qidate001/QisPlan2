@@ -69,7 +69,10 @@ public class SupernaturalDeathHandler {
          * 灵异实体受到灵异攻击
          */
         if (entity instanceof SupernaturalEntity supernaturalEntity) {
-
+            QisPlan2.LOGGER.info(
+                    "[QisPlan2] 灵异攻击命中灵异实体：{}",
+                    entity.getName().getString()
+            );
             double defense =
                     Math.max(
                             0.01D,
