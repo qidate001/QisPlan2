@@ -20,8 +20,19 @@ public class GhostShroudItem extends ArmorItem {
         );
     }
 
+    /**
+     * 无限耐久。
+     */
     @Override
     public boolean isDamageable(ItemStack stack) {
+        return false;
+    }
+
+    /**
+     * 即使带有绑定诅咒，也不显示附魔光效。
+     */
+    @Override
+    public boolean isFoil(ItemStack stack) {
         return false;
     }
 }

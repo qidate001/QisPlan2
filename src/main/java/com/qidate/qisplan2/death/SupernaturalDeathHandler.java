@@ -5,6 +5,8 @@ import com.qidate.qisplan2.death.SupernaturalEntity;
 import com.qidate.qisplan2.item.GhostShroudItem;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.LivingEntity;
@@ -171,85 +173,27 @@ public class SupernaturalDeathHandler {
             LivingEntity entity,
             double strength
     ) {
-
-        QisPlan2.LOGGER.info(
-                "[QisPlan2][GhostShroud] ===== 开始检查鬼寿衣 ====="
-        );
-
-        QisPlan2.LOGGER.info(
-                "[QisPlan2][GhostShroud] 目标：{}",
-                entity.getName().getString()
-        );
-
-        QisPlan2.LOGGER.info(
-                "[QisPlan2][GhostShroud] 灵异强度：{}",
-                strength
-        );
-
         /*
-         * ========================================
-         * 1. 是否是玩家
-         * ========================================
+         * 必须是玩家。
          */
         if (!(entity instanceof ServerPlayer player)) {
-
-            QisPlan2.LOGGER.info(
-                    "[QisPlan2][GhostShroud] 目标不是 ServerPlayer，保护结束"
-            );
-
             return false;
         }
 
-        QisPlan2.LOGGER.info(
-                "[QisPlan2][GhostShroud] 确认目标是玩家：{}",
-                player.getName().getString()
-        );
-
         /*
-         * ========================================
-         * 2. 获取胸甲
-         * ========================================
+         * 必须穿着鬼寿衣。
          */
         ItemStack chest =
                 player.getItemBySlot(
                         EquipmentSlot.CHEST
                 );
 
-        QisPlan2.LOGGER.info(
-                "[QisPlan2][GhostShroud] 胸甲物品：{}",
-                chest.isEmpty()
-                        ? "EMPTY"
-                        : chest.getItem().toString()
-        );
-
-        QisPlan2.LOGGER.info(
-                "[QisPlan2][GhostShroud] 胸甲数量：{}",
-                chest.getCount()
-        );
-
-        /*
-         * ========================================
-         * 3. 是否是鬼寿衣
-         * ========================================
-         */
-        if (!(chest.getItem()
-                instanceof GhostShroudItem)) {
-
-            QisPlan2.LOGGER.info(
-                    "[QisPlan2][GhostShroud] 胸甲不是 GhostShroudItem，保护结束"
-            );
-
+        if (!(chest.getItem() instanceof GhostShroudItem)) {
             return false;
         }
 
-        QisPlan2.LOGGER.info(
-                "[QisPlan2][GhostShroud] ✅ 检测到鬼寿衣！"
-        );
-
         /*
-         * ========================================
-         * 4. 获取最大生命属性
-         * ========================================
+         * 获取最大生命属性。
          */
         AttributeInstance maxHealth =
                 player.getAttribute(
@@ -257,47 +201,32 @@ public class SupernaturalDeathHandler {
                 );
 
         if (maxHealth == null) {
-
-            QisPlan2.LOGGER.error(
-                    "[QisPlan2][GhostShroud] ❌ 找不到 MAX_HEALTH 属性"
-            );
-
             return false;
         }
 
-        QisPlan2.LOGGER.info(
-                "[QisPlan2][GhostShroud] 当前最大生命：{}",
-                player.getMaxHealth()
-        );
-
         /*
          * ========================================
-         * 5. 检查本次消耗
+         * 计算本次最大生命消耗
          * ========================================
+         *
+         * 最低消耗 1 点。
          */
         double cost =
-                strength;
-
-        QisPlan2.LOGGER.info(
-                "[QisPlan2][GhostShroud] 本次生命上限消耗：{}",
-                cost
-        );
+                Math.max(
+                        1.0D,
+                        strength
+                );
 
         /*
          * 至少保留 1 点最大生命。
          */
         if (player.getMaxHealth() - cost < 1.0D) {
-
-            QisPlan2.LOGGER.info(
-                    "[QisPlan2][GhostShroud] ❌ 最大生命不足，无法抵挡"
-            );
-
             return false;
         }
 
         /*
          * ========================================
-         * 6. 获取当前鬼寿衣累计损耗
+         * 获取鬼寿衣此前累计造成的最大生命损失
          * ========================================
          */
         double currentLoss = 0.0D;
@@ -308,38 +237,19 @@ public class SupernaturalDeathHandler {
                 );
 
         if (modifier != null) {
-
             currentLoss =
                     -modifier.amount();
-
-            QisPlan2.LOGGER.info(
-                    "[QisPlan2][GhostShroud] 当前累计生命上限损失：{}",
-                    currentLoss
-            );
-
-        } else {
-
-            QisPlan2.LOGGER.info(
-                    "[QisPlan2][GhostShroud] 当前没有生命上限损失 Modifier"
-            );
         }
 
         /*
-         * ========================================
-         * 7. 计算新的损失
-         * ========================================
+         * 累加本次消耗。
          */
         double newLoss =
                 currentLoss + cost;
 
-        QisPlan2.LOGGER.info(
-                "[QisPlan2][GhostShroud] 新的累计生命上限损失：{}",
-                newLoss
-        );
-
         /*
          * ========================================
-         * 8. 添加属性 Modifier
+         * 永久降低最大生命
          * ========================================
          */
         maxHealth.addOrReplacePermanentModifier(
@@ -350,38 +260,30 @@ public class SupernaturalDeathHandler {
                 )
         );
 
-        QisPlan2.LOGGER.info(
-                "[QisPlan2][GhostShroud] ✅ MAX_HEALTH Modifier 已更新"
-        );
-
-        QisPlan2.LOGGER.info(
-                "[QisPlan2][GhostShroud] 新最大生命：{}",
-                player.getMaxHealth()
-        );
-
         /*
-         * ========================================
-         * 9. 当前生命不能超过新的上限
-         * ========================================
+         * 最大生命下降后，
+         * 当前生命不能超过新的上限。
          */
         if (player.getHealth()
                 > player.getMaxHealth()) {
-
-            QisPlan2.LOGGER.info(
-                    "[QisPlan2][GhostShroud] 当前生命超过新上限，进行压制"
-            );
 
             player.setHealth(
                     player.getMaxHealth()
             );
         }
 
-        QisPlan2.LOGGER.info(
-                "[QisPlan2][GhostShroud] ✅ 鬼寿衣成功抵挡灵异攻击"
-        );
-
-        QisPlan2.LOGGER.info(
-                "[QisPlan2][GhostShroud] ===== 检查结束 ====="
+        /*
+         * 鬼寿衣成功抵挡的音效。
+         */
+        player.level().playSound(
+                null,
+                player.getX(),
+                player.getY(),
+                player.getZ(),
+                SoundEvents.SHIELD_BLOCK,
+                SoundSource.PLAYERS,
+                1.0F,
+                1.0F
         );
 
         return true;
