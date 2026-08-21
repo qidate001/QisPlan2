@@ -9,6 +9,7 @@ import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 
 public class GhostManorMarkerBlockEntity extends BlockEntity {
+    private static final double SPAWN_EXCLUSION_RADIUS = 500.0D;
 
     public GhostManorMarkerBlockEntity(
             BlockPos pos,
@@ -35,11 +36,45 @@ public class GhostManorMarkerBlockEntity extends BlockEntity {
             return;
         }
 
-        QisPlan2.LOGGER.info(
-                "[QisPlan2] Ghost Manor Marker tick: {}",
-                pos
-        );
+        /*
+         * ========================================
+         * 出生点禁区
+         * ========================================
+         */
+        BlockPos spawnPos =
+                serverLevel.getSharedSpawnPos();
 
+        double distanceSqr =
+                pos.distSqr(spawnPos);
+
+        double radiusSqr =
+                SPAWN_EXCLUSION_RADIUS
+                        * SPAWN_EXCLUSION_RADIUS;
+
+        if (distanceSqr < radiusSqr) {
+
+            QisPlan2.LOGGER.info(
+                    "[QisPlan2] 鬼庄园候选点位于出生点禁区内，取消生成：{}",
+                    pos
+            );
+
+            /*
+             * 只删除 Marker，
+             * 不启动大型结构生成。
+             */
+            serverLevel.removeBlock(
+                    pos,
+                    false
+            );
+
+            return;
+        }
+
+        /*
+         * ========================================
+         * 正常生成
+         * ========================================
+         */
         boolean started =
                 GhostManorGenerationManager.start(
                         serverLevel,
@@ -47,11 +82,6 @@ public class GhostManorMarkerBlockEntity extends BlockEntity {
                 );
 
         if (started) {
-
-            QisPlan2.LOGGER.info(
-                    "[QisPlan2] Ghost Manor Marker 已接管：{}",
-                    pos
-            );
 
             serverLevel.removeBlock(
                     pos,

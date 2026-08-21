@@ -15,15 +15,20 @@ import com.qidate.qisplan2.item.GhostCoin;
 import com.qidate.qisplan2.structure.GhostManorGenerationManager;
 import com.qidate.qisplan2.structure.StructureSplitter;
 //import com.qidate.qisplan2.util.StructureUtil;
+import net.minecraft.Util;
 import net.minecraft.commands.Commands;
 import net.minecraft.commands.arguments.ResourceLocationArgument;
+import net.minecraft.core.Holder;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.sounds.SoundEvents;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.MobCategory;
-import net.minecraft.world.item.SpawnEggItem;
+import net.minecraft.world.item.*;
+import net.minecraft.world.item.crafting.Ingredient;
 import net.minecraft.world.level.GameRules;
 import net.minecraft.world.level.block.SoundType;
 import net.minecraft.world.level.block.entity.BlockEntityType;
@@ -42,9 +47,6 @@ import com.mojang.logging.LogUtils;
 
 import net.minecraft.core.registries.Registries;
 import net.minecraft.network.chat.Component;
-import net.minecraft.world.item.BlockItem;
-import net.minecraft.world.item.CreativeModeTab;
-import net.minecraft.world.item.Item;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.minecraft.world.level.material.MapColor;
@@ -60,10 +62,7 @@ import net.neoforged.neoforge.registries.DeferredHolder;
 import net.neoforged.neoforge.registries.DeferredItem;
 import net.neoforged.neoforge.registries.DeferredRegister;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 // The value here should match an entry in the META-INF/neoforge.mods.toml file
 @Mod(QisPlan2.MODID)
@@ -80,6 +79,11 @@ public class QisPlan2 {
     public static final DeferredRegister<BlockEntityType<?>> BLOCK_ENTITY_TYPES =
             DeferredRegister.create(
                     Registries.BLOCK_ENTITY_TYPE,
+                    MODID
+            );
+    public static final DeferredRegister<ArmorMaterial> ARMOR_MATERIALS =
+            DeferredRegister.create(
+                    BuiltInRegistries.ARMOR_MATERIAL,
                     MODID
             );
 
@@ -259,6 +263,72 @@ public class QisPlan2 {
                             .sound(SoundType.GRASS)
             );
 
+    // 鬼寿衣
+    public static final DeferredHolder<
+            ArmorMaterial,
+            ArmorMaterial
+            > GHOST_SHROUD_MATERIAL =
+            ARMOR_MATERIALS.register(
+                    "ghost_shroud",
+                    () -> new ArmorMaterial(
+                            Util.make(
+                                    new EnumMap<>(
+                                            ArmorItem.Type.class
+                                    ),
+                                    map -> {
+                                        map.put(
+                                                ArmorItem.Type.BOOTS,
+                                                0
+                                        );
+
+                                        map.put(
+                                                ArmorItem.Type.LEGGINGS,
+                                                0
+                                        );
+
+                                        map.put(
+                                                ArmorItem.Type.CHESTPLATE,
+                                                4
+                                        );
+
+                                        map.put(
+                                                ArmorItem.Type.HELMET,
+                                                0
+                                        );
+
+                                        map.put(
+                                                ArmorItem.Type.BODY,
+                                                0
+                                        );
+                                    }
+                            ),
+                            10,
+                            SoundEvents.ARMOR_EQUIP_LEATHER,
+                            () -> Ingredient.EMPTY,
+                            List.of(
+                                    new ArmorMaterial.Layer(
+                                            ResourceLocation.fromNamespaceAndPath(
+                                                    MODID,
+                                                    "ghost_shroud"
+                                            )
+                                    )
+                            ),
+                            0.0F,
+                            0.0F
+                    )
+            );
+
+    public static final DeferredItem<ArmorItem> GHOST_SHROUD =
+            ITEMS.register(
+                    "ghost_shroud",
+                    () -> new ArmorItem(
+                            GHOST_SHROUD_MATERIAL,
+                            ArmorItem.Type.CHESTPLATE,
+                            new Item.Properties()
+                                    .stacksTo(1)
+                    )
+            );
+
     public static final DeferredItem<BlockItem> GHOST_GRASS_ITEM =
             ITEMS.registerSimpleBlockItem(GHOST_GRASS);
 
@@ -307,6 +377,7 @@ public class QisPlan2 {
                         output.accept(GHOST_DOOR_ITEM);
                         output.accept(GHOST_GRASS_ITEM);
                         output.accept(NIGHT_WANDERER_SPAWN_EGG);
+                        output.accept(GHOST_SHROUD);
                     })
                     .build()
             );
@@ -338,6 +409,7 @@ public class QisPlan2 {
         CREATIVE_MODE_TABS.register(modEventBus);
         ENTITY_TYPES.register(modEventBus);
         BLOCK_ENTITY_TYPES.register(modEventBus);
+        ARMOR_MATERIALS.register(modEventBus);
 
         // 实体属性注册
         modEventBus.addListener(this::onEntityAttributeCreation);
