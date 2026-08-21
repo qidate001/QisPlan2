@@ -1,0 +1,14 @@
+{
+  "structures": [
+    {
+      "structure": "qisplan2:ghost_manor",
+      "weight": 1
+    }
+  ],
+  "placement": {
+    "type": "minecraft:random_spread",
+    "spacing": 625,
+    "separation": 624,
+    "salt": 92837461
+  }
+}

@@ -2,10 +2,7 @@ package com.qidate.qisplan2;
 
 import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.serialization.Codec;
-import com.qidate.qisplan2.block.GhostCarpetBlock;
-import com.qidate.qisplan2.block.GhostDoorBlock;
-import com.qidate.qisplan2.block.GhostGrassBlock;
-import com.qidate.qisplan2.block.GhostStoveBlock;
+import com.qidate.qisplan2.block.*;
 import com.qidate.qisplan2.core.QisConfig;
 import com.qidate.qisplan2.death.SupernaturalEntity;
 import com.qidate.qisplan2.entity.NightWanderer;
@@ -84,21 +81,6 @@ public class QisPlan2 {
             DeferredRegister.create(NeoForgeRegistries.ATTACHMENT_TYPES, MODID);
 
     /**
-     * 鬼庙生成检查标记
-     *
-     * true  = 这个候选区块已经处理过
-     * false = 尚未处理
-     */
-    public static final DeferredHolder<AttachmentType<?>, AttachmentType<Boolean>>
-            GHOST_TEMPLE_GENERATED =
-            ATTACHMENT_TYPES.register(
-                    "ghost_temple_generated",
-                    () -> AttachmentType.builder(() -> false)
-                            .serialize(Codec.BOOL)
-                            .build()
-            );
-
-    /**
      * 玩家当前驾驭的鬼及其状态。
      *
      * Key：
@@ -137,6 +119,19 @@ public class QisPlan2 {
                                     )
                             )
                             .build()
+            );
+
+    // 鬼庄园生成占位符方块
+    public static final DeferredHolder<Block, GhostManorMarkerBlock>
+            GHOST_MANOR_MARKER =
+            BLOCKS.register(
+                    "ghost_manor_marker",
+                    () -> new GhostManorMarkerBlock(
+                            BlockBehaviour.Properties.of()
+                                    .noLootTable()
+                                    .noOcclusion()
+                                    .strength(-1.0F, 3600000.0F)
+                    )
             );
 
     // 必死诅咒层数（0~10，同步到客户端供骷髅条显示）
