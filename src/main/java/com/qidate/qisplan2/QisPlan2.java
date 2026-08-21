@@ -14,8 +14,10 @@ import com.qidate.qisplan2.ghost.PossessedGhostState;
 import com.qidate.qisplan2.ghost.PossessionHandler;
 import com.qidate.qisplan2.item.DeathCurseSword;
 import com.qidate.qisplan2.item.GhostCoin;
+import com.qidate.qisplan2.structure.StructureSplitter;
 import com.qidate.qisplan2.util.StructureUtil;
 import net.minecraft.commands.Commands;
+import net.minecraft.commands.arguments.ResourceLocationArgument;
 import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
@@ -738,6 +740,73 @@ public class QisPlan2 {
                                                     );
 
                                             return 1;
+                                        })
+                        )
+        );
+
+        event.getDispatcher().register(
+                Commands.literal("qis_split_structure")
+                        .requires(source -> source.hasPermission(2))
+                        .then(
+                                Commands.argument(
+                                                "structure",
+                                                ResourceLocationArgument.id()
+                                        )
+                                        .executes(context -> {
+
+                                            var source =
+                                                    context.getSource();
+
+                                            ResourceLocation sourceId =
+                                                    ResourceLocationArgument.getId(
+                                                            context,
+                                                            "structure"
+                                                    );
+
+                                            try {
+
+                                                int count =
+                                                        StructureSplitter.split(
+                                                                source.getServer(),
+                                                                sourceId,
+                                                                ResourceLocation.fromNamespaceAndPath(
+                                                                        sourceId.getNamespace(),
+                                                                        sourceId.getPath()
+                                                                                + "_parts"
+                                                                )
+                                                        );
+
+                                                source.sendSuccess(
+                                                        () -> Component.literal(
+                                                                "结构拆分完成："
+                                                                        + sourceId
+                                                                        + "\n"
+                                                                        + "共生成 "
+                                                                        + count
+                                                                        + " 个区块结构。"
+                                                        ),
+                                                        true
+                                                );
+
+                                                return count;
+
+                                            } catch (Exception e) {
+
+                                                QisPlan2.LOGGER.error(
+                                                        "拆分结构失败："
+                                                                + sourceId,
+                                                        e
+                                                );
+
+                                                source.sendFailure(
+                                                        Component.literal(
+                                                                "结构拆分失败："
+                                                                        + e.getMessage()
+                                                        )
+                                                );
+
+                                                return 0;
+                                            }
                                         })
                         )
         );
