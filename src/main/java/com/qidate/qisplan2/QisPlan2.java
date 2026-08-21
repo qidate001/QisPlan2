@@ -3,6 +3,7 @@ package com.qidate.qisplan2;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.serialization.Codec;
 import com.qidate.qisplan2.block.*;
+import com.qidate.qisplan2.block.entity.GhostManorMarkerBlockEntity;
 import com.qidate.qisplan2.core.QisConfig;
 import com.qidate.qisplan2.death.SupernaturalEntity;
 import com.qidate.qisplan2.entity.NightWanderer;
@@ -25,6 +26,7 @@ import net.minecraft.world.entity.MobCategory;
 import net.minecraft.world.item.SpawnEggItem;
 import net.minecraft.world.level.GameRules;
 import net.minecraft.world.level.block.SoundType;
+import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.properties.BlockSetType;
 import net.minecraft.world.phys.AABB;
 import net.neoforged.api.distmarker.Dist;
@@ -73,6 +75,11 @@ public class QisPlan2 {
     public static final DeferredRegister<EntityType<?>> ENTITY_TYPES =
             DeferredRegister.create(
                     Registries.ENTITY_TYPE,
+                    MODID
+            );
+    public static final DeferredRegister<BlockEntityType<?>> BLOCK_ENTITY_TYPES =
+            DeferredRegister.create(
+                    Registries.BLOCK_ENTITY_TYPE,
                     MODID
             );
 
@@ -132,6 +139,18 @@ public class QisPlan2 {
                                     .noOcclusion()
                                     .strength(-1.0F, 3600000.0F)
                     )
+            );
+
+    public static final DeferredHolder<
+            BlockEntityType<?>,
+            BlockEntityType<GhostManorMarkerBlockEntity>
+            > GHOST_MANOR_MARKER_BLOCK_ENTITY =
+            BLOCK_ENTITY_TYPES.register(
+                    "ghost_manor_marker",
+                    () -> BlockEntityType.Builder.of(
+                            GhostManorMarkerBlockEntity::new,
+                            GHOST_MANOR_MARKER.get()
+                    ).build(null)
             );
 
     // 必死诅咒层数（0~10，同步到客户端供骷髅条显示）
@@ -318,6 +337,7 @@ public class QisPlan2 {
         ATTACHMENT_TYPES.register(modEventBus);
         CREATIVE_MODE_TABS.register(modEventBus);
         ENTITY_TYPES.register(modEventBus);
+        BLOCK_ENTITY_TYPES.register(modEventBus);
 
         // 实体属性注册
         modEventBus.addListener(this::onEntityAttributeCreation);

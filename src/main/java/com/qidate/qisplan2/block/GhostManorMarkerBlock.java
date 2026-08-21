@@ -1,87 +1,53 @@
 package com.qidate.qisplan2.block;
 
-import com.qidate.qisplan2.structure.GhostManorGenerationManager;
+import com.qidate.qisplan2.block.entity.GhostManorMarkerBlockEntity;
+import com.qidate.qisplan2.QisPlan2;
+import com.mojang.serialization.MapCodec;
 import net.minecraft.core.BlockPos;
-import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.BaseEntityBlock;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.entity.BlockEntityTicker;
+import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
+import org.jetbrains.annotations.Nullable;
 
-public class GhostManorMarkerBlock extends Block {
+public class GhostManorMarkerBlock extends BaseEntityBlock {
 
-    public GhostManorMarkerBlock(
-            Properties properties
-    ) {
+    public GhostManorMarkerBlock(Properties properties) {
         super(properties);
     }
 
     @Override
-    public void onPlace(
-            BlockState state,
-            Level level,
+    protected MapCodec<? extends BaseEntityBlock> codec() {
+        return simpleCodec(GhostManorMarkerBlock::new);
+    }
+
+    @Override
+    public BlockEntity newBlockEntity(
             BlockPos pos,
-            BlockState oldState,
-            boolean movedByPiston
+            BlockState state
     ) {
-
-
-        super.onPlace(
-                state,
-                level,
+        return new GhostManorMarkerBlockEntity(
                 pos,
-                oldState,
-                movedByPiston
+                state
         );
+    }
 
-        /*
-         * 只处理真正的服务器世界。
-         */
-        if (!(level instanceof ServerLevel serverLevel)) {
-            return;
+    @Override
+    public <T extends BlockEntity> @Nullable BlockEntityTicker<T> getTicker(
+            Level level,
+            BlockState state,
+            BlockEntityType<T> blockEntityType
+    ) {
+        if (level.isClientSide()) {
+            return null;
         }
 
-        /*
-         * 防止同一种方块重新放置时重复触发。
-         */
-        if (oldState.is(this)) {
-            return;
-        }
-
-        /*
-         * ========================================
-         * 不要在结构生成过程中立即启动庄园生成。
-         *
-         * 延迟到下一次服务器任务执行，
-         * 避免在 Chunk 生成流程里面再次请求 Chunk。
-         * ========================================
-         */
-        serverLevel.getServer().execute(() -> {
-
-            /*
-             * Marker 可能已经不存在了。
-             */
-            if (!serverLevel
-                    .getBlockState(pos)
-                    .is(this)) {
-                return;
-            }
-
-            /*
-             * 启动鬼庄园大型结构生成。
-             */
-            boolean started =
-                    GhostManorGenerationManager.start(
-                            serverLevel,
-                            pos
-                    );
-
-            /*
-             * Marker 自己删除。
-             */
-            serverLevel.removeBlock(
-                    pos,
-                    false
-            );
-        });
+        return createTickerHelper(
+                blockEntityType,
+                QisPlan2.GHOST_MANOR_MARKER_BLOCK_ENTITY.get(),
+                GhostManorMarkerBlockEntity::serverTick
+        );
     }
 }
