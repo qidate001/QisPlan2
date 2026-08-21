@@ -1,0 +1,12 @@
+{
+  "replace": false,
+  "values": [
+    "minecraft:plains",
+    "minecraft:forest",
+    "minecraft:birch_forest",
+    "minecraft:dark_forest",
+    "minecraft:savanna",
+    "minecraft:savanna_plateau",
+    "minecraft:meadow"
+  ]
+}
