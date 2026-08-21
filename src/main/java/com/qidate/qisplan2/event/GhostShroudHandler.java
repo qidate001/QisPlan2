@@ -2,9 +2,12 @@ package com.qidate.qisplan2.event;
 
 import com.qidate.qisplan2.QisPlan2;
 import com.qidate.qisplan2.item.GhostShroudItem;
+import net.minecraft.core.component.DataComponents;
+import net.minecraft.core.registries.Registries;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.enchantment.ItemEnchantments;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.entity.living.LivingEquipmentChangeEvent;
@@ -37,6 +40,11 @@ public class GhostShroudHandler {
                 instanceof GhostShroudItem)) {
             return;
         }
+
+        ensureBindingCurse(
+                player,
+                chest
+        );
 
         /*
          * 每 100 tick = 5 秒。
@@ -123,6 +131,61 @@ public class GhostShroudHandler {
         QisPlan2.LOGGER.info(
                 "[QisPlan2] 鬼寿衣阻止脱下：{}",
                 player.getName().getString()
+        );
+    }
+
+    private static void ensureBindingCurse(
+            ServerPlayer player,
+            ItemStack stack
+    ) {
+        if (!(stack.getItem() instanceof GhostShroudItem)) {
+            return;
+        }
+
+        /*
+         * 已经有绑定诅咒就不重复处理。
+         */
+        ItemEnchantments current =
+                stack.getOrDefault(
+                        DataComponents.ENCHANTMENTS,
+                        ItemEnchantments.EMPTY
+                );
+
+        var registry =
+                player.level()
+                        .registryAccess()
+                        .lookupOrThrow(
+                                Registries.ENCHANTMENT
+                        );
+
+        var binding =
+                registry.getOrThrow(
+                        net.minecraft.world.item.enchantment.Enchantments.BINDING_CURSE
+                );
+
+        /*
+         * 已经存在绑定诅咒。
+         */
+        if (current.getLevel(binding) > 0) {
+            return;
+        }
+
+        /*
+         * 构造新的附魔数据。
+         */
+        ItemEnchantments.Mutable mutable =
+                new ItemEnchantments.Mutable(
+                        current
+                );
+
+        mutable.set(
+                binding,
+                1
+        );
+
+        stack.set(
+                DataComponents.ENCHANTMENTS,
+                mutable.toImmutable()
         );
     }
 }
