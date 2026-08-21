@@ -33,7 +33,7 @@ public class DeathCurseHandler {
     /**
      * 灵异袭击强度
      */
-    private static final double SUPERNATURAL_ATTACK_STRENGTH = 1.5D;
+    private static final double SUPERNATURAL_ATTACK_STRENGTH = 3.0D;
 
 
     /**

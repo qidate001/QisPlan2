@@ -658,7 +658,7 @@ public final class PossessionHandler {
         SupernaturalDeathHandler.tryKill(
                 target,
                 ModDamageTypes.ghostNightWanderer(player),
-                0.6D
+                4.0D
         );
 
         return true;
