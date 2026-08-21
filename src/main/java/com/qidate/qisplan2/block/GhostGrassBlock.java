@@ -27,7 +27,7 @@ public class GhostGrassBlock extends Block {
     /**
      * 灵异袭击强度
      */
-    private static final double SUPERNATURAL_ATTACK_STRENGTH = 0.3D;
+    private static final double SUPERNATURAL_ATTACK_STRENGTH = 0.7D;
 
     public GhostGrassBlock(Properties properties) {
         super(properties);

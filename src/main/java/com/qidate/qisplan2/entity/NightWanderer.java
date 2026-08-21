@@ -96,8 +96,8 @@ public class NightWanderer
     /**
      * 灵异攻击强度
      */
-    private static final double SUPERNATURAL_ATTACK_STRENGTH = 0.6D;
-    private static final double SUPERNATURAL_DEFENSE = 1.0D;
+    private static final double SUPERNATURAL_ATTACK_STRENGTH = 4.0D;
+    private static final double SUPERNATURAL_DEFENSE = 6.0D;
 
     /**
      * 永久储存NBT

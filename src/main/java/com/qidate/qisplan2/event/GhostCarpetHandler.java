@@ -37,7 +37,7 @@ public class GhostCarpetHandler {
     /**
      * 灵异强度
      */
-    private static final double SUPERNATURAL_ATTACK_STRENGTH = 1.0D;
+    private static final double SUPERNATURAL_ATTACK_STRENGTH = 2.0D;
 
 
     @SubscribeEvent
