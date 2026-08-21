@@ -7,11 +7,13 @@ import com.qidate.qisplan2.block.entity.GhostManorMarkerBlockEntity;
 import com.qidate.qisplan2.core.QisConfig;
 import com.qidate.qisplan2.death.SupernaturalEntity;
 import com.qidate.qisplan2.entity.NightWanderer;
+import com.qidate.qisplan2.event.GhostShroudHandler;
 import com.qidate.qisplan2.event.PossessionHudOverlay;
 import com.qidate.qisplan2.ghost.PossessedGhostState;
 import com.qidate.qisplan2.ghost.PossessionHandler;
 import com.qidate.qisplan2.item.DeathCurseSword;
 import com.qidate.qisplan2.item.GhostCoin;
+import com.qidate.qisplan2.item.GhostShroudItem;
 import com.qidate.qisplan2.structure.GhostManorGenerationManager;
 import com.qidate.qisplan2.structure.StructureSplitter;
 //import com.qidate.qisplan2.util.StructureUtil;
@@ -19,6 +21,7 @@ import net.minecraft.Util;
 import net.minecraft.commands.Commands;
 import net.minecraft.commands.arguments.ResourceLocationArgument;
 import net.minecraft.core.Holder;
+import net.minecraft.core.component.DataComponents;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.resources.ResourceLocation;
@@ -29,6 +32,8 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.MobCategory;
 import net.minecraft.world.item.*;
 import net.minecraft.world.item.crafting.Ingredient;
+import net.minecraft.world.item.enchantment.Enchantments;
+import net.minecraft.world.item.enchantment.ItemEnchantments;
 import net.minecraft.world.level.GameRules;
 import net.minecraft.world.level.block.SoundType;
 import net.minecraft.world.level.block.entity.BlockEntityType;
@@ -37,6 +42,7 @@ import net.minecraft.world.phys.AABB;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.fml.config.ModConfig;
 import net.neoforged.neoforge.attachment.AttachmentType;
+import net.neoforged.neoforge.event.ModifyDefaultComponentsEvent;
 import net.neoforged.neoforge.event.RegisterCommandsEvent;
 import net.neoforged.neoforge.event.entity.EntityAttributeCreationEvent;
 import net.neoforged.neoforge.registries.NeoForgeRegistries;
@@ -61,6 +67,7 @@ import net.neoforged.neoforge.registries.DeferredBlock;
 import net.neoforged.neoforge.registries.DeferredHolder;
 import net.neoforged.neoforge.registries.DeferredItem;
 import net.neoforged.neoforge.registries.DeferredRegister;
+import net.minecraft.core.registries.Registries;
 
 import java.util.*;
 
@@ -318,16 +325,18 @@ public class QisPlan2 {
                     )
             );
 
-    public static final DeferredItem<ArmorItem> GHOST_SHROUD =
+    public static final DeferredItem<GhostShroudItem> GHOST_SHROUD =
             ITEMS.register(
                     "ghost_shroud",
-                    () -> new ArmorItem(
+                    () -> new GhostShroudItem(
                             GHOST_SHROUD_MATERIAL,
                             ArmorItem.Type.CHESTPLATE,
                             new Item.Properties()
                                     .stacksTo(1)
                     )
             );
+
+
 
     public static final DeferredItem<BlockItem> GHOST_GRASS_ITEM =
             ITEMS.registerSimpleBlockItem(GHOST_GRASS);
@@ -414,6 +423,11 @@ public class QisPlan2 {
         // 实体属性注册
         modEventBus.addListener(this::onEntityAttributeCreation);
 
+//        modEventBus.addListener(QisPlan2::modifyDefaultItemComponents);
+//        NeoForge.EVENT_BUS.addListener(
+//                GhostShroudHandler::onPlayerTick
+//        );
+
         // 驭鬼 HUD 注册
         NeoForge.EVENT_BUS.addListener(PossessionHudOverlay::render);
 
@@ -423,6 +437,37 @@ public class QisPlan2 {
         // 普通 NeoForge 游戏事件
         NeoForge.EVENT_BUS.register(this);
     }
+
+//    public static void modifyDefaultItemComponents(
+//            ModifyDefaultComponentsEvent event
+//    ) {
+//        event.modify(
+//                GHOST_SHROUD,
+//                builder -> {
+//
+//                    var binding =
+//                            Registries.ENCHANTMENT
+//                                    .getHolderOrThrow(
+//                                            Enchantments.BINDING_CURSE
+//                                    );
+//
+//                    var mutable =
+//                            new ItemEnchantments.Mutable(
+//                                    ItemEnchantments.EMPTY
+//                            );
+//
+//                    mutable.set(
+//                            binding,
+//                            1
+//                    );
+//
+//                    builder.set(
+//                            DataComponents.ENCHANTMENTS,
+//                            mutable.toImmutable()
+//                    );
+//                }
+//        );
+//    }
 
     private void onEntityAttributeCreation(
             EntityAttributeCreationEvent event
