@@ -14,8 +14,9 @@ import com.qidate.qisplan2.ghost.PossessedGhostState;
 import com.qidate.qisplan2.ghost.PossessionHandler;
 import com.qidate.qisplan2.item.DeathCurseSword;
 import com.qidate.qisplan2.item.GhostCoin;
+import com.qidate.qisplan2.structure.GhostManorGenerationManager;
 import com.qidate.qisplan2.structure.StructureSplitter;
-import com.qidate.qisplan2.util.StructureUtil;
+//import com.qidate.qisplan2.util.StructureUtil;
 import net.minecraft.commands.Commands;
 import net.minecraft.commands.arguments.ResourceLocationArgument;
 import net.minecraft.network.codec.ByteBufCodecs;
@@ -809,6 +810,45 @@ public class QisPlan2 {
                                             }
                                         })
                         )
+        );
+
+        event.getDispatcher().register(
+                Commands.literal("qis_generate_ghost_manor")
+                        .requires(source -> source.hasPermission(2))
+                        .executes(context -> {
+
+                            ServerPlayer player =
+                                    context.getSource()
+                                            .getPlayerOrException();
+
+                            boolean success =
+                                    GhostManorGenerationManager.start(
+                                            player.serverLevel(),
+                                            player.blockPosition()
+                                    );
+
+                            if (!success) {
+
+                                context.getSource()
+                                        .sendFailure(
+                                                Component.literal(
+                                                        "现在已经有一个鬼庄园正在生成。"
+                                                )
+                                        );
+
+                                return 0;
+                            }
+
+                            context.getSource()
+                                    .sendSuccess(
+                                            () -> Component.literal(
+                                                    "已开始生成鬼庄园。"
+                                            ),
+                                            true
+                                    );
+
+                            return 1;
+                        })
         );
     }
 
