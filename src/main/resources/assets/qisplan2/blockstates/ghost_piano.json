@@ -1,0 +1,35 @@
+{
+  "variants": {
+    "part=left,facing=north": {
+      "model": "qisplan2:block/ghost_piano_left"
+    },
+    "part=left,facing=south": {
+      "model": "qisplan2:block/ghost_piano_left",
+      "y": 180
+    },
+    "part=left,facing=west": {
+      "model": "qisplan2:block/ghost_piano_left",
+      "y": 270
+    },
+    "part=left,facing=east": {
+      "model": "qisplan2:block/ghost_piano_left",
+      "y": 90
+    },
+
+    "part=right,facing=north": {
+      "model": "qisplan2:block/ghost_piano_right"
+    },
+    "part=right,facing=south": {
+      "model": "qisplan2:block/ghost_piano_right",
+      "y": 180
+    },
+    "part=right,facing=west": {
+      "model": "qisplan2:block/ghost_piano_right",
+      "y": 270
+    },
+    "part=right,facing=east": {
+      "model": "qisplan2:block/ghost_piano_right",
+      "y": 90
+    }
+  }
+}
