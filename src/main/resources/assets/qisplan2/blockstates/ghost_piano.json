@@ -1,33 +1,33 @@
 {
   "variants": {
-    "part=left,facing=north": {
+    "facing=north,part=left": {
       "model": "qisplan2:block/ghost_piano_left"
     },
-    "part=left,facing=south": {
+    "facing=south,part=left": {
       "model": "qisplan2:block/ghost_piano_left",
       "y": 180
     },
-    "part=left,facing=west": {
+    "facing=west,part=left": {
       "model": "qisplan2:block/ghost_piano_left",
       "y": 270
     },
-    "part=left,facing=east": {
+    "facing=east,part=left": {
       "model": "qisplan2:block/ghost_piano_left",
       "y": 90
     },
 
-    "part=right,facing=north": {
+    "facing=north,part=right": {
       "model": "qisplan2:block/ghost_piano_right"
     },
-    "part=right,facing=south": {
+    "facing=south,part=right": {
       "model": "qisplan2:block/ghost_piano_right",
       "y": 180
     },
-    "part=right,facing=west": {
+    "facing=west,part=right": {
       "model": "qisplan2:block/ghost_piano_right",
       "y": 270
     },
-    "part=right,facing=east": {
+    "facing=east,part=right": {
       "model": "qisplan2:block/ghost_piano_right",
       "y": 90
     }

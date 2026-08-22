@@ -4,6 +4,7 @@ import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.serialization.Codec;
 import com.qidate.qisplan2.block.*;
 import com.qidate.qisplan2.block.entity.GhostManorMarkerBlockEntity;
+import com.qidate.qisplan2.block.entity.GhostPianoBlockEntity;
 import com.qidate.qisplan2.core.QisConfig;
 import com.qidate.qisplan2.death.SupernaturalEntity;
 import com.qidate.qisplan2.entity.NightWanderer;
@@ -375,6 +376,18 @@ public class QisPlan2 {
                             GHOST_PIANO_BLOCK.get(),
                             new Item.Properties()
                     )
+            );
+
+    public static final DeferredHolder<
+            BlockEntityType<?>,
+            BlockEntityType<GhostPianoBlockEntity>
+            > GHOST_PIANO_BLOCK_ENTITY =
+            BLOCK_ENTITY_TYPES.register(
+                    "ghost_piano",
+                    () -> BlockEntityType.Builder.of(
+                            GhostPianoBlockEntity::new,
+                            GHOST_PIANO_BLOCK.get()
+                    ).build(null)
             );
 
     // 鬼钢琴音乐

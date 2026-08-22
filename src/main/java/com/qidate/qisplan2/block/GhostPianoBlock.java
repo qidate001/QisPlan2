@@ -1,28 +1,43 @@
 package com.qidate.qisplan2.block;
 
 import com.mojang.serialization.MapCodec;
+import com.qidate.qisplan2.QisPlan2;
+import com.qidate.qisplan2.block.entity.GhostPianoBlockEntity;
 import com.qidate.qisplan2.event.GhostPianoMusicHandler;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
-import net.minecraft.network.chat.Component;
-import net.minecraft.server.level.ServerLevel;
-import net.minecraft.util.StringRepresentable;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.BaseEntityBlock;
 import net.minecraft.world.level.block.Block;
-import net.minecraft.world.level.block.HorizontalDirectionalBlock;
+import net.minecraft.world.level.block.RenderShape;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.entity.BlockEntityTicker;
+import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
+import net.minecraft.world.level.block.state.properties.BlockStateProperties;
+import net.minecraft.world.level.block.state.properties.DirectionProperty;
 import net.minecraft.world.level.block.state.properties.EnumProperty;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.VoxelShape;
+import net.minecraft.util.StringRepresentable;
+import org.jetbrains.annotations.Nullable;
 
-public class GhostPianoBlock extends HorizontalDirectionalBlock {
+public class GhostPianoBlock extends BaseEntityBlock {
+
+    public static final MapCodec<GhostPianoBlock> CODEC =
+            simpleCodec(GhostPianoBlock::new);
+
+    public static final DirectionProperty FACING =
+            BlockStateProperties.HORIZONTAL_FACING;
 
     public enum Part implements StringRepresentable {
+
         LEFT("left"),
         RIGHT("right");
 
@@ -44,10 +59,7 @@ public class GhostPianoBlock extends HorizontalDirectionalBlock {
                     Part.class
             );
 
-    public static final MapCodec<GhostPianoBlock> CODEC =
-            simpleCodec(GhostPianoBlock::new);
-
-    private static final VoxelShape PIANO_SHAPE =
+    private static final VoxelShape SHAPE =
             box(
                     0,
                     0,
@@ -76,7 +88,7 @@ public class GhostPianoBlock extends HorizontalDirectionalBlock {
     }
 
     @Override
-    protected MapCodec<? extends HorizontalDirectionalBlock> codec() {
+    protected MapCodec<? extends BaseEntityBlock> codec() {
         return CODEC;
     }
 
@@ -92,22 +104,21 @@ public class GhostPianoBlock extends HorizontalDirectionalBlock {
 
     @Override
     public BlockState getStateForPlacement(
-            net.minecraft.world.item.context.BlockPlaceContext context
+            BlockPlaceContext context
     ) {
         Direction facing =
                 context.getHorizontalDirection();
-
-        BlockPos pos =
-                context.getClickedPos();
 
         Direction right =
                 facing.getClockWise();
 
         BlockPos otherPos =
-                pos.relative(right);
+                context.getClickedPos()
+                        .relative(right);
 
         /*
-         * 另一半位置必须可以替换。
+         * 第二个方块放不下，
+         * 整个钢琴就不允许放置。
          */
         if (!context.getLevel()
                 .getBlockState(otherPos)
@@ -156,6 +167,9 @@ public class GhostPianoBlock extends HorizontalDirectionalBlock {
         BlockPos otherPos =
                 pos.relative(right);
 
+        /*
+         * 放置 RIGHT。
+         */
         level.setBlock(
                 otherPos,
                 state.setValue(
@@ -165,13 +179,11 @@ public class GhostPianoBlock extends HorizontalDirectionalBlock {
                 3
         );
 
-        if (level instanceof ServerLevel serverLevel) {
-
-            GhostPianoMusicHandler.registerPiano(
-                    serverLevel,
-                    pos
-            );
-        }
+        /*
+         * 不在这里注册钢琴。
+         *
+         * 注册交给 BlockEntity ticker。
+         */
     }
 
     @Override
@@ -182,21 +194,16 @@ public class GhostPianoBlock extends HorizontalDirectionalBlock {
             Player player
     ) {
         if (!level.isClientSide()
-                && level instanceof ServerLevel serverLevel) {
+                && level instanceof net.minecraft.server.level.ServerLevel serverLevel) {
 
-            if (state.getValue(PART) == Part.LEFT) {
+            if (state.getValue(PART)
+                    == Part.LEFT) {
 
-                /*
-                 * 只有左半边是登记过的钢琴位置。
-                 */
                 GhostPianoMusicHandler.unregisterPiano(
                         serverLevel,
                         pos
                 );
 
-                /*
-                 * 删除右半边。
-                 */
                 destroyOtherHalf(
                         level,
                         pos,
@@ -205,10 +212,6 @@ public class GhostPianoBlock extends HorizontalDirectionalBlock {
 
             } else {
 
-                /*
-                 * 如果意外直接破坏右半边，
-                 * 也要找到左半边并注销。
-                 */
                 Direction right =
                         state.getValue(FACING)
                                 .getClockWise();
@@ -223,11 +226,10 @@ public class GhostPianoBlock extends HorizontalDirectionalBlock {
                         leftPos
                 );
 
-                /*
-                 * 删除左半边。
-                 */
                 BlockState leftState =
-                        level.getBlockState(leftPos);
+                        level.getBlockState(
+                                leftPos
+                        );
 
                 if (leftState.is(this)) {
                     level.destroyBlock(
@@ -251,37 +253,57 @@ public class GhostPianoBlock extends HorizontalDirectionalBlock {
             BlockPos pos,
             BlockState state
     ) {
-        Direction facing =
-                state.getValue(FACING);
-
         Direction right =
-                facing.getClockWise();
+                state.getValue(FACING)
+                        .getClockWise();
 
-        BlockPos otherPos;
-
-        if (state.getValue(PART) == Part.LEFT) {
-
-            otherPos =
-                    pos.relative(right);
-
-        } else {
-
-            otherPos =
-                    pos.relative(
-                            right.getOpposite()
-                    );
-        }
+        BlockPos otherPos =
+                pos.relative(right);
 
         BlockState otherState =
-                level.getBlockState(otherPos);
+                level.getBlockState(
+                        otherPos
+                );
 
         if (otherState.is(this)) {
-
             level.destroyBlock(
                     otherPos,
                     false
             );
         }
+    }
+
+    @Override
+    public BlockEntity newBlockEntity(
+            BlockPos pos,
+            BlockState state
+    ) {
+        return new GhostPianoBlockEntity(
+                pos,
+                state
+        );
+    }
+
+    @Override
+    public <T extends BlockEntity> @Nullable BlockEntityTicker<T> getTicker(
+            Level level,
+            BlockState state,
+            BlockEntityType<T> blockEntityType
+    ) {
+        if (level.isClientSide()) {
+            return null;
+        }
+
+        if (state.getValue(PART)
+                != Part.LEFT) {
+            return null;
+        }
+
+        return createTickerHelper(
+                blockEntityType,
+                QisPlan2.GHOST_PIANO_BLOCK_ENTITY.get(),
+                GhostPianoBlockEntity::serverTick
+        );
     }
 
     @Override
@@ -291,6 +313,13 @@ public class GhostPianoBlock extends HorizontalDirectionalBlock {
             BlockPos pos,
             CollisionContext context
     ) {
-        return PIANO_SHAPE;
+        return SHAPE;
+    }
+
+    @Override
+    protected RenderShape getRenderShape(
+            BlockState state
+    ) {
+        return RenderShape.MODEL;
     }
 }
