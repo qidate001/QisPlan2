@@ -351,6 +351,26 @@ public class QisPlan2 {
                     )
             );
 
+    // 鬼钢琴
+    public static final DeferredHolder<Block, GhostPianoBlock> GHOST_PIANO_BLOCK =
+            BLOCKS.register(
+                    "ghost_piano",
+                    () -> new GhostPianoBlock(
+                            BlockBehaviour.Properties.of()
+                                    .strength(2.0F)
+                                    .noOcclusion()
+                    )
+            );
+
+    public static final DeferredItem<BlockItem> GHOST_PIANO =
+            ITEMS.register(
+                    "ghost_piano",
+                    () -> new BlockItem(
+                            GHOST_PIANO_BLOCK.get(),
+                            new Item.Properties()
+                    )
+            );
+
 
     // 夜游鬼
     public static final DeferredHolder<EntityType<?>, EntityType<NightWanderer>> NIGHT_WANDERER =
@@ -397,9 +417,10 @@ public class QisPlan2 {
                         output.accept(GHOST_STOVE_ITEM);
                         output.accept(GHOST_DOOR_ITEM);
                         output.accept(GHOST_GRASS_ITEM);
-                        output.accept(NIGHT_WANDERER_SPAWN_EGG);
                         output.accept(GHOST_SHROUD);
                         output.accept(GHOST_BOOK);
+                        output.accept(GHOST_PIANO);
+                        output.accept(NIGHT_WANDERER_SPAWN_EGG);
                     })
                     .build()
             );
