@@ -1,3 +1,6 @@
 {
-  "parent": "qisplan2:block/ghost_piano"
+  "parent": "minecraft:item/generated",
+  "textures": {
+    "layer0": "qisplan2:item/ghost_piano"
+  }
 }
