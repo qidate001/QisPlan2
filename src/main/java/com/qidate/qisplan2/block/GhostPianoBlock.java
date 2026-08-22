@@ -322,4 +322,23 @@ public class GhostPianoBlock extends BaseEntityBlock {
     ) {
         return RenderShape.MODEL;
     }
+
+    @Override
+    public float getDestroyProgress(
+            BlockState state,
+            Player player,
+            BlockGetter level,
+            BlockPos pos
+    ) {
+        if (!player.isCreative()) {
+            return 0.0F;
+        }
+
+        return super.getDestroyProgress(
+                state,
+                player,
+                level,
+                pos
+        );
+    }
 }
