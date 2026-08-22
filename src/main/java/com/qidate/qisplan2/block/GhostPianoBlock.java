@@ -1,9 +1,11 @@
 package com.qidate.qisplan2.block;
 
 import com.mojang.serialization.MapCodec;
+import com.qidate.qisplan2.event.GhostPianoMusicHandler;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.network.chat.Component;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.util.StringRepresentable;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
@@ -154,9 +156,6 @@ public class GhostPianoBlock extends HorizontalDirectionalBlock {
         BlockPos otherPos =
                 pos.relative(right);
 
-        /*
-         * 放置右半边。
-         */
         level.setBlock(
                 otherPos,
                 state.setValue(
@@ -165,6 +164,14 @@ public class GhostPianoBlock extends HorizontalDirectionalBlock {
                 ),
                 3
         );
+
+        if (level instanceof ServerLevel serverLevel) {
+
+            GhostPianoMusicHandler.registerPiano(
+                    serverLevel,
+                    pos
+            );
+        }
     }
 
     @Override
@@ -174,13 +181,61 @@ public class GhostPianoBlock extends HorizontalDirectionalBlock {
             BlockState state,
             Player player
     ) {
-        if (!level.isClientSide()) {
+        if (!level.isClientSide()
+                && level instanceof ServerLevel serverLevel) {
 
-            destroyOtherHalf(
-                    level,
-                    pos,
-                    state
-            );
+            if (state.getValue(PART) == Part.LEFT) {
+
+                /*
+                 * 只有左半边是登记过的钢琴位置。
+                 */
+                GhostPianoMusicHandler.unregisterPiano(
+                        serverLevel,
+                        pos
+                );
+
+                /*
+                 * 删除右半边。
+                 */
+                destroyOtherHalf(
+                        level,
+                        pos,
+                        state
+                );
+
+            } else {
+
+                /*
+                 * 如果意外直接破坏右半边，
+                 * 也要找到左半边并注销。
+                 */
+                Direction right =
+                        state.getValue(FACING)
+                                .getClockWise();
+
+                BlockPos leftPos =
+                        pos.relative(
+                                right.getOpposite()
+                        );
+
+                GhostPianoMusicHandler.unregisterPiano(
+                        serverLevel,
+                        leftPos
+                );
+
+                /*
+                 * 删除左半边。
+                 */
+                BlockState leftState =
+                        level.getBlockState(leftPos);
+
+                if (leftState.is(this)) {
+                    level.destroyBlock(
+                            leftPos,
+                            false
+                    );
+                }
+            }
         }
 
         return super.playerWillDestroy(

@@ -27,6 +27,7 @@ import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
@@ -93,6 +94,11 @@ public class QisPlan2 {
     public static final DeferredRegister<ArmorMaterial> ARMOR_MATERIALS =
             DeferredRegister.create(
                     BuiltInRegistries.ARMOR_MATERIAL,
+                    MODID
+            );
+    public static final DeferredRegister<SoundEvent> SOUND_EVENTS =
+            DeferredRegister.create(
+                    BuiltInRegistries.SOUND_EVENT,
                     MODID
             );
 
@@ -371,6 +377,18 @@ public class QisPlan2 {
                     )
             );
 
+    // 鬼钢琴音乐
+    public static final DeferredHolder<SoundEvent, SoundEvent> GHOST_PIANO_MUSIC =
+            SOUND_EVENTS.register(
+                    "ghost_piano_music",
+                    () -> SoundEvent.createVariableRangeEvent(
+                            ResourceLocation.fromNamespaceAndPath(
+                                    MODID,
+                                    "ghost_piano_music"
+                            )
+                    )
+            );
+
 
     // 夜游鬼
     public static final DeferredHolder<EntityType<?>, EntityType<NightWanderer>> NIGHT_WANDERER =
@@ -453,6 +471,7 @@ public class QisPlan2 {
         ENTITY_TYPES.register(modEventBus);
         BLOCK_ENTITY_TYPES.register(modEventBus);
         ARMOR_MATERIALS.register(modEventBus);
+        SOUND_EVENTS.register(modEventBus);
 
         // 实体属性注册
         modEventBus.addListener(this::onEntityAttributeCreation);

@@ -1,0 +1,10 @@
+{
+  "ghost_piano_music": {
+    "sounds": [
+      {
+        "name": "qisplan2:ghost_piano_music",
+        "stream": true
+      }
+    ]
+  }
+}

@@ -124,6 +124,18 @@ public class ModDamageTypes {
         );
     }
 
+    /**
+     * 鬼钢琴灵异攻击
+     */
+    public static final ResourceKey<DamageType> GHOST_PIANO =
+            ResourceKey.create(
+                    Registries.DAMAGE_TYPE,
+                    ResourceLocation.fromNamespaceAndPath(
+                            QisPlan2.MODID,
+                            "ghost_piano"
+                    )
+            );
+
 
     /**
      * 创建鬼灶台死亡 DamageSource
@@ -175,6 +187,25 @@ public class ModDamageTypes {
                         )
                         .getHolderOrThrow(
                                 GHOST_NIGHT_WANDERER
+                        ),
+                entity
+        );
+    }
+
+    /**
+     * 创建鬼钢琴死亡 DamageSource
+     */
+    public static DamageSource ghostPiano(
+            Entity entity
+    ) {
+        return new DamageSource(
+                entity.level()
+                        .registryAccess()
+                        .registryOrThrow(
+                                Registries.DAMAGE_TYPE
+                        )
+                        .getHolderOrThrow(
+                                GHOST_PIANO
                         ),
                 entity
         );
