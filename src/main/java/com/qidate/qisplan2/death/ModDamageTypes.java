@@ -81,6 +81,18 @@ public class ModDamageTypes {
                     )
             );
 
+    /**
+     * 不可视之鬼灵异攻击
+     */
+    public static final ResourceKey<DamageType> INVISIBLE_GHOST =
+            ResourceKey.create(
+                    Registries.DAMAGE_TYPE,
+                    ResourceLocation.fromNamespaceAndPath(
+                            QisPlan2.MODID,
+                            "invisible_ghost"
+                    )
+            );
+
 
     /**
      * 创建鬼地毯死亡 DamageSource
@@ -187,6 +199,25 @@ public class ModDamageTypes {
                         )
                         .getHolderOrThrow(
                                 GHOST_NIGHT_WANDERER
+                        ),
+                entity
+        );
+    }
+
+    /**
+     * 创建不可视之鬼灵异攻击 DamageSource
+     */
+    public static DamageSource invisibleGhost(
+            Entity entity
+    ) {
+        return new DamageSource(
+                entity.level()
+                        .registryAccess()
+                        .registryOrThrow(
+                                Registries.DAMAGE_TYPE
+                        )
+                        .getHolderOrThrow(
+                                INVISIBLE_GHOST
                         ),
                 entity
         );

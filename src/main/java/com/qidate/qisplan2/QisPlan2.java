@@ -5,8 +5,10 @@ import com.mojang.serialization.Codec;
 import com.qidate.qisplan2.block.*;
 import com.qidate.qisplan2.block.entity.GhostManorMarkerBlockEntity;
 import com.qidate.qisplan2.block.entity.GhostPianoBlockEntity;
+import com.qidate.qisplan2.client.InvisibleGhostClient;
 import com.qidate.qisplan2.core.QisConfig;
 import com.qidate.qisplan2.death.SupernaturalEntity;
+import com.qidate.qisplan2.entity.InvisibleGhost;
 import com.qidate.qisplan2.entity.NightWanderer;
 import com.qidate.qisplan2.event.GhostShroudHandler;
 import com.qidate.qisplan2.event.PossessionHudOverlay;
@@ -431,6 +433,45 @@ public class QisPlan2 {
                     )
             );
 
+    // 不可视之鬼
+    public static final DeferredHolder<
+            EntityType<?>,
+            EntityType<InvisibleGhost>
+            > INVISIBLE_GHOST =
+            ENTITY_TYPES.register(
+                    "invisible_ghost",
+                    () -> EntityType.Builder
+                            .of(
+                                    InvisibleGhost::new,
+                                    MobCategory.MONSTER
+                            )
+                            .sized(
+                                    0.6F,
+                                    1.95F
+                            )
+                            .clientTrackingRange(8)
+                            .updateInterval(3)
+                            .build(
+                                    ResourceLocation
+                                            .fromNamespaceAndPath(
+                                                    MODID,
+                                                    "invisible_ghost"
+                                            )
+                                            .toString()
+                            )
+            );
+
+    public static final DeferredItem<SpawnEggItem> NINVISIBLE_GHOST_SPAWN_EGG =
+            ITEMS.register(
+                    "invisible_ghost_spawn_egg",
+                    () -> new SpawnEggItem(
+                            INVISIBLE_GHOST.get(),
+                            0x191919, // 基础颜色
+                            0x6B6B6B, // 斑点颜色
+                            new Item.Properties()
+                    )
+            );
+
 
     // 创造物品栏
     public static final DeferredRegister<CreativeModeTab> CREATIVE_MODE_TABS =
@@ -452,6 +493,7 @@ public class QisPlan2 {
                         output.accept(GHOST_BOOK);
                         output.accept(GHOST_PIANO);
                         output.accept(NIGHT_WANDERER_SPAWN_EGG);
+                        output.accept(NINVISIBLE_GHOST_SPAWN_EGG);
                     })
                     .build()
             );
@@ -489,6 +531,10 @@ public class QisPlan2 {
         // 实体属性注册
         modEventBus.addListener(this::onEntityAttributeCreation);
 
+        modEventBus.addListener(
+                InvisibleGhostClient::registerRenderers
+        );
+
 //        modEventBus.addListener(QisPlan2::modifyDefaultItemComponents);
 //        NeoForge.EVENT_BUS.addListener(
 //                GhostShroudHandler::onPlayerTick
@@ -504,43 +550,21 @@ public class QisPlan2 {
         NeoForge.EVENT_BUS.register(this);
     }
 
-//    public static void modifyDefaultItemComponents(
-//            ModifyDefaultComponentsEvent event
-//    ) {
-//        event.modify(
-//                GHOST_SHROUD,
-//                builder -> {
-//
-//                    var binding =
-//                            Registries.ENCHANTMENT
-//                                    .getHolderOrThrow(
-//                                            Enchantments.BINDING_CURSE
-//                                    );
-//
-//                    var mutable =
-//                            new ItemEnchantments.Mutable(
-//                                    ItemEnchantments.EMPTY
-//                            );
-//
-//                    mutable.set(
-//                            binding,
-//                            1
-//                    );
-//
-//                    builder.set(
-//                            DataComponents.ENCHANTMENTS,
-//                            mutable.toImmutable()
-//                    );
-//                }
-//        );
-//    }
-
     private void onEntityAttributeCreation(
             EntityAttributeCreationEvent event
     ) {
+        // 夜游鬼
         event.put(
                 NIGHT_WANDERER.get(),
-                NightWanderer.createAttributes().build()
+                NightWanderer.createAttributes()
+                        .build()
+        );
+
+        // 不可视之鬼
+        event.put(
+                INVISIBLE_GHOST.get(),
+                InvisibleGhost.createAttributes()
+                        .build()
         );
     }
 
