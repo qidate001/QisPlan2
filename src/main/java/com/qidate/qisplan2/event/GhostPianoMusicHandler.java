@@ -1,6 +1,7 @@
 package com.qidate.qisplan2.event;
 
 import com.qidate.qisplan2.QisPlan2;
+import com.qidate.qisplan2.data.GhostPianoSavedData;
 import com.qidate.qisplan2.death.ModDamageTypes;
 import com.qidate.qisplan2.death.SupernaturalDeathHandler;
 import com.qidate.qisplan2.network.StartGhostPianoMusicPayload;
@@ -110,22 +111,14 @@ public final class GhostPianoMusicHandler {
             ServerLevel level,
             BlockPos pos
     ) {
+        GhostPianoSavedData data =
+                GhostPianoSavedData.get(level);
 
-        String dimension =
-                level.dimension()
-                        .location()
-                        .toString();
-
-        ACTIVE_PIANOS
-                .computeIfAbsent(
-                        dimension,
-                        ignored -> new HashSet<>()
-                )
-                .add(pos.immutable());
+        data.add(pos);
 
         QisPlan2.LOGGER.debug(
                 "[QisPlan2] 注册鬼钢琴：{} @ {}",
-                dimension,
+                level.dimension().location(),
                 pos
         );
     }
@@ -140,28 +133,14 @@ public final class GhostPianoMusicHandler {
             ServerLevel level,
             BlockPos pos
     ) {
+        GhostPianoSavedData data =
+                GhostPianoSavedData.get(level);
 
-        String dimension =
-                level.dimension()
-                        .location()
-                        .toString();
-
-        Set<BlockPos> pianos =
-                ACTIVE_PIANOS.get(dimension);
-
-        if (pianos == null) {
-            return;
-        }
-
-        pianos.remove(pos);
-
-        if (pianos.isEmpty()) {
-            ACTIVE_PIANOS.remove(dimension);
-        }
+        data.remove(pos);
 
         QisPlan2.LOGGER.debug(
                 "[QisPlan2] 注销鬼钢琴：{} @ {}",
-                dimension,
+                level.dimension().location(),
                 pos
         );
     }
@@ -230,17 +209,13 @@ public final class GhostPianoMusicHandler {
         /*
          * 获取当前维度的钢琴。
          */
-        String dimension =
-                level.dimension()
-                        .location()
-                        .toString();
+        GhostPianoSavedData data =
+                GhostPianoSavedData.get(level);
 
         Set<BlockPos> pianos =
-                ACTIVE_PIANOS.get(
-                        dimension
-                );
+                data.getPositions();
 
-        if (pianos != null) {
+        if (!pianos.isEmpty()) {
 
             /*
              * 遍历这个维度里记录的全部钢琴。
