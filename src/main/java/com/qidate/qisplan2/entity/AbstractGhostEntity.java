@@ -3,41 +3,67 @@ package com.qidate.qisplan2.entity;
 import com.qidate.qisplan2.death.SupernaturalEntity;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.entity.EntityType;
-import net.minecraft.world.entity.monster.Monster;
+import net.minecraft.world.entity.PathfinderMob;
+import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.level.Level;
 
 /**
- * 所有实体厉鬼的公共基类。
+ * 所有实体鬼的公共基类。
  *
  * 负责：
- * 1. 复苏值
- * 2. 浅死机值
- * 3. 永久死机
- * 4. 灵异防御强度
- * 5. 灵异攻击后的死机处理
- * 6. NBT 永久保存
+ * - 复苏值
+ * - 普通死机
+ * - 永久死机
+ * - 灵异防御
+ * - 对应 NBT 持久化
  */
 public abstract class AbstractGhostEntity
-        extends Monster
+        extends PathfinderMob
         implements SupernaturalEntity {
+
+    /*
+     * ========================================
+     * 公共灵异状态
+     * ========================================
+     */
 
     /**
      * 复苏值。
+     *
+     * 这里只负责保存与修改，
+     * 不决定具体复苏规则。
      */
     private double revival = 0.0D;
 
     /**
-     * 浅死机值。
+     * 当前普通死机剩余时间。
      */
-    private double shallowStun = 0.0D;
+    protected int supernaturalStunTicks = 0;
 
     /**
      * 是否永久死机。
      */
-    private boolean permanentlySupernaturallyStunned = false;
+    protected boolean permanentSupernaturalStun = false;
+
+
+    /*
+     * ========================================
+     * NBT
+     * ========================================
+     */
+
+    private static final String NBT_REVIVAL =
+            "QisPlan2Revival";
+
+    private static final String NBT_STUN_TICKS =
+            "QisPlan2SupernaturalStunTicks";
+
+    private static final String NBT_PERMANENT_STUN =
+            "QisPlan2PermanentSupernaturalStun";
+
 
     protected AbstractGhostEntity(
-            EntityType<? extends Monster> entityType,
+            EntityType<? extends PathfinderMob> entityType,
             Level level
     ) {
         super(
@@ -46,9 +72,12 @@ public abstract class AbstractGhostEntity
         );
     }
 
-    // =========================================================
-    // 复苏
-    // =========================================================
+
+    /*
+     * ========================================
+     * 复苏值
+     * ========================================
+     */
 
     public double getRevival() {
         return revival;
@@ -71,148 +100,195 @@ public abstract class AbstractGhostEntity
         );
     }
 
-    // =========================================================
-    // 浅死机
-    // =========================================================
 
-    public double getShallowStun() {
-        return shallowStun;
+    /*
+     * ========================================
+     * 普通死机
+     * ========================================
+     */
+
+    public int getSupernaturalStunTicks() {
+        return supernaturalStunTicks;
     }
 
-    public void setShallowStun(
-            double value
+    public void setSupernaturalStunTicks(
+            int ticks
     ) {
-        shallowStun = Math.max(
-                0.0D,
-                value
-        );
+        supernaturalStunTicks =
+                Math.max(
+                        0,
+                        ticks
+                );
     }
 
-    public void addShallowStun(
-            double value
+    public void addSupernaturalStunTicks(
+            int ticks
     ) {
-        setShallowStun(
-                shallowStun + value
-        );
+        long result =
+                (long) supernaturalStunTicks
+                        + ticks;
+
+        supernaturalStunTicks =
+                (int) Math.min(
+                        Integer.MAX_VALUE,
+                        Math.max(
+                                0L,
+                                result
+                        )
+                );
     }
 
-    // =========================================================
-    // 永久死机
-    // =========================================================
+
+    /*
+     * ========================================
+     * 永久死机
+     * ========================================
+     */
 
     @Override
     public boolean isPermanentlySupernaturallyStunned() {
-        return permanentlySupernaturallyStunned;
+        return permanentSupernaturalStun;
     }
 
-    public void setPermanentlySupernaturallyStunned(
+    public void setPermanentSupernaturalStun(
             boolean value
     ) {
-        permanentlySupernaturallyStunned = value;
+        permanentSupernaturalStun = value;
+
+        if (value) {
+            supernaturalStunTicks = 0;
+        }
     }
 
-    // =========================================================
-    // 当前是否处于死机
-    // =========================================================
+
+    /*
+     * ========================================
+     * 当前是否死机
+     * ========================================
+     */
 
     @Override
     public boolean isSupernaturallyStunned() {
-        return permanentlySupernaturallyStunned
-                || shallowStun > 0.0D;
+        return permanentSupernaturalStun
+                || supernaturalStunTicks > 0;
     }
 
-    // =========================================================
-    // 灵异防御
-    // =========================================================
 
-    /**
-     * 默认灵异防御。
+    /*
+     * ========================================
+     * 灵异防御
+     * ========================================
      *
-     * 之后夜游鬼可以 override。
+     * 子类可以 override。
      */
     @Override
     public double getSupernaturalDefense() {
         return 0.0D;
     }
 
-    // =========================================================
-    // 普通灵异攻击
-    // =========================================================
+
+    /*
+     * ========================================
+     * 普通灵异攻击
+     * ========================================
+     */
 
     @Override
     public void onSupernaturalAttack(
             int ticks
     ) {
-        if (permanentlySupernaturallyStunned) {
+        if (permanentSupernaturalStun) {
             return;
         }
 
-        addShallowStun(
+        addSupernaturalStunTicks(
                 ticks
         );
+
+        getNavigation().stop();
+        setTarget(null);
+        setAggressive(false);
     }
 
-    // =========================================================
-    // 永久灵异攻击
-    // =========================================================
+
+    /*
+     * ========================================
+     * 永久灵异攻击
+     * ========================================
+     */
 
     @Override
     public void onPermanentSupernaturalAttack() {
-        permanentlySupernaturallyStunned = true;
+
+        permanentSupernaturalStun = true;
+
+        supernaturalStunTicks = 0;
+
+        getNavigation().stop();
+        setTarget(null);
+        setAggressive(false);
     }
 
-    // =========================================================
-    // Tick
-    // =========================================================
 
+    /*
+     * ========================================
+     * 公共 Tick
+     * ========================================
+     *
+     * 这里处理所有实体鬼共有的死机倒计时。
+     */
     @Override
-    public void tick() {
-        super.tick();
+    public void aiStep() {
 
-        /*
-         * 永久死机不需要处理倒计时。
-         */
-        if (permanentlySupernaturallyStunned) {
-            shallowStun = 0.0D;
+        super.aiStep();
+
+        if (permanentSupernaturalStun) {
+
+            getNavigation().stop();
+            setTarget(null);
+            setAggressive(false);
+
             return;
         }
 
-        /*
-         * 每 tick 减少浅死机时间。
-         */
-        if (shallowStun > 0.0D) {
-            shallowStun = Math.max(
-                    0.0D,
-                    shallowStun - 1.0D
-            );
+        if (supernaturalStunTicks > 0) {
+
+            supernaturalStunTicks--;
+
+            getNavigation().stop();
+            setTarget(null);
+            setAggressive(false);
+
+            return;
         }
     }
 
-    // =========================================================
-    // NBT
-    // =========================================================
+
+    /*
+     * ========================================
+     * NBT 保存
+     * ========================================
+     */
 
     @Override
     public void addAdditionalSaveData(
             CompoundTag tag
     ) {
-        super.addAdditionalSaveData(
-                tag
-        );
+        super.addAdditionalSaveData(tag);
 
         tag.putDouble(
-                "GhostRevival",
+                NBT_REVIVAL,
                 revival
         );
 
-        tag.putDouble(
-                "GhostShallowStun",
-                shallowStun
+        tag.putInt(
+                NBT_STUN_TICKS,
+                supernaturalStunTicks
         );
 
         tag.putBoolean(
-                "GhostPermanentlySupernaturallyStunned",
-                permanentlySupernaturallyStunned
+                NBT_PERMANENT_STUN,
+                permanentSupernaturalStun
         );
     }
 
@@ -220,23 +296,34 @@ public abstract class AbstractGhostEntity
     public void readAdditionalSaveData(
             CompoundTag tag
     ) {
-        super.readAdditionalSaveData(
-                tag
-        );
+        super.readAdditionalSaveData(tag);
 
         revival =
-                tag.getDouble(
-                        "GhostRevival"
+                Math.max(
+                        0.0D,
+                        tag.getDouble(
+                                NBT_REVIVAL
+                        )
                 );
 
-        shallowStun =
-                tag.getDouble(
-                        "GhostShallowStun"
+        supernaturalStunTicks =
+                Math.max(
+                        0,
+                        tag.getInt(
+                                NBT_STUN_TICKS
+                        )
                 );
 
-        permanentlySupernaturallyStunned =
+        permanentSupernaturalStun =
                 tag.getBoolean(
-                        "GhostPermanentlySupernaturallyStunned"
+                        NBT_PERMANENT_STUN
                 );
+
+        /*
+         * 永久死机优先。
+         */
+        if (permanentSupernaturalStun) {
+            supernaturalStunTicks = 0;
+        }
     }
 }
