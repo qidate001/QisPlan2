@@ -12,6 +12,7 @@ import com.qidate.qisplan2.event.PossessionHudOverlay;
 import com.qidate.qisplan2.ghost.PossessedGhostState;
 import com.qidate.qisplan2.ghost.PossessionHandler;
 import com.qidate.qisplan2.item.DeathCurseSword;
+import com.qidate.qisplan2.item.GhostBookItem;
 import com.qidate.qisplan2.item.GhostCoin;
 import com.qidate.qisplan2.item.GhostShroudItem;
 import com.qidate.qisplan2.structure.GhostManorGenerationManager;
@@ -271,6 +272,9 @@ public class QisPlan2 {
                             .sound(SoundType.GRASS)
             );
 
+    public static final DeferredItem<BlockItem> GHOST_GRASS_ITEM =
+            ITEMS.registerSimpleBlockItem(GHOST_GRASS);
+
     // 鬼寿衣
     public static final DeferredHolder<
             ArmorMaterial,
@@ -337,11 +341,18 @@ public class QisPlan2 {
                     )
             );
 
+    // 鬼书
+    public static final DeferredItem<GhostBookItem> GHOST_BOOK =
+            ITEMS.register(
+                    "ghost_book",
+                    () -> new GhostBookItem(
+                            new Item.Properties()
+                                    .stacksTo(1)
+                    )
+            );
 
 
-    public static final DeferredItem<BlockItem> GHOST_GRASS_ITEM =
-            ITEMS.registerSimpleBlockItem(GHOST_GRASS);
-
+    // 夜游鬼
     public static final DeferredHolder<EntityType<?>, EntityType<NightWanderer>> NIGHT_WANDERER =
             ENTITY_TYPES.register(
                     "night_wanderer",
@@ -388,6 +399,7 @@ public class QisPlan2 {
                         output.accept(GHOST_GRASS_ITEM);
                         output.accept(NIGHT_WANDERER_SPAWN_EGG);
                         output.accept(GHOST_SHROUD);
+                        output.accept(GHOST_BOOK);
                     })
                     .build()
             );

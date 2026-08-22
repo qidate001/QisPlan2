@@ -17,9 +17,9 @@ import net.neoforged.neoforge.event.tick.EntityTickEvent;
 public class GhostShroudHandler {
 
     /**
-     * 鬼寿衣每 5 秒扣 1 点生命。
+     * 鬼寿衣每 25 秒扣 1 点生命。
      */
-    private static final int DRAIN_INTERVAL = 100;
+    private static final int DRAIN_INTERVAL = 500;
 
     @SubscribeEvent
     public static void onEntityTick(
