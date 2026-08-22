@@ -1,6 +1,7 @@
 package com.qidate.qisplan2.item;
 
 import com.qidate.qisplan2.client.GhostBookScreen;
+import com.qidate.qisplan2.core.QisConfig;
 import net.minecraft.client.Minecraft;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResultHolder;
@@ -22,13 +23,19 @@ public class GhostBookItem extends Item {
             InteractionHand hand
     ) {
 
-        /*
-         * 只在客户端打开 GUI。
-         */
         if (level.isClientSide()) {
 
+            String apiKey =
+                    QisConfig.CLIENT.API_KEY.get();
+
+            String modelName =
+                    QisConfig.CLIENT.MODEL_NAME.get();
+
             Minecraft.getInstance().setScreen(
-                    new GhostBookScreen()
+                    new GhostBookScreen(
+                            apiKey,
+                            modelName
+                    )
             );
         }
 

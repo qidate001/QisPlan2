@@ -55,7 +55,7 @@ public class ModCommands {
         source.sendSuccess(() -> Component.literal("§e正在思考，请稍候..."), false);
 
         // 异步请求 DeepSeek
-        CompletableFuture<String> future = DeepSeekService.sendMessage(message, apiKey, modelName);
+        CompletableFuture<String> future = DeepSeekService.sendMessage(message, apiKey, modelName, DeepSeekService.PromptProfile.WISH_GHOST);
         future.thenAcceptAsync(reply -> AgentExecutor.execute(reply, source))
                 .exceptionally(throwable -> {
                     source.sendFailure(Component.literal("§c处理请求时发生错误: " + throwable.getMessage()));
