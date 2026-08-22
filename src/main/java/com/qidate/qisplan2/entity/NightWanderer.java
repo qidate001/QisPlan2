@@ -4,7 +4,6 @@ import com.qidate.qisplan2.QisPlan2;
 import com.qidate.qisplan2.death.ModDamageTypes;
 import com.qidate.qisplan2.death.SupernaturalCombatHandler;
 import com.qidate.qisplan2.death.SupernaturalDeathHandler;
-import com.qidate.qisplan2.death.SupernaturalEntity;
 import com.qidate.qisplan2.item.DeathCurseSword;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.nbt.CompoundTag;
@@ -17,7 +16,6 @@ import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
-import net.minecraft.world.entity.PathfinderMob;
 import net.minecraft.world.entity.ai.attributes.AttributeInstance;
 import net.minecraft.world.entity.ai.attributes.AttributeModifier;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
@@ -31,8 +29,7 @@ import net.minecraft.world.level.LightLayer;
 import java.util.EnumSet;
 
 public class NightWanderer
-        extends PathfinderMob
-        implements SupernaturalEntity
+        extends AbstractGhostEntity
 {
 
     private static final double NORMAL_SPEED = 0.25D;
@@ -73,16 +70,6 @@ public class NightWanderer
     private static final int SUPERNATURAL_STUN_TIME = 100;
 
     /**
-     * 当前剩余死机时间。
-     */
-    private int supernaturalStunTicks = 0;
-
-    /**
-     * 是否永久死机。
-     */
-    private boolean permanentSupernaturalStun = false;
-
-    /**
      * 灵异攻击后的休息时间：
      * 10 秒 = 200 tick
      */
@@ -99,15 +86,6 @@ public class NightWanderer
     private static final double SUPERNATURAL_ATTACK_STRENGTH = 4.0D;
     private static final double SUPERNATURAL_DEFENSE = 6.0D;
 
-    /**
-     * 永久储存NBT
-     */
-    private static final String NBT_STUN_TICKS =
-            "QisPlan2SupernaturalStunTicks";
-
-    private static final String NBT_PERMANENT_STUN =
-            "QisPlan2SupernaturalStunTicks";
-
     @Override
     public double getSupernaturalDefense() {
         return SUPERNATURAL_DEFENSE;
@@ -120,10 +98,6 @@ public class NightWanderer
             Level level
     ) {
         super(entityType, level);
-    }
-
-    public boolean isSupernaturalStunned() {
-        return supernaturalStunTicks > 0;
     }
 
     @Override
@@ -194,30 +168,23 @@ public class NightWanderer
         super.aiStep();
 
         /*
-         * ==============================
+         * ========================================
          * 死机状态
-         * ==============================
+         * ========================================
+         *
+         * AbstractGhostEntity 已经处理。
+         *
+         * 如果当前处于死机，
+         * 不继续执行夜游鬼自己的行为。
          */
-
-        if (permanentSupernaturalStun) {
-            getNavigation().stop();
-            setTarget(null);
-            setAggressive(false);
-            return;
-        }
-
-        if (supernaturalStunTicks > 0) {
-            supernaturalStunTicks--;
-            getNavigation().stop();
-            setTarget(null);
-            setAggressive(false);
+        if (isSupernaturallyStunned()) {
             return;
         }
 
         /*
-         * ==============================
+         * ========================================
          * 玩家优先
-         * ==============================
+         * ========================================
          */
 
         if (!level().isClientSide()) {
@@ -238,9 +205,9 @@ public class NightWanderer
         }
 
         /*
-         * ==============================
+         * ========================================
          * 自身攻击冷却
-         * ==============================
+         * ========================================
          */
 
         if (supernaturalAttackCooldown > 0) {
@@ -248,9 +215,9 @@ public class NightWanderer
         }
 
         /*
-         * ==============================
+         * ========================================
          * 光照移速
-         * ==============================
+         * ========================================
          */
 
         updateMovementSpeed();
@@ -375,50 +342,10 @@ public class NightWanderer
         );
     }
 
-    /**
-     * 普通死机
-     * @param ticks 死机时间
-     */
-    @Override
-    public void onSupernaturalAttack(int ticks) {
-
-        supernaturalStunTicks =
-                (int) Math.min(
-                        Integer.MAX_VALUE,
-                        (long) supernaturalStunTicks
-                                + ticks
-                );
-
-        getNavigation().stop();
-        setTarget(null);
-        setAggressive(false);
-    }
-
-    /**
-     * 永久死机
-     */
-    @Override
-    public void onPermanentSupernaturalAttack() {
-
-        permanentSupernaturalStun = true;
-
-        // 永久死机不需要倒计时
-        supernaturalStunTicks = 0;
-
-        getNavigation().stop();
-        setTarget(null);
-        setAggressive(false);
-    }
-
     @Override
     public boolean isSupernaturallyStunned() {
         return permanentSupernaturalStun
                 || supernaturalStunTicks > 0;
-    }
-
-    @Override
-    public boolean isPermanentlySupernaturallyStunned() {
-        return permanentSupernaturalStun;
     }
 
     /**
@@ -594,51 +521,6 @@ public class NightWanderer
 
             mob.supernaturalAttackCooldown =
                     SUPERNATURAL_ATTACK_COOLDOWN;
-        }
-    }
-
-    @Override
-    public void addAdditionalSaveData(
-            CompoundTag tag
-    ) {
-        super.addAdditionalSaveData(tag);
-
-        tag.putInt(
-                NBT_STUN_TICKS,
-                supernaturalStunTicks
-        );
-
-        tag.putBoolean(
-                NBT_PERMANENT_STUN,
-                permanentSupernaturalStun
-        );
-    }
-
-    @Override
-    public void readAdditionalSaveData(
-            CompoundTag tag
-    ) {
-        super.readAdditionalSaveData(tag);
-
-        supernaturalStunTicks =
-                Math.max(
-                        0,
-                        tag.getInt(NBT_STUN_TICKS)
-                );
-
-        permanentSupernaturalStun =
-                tag.getBoolean(
-                        NBT_PERMANENT_STUN
-                );
-
-        /*
-         * 永久死机优先。
-         *
-         * 读取到永久死机后，
-         * 不需要保留普通死机倒计时。
-         */
-        if (permanentSupernaturalStun) {
-            supernaturalStunTicks = 0;
         }
     }
 }

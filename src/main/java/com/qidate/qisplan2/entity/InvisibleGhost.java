@@ -1,16 +1,16 @@
 package com.qidate.qisplan2.entity;
 
-import com.qidate.qisplan2.QisPlan2;
 import net.minecraft.world.entity.EntityType;
-import net.minecraft.world.entity.Mob;
-import net.minecraft.world.entity.MobCategory;
+import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
+import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.monster.Monster;
 import net.minecraft.world.level.Level;
 
-public class InvisibleGhost extends Monster {
+public class InvisibleGhost
+        extends AbstractGhostEntity {
 
     public InvisibleGhost(
-            EntityType<? extends Monster> entityType,
+            EntityType<? extends InvisibleGhost> entityType,
             Level level
     ) {
         super(
@@ -22,25 +22,28 @@ public class InvisibleGhost extends Monster {
     @Override
     protected void registerGoals() {
         /*
-         * 暂时不注册 AI。
-         *
-         * 它的攻击规律由
-         * InvisibleGhostHandler 统一处理。
+         * 暂时没有特殊 AI。
          */
     }
 
     @Override
-    public boolean isPersistenceRequired() {
-        return true;
+    public double getSupernaturalDefense() {
+        return 0.0D;
     }
 
-    @Override
-    public boolean isInvulnerableTo(
-            net.minecraft.world.damagesource.DamageSource damageSource
-    ) {
-        /*
-         * 先做成灵异实体，不允许普通伤害破坏。
-         */
-        return true;
+    public static AttributeSupplier.Builder createAttributes() {
+        return createLivingAttributes()
+                .add(
+                        Attributes.MAX_HEALTH,
+                        20.0D
+                )
+                .add(
+                        Attributes.MOVEMENT_SPEED,
+                        0.25D
+                )
+                .add(
+                        Attributes.FOLLOW_RANGE,
+                        32.0D
+                );
     }
 }
