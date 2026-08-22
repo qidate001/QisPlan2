@@ -1,13 +1,14 @@
 package com.qidate.qisplan2.block.entity;
 
 import com.qidate.qisplan2.QisPlan2;
-import com.qidate.qisplan2.event.GhostPianoMusicHandler;
 import com.qidate.qisplan2.block.GhostPianoBlock;
+import com.qidate.qisplan2.event.GhostPianoMusicHandler;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.core.particles.ParticleTypes;
 
 public class GhostPianoBlockEntity extends BlockEntity {
 
@@ -28,6 +29,7 @@ public class GhostPianoBlockEntity extends BlockEntity {
             BlockState state,
             GhostPianoBlockEntity blockEntity
     ) {
+
         if (level.isClientSide()) {
             return;
         }
@@ -37,10 +39,10 @@ public class GhostPianoBlockEntity extends BlockEntity {
         }
 
         /*
-         * 只让 LEFT 半边负责登记。
+         * 只有左半边负责：
          *
-         * RIGHT 半边也拥有 BlockEntity，
-         * 但不会重复注册。
+         * 1. 注册钢琴
+         * 2. 生成音符粒子
          */
         if (state.getValue(
                 GhostPianoBlock.PART
@@ -49,14 +51,110 @@ public class GhostPianoBlockEntity extends BlockEntity {
         }
 
         /*
-         * 登记到持久化数据。
-         *
-         * SavedData 自己会去重，
-         * 所以这里每 tick 调用也是安全的。
+         * ========================================
+         * 注册钢琴
+         * ========================================
          */
         GhostPianoMusicHandler.registerPiano(
                 serverLevel,
                 pos
+        );
+
+        /*
+         * ========================================
+         * 鬼音乐符粒子
+         * ========================================
+         *
+         * 平均大约每 5 tick 生成一次。
+         */
+        if (serverLevel.random.nextInt(5) != 0) {
+            return;
+        }
+
+        /*
+         * 钢琴占两个方块。
+         *
+         * 先找到右半边的位置。
+         */
+        net.minecraft.core.Direction facing =
+                state.getValue(
+                        GhostPianoBlock.FACING
+                );
+
+        net.minecraft.core.Direction right =
+                facing.getClockWise();
+
+        BlockPos rightPos =
+                pos.relative(right);
+
+        /*
+         * 在两块钢琴上方随机生成一个音符。
+         */
+        double x =
+                rightPos.getX()
+                        + 0.5D;
+
+        /*
+         * 让 X/Z 在整个两方块区域里随机。
+         */
+        double offset =
+                serverLevel.random.nextDouble();
+
+        double x1 =
+                Math.min(
+                        pos.getX(),
+                        rightPos.getX()
+                );
+
+        double x2 =
+                Math.max(
+                        pos.getX(),
+                        rightPos.getX()
+                );
+
+        double z1 =
+                Math.min(
+                        pos.getZ(),
+                        rightPos.getZ()
+                );
+
+        double z2 =
+                Math.max(
+                        pos.getZ(),
+                        rightPos.getZ()
+                );
+
+        x =
+                x1
+                        + 0.2D
+                        + (x2 - x1 + 1.0D)
+                        * serverLevel.random.nextDouble();
+
+        double z =
+                z1
+                        + 0.2D
+                        + (z2 - z1 + 1.0D)
+                        * serverLevel.random.nextDouble();
+
+        double y =
+                pos.getY()
+                        + 1.4D
+                        + serverLevel.random.nextDouble()
+                        * 0.7D;
+
+        /*
+         * 生成音符粒子。
+         */
+        serverLevel.sendParticles(
+                ParticleTypes.NOTE,
+                x,
+                y,
+                z,
+                1,
+                0.0D,
+                0.15D,
+                0.0D,
+                0.0D
         );
     }
 }
