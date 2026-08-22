@@ -114,13 +114,14 @@ public final class GhostPianoMusicHandler {
         GhostPianoSavedData data =
                 GhostPianoSavedData.get(level);
 
-        data.add(pos);
+        if (data.add(pos)) {
 
-        QisPlan2.LOGGER.debug(
-                "[QisPlan2] 注册鬼钢琴：{} @ {}",
-                level.dimension().location(),
-                pos
-        );
+            QisPlan2.LOGGER.debug(
+                    "[QisPlan2] 注册鬼钢琴：{} @ {}",
+                    level.dimension().location(),
+                    pos
+            );
+        }
     }
 
 
@@ -234,6 +235,9 @@ public final class GhostPianoMusicHandler {
                 if (!level.getBlockState(
                         pianoPos
                 ).is(QisPlan2.GHOST_PIANO_BLOCK.get())) {
+
+                    GhostPianoSavedData.get(level)
+                            .remove(pianoPos);
 
                     continue;
                 }
