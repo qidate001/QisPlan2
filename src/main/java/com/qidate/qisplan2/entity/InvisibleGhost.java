@@ -1,6 +1,7 @@
 package com.qidate.qisplan2.entity;
 
 import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.monster.Monster;
@@ -22,7 +23,10 @@ public class InvisibleGhost
     @Override
     protected void registerGoals() {
         /*
-         * 暂时没有特殊 AI。
+         * 暂时不需要自己的移动 AI。
+         *
+         * “看到玩家攻击”由
+         * InvisibleGhostHandler 统一处理。
          */
     }
 
@@ -32,7 +36,7 @@ public class InvisibleGhost
     }
 
     public static AttributeSupplier.Builder createAttributes() {
-        return createLivingAttributes()
+        return Mob.createMobAttributes()
                 .add(
                         Attributes.MAX_HEALTH,
                         20.0D
