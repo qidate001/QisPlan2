@@ -32,11 +32,18 @@ public class GhostPianoSoundInstance
         this.pitch = 1.0F;
 
         this.looping = true;
-
         this.delay = 0;
 
+        /*
+         * 使用线性距离衰减。
+         */
         this.attenuation =
                 SoundInstance.Attenuation.LINEAR;
+
+        QisPlan2.LOGGER.info(
+                "[QisPlan2] 创建鬼音乐实例：{}",
+                pianoPos
+        );
     }
 
     public BlockPos getPianoPos() {
@@ -54,8 +61,15 @@ public class GhostPianoSoundInstance
 
     @Override
     public void tick() {
+
         if (stopped) {
             return;
         }
+
+        /*
+         * 这里暂时什么也不做。
+         *
+         * looping=true 会让声音持续循环。
+         */
     }
 }

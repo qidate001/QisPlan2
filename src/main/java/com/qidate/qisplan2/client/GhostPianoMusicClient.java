@@ -1,5 +1,6 @@
 package com.qidate.qisplan2.client;
 
+import com.qidate.qisplan2.QisPlan2;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
 
@@ -36,9 +37,12 @@ public final class GhostPianoMusicClient {
                 sound
         );
 
-        minecraft.getSoundManager().play(
-                sound
+        QisPlan2.LOGGER.info(
+                "[QisPlan2] 开始播放鬼音乐：{}",
+                pos
         );
+
+        minecraft.getSoundManager().play(sound);
     }
 
     public static void stop(
@@ -56,6 +60,11 @@ public final class GhostPianoMusicClient {
         Minecraft.getInstance()
                 .getSoundManager()
                 .stop(sound);
+
+        QisPlan2.LOGGER.info(
+                "[QisPlan2] 停止播放鬼音乐：{}",
+                pos
+        );
     }
 
     public static void stopAll() {

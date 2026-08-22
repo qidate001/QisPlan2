@@ -8,6 +8,7 @@ import com.qidate.qisplan2.network.StopGhostPianoMusicPayload;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.util.Mth;
 import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
@@ -413,7 +414,6 @@ public final class GhostPianoMusicHandler {
             BlockPos pianoPos,
             ServerPlayer player
     ) {
-
         Vec3 start =
                 new Vec3(
                         pianoPos.getX() + 0.5D,
@@ -424,35 +424,64 @@ public final class GhostPianoMusicHandler {
         Vec3 end =
                 player.getEyePosition();
 
-        ClipContext context =
-                new ClipContext(
-                        start,
-                        end,
-                        ClipContext.Block.COLLIDER,
-                        ClipContext.Fluid.NONE,
-                        player
-                );
-
-        BlockHitResult hit =
-                level.clip(context);
+        double distance =
+                start.distanceTo(end);
 
         /*
-         * 完全没有碰到阻挡物。
+         * 每约 0.5 格检查一次。
          */
-        if (hit.getType()
-                == HitResult.Type.MISS) {
-
-            return true;
-        }
-
-        BlockState hitState =
-                level.getBlockState(
-                        hit.getBlockPos()
+        int steps =
+                Math.max(
+                        1,
+                        (int) Math.ceil(
+                                distance / 0.5D
+                        )
                 );
 
-        return !isGhostMusicBlocker(
-                hitState
-        );
+        for (int i = 1; i < steps; i++) {
+
+            double t =
+                    (double) i / steps;
+
+            double x =
+                    Mth.lerp(
+                            t,
+                            start.x,
+                            end.x
+                    );
+
+            double y =
+                    Mth.lerp(
+                            t,
+                            start.y,
+                            end.y
+                    );
+
+            double z =
+                    Mth.lerp(
+                            t,
+                            start.z,
+                            end.z
+                    );
+
+            BlockPos checkPos =
+                    BlockPos.containing(
+                            x,
+                            y,
+                            z
+                    );
+
+            BlockState state =
+                    level.getBlockState(
+                            checkPos
+                    );
+
+            if (isGhostMusicBlocker(state)) {
+                return false;
+            }
+        }
+
+        return true;
     }
 
 
@@ -462,11 +491,8 @@ public final class GhostPianoMusicHandler {
     private static boolean isGhostMusicBlocker(
             BlockState state
     ) {
-
         /*
-         * ==============================
          * 鬼石砖
-         * ==============================
          */
         if (state.is(
                 QisPlan2.GHOST_STONE_BRICKS.get()
@@ -474,27 +500,20 @@ public final class GhostPianoMusicHandler {
             return true;
         }
 
-
         /*
-         * ==============================
          * 鬼门
-         * ==============================
          *
-         * 关闭 → 阻挡
-         * 打开 → 不阻挡
+         * 关闭：阻挡
+         * 打开：不阻挡
          */
-        if (state.getBlock()
-                instanceof DoorBlock) {
-
+        if (state.is(
+                QisPlan2.GHOST_DOOR.get()
+        )) {
             return !state.getValue(
                     DoorBlock.OPEN
             );
         }
 
-
-        /*
-         * 其他方块不阻挡鬼音乐。
-         */
         return false;
     }
 
