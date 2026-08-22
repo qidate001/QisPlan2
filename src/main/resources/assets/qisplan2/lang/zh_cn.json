@@ -23,8 +23,10 @@
   "item.qisplan2.ghost_shroud": "§4鬼寿衣",
   "item.qisplan2.ghost_book": "§4鬼书",
   "item.qisplan2.night_wanderer_spawn_egg": "§4夜游鬼刷怪蛋",
+  "item.qisplan2.invisible_ghost_spawn_egg": "§4不可视之鬼刷怪蛋",
 
   "entity.qisplan2.night_wanderer": "§4夜游鬼",
+  "entity.qisplan2.invisible_ghost": "§4不可视之鬼",
 
   "screen.qisplan2.ghost_book": "§4鬼书",
 
@@ -33,8 +35,9 @@
   "death.attack.ghost_stone_bricks": "%1$s 试图破坏不应该破坏的东西。",
   "death.attack.ghost_stove": "%1$s 被§4鬼灶台§r变成了可口食物。",
   "death.attack.ghost_grass": "%1$s 被§4鬼草丛§r变成了养分。",
-  "death.attack.ghost_night_wanderer": "%1$s被§4夜游鬼§r化为了漫长黑夜的一份恐惧",
-  "death.attack.ghost_piano": "%1$s被来自§4鬼钢琴§r的§4鬼音乐§r震散了意识",
+  "death.attack.ghost_night_wanderer": "%1$s 被§4夜游鬼§r化为了漫长黑夜的一份恐惧",
+  "death.attack.ghost_piano": "%1$s 被来自§4鬼钢琴§r的§4鬼音乐§r震散了意识",
+  "death.attack.invisible_ghost": "%1$s 被灵异抹除了意识",
 
   "qisplan2.death_curse.triggered": "☠ §4死亡诅咒§r触发！§4死亡诅咒之剑§r已损坏！",
   "qisplan2.death_curse.reflection": "☠ §4死亡诅咒§r反噬！",

@@ -1,5 +1,7 @@
 package com.qidate.qisplan2.entity;
 
+import com.qidate.qisplan2.death.SupernaturalCombatHandler;
+import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
@@ -30,9 +32,25 @@ public class InvisibleGhost
          */
     }
 
+    // 灵异防御
+    private static final double SUPERNATURAL_DEFENSE = 4.0D;
+
     @Override
     public double getSupernaturalDefense() {
-        return 0.0D;
+        return SUPERNATURAL_DEFENSE;
+    }
+
+    /**
+     * 不可视之鬼无敌。
+     */
+    @Override
+    public boolean isInvulnerableTo(
+            DamageSource damageSource
+    ) {
+        return SupernaturalCombatHandler.isInvulnerableTo(
+                this,
+                damageSource
+        );
     }
 
     public static AttributeSupplier.Builder createAttributes() {
