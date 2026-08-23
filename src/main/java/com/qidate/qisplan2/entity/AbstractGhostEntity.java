@@ -326,4 +326,32 @@ public abstract class AbstractGhostEntity
             supernaturalStunTicks = 0;
         }
     }
+
+    /*
+     * 离玩家很远也不自然消失
+     */
+    @Override
+    public boolean removeWhenFarAway(
+            double distanceToClosestPlayer
+    ) {
+        return false;
+    }
+
+
+    /*
+     * 需要持久保存的自定义实体
+     */
+    @Override
+    public boolean requiresCustomPersistence() {
+        return true;
+    }
+
+
+    /*
+     * 和平难度也不因为和平模式自动消失
+     */
+    @Override
+    protected boolean shouldDespawnInPeaceful() {
+        return false;
+    }
 }

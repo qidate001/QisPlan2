@@ -44,6 +44,7 @@ import net.minecraft.world.level.GameRules;
 import net.minecraft.world.level.block.SoundType;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.properties.BlockSetType;
+import net.minecraft.world.level.material.PushReaction;
 import net.minecraft.world.phys.AABB;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.fml.config.ModConfig;
@@ -220,11 +221,13 @@ public class QisPlan2 {
                             .destroyTime(0.1F)
                             .explosionResistance(0.1F)
                             .sound(SoundType.WOOL)
+                            .noCollission()
+                            .instabreak()
+                            .pushReaction(PushReaction.BLOCK)
             );
 
     public static final DeferredItem<BlockItem> GHOST_CARPET_ITEM =
             ITEMS.registerSimpleBlockItem(GHOST_CARPET);
-
 
     // 鬼石砖
     public static final DeferredBlock<Block> GHOST_STONE_BRICKS =
