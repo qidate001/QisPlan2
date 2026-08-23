@@ -66,6 +66,11 @@ public final class PossessionHandler {
     private static final double MAX_REVIVAL =
             1.0D;
 
+    /**
+     * 浅死机值最大 100 点
+     */
+    public static final double MAX_SHALLOW_STUN = PossessedGhostState.MAX_SHALLOW_STUN;
+
 
     private static PossessedGhostState addRevival(
             PossessedGhostState state,
@@ -227,6 +232,60 @@ public final class PossessionHandler {
         return player.getData(
                 QisPlan2.POSSESSED_GHOSTS
         ).get(ghost);
+    }
+
+    /**
+     * 给指定厉鬼增加浅死机值。
+     *
+     * 自动限制在 0~100。
+     */
+    public static boolean addShallowStun(
+            ServerPlayer player,
+            ResourceLocation ghost,
+            double amount
+    ) {
+        if (amount <= 0.0D) {
+            return false;
+        }
+
+        Map<ResourceLocation, PossessedGhostState> oldData =
+                player.getData(
+                        QisPlan2.POSSESSED_GHOSTS
+                );
+
+        PossessedGhostState state =
+                oldData.get(ghost);
+
+        if (state == null) {
+            return false;
+        }
+
+        double newShallowStun =
+                Math.min(
+                        PossessedGhostState.MAX_SHALLOW_STUN,
+                        state.shallowStun() + amount
+                );
+
+        Map<ResourceLocation, PossessedGhostState> data =
+                new HashMap<>(oldData);
+
+        data.put(
+                ghost,
+                new PossessedGhostState(
+                        state.revival(),
+                        newShallowStun,
+                        state.stunTicks(),
+                        state.permanentStun(),
+                        state.lastAbilityUseTick()
+                )
+        );
+
+        player.setData(
+                QisPlan2.POSSESSED_GHOSTS,
+                data
+        );
+
+        return true;
     }
 
     public static boolean testStun(
@@ -896,53 +955,19 @@ public final class PossessionHandler {
                         QisPlan2.POSSESSED_GHOSTS
                 );
 
-        if (oldData.isEmpty()) {
-            return 0;
-        }
-
-        Map<ResourceLocation, PossessedGhostState> data =
-                new HashMap<>(oldData);
-
         int count = 0;
 
-        for (var entry : oldData.entrySet()) {
+        for (ResourceLocation ghost :
+                oldData.keySet()) {
 
-            ResourceLocation ghost =
-                    entry.getKey();
-
-            PossessedGhostState state =
-                    entry.getValue();
-
-            /*
-             * 永久死机的鬼也可以增加浅死机值。
-             *
-             * 只是永久死机本身不会被浅死机影响。
-             *
-             * 如果你希望永久死机状态完全不能增加，
-             * 可以在这里 return。
-             */
-            double shallowStun =
-                    state.shallowStun()
-                            + amount;
-
-            data.put(
+            if (addShallowStun(
+                    player,
                     ghost,
-                    new PossessedGhostState(
-                            state.revival(),
-                            shallowStun,
-                            state.stunTicks(),
-                            state.permanentStun(),
-                            state.lastAbilityUseTick()
-                    )
-            );
-
-            count++;
+                    amount
+            )) {
+                count++;
+            }
         }
-
-        player.setData(
-                QisPlan2.POSSESSED_GHOSTS,
-                data
-        );
 
         return count;
     }
