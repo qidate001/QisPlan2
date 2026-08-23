@@ -5,6 +5,7 @@ import com.mojang.serialization.Codec;
 import com.qidate.qisplan2.block.*;
 import com.qidate.qisplan2.block.entity.GhostManorMarkerBlockEntity;
 import com.qidate.qisplan2.block.entity.GhostPianoBlockEntity;
+import com.qidate.qisplan2.client.GhostStoveScreen;
 import com.qidate.qisplan2.client.InvisibleGhostClient;
 import com.qidate.qisplan2.core.QisConfig;
 import com.qidate.qisplan2.death.SupernaturalEntity;
@@ -18,6 +19,7 @@ import com.qidate.qisplan2.item.DeathCurseSword;
 import com.qidate.qisplan2.item.GhostBookItem;
 import com.qidate.qisplan2.item.GhostCoin;
 import com.qidate.qisplan2.item.GhostShroudItem;
+import com.qidate.qisplan2.menu.GhostStoveMenu;
 import com.qidate.qisplan2.structure.GhostManorGenerationManager;
 import com.qidate.qisplan2.structure.StructureSplitter;
 //import com.qidate.qisplan2.util.StructureUtil;
@@ -35,6 +37,8 @@ import net.minecraft.sounds.SoundEvents;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.MobCategory;
+import net.minecraft.world.flag.FeatureFlags;
+import net.minecraft.world.inventory.MenuType;
 import net.minecraft.world.item.*;
 import net.minecraft.world.item.crafting.Ingredient;
 import net.minecraft.world.item.enchantment.Enchantment;
@@ -49,6 +53,7 @@ import net.minecraft.world.phys.AABB;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.fml.config.ModConfig;
 import net.neoforged.neoforge.attachment.AttachmentType;
+import net.neoforged.neoforge.client.event.RegisterMenuScreensEvent;
 import net.neoforged.neoforge.event.ModifyDefaultComponentsEvent;
 import net.neoforged.neoforge.event.RegisterCommandsEvent;
 import net.neoforged.neoforge.event.entity.EntityAttributeCreationEvent;
@@ -103,6 +108,11 @@ public class QisPlan2 {
     public static final DeferredRegister<SoundEvent> SOUND_EVENTS =
             DeferredRegister.create(
                     BuiltInRegistries.SOUND_EVENT,
+                    MODID
+            );
+    public static final DeferredRegister<MenuType<?>> MENUS =
+            DeferredRegister.create(
+                    BuiltInRegistries.MENU,
                     MODID
             );
 
@@ -256,6 +266,19 @@ public class QisPlan2 {
 
     public static final DeferredItem<BlockItem> GHOST_STOVE_ITEM =
             ITEMS.registerSimpleBlockItem(GHOST_STOVE);
+
+    // 鬼灶台 GUI
+    public static final DeferredHolder<
+            MenuType<?>,
+            MenuType<GhostStoveMenu>
+            > GHOST_STOVE_MENU =
+            MENUS.register(
+                    "ghost_stove",
+                    () -> new MenuType<>(
+                            GhostStoveMenu::new,
+                            FeatureFlags.DEFAULT_FLAGS
+                    )
+            );
 
     // 鬼门
     public static final DeferredBlock<Block> GHOST_DOOR =
@@ -530,6 +553,7 @@ public class QisPlan2 {
         BLOCK_ENTITY_TYPES.register(modEventBus);
         ARMOR_MATERIALS.register(modEventBus);
         SOUND_EVENTS.register(modEventBus);
+        MENUS.register(modEventBus);
 
         // 实体属性注册
         modEventBus.addListener(this::onEntityAttributeCreation);
@@ -538,10 +562,9 @@ public class QisPlan2 {
                 InvisibleGhostClient::registerRenderers
         );
 
-//        modEventBus.addListener(QisPlan2::modifyDefaultItemComponents);
-//        NeoForge.EVENT_BUS.addListener(
-//                GhostShroudHandler::onPlayerTick
-//        );
+        modEventBus.addListener(
+                QisPlan2::registerMenuScreens
+        );
 
         // 驭鬼 HUD 注册
         NeoForge.EVENT_BUS.addListener(PossessionHudOverlay::render);
@@ -568,6 +591,15 @@ public class QisPlan2 {
                 INVISIBLE_GHOST.get(),
                 InvisibleGhost.createAttributes()
                         .build()
+        );
+    }
+
+    public static void registerMenuScreens(
+            RegisterMenuScreensEvent event
+    ) {
+        event.register(
+                GHOST_STOVE_MENU.get(),
+                GhostStoveScreen::new
         );
     }
 
