@@ -228,17 +228,15 @@ public class GhostCarpetBlock extends Block
     }
 
     /**
-     * 判断下面是否可以让鬼地毯掉落。
-     *
-     * 现在只有空气会导致掉落。
-     *
-     * 水、岩浆、其他方块都算支撑。
+     * 判断下面的方块是否允许鬼地毯掉落。
      */
     private static boolean canFallThrough(
             Level level,
             BlockPos pos
     ) {
-        return level.getBlockState(pos).isAir();
+        BlockState state = level.getBlockState(pos);
+
+        return state.isAir() || !state.getFluidState().isEmpty();
     }
 
     /**
