@@ -15,6 +15,12 @@ public class GhostStoveScreen
                     "textures/gui/ghost_stove.png"
             );
 
+    private static final ResourceLocation ARROW_TEXTURE =
+            ResourceLocation.fromNamespaceAndPath(
+                    "qisplan2",
+                    "textures/gui/ghost_stove_arrow.png"
+            );
+
     /*
      * 这里先假设你的 GUI 图片是 176×166。
      *
@@ -48,13 +54,17 @@ public class GhostStoveScreen
             int mouseX,
             int mouseY
     ) {
-
         int x =
                 (width - imageWidth) / 2;
 
         int y =
                 (height - imageHeight) / 2;
 
+        /*
+         * ==============================
+         * GUI 背景
+         * ==============================
+         */
         graphics.blit(
                 TEXTURE,
                 x,
@@ -65,6 +75,56 @@ public class GhostStoveScreen
                 imageHeight,
                 imageWidth,
                 imageHeight
+        );
+
+        /*
+         * ==============================
+         * 炼制进度箭头
+         * ==============================
+         */
+
+        int progress =
+                menu.getCookProgress();
+
+        if (progress <= 0) {
+            return;
+        }
+
+        /*
+         * 箭头原始尺寸。
+         */
+        int arrowWidth = 24;
+        int arrowHeight = 17;
+
+        /*
+         * 根据炼制进度计算当前显示宽度。
+         */
+        int filledWidth =
+                arrowWidth * progress / 100;
+
+        /*
+         * 鬼灶台箭头位置。
+         */
+        int arrowX =
+                x + 100;
+
+        int arrowY =
+                y + 38;
+
+        /*
+         * 从 ghost_stove_arrow.png
+         * 的左侧逐渐裁剪出来。
+         */
+        graphics.blit(
+                ARROW_TEXTURE,
+                arrowX,
+                arrowY,
+                0,
+                0,
+                filledWidth,
+                arrowHeight,
+                arrowWidth,
+                arrowHeight
         );
     }
 

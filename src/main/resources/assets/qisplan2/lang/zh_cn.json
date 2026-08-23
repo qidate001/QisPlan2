@@ -30,6 +30,8 @@
 
   "screen.qisplan2.ghost_book": "§4鬼书",
 
+  "container.qisplan2.ghost_stove": "§4鬼灶台",
+
   "death.attack.ghost_carpet": "%1$s 被脚下的§4鬼地毯§r当场抹杀。",
   "death.attack.death_curse": "%1$s 被死亡诅咒吞噬。",
   "death.attack.ghost_stone_bricks": "%1$s 试图破坏不应该破坏的东西。",
