@@ -1,0 +1,40 @@
+{
+  "type": "qisplan2:ghost_stove",
+  "ingredients": [
+    {
+      "ingredient": {
+        "item": "qisplan2:incense_ash"
+      },
+      "count": 2
+    },
+    {
+      "ingredient": {
+        "item": "qisplan2:incense_ash"
+      },
+      "count": 2
+    },
+    {
+      "ingredient": {
+        "item": "minecraft:wheat"
+      },
+      "count": 3
+    },
+    {
+      "ingredient": {
+        "item": "minecraft:wheat"
+      },
+      "count": 3
+    },
+    {
+      "ingredient": {
+        "item": "minecraft:wheat"
+      },
+      "count": 3
+    }
+  ],
+  "result": {
+    "id": "qisplan2:ghost_white_porridge",
+    "count": 1
+  },
+  "cooking_time": 200
+}

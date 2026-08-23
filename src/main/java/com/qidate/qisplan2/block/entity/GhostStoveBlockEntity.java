@@ -2,11 +2,16 @@ package com.qidate.qisplan2.block.entity;
 
 import com.qidate.qisplan2.QisPlan2;
 import com.qidate.qisplan2.menu.GhostStoveMenu;
+import com.qidate.qisplan2.recipe.GhostStoveIngredient;
+import com.qidate.qisplan2.recipe.GhostStoveInput;
+import com.qidate.qisplan2.recipe.GhostStoveRecipe;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.NonNullList;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.Container;
 import net.minecraft.world.ContainerHelper;
 import net.minecraft.world.MenuProvider;
@@ -20,6 +25,8 @@ import net.minecraft.world.item.Items;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
+
+import java.util.List;
 
 public class GhostStoveBlockEntity
         extends BlockEntity
@@ -42,6 +49,18 @@ public class GhostStoveBlockEntity
     private int cookTime = 0;
 
     private int cookTimeTotal = 200;
+
+    private ResourceLocation activeRecipeId;
+
+    public List<ItemStack> getInputStacks() {
+        return List.of(
+                items.get(0),
+                items.get(1),
+                items.get(2),
+                items.get(3),
+                items.get(4)
+        );
+    }
 
     private final ContainerData data =
             new ContainerData() {
@@ -87,167 +106,188 @@ public class GhostStoveBlockEntity
             Level level,
             BlockPos pos,
             BlockState state,
-            GhostStoveBlockEntity blockEntity
+            GhostStoveBlockEntity stove
     ) {
         if (level.isClientSide()) {
             return;
         }
 
-        /*
-         * 目前还没接真正配方。
-         */
-        if (!blockEntity.hasRecipe()) {
-            blockEntity.cookTime = 0;
-            blockEntity.setChanged();
+        if (!(level instanceof ServerLevel serverLevel)) {
             return;
         }
 
-        blockEntity.cookTime++;
+        GhostStoveInput input =
+                new GhostStoveInput(
+                        stove.getInputStacks()
+                );
 
-        if (blockEntity.cookTime
-                >= blockEntity.cookTimeTotal) {
+        var optional =
+                serverLevel.getRecipeManager()
+                        .getRecipeFor(
+                                QisPlan2.GHOST_STOVE_RECIPE_TYPE.get(),
+                                input,
+                                serverLevel
+                        );
 
-            blockEntity.craft();
+        if (optional.isEmpty()) {
 
-            blockEntity.cookTime = 0;
+            stove.cookTime = 0;
+            stove.setChanged();
+
+            return;
         }
 
-        blockEntity.setChanged();
+        var holder =
+                optional.get();
+
+        GhostStoveRecipe recipe =
+                holder.value();
+
+        /*
+         * 输出槽装不下：
+         * 不开始炼制。
+         */
+        ItemStack result =
+                recipe.assemble(
+                        input,
+                        serverLevel.registryAccess()
+                );
+
+        if (!stove.canAcceptResult(
+                result
+        )) {
+            stove.cookTime = 0;
+            stove.setChanged();
+
+            return;
+        }
+
+        /*
+         * 新配方开始炼制。
+         *
+         * 目前简单采用：
+         * 输入发生变化时重新从 0 开始。
+         */
+        if (stove.activeRecipeId == null
+                || !stove.activeRecipeId.equals(
+                holder.id()
+        )) {
+
+            stove.activeRecipeId =
+                    holder.id();
+
+            stove.cookTime = 0;
+        }
+
+        stove.cookTime++;
+
+        stove.cookTimeTotal =
+                recipe.getCookingTime();
+
+        if (stove.cookTime
+                >= stove.cookTimeTotal) {
+
+            stove.craftRecipe(
+                    recipe,
+                    serverLevel.registryAccess()
+            );
+
+            stove.cookTime = 0;
+        }
+
+        stove.setChanged();
     }
 
-    private boolean hasRecipe() {
-
-        /*
-         * 第一行：
-         *
-         * 香火灰  @  香火灰
-         */
-        if (!isItem(
-                0,
-                QisPlan2.INCENSE_ASH.get()
-        )) {
-            return false;
-        }
-
-        if (!isItem(
-                1,
-                QisPlan2.INCENSE_ASH.get()
-        )) {
-            return false;
-        }
-
-        /*
-         * 第二行：
-         *
-         * 小麦  小麦  小麦
-         */
-        if (!isItem(
-                2,
-                Items.WHEAT
-        )) {
-            return false;
-        }
-
-        if (!isItem(
-                3,
-                Items.WHEAT
-        )) {
-            return false;
-        }
-
-        if (!isItem(
-                4,
-                Items.WHEAT
-        )) {
-            return false;
-        }
-
-        /*
-         * 钻石剑不能堆叠。
-         *
-         * 输出槽必须为空。
-         */
-        return getItem(OUTPUT_SLOT).isEmpty();
-    }
-
-    private boolean isItem(
-            int slot,
-            Item item
+    public boolean canAcceptResult(
+            ItemStack result
     ) {
-        return getItem(slot).is(item);
-    }
-
-    private void craft() {
-
-        /*
-         * 安全检查。
-         */
-        if (!hasRecipe()) {
-            return;
+        if (result.isEmpty()) {
+            return false;
         }
-
-        /*
-         * ========================================
-         * 消耗香火灰
-         * ========================================
-         */
-        removeItem(
-                0,
-                1
-        );
-
-        removeItem(
-                1,
-                1
-        );
-
-        /*
-         * ========================================
-         * 消耗小麦
-         * ========================================
-         */
-        removeItem(
-                2,
-                1
-        );
-
-        removeItem(
-                3,
-                1
-        );
-
-        removeItem(
-                4,
-                1
-        );
-
-        /*
-         * ========================================
-         * 输出钻石剑
-         * ========================================
-         */
 
         ItemStack output =
-                getItem(OUTPUT_SLOT);
+                items.get(
+                        OUTPUT_SLOT
+                );
+
+        if (output.isEmpty()) {
+            return true;
+        }
+
+        if (!ItemStack.isSameItemSameComponents(
+                output,
+                result
+        )) {
+            return false;
+        }
+
+        return output.getCount()
+                + result.getCount()
+                <= output.getMaxStackSize();
+    }
+
+    public void craftRecipe(
+            GhostStoveRecipe recipe,
+            HolderLookup.Provider registries
+    ) {
+        GhostStoveInput input =
+                new GhostStoveInput(
+                        getInputStacks()
+                );
+
+        ItemStack result =
+                recipe.assemble(
+                        input,
+                        registries
+                );
+
+        if (!canAcceptResult(result)) {
+            return;
+        }
+
+        /*
+         * 消耗每个槽位要求的数量。
+         */
+        for (int i = 0; i < 5; i++) {
+
+            GhostStoveIngredient ingredient =
+                    recipe.getSlotIngredients().get(i);
+
+            if (ingredient.isEmpty()) {
+                continue;
+            }
+
+            ItemStack stack =
+                    items.get(i);
+
+            stack.shrink(
+                    ingredient.count()
+            );
+        }
+
+        /*
+         * 输出。
+         */
+        ItemStack output =
+                items.get(
+                        OUTPUT_SLOT
+                );
 
         if (output.isEmpty()) {
 
-            setItem(
+            items.set(
                     OUTPUT_SLOT,
-                    new ItemStack(
-                            Items.DIAMOND_SWORD
-                    )
+                    result.copy()
             );
 
         } else {
 
-            output.grow(1);
-
-            setItem(
-                    OUTPUT_SLOT,
-                    output
+            output.grow(
+                    result.getCount()
             );
         }
+
+        setChanged();
     }
 
     public ContainerData getData() {
