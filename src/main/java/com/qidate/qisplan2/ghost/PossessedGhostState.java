@@ -38,6 +38,39 @@ public record PossessedGhostState(
         long lastAbilityUseTick
 ) {
 
+
+    /**
+     * 浅死机值上限。
+     */
+    public static final double MAX_SHALLOW_STUN = 100.0D;
+
+
+    /**
+     * 统一保证状态数据合法。
+     */
+    public PossessedGhostState {
+
+        revival =
+                Math.clamp(
+                        revival,
+                        0.0D,
+                        1.0D
+                );
+
+        shallowStun =
+                Math.clamp(
+                        shallowStun,
+                        0.0D,
+                        MAX_SHALLOW_STUN
+                );
+
+        stunTicks =
+                Math.max(
+                        0L,
+                        stunTicks
+                );
+    }
+
     public static final Codec<PossessedGhostState> CODEC =
             RecordCodecBuilder.create(instance ->
                     instance.group(
