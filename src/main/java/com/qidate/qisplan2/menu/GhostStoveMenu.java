@@ -73,7 +73,7 @@ public class GhostStoveMenu extends AbstractContainerMenu {
                 new Slot(
                         inputContainer,
                         2,
-                        68,
+                        59,
                         50
                 )
         );
@@ -82,7 +82,7 @@ public class GhostStoveMenu extends AbstractContainerMenu {
                 new Slot(
                         inputContainer,
                         3,
-                        92,
+                        83,
                         50
                 )
         );
@@ -91,7 +91,7 @@ public class GhostStoveMenu extends AbstractContainerMenu {
                 new Slot(
                         inputContainer,
                         4,
-                        116,
+                        107,
                         50
                 )
         );
