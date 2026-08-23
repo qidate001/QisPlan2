@@ -16,10 +16,7 @@ import com.qidate.qisplan2.event.GhostShroudHandler;
 import com.qidate.qisplan2.event.PossessionHudOverlay;
 import com.qidate.qisplan2.ghost.PossessedGhostState;
 import com.qidate.qisplan2.ghost.PossessionHandler;
-import com.qidate.qisplan2.item.DeathCurseSword;
-import com.qidate.qisplan2.item.GhostBookItem;
-import com.qidate.qisplan2.item.GhostCoin;
-import com.qidate.qisplan2.item.GhostShroudItem;
+import com.qidate.qisplan2.item.*;
 import com.qidate.qisplan2.menu.GhostStoveMenu;
 import com.qidate.qisplan2.structure.GhostManorGenerationManager;
 import com.qidate.qisplan2.structure.StructureSplitter;
@@ -220,6 +217,17 @@ public class QisPlan2 {
     public static final DeferredItem<Item> INCENSE_ASH =
             ITEMS.registerSimpleItem(
                     "incense_ash"
+            );
+
+    // 鬼白粥
+    public static final DeferredItem<GhostWhitePorridgeItem>
+            GHOST_WHITE_PORRIDGE =
+            ITEMS.register(
+                    "ghost_white_porridge",
+                    () -> new GhostWhitePorridgeItem(
+                            new Item.Properties()
+                                    .stacksTo(16)
+                    )
             );
 
     // 鬼地毯
@@ -531,6 +539,7 @@ public class QisPlan2 {
                         output.accept(GHOST_SHROUD);
                         output.accept(GHOST_BOOK);
                         output.accept(GHOST_PIANO);
+                        output.accept(GHOST_WHITE_PORRIDGE);
                         output.accept(NIGHT_WANDERER_SPAWN_EGG);
                         output.accept(NINVISIBLE_GHOST_SPAWN_EGG);
                     })

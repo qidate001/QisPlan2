@@ -875,4 +875,75 @@ public final class PossessionHandler {
             );
         }
     }
+
+    /**
+     * 让玩家驾驭的所有厉鬼增加浅死机值。
+     *
+     * @param player 玩家
+     * @param amount 增加的浅死机值
+     * @return 实际被修改的厉鬼数量
+     */
+    public static int addShallowStunToAll(
+            ServerPlayer player,
+            double amount
+    ) {
+        if (amount <= 0.0D) {
+            return 0;
+        }
+
+        Map<ResourceLocation, PossessedGhostState> oldData =
+                player.getData(
+                        QisPlan2.POSSESSED_GHOSTS
+                );
+
+        if (oldData.isEmpty()) {
+            return 0;
+        }
+
+        Map<ResourceLocation, PossessedGhostState> data =
+                new HashMap<>(oldData);
+
+        int count = 0;
+
+        for (var entry : oldData.entrySet()) {
+
+            ResourceLocation ghost =
+                    entry.getKey();
+
+            PossessedGhostState state =
+                    entry.getValue();
+
+            /*
+             * 永久死机的鬼也可以增加浅死机值。
+             *
+             * 只是永久死机本身不会被浅死机影响。
+             *
+             * 如果你希望永久死机状态完全不能增加，
+             * 可以在这里 return。
+             */
+            double shallowStun =
+                    state.shallowStun()
+                            + amount;
+
+            data.put(
+                    ghost,
+                    new PossessedGhostState(
+                            state.revival(),
+                            shallowStun,
+                            state.stunTicks(),
+                            state.permanentStun(),
+                            state.lastAbilityUseTick()
+                    )
+            );
+
+            count++;
+        }
+
+        player.setData(
+                QisPlan2.POSSESSED_GHOSTS,
+                data
+        );
+
+        return count;
+    }
 }
