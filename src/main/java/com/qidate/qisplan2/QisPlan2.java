@@ -18,6 +18,8 @@ import com.qidate.qisplan2.ghost.PossessedGhostState;
 import com.qidate.qisplan2.ghost.PossessionHandler;
 import com.qidate.qisplan2.item.*;
 import com.qidate.qisplan2.menu.GhostStoveMenu;
+import com.qidate.qisplan2.recipe.GhostStoveRecipe;
+import com.qidate.qisplan2.recipe.GhostStoveRecipeSerializer;
 import com.qidate.qisplan2.structure.GhostManorGenerationManager;
 import com.qidate.qisplan2.structure.StructureSplitter;
 //import com.qidate.qisplan2.util.StructureUtil;
@@ -39,6 +41,8 @@ import net.minecraft.world.flag.FeatureFlags;
 import net.minecraft.world.inventory.MenuType;
 import net.minecraft.world.item.*;
 import net.minecraft.world.item.crafting.Ingredient;
+import net.minecraft.world.item.crafting.RecipeSerializer;
+import net.minecraft.world.item.crafting.RecipeType;
 import net.minecraft.world.item.enchantment.Enchantment;
 import net.minecraft.world.item.enchantment.Enchantments;
 import net.minecraft.world.item.enchantment.ItemEnchantments;
@@ -80,6 +84,7 @@ import net.neoforged.neoforge.registries.DeferredRegister;
 import net.minecraft.core.registries.Registries;
 
 import java.util.*;
+import java.util.function.Supplier;
 
 // The value here should match an entry in the META-INF/neoforge.mods.toml file
 @Mod(QisPlan2.MODID)
@@ -111,6 +116,17 @@ public class QisPlan2 {
     public static final DeferredRegister<MenuType<?>> MENUS =
             DeferredRegister.create(
                     BuiltInRegistries.MENU,
+                    MODID
+            );
+    public static final DeferredRegister<RecipeType<?>> RECIPE_TYPES =
+            DeferredRegister.create(
+                    Registries.RECIPE_TYPE,
+                    MODID
+            );
+
+    public static final DeferredRegister<RecipeSerializer<?>> RECIPE_SERIALIZERS =
+            DeferredRegister.create(
+                    Registries.RECIPE_SERIALIZER,
                     MODID
             );
 
@@ -559,6 +575,31 @@ public class QisPlan2 {
                     .build()
             );
 
+    // ========================================
+    // 鬼灶台 Recipe 注册
+    // ========================================
+
+
+    public static final Supplier<RecipeType<GhostStoveRecipe>>
+            GHOST_STOVE_RECIPE_TYPE =
+            RECIPE_TYPES.register(
+                    "ghost_stove",
+                    () -> RecipeType.simple(
+                            ResourceLocation.fromNamespaceAndPath(
+                                    MODID,
+                                    "ghost_stove"
+                            )
+                    )
+            );
+
+
+    public static final Supplier<RecipeSerializer<GhostStoveRecipe>>
+            GHOST_STOVE_RECIPE_SERIALIZER =
+            RECIPE_SERIALIZERS.register(
+                    "ghost_stove",
+                    GhostStoveRecipeSerializer::new
+            );
+
 
 
     // The constructor for the mod class is the first code that is run when your mod is loaded.
@@ -576,6 +617,8 @@ public class QisPlan2 {
         ARMOR_MATERIALS.register(modEventBus);
         SOUND_EVENTS.register(modEventBus);
         MENUS.register(modEventBus);
+        RECIPE_TYPES.register(modEventBus);
+        RECIPE_SERIALIZERS.register(modEventBus);
 
         // 实体属性注册
         modEventBus.addListener(this::onEntityAttributeCreation);
