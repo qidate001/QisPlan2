@@ -77,56 +77,14 @@ public class GhostStoveMenu
         /*
          * ========================================
          * 鬼灶台输入
-         *
-         * # @ @ @ #
-         * @ # # # @
          * ========================================
          */
 
-        addSlot(
-                new Slot(
-                        container,
-                        0,
-                        44,
-                        26
-                )
-        );
-
-        addSlot(
-                new Slot(
-                        container,
-                        1,
-                        116,
-                        26
-                )
-        );
-
-        addSlot(
-                new Slot(
-                        container,
-                        2,
-                        59,
-                        50
-                )
-        );
-
-        addSlot(
-                new Slot(
-                        container,
-                        3,
-                        83,
-                        50
-                )
-        );
-
-        addSlot(
-                new Slot(
-                        container,
-                        4,
-                        107,
-                        50
-                )
-        );
+        addSlot(new Slot(container, 0, 14, 26));
+        addSlot(new Slot(container, 1, 74, 26));
+        addSlot(new Slot(container, 2, 18, 50));
+        addSlot(new Slot(container, 3, 44, 50));
+        addSlot(new Slot(container, 4, 68, 50));
 
         /*
          * ========================================
@@ -138,7 +96,7 @@ public class GhostStoveMenu
                 new Slot(
                         container,
                         5,
-                        152,
+                        134,
                         38
                 ) {
                     @Override

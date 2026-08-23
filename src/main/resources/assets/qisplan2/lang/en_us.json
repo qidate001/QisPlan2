@@ -30,6 +30,8 @@
 
   "screen.qisplan2.ghost_book": "§4Ghost Book",
 
+  "container.qisplan2.ghost_stove": "§4Ghost Stove",
+
   "death.attack.ghost_carpet": "%1$s was erased by the §4Ghost Carpet§r beneath them.",
   "death.attack.death_curse": "%1$s was consumed by the §4Death Curse§r.",
   "death.attack.ghost_stone_bricks": "%1$s attempted to destroy something that should not have been destroyed.",
