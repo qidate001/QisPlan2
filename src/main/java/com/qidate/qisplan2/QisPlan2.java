@@ -5,6 +5,7 @@ import com.mojang.serialization.Codec;
 import com.qidate.qisplan2.block.*;
 import com.qidate.qisplan2.block.entity.GhostManorMarkerBlockEntity;
 import com.qidate.qisplan2.block.entity.GhostPianoBlockEntity;
+import com.qidate.qisplan2.block.entity.GhostStoveBlockEntity;
 import com.qidate.qisplan2.client.GhostStoveScreen;
 import com.qidate.qisplan2.client.InvisibleGhostClient;
 import com.qidate.qisplan2.core.QisConfig;
@@ -262,6 +263,18 @@ public class QisPlan2 {
                             BlockBehaviour.Properties.of()
                                     .strength(1.5F, 6.0F)
                     )
+            );
+
+    public static final DeferredHolder<
+            BlockEntityType<?>,
+            BlockEntityType<GhostStoveBlockEntity>
+            > GHOST_STOVE_BLOCK_ENTITY =
+            BLOCK_ENTITY_TYPES.register(
+                    "ghost_stove",
+                    () -> BlockEntityType.Builder.of(
+                            GhostStoveBlockEntity::new,
+                            GHOST_STOVE.get()
+                    ).build(null)
             );
 
     public static final DeferredItem<BlockItem> GHOST_STOVE_ITEM =
