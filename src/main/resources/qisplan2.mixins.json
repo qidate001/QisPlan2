@@ -4,6 +4,7 @@
   "package": "com.qidate.qisplan2.mixin",
   "compatibilityLevel": "JAVA_21",
   "client": [
-    "HumanoidModelMixin"
+    "HumanoidModelMixin",
+    "LevelRendererMixin"
   ]
 }

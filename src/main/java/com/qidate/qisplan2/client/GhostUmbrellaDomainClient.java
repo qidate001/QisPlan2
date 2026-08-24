@@ -40,6 +40,35 @@ public final class GhostUmbrellaDomainClient {
      */
     private static boolean insideDomain = false;
 
+    public static boolean isInsideDomain() {
+        return insideDomain;
+    }
+
+    public static boolean isPositionInsideDomain(
+            double x,
+            double z
+    ) {
+        for (GhostRainSource source : RAIN_SOURCES) {
+
+            double dx =
+                    x - source.x();
+
+            double dz =
+                    z - source.z();
+
+            double radius =
+                    source.radius();
+
+            if (dx * dx + dz * dz
+                    <= radius * radius) {
+
+                return true;
+            }
+        }
+
+        return false;
+    }
+
 
     /*
      * 鬼雨环境音计时器。
