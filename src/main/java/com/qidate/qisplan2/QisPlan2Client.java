@@ -1,5 +1,7 @@
 package com.qidate.qisplan2;
 
+import com.qidate.qisplan2.client.BlackRainParticle;
+import com.qidate.qisplan2.client.GhostUmbrellaDomainClient;
 import com.qidate.qisplan2.client.model.NightWandererModel;
 import com.qidate.qisplan2.client.renderer.NightWandererRenderer;
 import com.qidate.qisplan2.event.DeathCurseHudOverlay;
@@ -14,8 +16,10 @@ import net.neoforged.fml.common.Mod;
 import net.neoforged.api.distmarker.Dist;
 
 import net.neoforged.neoforge.client.event.EntityRenderersEvent;
+import net.neoforged.neoforge.client.event.RegisterParticleProvidersEvent;
 import net.neoforged.neoforge.client.gui.ConfigurationScreen;
 import net.neoforged.neoforge.client.gui.IConfigScreenFactory;
+import net.neoforged.neoforge.common.NeoForge;
 
 @Mod(value = QisPlan2.MODID, dist = Dist.CLIENT)
 public class QisPlan2Client {
@@ -48,6 +52,28 @@ public class QisPlan2Client {
         // 注册夜游鬼 Renderer
         modEventBus.addListener(
                 QisPlan2Client::registerEntityRenderers
+        );
+
+        // 鬼黑雨
+        modEventBus.addListener(
+                QisPlan2Client::registerParticleProviders
+        );
+
+
+        /*
+         * 鬼雨领域客户端逻辑
+         */
+        NeoForge.EVENT_BUS.register(
+                GhostUmbrellaDomainClient.class
+        );
+    }
+
+    private static void registerParticleProviders(
+            RegisterParticleProvidersEvent event
+    ) {
+        event.registerSpriteSet(
+                QisPlan2.BLACK_RAIN.get(),
+                BlackRainParticle.Provider::new
         );
     }
 

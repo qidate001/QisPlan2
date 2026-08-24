@@ -185,22 +185,11 @@ public class GhostUmbrellaRenderer
              * 大小
              * ==============================
              */
-            if (open) {
-
-                poseStack.scale(
-                        2.2F,
-                        2.2F,
-                        2.2F
-                );
-
-            } else {
-
-                poseStack.scale(
-                        1.4F,
-                        1.4F,
-                        1.4F
-                );
-            }
+            poseStack.scale(
+                    2.2F,
+                    2.2F,
+                    2.2F
+            );
 
             /*
              * ==============================
