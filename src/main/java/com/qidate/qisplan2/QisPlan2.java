@@ -667,15 +667,9 @@ public class QisPlan2 {
                 QisPlan2::registerMenuScreens
         );
 
-        modEventBus.addListener(
-                QisPlan2::registerClientItemExtensions
+        modEventBus.register(
+                GhostUmbrellaClient.class
         );
-
-        if (FMLEnvironment.dist == Dist.CLIENT) {
-            modEventBus.addListener(
-                    GhostUmbrellaClient::registerAdditionalModels
-            );
-        }
 
         // 驭鬼 HUD 注册
         NeoForge.EVENT_BUS.addListener(PossessionHudOverlay::render);

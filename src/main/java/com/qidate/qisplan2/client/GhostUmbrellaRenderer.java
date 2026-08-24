@@ -44,25 +44,43 @@ public class GhostUmbrellaRenderer
         var modelManager =
                 minecraft.getModelManager();
 
+        ModelResourceLocation closedLocation =
+                ModelResourceLocation.standalone(
+                        ResourceLocation.fromNamespaceAndPath(
+                                QisPlan2.MODID,
+                                "item/ghost_umbrella_closed"
+                        )
+                );
+
+        ModelResourceLocation openLocation =
+                ModelResourceLocation.standalone(
+                        ResourceLocation.fromNamespaceAndPath(
+                                QisPlan2.MODID,
+                                "item/ghost_umbrella_open"
+                        )
+                );
+
+        QisPlan2.LOGGER.info(
+                "[QisPlan2] 加载鬼雨伞模型：{} / {}",
+                closedLocation,
+                openLocation
+        );
+
         closedModel =
                 modelManager.getModel(
-                        ModelResourceLocation.standalone(
-                                ResourceLocation.fromNamespaceAndPath(
-                                        QisPlan2.MODID,
-                                        "ghost_umbrella_closed"
-                                )
-                        )
+                        closedLocation
                 );
 
         openModel =
                 modelManager.getModel(
-                        ModelResourceLocation.standalone(
-                                ResourceLocation.fromNamespaceAndPath(
-                                        QisPlan2.MODID,
-                                        "ghost_umbrella_open"
-                                )
-                        )
+                        openLocation
                 );
+
+        QisPlan2.LOGGER.info(
+                "[QisPlan2] 鬼雨伞模型结果：closed={}, open={}",
+                closedModel,
+                openModel
+        );
     }
 
     @Override
@@ -88,12 +106,91 @@ public class GhostUmbrellaRenderer
         poseStack.pushPose();
 
         /*
-         * 这里先不做额外旋转/缩放。
-         *
-         * 如果 Blockbench 模型在手里方向不对，
-         * 再单独调整。
+         * ========================================
+         * 第一人称
+         * ========================================
          */
+        if (displayContext == ItemDisplayContext.FIRST_PERSON_RIGHT_HAND
+                || displayContext == ItemDisplayContext.FIRST_PERSON_LEFT_HAND) {
 
+            /*
+             * 整体放大 3 倍。
+             */
+            poseStack.scale(
+                    3.0F,
+                    3.0F,
+                    3.0F
+            );
+
+            /*
+             * 从手中心附近向上移动。
+             */
+            poseStack.translate(
+                    0.0D,
+                    0.15D,
+                    0.0D
+            );
+
+            /*
+             * 让伞柄朝上，
+             * 呈现“手持雨伞”的感觉。
+             */
+            poseStack.mulPose(
+                    com.mojang.math.Axis.XP.rotationDegrees(
+                            -15.0F
+                    )
+            );
+
+            /*
+             * 稍微向身体外侧偏移。
+             */
+            if (displayContext
+                    == ItemDisplayContext.FIRST_PERSON_RIGHT_HAND) {
+
+                poseStack.translate(
+                        0.2D,
+                        0.0D,
+                        0.0D
+                );
+
+            } else {
+
+                poseStack.translate(
+                        0.10D,
+                        0.0D,
+                        0.0D
+                );
+            }
+        }
+
+        /*
+         * ========================================
+         * 第三人称
+         * ========================================
+         */
+        else if (displayContext
+                == ItemDisplayContext.THIRD_PERSON_RIGHT_HAND
+                || displayContext
+                == ItemDisplayContext.THIRD_PERSON_LEFT_HAND) {
+
+            poseStack.scale(
+                    2.5F,
+                    2.5F,
+                    2.5F
+            );
+
+            poseStack.translate(
+                    0.0D,
+                    -0.15D,
+                    0.0D
+            );
+        }
+
+        /*
+         * ========================================
+         * 正常渲染
+         * ========================================
+         */
         minecraft.getItemRenderer()
                 .render(
                         stack,
