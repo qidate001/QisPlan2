@@ -7,6 +7,8 @@ import com.qidate.qisplan2.block.entity.GhostManorMarkerBlockEntity;
 import com.qidate.qisplan2.block.entity.GhostPianoBlockEntity;
 import com.qidate.qisplan2.block.entity.GhostStoveBlockEntity;
 import com.qidate.qisplan2.client.GhostStoveScreen;
+import com.qidate.qisplan2.client.GhostUmbrellaClient;
+import com.qidate.qisplan2.client.GhostUmbrellaRenderer;
 import com.qidate.qisplan2.client.InvisibleGhostClient;
 import com.qidate.qisplan2.core.QisConfig;
 import com.qidate.qisplan2.death.SupernaturalEntity;
@@ -24,9 +26,11 @@ import com.qidate.qisplan2.structure.GhostManorGenerationManager;
 import com.qidate.qisplan2.structure.StructureSplitter;
 //import com.qidate.qisplan2.util.StructureUtil;
 import net.minecraft.Util;
+import net.minecraft.client.renderer.BlockEntityWithoutLevelRenderer;
 import net.minecraft.commands.Commands;
 import net.minecraft.commands.arguments.ResourceLocationArgument;
 import net.minecraft.core.Holder;
+import net.minecraft.core.component.DataComponentType;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.codec.ByteBufCodecs;
@@ -54,8 +58,11 @@ import net.minecraft.world.level.material.PushReaction;
 import net.minecraft.world.phys.AABB;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.fml.config.ModConfig;
+import net.neoforged.fml.loading.FMLEnvironment;
 import net.neoforged.neoforge.attachment.AttachmentType;
 import net.neoforged.neoforge.client.event.RegisterMenuScreensEvent;
+import net.neoforged.neoforge.client.extensions.common.IClientItemExtensions;
+import net.neoforged.neoforge.client.extensions.common.RegisterClientExtensionsEvent;
 import net.neoforged.neoforge.event.ModifyDefaultComponentsEvent;
 import net.neoforged.neoforge.event.RegisterCommandsEvent;
 import net.neoforged.neoforge.event.entity.EntityAttributeCreationEvent;
@@ -91,6 +98,8 @@ import java.util.function.Supplier;
 public class QisPlan2 {
     public static final String MODID = "qisplan2";
     public static final Logger LOGGER = LogUtils.getLogger();
+
+    // 附件类型注册表
     public static final DeferredRegister.Blocks BLOCKS = DeferredRegister.createBlocks(MODID);
     public static final DeferredRegister.Items ITEMS = DeferredRegister.createItems(MODID);
     public static final DeferredRegister<EntityType<?>> ENTITY_TYPES =
@@ -123,14 +132,16 @@ public class QisPlan2 {
                     Registries.RECIPE_TYPE,
                     MODID
             );
-
     public static final DeferredRegister<RecipeSerializer<?>> RECIPE_SERIALIZERS =
             DeferredRegister.create(
                     Registries.RECIPE_SERIALIZER,
                     MODID
             );
-
-    // 附件类型注册表
+    public static final DeferredRegister<DataComponentType<?>> DATA_COMPONENTS =
+            DeferredRegister.create(
+                    BuiltInRegistries.DATA_COMPONENT_TYPE,
+                    MODID
+            );
     public static final DeferredRegister<AttachmentType<?>> ATTACHMENT_TYPES =
             DeferredRegister.create(NeoForgeRegistries.ATTACHMENT_TYPES, MODID);
 
@@ -242,7 +253,7 @@ public class QisPlan2 {
                     "ghost_white_porridge",
                     () -> new GhostWhitePorridgeItem(
                             new Item.Properties()
-                                    .stacksTo(16)
+                                    .stacksTo(1)
                     )
             );
 
@@ -467,6 +478,31 @@ public class QisPlan2 {
                     )
             );
 
+    // 鬼伞
+    public static final DeferredHolder<
+            DataComponentType<?>,
+            DataComponentType<Boolean>
+            > GHOST_UMBRELLA_OPEN =
+            DATA_COMPONENTS.register(
+                    "ghost_umbrella_open",
+                    () -> DataComponentType.<Boolean>builder()
+                            .persistent(Codec.BOOL)
+                            .networkSynchronized(
+                                    ByteBufCodecs.BOOL
+                            )
+                            .build()
+            );
+
+    public static final DeferredItem<GhostUmbrellaItem>
+            GHOST_UMBRELLA =
+            ITEMS.register(
+                    "ghost_umbrella",
+                    () -> new GhostUmbrellaItem(
+                            new Item.Properties()
+                                    .stacksTo(1)
+                    )
+            );
+
 
     // 夜游鬼
     public static final DeferredHolder<EntityType<?>, EntityType<NightWanderer>> NIGHT_WANDERER =
@@ -556,6 +592,7 @@ public class QisPlan2 {
                         output.accept(GHOST_BOOK);
                         output.accept(GHOST_PIANO);
                         output.accept(GHOST_WHITE_PORRIDGE);
+                        output.accept(GHOST_UMBRELLA);
                         output.accept(NIGHT_WANDERER_SPAWN_EGG);
                         output.accept(NINVISIBLE_GHOST_SPAWN_EGG);
                     })
@@ -578,8 +615,6 @@ public class QisPlan2 {
     // ========================================
     // 鬼灶台 Recipe 注册
     // ========================================
-
-
     public static final Supplier<RecipeType<GhostStoveRecipe>>
             GHOST_STOVE_RECIPE_TYPE =
             RECIPE_TYPES.register(
@@ -619,6 +654,7 @@ public class QisPlan2 {
         MENUS.register(modEventBus);
         RECIPE_TYPES.register(modEventBus);
         RECIPE_SERIALIZERS.register(modEventBus);
+        DATA_COMPONENTS.register(modEventBus);
 
         // 实体属性注册
         modEventBus.addListener(this::onEntityAttributeCreation);
@@ -630,6 +666,16 @@ public class QisPlan2 {
         modEventBus.addListener(
                 QisPlan2::registerMenuScreens
         );
+
+        modEventBus.addListener(
+                QisPlan2::registerClientItemExtensions
+        );
+
+        if (FMLEnvironment.dist == Dist.CLIENT) {
+            modEventBus.addListener(
+                    GhostUmbrellaClient::registerAdditionalModels
+            );
+        }
 
         // 驭鬼 HUD 注册
         NeoForge.EVENT_BUS.addListener(PossessionHudOverlay::render);
@@ -665,6 +711,24 @@ public class QisPlan2 {
         event.register(
                 GHOST_STOVE_MENU.get(),
                 GhostStoveScreen::new
+        );
+    }
+
+    public static void registerClientItemExtensions(
+            RegisterClientExtensionsEvent event
+    ) {
+        event.registerItem(
+                new IClientItemExtensions() {
+
+                    private final GhostUmbrellaRenderer renderer =
+                            new GhostUmbrellaRenderer();
+
+                    @Override
+                    public BlockEntityWithoutLevelRenderer getCustomRenderer() {
+                        return renderer;
+                    }
+                },
+                GHOST_UMBRELLA.get()
         );
     }
 
