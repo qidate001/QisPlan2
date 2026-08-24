@@ -31,7 +31,7 @@ public final class GhostRainRenderer {
      *
      * 即 33 × 33。
      */
-    private static final int RAIN_RADIUS = 16;
+    private static final int RAIN_RADIUS = 24;
 
 
     /*
@@ -54,8 +54,8 @@ public final class GhostRainRenderer {
     /**
      * 一根雨线长度。
      */
-    private static final double RAIN_MIN_LENGTH = 3.5D;
-    private static final double RAIN_MAX_LENGTH = 6.0D;
+    private static final double RAIN_MIN_LENGTH = 1.0D;
+    private static final double RAIN_MAX_LENGTH = 2.2D;
 
 
     /*
@@ -67,8 +67,8 @@ public final class GhostRainRenderer {
     /**
      * 每 tick 下落多少格。
      */
-    private static final double RAIN_MIN_SPEED = 0.45D;
-    private static final double RAIN_MAX_SPEED = 0.75D;
+    private static final double RAIN_MIN_SPEED = 0.75D;
+    private static final double RAIN_MAX_SPEED = 1.15D;
 
 
     /*
@@ -80,7 +80,7 @@ public final class GhostRainRenderer {
     /**
      * 雨线半宽。
      */
-    private static final float RAIN_WIDTH = 0.035F;
+    private static final float RAIN_WIDTH = 0.025F;
 
     /**
      * 雨线透明度。

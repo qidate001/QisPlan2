@@ -1,6 +1,7 @@
 package com.qidate.qisplan2.client;
 
 import com.qidate.qisplan2.item.GhostUmbrellaItem;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
@@ -39,6 +40,15 @@ public final class GhostUmbrellaDomainClient {
 
 
     private GhostUmbrellaDomainClient() {
+    }
+
+    /*
+     * 声音字段
+     */
+    private static GhostRainSound rainSound;
+
+    public static boolean isInsideDomain() {
+        return insideDomain;
     }
 
 
@@ -135,6 +145,33 @@ public final class GhostUmbrellaDomainClient {
                 isInsideAnyDomain(
                         localPlayer
                 );
+
+        /*
+         * ========================================================
+         * 鬼雨声音
+         * ========================================================
+         */
+
+        if (insideDomain) {
+
+            if (rainSound == null
+                    || rainSound.isStopped()) {
+
+                rainSound =
+                        new GhostRainSound();
+
+                Minecraft.getInstance()
+                        .getSoundManager()
+                        .play(rainSound);
+            }
+
+        } else {
+
+            if (rainSound != null) {
+                rainSound.stopSound();
+                rainSound = null;
+            }
+        }
     }
 
 
