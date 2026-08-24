@@ -3,6 +3,8 @@ package com.qidate.qisplan2.client;
 import com.qidate.qisplan2.item.GhostUmbrellaItem;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.neoforged.bus.api.SubscribeEvent;
@@ -39,16 +41,15 @@ public final class GhostUmbrellaDomainClient {
     private static boolean insideDomain = false;
 
 
-    private GhostUmbrellaDomainClient() {
-    }
-
     /*
-     * 声音字段
+     * 鬼雨环境音计时器。
+     *
+     * 0 表示可以立即播放下一次。
      */
-    private static GhostRainSound rainSound;
+    private static int rainSoundTime = 0;
 
-    public static boolean isInsideDomain() {
-        return insideDomain;
+
+    private GhostUmbrellaDomainClient() {
     }
 
 
@@ -147,31 +148,11 @@ public final class GhostUmbrellaDomainClient {
                 );
 
         /*
-         * ========================================================
-         * 鬼雨声音
-         * ========================================================
+         * 鬼雨环境音。
          */
-
-        if (insideDomain) {
-
-            if (rainSound == null
-                    || rainSound.isStopped()) {
-
-                rainSound =
-                        new GhostRainSound();
-
-                Minecraft.getInstance()
-                        .getSoundManager()
-                        .play(rainSound);
-            }
-
-        } else {
-
-            if (rainSound != null) {
-                rainSound.stopSound();
-                rainSound = null;
-            }
-        }
+        tickRainSound(
+                minecraft
+        );
     }
 
 
@@ -288,5 +269,68 @@ public final class GhostUmbrellaDomainClient {
                 event,
                 RAIN_SOURCES
         );
+    }
+
+    private static void tickRainSound(
+            Minecraft minecraft
+    ) {
+        /*
+         * 不在鬼雨领域：
+         * 清空计时器。
+         */
+        if (!insideDomain) {
+            rainSoundTime = 0;
+            return;
+        }
+
+        /*
+         * 还没到下一次播放时间。
+         */
+        if (rainSoundTime > 0) {
+            rainSoundTime--;
+            return;
+        }
+
+        /*
+         * 找不到玩家就不播放。
+         */
+        if (minecraft.player == null
+                || minecraft.level == null) {
+            return;
+        }
+
+        /*
+         * ========================================================
+         * 播放一次原版雨声事件
+         * ========================================================
+         *
+         * 不使用 looping。
+         *
+         * 每次只播放一次 WEATHER_RAIN，
+         * 然后等待一小段时间再播放下一次。
+         */
+        minecraft.level.playLocalSound(
+                minecraft.player.getX(),
+                minecraft.player.getY(),
+                minecraft.player.getZ(),
+                SoundEvents.WEATHER_RAIN,
+                SoundSource.WEATHER,
+                0.30F,
+                1.0F,
+                false
+        );
+
+        /*
+         * ========================================================
+         * 下一次播放时间
+         * ========================================================
+         *
+         * 原版本身有 rainSoundTime 调度机制；
+         * 我们这里保留这个思路。
+         *
+         * 不要每 tick 播放。
+         */
+        rainSoundTime =
+                12 + minecraft.level.random.nextInt(12);
     }
 }
