@@ -29,6 +29,8 @@ import net.minecraft.commands.arguments.ResourceLocationArgument;
 import net.minecraft.core.Holder;
 import net.minecraft.core.component.DataComponentType;
 import net.minecraft.core.component.DataComponents;
+import net.minecraft.core.particles.ParticleType;
+import net.minecraft.core.particles.SimpleParticleType;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.resources.ResourceLocation;
@@ -137,6 +139,11 @@ public class QisPlan2 {
     public static final DeferredRegister<DataComponentType<?>> DATA_COMPONENTS =
             DeferredRegister.create(
                     BuiltInRegistries.DATA_COMPONENT_TYPE,
+                    MODID
+            );
+    public static final DeferredRegister<ParticleType<?>> PARTICLE_TYPES =
+            DeferredRegister.create(
+                    BuiltInRegistries.PARTICLE_TYPE,
                     MODID
             );
     public static final DeferredRegister<AttachmentType<?>> ATTACHMENT_TYPES =
@@ -500,6 +507,16 @@ public class QisPlan2 {
                     )
             );
 
+    // 鬼黑雨
+    public static final DeferredHolder<
+            ParticleType<?>,
+            SimpleParticleType
+            > BLACK_RAIN =
+            PARTICLE_TYPES.register(
+                    "black_rain",
+                    () -> new SimpleParticleType(false)
+            );
+
 
     // 夜游鬼
     public static final DeferredHolder<EntityType<?>, EntityType<NightWanderer>> NIGHT_WANDERER =
@@ -652,6 +669,7 @@ public class QisPlan2 {
         RECIPE_TYPES.register(modEventBus);
         RECIPE_SERIALIZERS.register(modEventBus);
         DATA_COMPONENTS.register(modEventBus);
+        PARTICLE_TYPES.register(modEventBus);
 
         // 实体属性注册
         modEventBus.addListener(this::onEntityAttributeCreation);
