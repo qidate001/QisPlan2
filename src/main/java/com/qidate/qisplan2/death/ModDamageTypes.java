@@ -136,6 +136,16 @@ public class ModDamageTypes {
         );
     }
 
+    public static final ResourceKey<DamageType>
+            GHOST_UMBRELLA =
+            ResourceKey.create(
+                    Registries.DAMAGE_TYPE,
+                    ResourceLocation.fromNamespaceAndPath(
+                            QisPlan2.MODID,
+                            "ghost_umbrella"
+                    )
+            );
+
     /**
      * 鬼钢琴灵异攻击
      */
@@ -237,6 +247,25 @@ public class ModDamageTypes {
                         )
                         .getHolderOrThrow(
                                 GHOST_PIANO
+                        ),
+                entity
+        );
+    }
+
+    /**
+     * 创建鬼伞死亡 DamageSource
+     */
+    public static DamageSource ghostUmbrella(
+            Entity entity
+    ) {
+        return new DamageSource(
+                entity.level()
+                        .registryAccess()
+                        .registryOrThrow(
+                                Registries.DAMAGE_TYPE
+                        )
+                        .getHolderOrThrow(
+                                GHOST_UMBRELLA
                         ),
                 entity
         );

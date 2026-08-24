@@ -12,6 +12,7 @@ import com.qidate.qisplan2.death.SupernaturalEntity;
 import com.qidate.qisplan2.entity.InvisibleGhost;
 import com.qidate.qisplan2.entity.NightWanderer;
 import com.qidate.qisplan2.event.GhostShroudHandler;
+import com.qidate.qisplan2.event.GhostUmbrellaAttackHandler;
 import com.qidate.qisplan2.event.PossessionHudOverlay;
 import com.qidate.qisplan2.ghost.PossessedGhostState;
 import com.qidate.qisplan2.ghost.PossessionHandler;
@@ -684,6 +685,10 @@ public class QisPlan2 {
 
         modEventBus.register(
                 GhostUmbrellaClient.class
+        );
+
+        NeoForge.EVENT_BUS.register(
+                GhostUmbrellaAttackHandler.class
         );
 
         // 驭鬼 HUD 注册
