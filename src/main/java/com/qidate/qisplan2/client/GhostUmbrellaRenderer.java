@@ -1,5 +1,6 @@
 package com.qidate.qisplan2.client;
 
+import com.mojang.math.Axis;
 import com.qidate.qisplan2.QisPlan2;
 import com.qidate.qisplan2.item.GhostUmbrellaItem;
 import com.mojang.blaze3d.vertex.PoseStack;
@@ -168,22 +169,83 @@ public class GhostUmbrellaRenderer
          * 第三人称
          * ========================================
          */
-        else if (displayContext
-                == ItemDisplayContext.THIRD_PERSON_RIGHT_HAND
-                || displayContext
-                == ItemDisplayContext.THIRD_PERSON_LEFT_HAND) {
+        /*
+         * ========================================
+         * 第三人称
+         * ========================================
+         */
+        else if (displayContext == ItemDisplayContext.THIRD_PERSON_RIGHT_HAND
+                || displayContext == ItemDisplayContext.THIRD_PERSON_LEFT_HAND) {
 
-            poseStack.scale(
-                    2.5F,
-                    2.5F,
-                    2.5F
-            );
+            boolean open =
+                    GhostUmbrellaItem.isOpen(stack);
 
+            /*
+             * ==============================
+             * 大小
+             * ==============================
+             */
+            if (open) {
+
+                poseStack.scale(
+                        2.2F,
+                        2.2F,
+                        2.2F
+                );
+
+            } else {
+
+                poseStack.scale(
+                        1.4F,
+                        1.4F,
+                        1.4F
+                );
+            }
+
+            /*
+             * ==============================
+             * 把伞整体抬到手的位置
+             * ==============================
+             */
             poseStack.translate(
-                    0.0D,
-                    -0.15D,
-                    0.0D
+                    0.11D,
+                    0.6D,
+                    0.3D
             );
+
+            /*
+             * ==============================
+             * 让伞竖起来
+             * ==============================
+             */
+            poseStack.mulPose(
+                    Axis.XP.rotationDegrees(
+                            15.0F
+                    )
+            );
+
+            /*
+             * ==============================
+             * 左右手稍微错开
+             * ==============================
+             */
+            if (displayContext
+                    == ItemDisplayContext.THIRD_PERSON_RIGHT_HAND) {
+
+                poseStack.translate(
+                        0.12D,
+                        0.0D,
+                        0.0D
+                );
+
+            } else {
+
+                poseStack.translate(
+                        -0.12D,
+                        0.0D,
+                        0.0D
+                );
+            }
         }
 
         /*
