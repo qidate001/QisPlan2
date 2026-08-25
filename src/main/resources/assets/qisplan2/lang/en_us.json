@@ -32,6 +32,10 @@
   "entity.qisplan2.invisible_ghost": "§4Invisible Ghost",
   "entity.qisplan2.knocking_ghost": "§4Knocking Ghost",
 
+  "ghost.qisplan2.night_wanderer": "Night Wanderer",
+  "ghost.qisplan2.invisible_ghost": "Invisible Ghost",
+  "ghost.qisplan2.knocking_ghost": "Knocking Ghost",
+
   "screen.qisplan2.ghost_book": "§4Ghost Book",
 
   "container.qisplan2.ghost_stove": "§4Ghost Stove",

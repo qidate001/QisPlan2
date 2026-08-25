@@ -32,6 +32,10 @@
   "entity.qisplan2.invisible_ghost": "§4不可视之鬼",
   "entity.qisplan2.knocking_ghost": "§4敲门鬼",
 
+  "ghost.qisplan2.night_wanderer": "夜游鬼",
+  "ghost.qisplan2.invisible_ghost": "不可视之鬼",
+  "ghost.qisplan2.knocking_ghost": "敲门鬼",
+
   "screen.qisplan2.ghost_book": "§4鬼书",
 
   "container.qisplan2.ghost_stove": "§4鬼灶台",
