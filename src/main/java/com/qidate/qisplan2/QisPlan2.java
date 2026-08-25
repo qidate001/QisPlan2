@@ -508,6 +508,21 @@ public class QisPlan2 {
                     )
             );
 
+    public static final DeferredHolder<
+            DataComponentType<?>,
+            DataComponentType<Long>
+            > GHOST_UMBRELLA_OPENED_AT =
+            DATA_COMPONENTS.register(
+                    "ghost_umbrella_opened_at",
+                    () -> DataComponentType
+                            .<Long>builder()
+                            .persistent(Codec.LONG)
+                            .networkSynchronized(
+                                    ByteBufCodecs.VAR_LONG
+                            )
+                            .build()
+            );
+
     // 鬼黑雨
     public static final DeferredHolder<
             ParticleType<?>,
