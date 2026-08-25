@@ -3,16 +3,12 @@ package com.qidate.qisplan2.entity;
 import com.qidate.qisplan2.QisPlan2;
 import com.qidate.qisplan2.block.GhostDoorBlock;
 import com.qidate.qisplan2.death.ModDamageTypes;
-import com.qidate.qisplan2.death.SupernaturalCombatHandler;
 import com.qidate.qisplan2.death.SupernaturalDeathHandler;
-import com.qidate.qisplan2.death.SupernaturalEntity;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
-import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.tags.BlockTags;
-import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.*;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
@@ -26,14 +22,23 @@ import net.minecraft.world.phys.AABB;
 import java.util.*;
 
 public class KnockingGhost
-        extends PathfinderMob
-        implements SupernaturalEntity {
+        extends AbstractGhostEntity {
 
     /*
      * ============================================================
      * 参数
      * ============================================================
      */
+
+    /**
+     * 灵异防御
+     */
+    private static final double SUPERNATURAL_DEFENSE = 6.0D;
+
+    @Override
+    public double getSupernaturalDefense() {
+        return SUPERNATURAL_DEFENSE;
+    }
 
     /**
      * 寻找门的水平范围。
@@ -130,22 +135,6 @@ public class KnockingGhost
 
     /*
      * ============================================================
-     * 死机状态
-     * ============================================================
-     */
-
-    private int supernaturalStunTicks = 0;
-
-    private boolean permanentSupernaturalStun = false;
-
-    private static final String NBT_STUN_TICKS =
-            "QisPlan2SupernaturalStunTicks";
-
-    private static final String NBT_PERMANENT_STUN =
-            "QisPlan2SupernaturalPermanentStun";
-
-    /*
-     * ============================================================
      * AI 状态
      * ============================================================
      */
@@ -176,63 +165,6 @@ public class KnockingGhost
      * 灵异属性
      * ============================================================
      */
-
-    /**
-     * 这里按照你自己的设定调整。
-     */
-    private static final double SUPERNATURAL_DEFENSE = 6.0D;
-
-    @Override
-    public double getSupernaturalDefense() {
-        return SUPERNATURAL_DEFENSE;
-    }
-
-    @Override
-    public void onSupernaturalAttack(int ticks) {
-
-        supernaturalStunTicks =
-                (int) Math.min(
-                        Integer.MAX_VALUE,
-                        (long) supernaturalStunTicks
-                                + ticks
-                );
-
-        getNavigation().stop();
-    }
-
-    @Override
-    public void onPermanentSupernaturalAttack() {
-
-        permanentSupernaturalStun = true;
-
-        supernaturalStunTicks = 0;
-
-        getNavigation().stop();
-    }
-
-    @Override
-    public boolean isSupernaturallyStunned() {
-        return permanentSupernaturalStun
-                || supernaturalStunTicks > 0;
-    }
-
-    @Override
-    public boolean isPermanentlySupernaturallyStunned() {
-        return permanentSupernaturalStun;
-    }
-
-    /**
-     * 无敌。
-     */
-    @Override
-    public boolean isInvulnerableTo(
-            DamageSource damageSource
-    ) {
-        return SupernaturalCombatHandler.isInvulnerableTo(
-                this,
-                damageSource
-        );
-    }
 
     /*
      * ============================================================
@@ -269,20 +201,14 @@ public class KnockingGhost
         super.tick();
 
         /*
-         * ========================================
-         * 死机
-         * ========================================
+         * ========================================================
+         * 死机时不允许敲门鬼继续寻路。
+         *
+         * AbstractGhostEntity 已经统一管理死机状态，
+         * 这里只负责停止自己的 AI 移动。
+         * ========================================================
          */
-        if (permanentSupernaturalStun) {
-
-            getNavigation().stop();
-
-            return;
-        }
-
-        if (supernaturalStunTicks > 0) {
-
-            supernaturalStunTicks--;
+        if (isSupernaturallyStunned()) {
 
             getNavigation().stop();
 
@@ -290,9 +216,9 @@ public class KnockingGhost
         }
 
         /*
-         * ========================================
+         * ========================================================
          * 最近门记录计时
-         * ========================================
+         * ========================================================
          */
         if (!level().isClientSide()) {
 
@@ -309,10 +235,20 @@ public class KnockingGhost
             }
         }
 
+        /*
+         * ========================================================
+         * 延迟灵异攻击
+         * ========================================================
+         */
         if (!level().isClientSide()) {
             tickPendingKnockAttacks();
         }
 
+        /*
+         * ========================================================
+         * 延迟鬼门共鸣
+         * ========================================================
+         */
         if (!level().isClientSide()) {
             tickPendingDoorKnocks();
         }
@@ -1310,56 +1246,5 @@ public class KnockingGhost
                         Attributes.FOLLOW_RANGE,
                         32.0D
                 );
-    }
-
-    /*
-     * ============================================================
-     * NBT
-     * ============================================================
-     */
-
-    @Override
-    public void addAdditionalSaveData(
-            CompoundTag tag
-    ) {
-        super.addAdditionalSaveData(
-                tag
-        );
-
-        tag.putInt(
-                NBT_STUN_TICKS,
-                supernaturalStunTicks
-        );
-
-        tag.putBoolean(
-                NBT_PERMANENT_STUN,
-                permanentSupernaturalStun
-        );
-    }
-
-    @Override
-    public void readAdditionalSaveData(
-            CompoundTag tag
-    ) {
-        super.readAdditionalSaveData(
-                tag
-        );
-
-        supernaturalStunTicks =
-                Math.max(
-                        0,
-                        tag.getInt(
-                                NBT_STUN_TICKS
-                        )
-                );
-
-        permanentSupernaturalStun =
-                tag.getBoolean(
-                        NBT_PERMANENT_STUN
-                );
-
-        if (permanentSupernaturalStun) {
-            supernaturalStunTicks = 0;
-        }
     }
 }
