@@ -2,6 +2,7 @@ package com.qidate.qisplan2.entity;
 
 import com.qidate.qisplan2.QisPlan2;
 import com.qidate.qisplan2.death.ModDamageTypes;
+import com.qidate.qisplan2.death.SupernaturalCombatHandler;
 import com.qidate.qisplan2.death.SupernaturalDeathHandler;
 import com.qidate.qisplan2.death.SupernaturalEntity;
 import net.minecraft.core.BlockPos;
@@ -9,21 +10,20 @@ import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.sounds.SoundSource;
 import net.minecraft.tags.BlockTags;
-import net.minecraft.world.entity.EntityType;
-import net.minecraft.world.entity.Mob;
-import net.minecraft.world.entity.PathfinderMob;
+import net.minecraft.world.damagesource.DamageSource;
+import net.minecraft.world.entity.*;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.ai.goal.Goal;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.DoorBlock;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.state.properties.DoubleBlockHalf;
 import net.minecraft.world.phys.AABB;
 
-import java.util.EnumSet;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 
 public class KnockingGhost
         extends PathfinderMob
@@ -64,6 +64,21 @@ public class KnockingGhost
      * 同一扇门多久之后可以重新敲。
      */
     private static final int RECENT_DOOR_MEMORY_TIME = 20 * 30;
+
+    /**
+     * 攻击奏效延迟
+     */
+    private static final int KNOCK_ATTACK_DELAY = 10;
+
+    private final List<PendingKnockAttack>
+            pendingKnockAttacks =
+            new ArrayList<>();
+
+    private record PendingKnockAttack(
+            UUID target,
+            int remainingTicks
+    ) {
+    }
 
     /*
      * ============================================================
@@ -158,6 +173,19 @@ public class KnockingGhost
         return permanentSupernaturalStun;
     }
 
+    /**
+     * 无敌。
+     */
+    @Override
+    public boolean isInvulnerableTo(
+            DamageSource damageSource
+    ) {
+        return SupernaturalCombatHandler.isInvulnerableTo(
+                this,
+                damageSource
+        );
+    }
+
     /*
      * ============================================================
      * AI
@@ -231,6 +259,68 @@ public class KnockingGhost
                 recentDoorResetTicks =
                         RECENT_DOOR_MEMORY_TIME;
             }
+        }
+
+        if (!level().isClientSide()) {
+            tickPendingKnockAttacks();
+        }
+    }
+
+    private void tickPendingKnockAttacks() {
+
+        if (pendingKnockAttacks.isEmpty()) {
+            return;
+        }
+
+        for (int i =
+             pendingKnockAttacks.size() - 1;
+             i >= 0;
+             i--) {
+
+            PendingKnockAttack pending =
+                    pendingKnockAttacks.get(i);
+
+            int remaining =
+                    pending.remainingTicks() - 1;
+
+            if (remaining > 0) {
+
+                pendingKnockAttacks.set(
+                        i,
+                        new PendingKnockAttack(
+                                pending.target(),
+                                remaining
+                        )
+                );
+
+                continue;
+            }
+
+            /*
+             * 时间到了。
+             */
+            if (level() instanceof ServerLevel serverLevel) {
+
+                Entity entity =
+                        serverLevel.getEntity(
+                                pending.target()
+                        );
+
+                if (entity instanceof LivingEntity living
+                        && living.isAlive()
+                        && living != this) {
+
+                    SupernaturalDeathHandler.tryKill(
+                            living,
+                            ModDamageTypes.knockingGhost(
+                                    this
+                            ),
+                            KNOCK_ATTACK_STRENGTH
+                    );
+                }
+            }
+
+            pendingKnockAttacks.remove(i);
         }
     }
 
@@ -315,27 +405,52 @@ public class KnockingGhost
             Level level,
             BlockPos pos
     ) {
-
         BlockState state =
                 level.getBlockState(pos);
 
         /*
-         * 首选：
-         * minecraft:doors
+         * ========================================================
+         * 原版 / 标准 DoorBlock
+         * ========================================================
          *
-         * 这样其他模组如果正确使用 Door Tag，
-         * 也会自动兼容。
+         * 门只认下半部分。
          */
-        if (state.is(BlockTags.DOORS)) {
-            return true;
+        if (state.getBlock() instanceof DoorBlock) {
+
+            return state.getValue(
+                    DoorBlock.HALF
+            ) == DoubleBlockHalf.LOWER;
         }
 
         /*
-         * 兜底：
-         * 原版 DoorBlock。
+         * ========================================================
+         * 其他模组的门
+         * ========================================================
+         *
+         * 如果它不是 DoorBlock，但加入了 DOORS 标签，
+         * 先检查有没有 DOUBLE_BLOCK_HALF 属性。
+         *
+         * 有的话，只接受 LOWER。
          */
-        return state.getBlock()
-                instanceof DoorBlock;
+        if (state.is(BlockTags.DOORS)) {
+
+            if (state.hasProperty(
+                    net.minecraft.world.level.block.state.properties.BlockStateProperties.DOUBLE_BLOCK_HALF
+            )) {
+
+                return state.getValue(
+                        net.minecraft.world.level.block.state.properties.BlockStateProperties.DOUBLE_BLOCK_HALF
+                ) == DoubleBlockHalf.LOWER;
+            }
+
+            /*
+             * 没有上下半属性：
+             * 视为单方块门，直接接受。
+             */
+            return true;
+        }
+
+        return false;
     }
 
     /*
@@ -354,64 +469,62 @@ public class KnockingGhost
             return;
         }
 
-        /*
-         * 门在抵达前可能已经消失。
-         */
         if (!isDoor(
                 serverLevel,
                 doorPos
         )) {
-
             return;
         }
 
         /*
          * ========================================================
-         * 播放敲门声
+         * 先播放敲门声
          * ========================================================
-         *
-         * null 表示广播给附近玩家。
          */
         serverLevel.playSound(
                 null,
                 doorPos,
                 QisPlan2.GHOST_KNOCK.get(),
-                net.minecraft.sounds.SoundSource.HOSTILE,
+                SoundSource.HOSTILE,
                 1.0F,
                 1.0F
         );
 
         /*
          * ========================================================
-         * 听觉范围
+         * 查找听到敲门声的生物
          * ========================================================
          */
         AABB hearingBox =
-                new AABB(
-                        doorPos
-                ).inflate(
-                        KNOCK_HEARING_RADIUS
-                );
+                new AABB(doorPos)
+                        .inflate(
+                                KNOCK_HEARING_RADIUS
+                        );
 
-        for (ServerPlayer player :
+        for (LivingEntity entity :
                 serverLevel.getEntitiesOfClass(
-                        ServerPlayer.class,
-                        hearingBox
+                        LivingEntity.class,
+                        hearingBox,
+                        LivingEntity::isAlive
                 )) {
 
             /*
-             * 精确球形距离。
+             * 敲门鬼自己不受到自己的敲门声攻击。
              */
+            if (entity == this) {
+                continue;
+            }
+
             double dx =
-                    player.getX()
+                    entity.getX()
                             - (doorPos.getX() + 0.5D);
 
             double dy =
-                    player.getY()
+                    entity.getY()
                             - (doorPos.getY() + 0.5D);
 
             double dz =
-                    player.getZ()
+                    entity.getZ()
                             - (doorPos.getZ() + 0.5D);
 
             if (dx * dx
@@ -425,15 +538,16 @@ public class KnockingGhost
 
             /*
              * ====================================================
-             * 听到敲门声
+             * 不立即攻击。
+             *
+             * 记录下来，10 tick 后再攻击。
              * ====================================================
              */
-            SupernaturalDeathHandler.tryKill(
-                    player,
-                    ModDamageTypes.knockingGhost(
-                            this
-                    ),
-                    KNOCK_ATTACK_STRENGTH
+            pendingKnockAttacks.add(
+                    new PendingKnockAttack(
+                            entity.getUUID(),
+                            KNOCK_ATTACK_DELAY
+                    )
             );
         }
     }
@@ -567,6 +681,82 @@ public class KnockingGhost
                     );
 
             /*
+             * ========================================================
+             * 距离门 5 格以内
+             * ========================================================
+             *
+             * 不再继续寻路。
+             *
+             * 直接出现在门前。
+             */
+            if (distanceSqr <= 25.0D) {
+
+                BlockPos approach =
+                        findBestApproachPosition();
+
+                if (approach != null) {
+
+                    ghost.teleportTo(
+                            approach.getX() + 0.5D,
+                            approach.getY(),
+                            approach.getZ() + 0.5D
+                    );
+
+                } else {
+
+                    /*
+                     * 如果周围没有合适的门前位置，
+                     * 就直接到门的一侧。
+                     */
+                    ghost.teleportTo(
+                            targetDoor.getX() + 0.5D,
+                            targetDoor.getY(),
+                            targetDoor.getZ() + 0.5D
+                    );
+                }
+
+                ghost.getNavigation().stop();
+
+                /*
+                 * 瞬移完成以后立即敲门。
+                 */
+                ghost.knockDoor(
+                        targetDoor
+                );
+
+                /*
+                 * 记录这扇门。
+                 */
+                ghost.recentlyKnocked.add(
+                        targetDoor.immutable()
+                );
+
+                ghost.recentDoorResetTicks =
+                        RECENT_DOOR_MEMORY_TIME;
+
+                /*
+                 * 当前目标结束。
+                 */
+                targetDoor = null;
+
+                /*
+                 * 下一扇门。
+                 */
+                cooldown =
+                        KNOCK_COOLDOWN;
+
+                return;
+            }
+
+
+            /*
+             * ========================================================
+             * 还比较远
+             * ========================================================
+             */
+            moveToDoor();
+
+            /*
              * 进入门附近就敲。
              */
             if (distanceSqr > 3.0D) {
@@ -670,11 +860,31 @@ public class KnockingGhost
                                 direction
                         );
 
+                /*
+                 * 门前必须能站人。
+                 */
                 if (!ghost.level()
                         .getBlockState(pos)
                         .getCollisionShape(
                                 ghost.level(),
                                 pos
+                        )
+                        .isEmpty()) {
+
+                    continue;
+                }
+
+                /*
+                 * 脚下需要有支撑。
+                 */
+                BlockPos below =
+                        pos.below();
+
+                if (ghost.level()
+                        .getBlockState(below)
+                        .getCollisionShape(
+                                ghost.level(),
+                                below
                         )
                         .isEmpty()) {
 
@@ -688,8 +898,7 @@ public class KnockingGhost
                                 pos.getZ() + 0.5D
                         );
 
-                if (distance
-                        < bestDistance) {
+                if (distance < bestDistance) {
 
                     bestDistance =
                             distance;
