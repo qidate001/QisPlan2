@@ -93,6 +93,19 @@ public class ModDamageTypes {
                     )
             );
 
+    /**
+     * 敲门鬼灵异攻击
+     */
+    public static final ResourceKey<DamageType>
+            KNOCKING_GHOST =
+            ResourceKey.create(
+                    Registries.DAMAGE_TYPE,
+                    ResourceLocation.fromNamespaceAndPath(
+                            QisPlan2.MODID,
+                            "knocking_ghost"
+                    )
+            );
+
 
     /**
      * 创建鬼地毯死亡 DamageSource
@@ -266,6 +279,25 @@ public class ModDamageTypes {
                         )
                         .getHolderOrThrow(
                                 GHOST_UMBRELLA
+                        ),
+                entity
+        );
+    }
+
+    /**
+     * 创建敲门鬼死亡 DamageSource
+     */
+    public static DamageSource knockingGhost(
+            Entity entity
+    ) {
+        return new DamageSource(
+                entity.level()
+                        .registryAccess()
+                        .registryOrThrow(
+                                Registries.DAMAGE_TYPE
+                        )
+                        .getHolderOrThrow(
+                                KNOCKING_GHOST
                         ),
                 entity
         );

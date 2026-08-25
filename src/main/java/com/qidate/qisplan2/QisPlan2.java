@@ -10,6 +10,7 @@ import com.qidate.qisplan2.client.*;
 import com.qidate.qisplan2.core.QisConfig;
 import com.qidate.qisplan2.death.SupernaturalEntity;
 import com.qidate.qisplan2.entity.InvisibleGhost;
+import com.qidate.qisplan2.entity.KnockingGhost;
 import com.qidate.qisplan2.entity.NightWanderer;
 import com.qidate.qisplan2.event.GhostShroudHandler;
 import com.qidate.qisplan2.event.GhostUmbrellaAttackHandler;
@@ -601,6 +602,55 @@ public class QisPlan2 {
                     )
             );
 
+    // 敲门鬼
+    public static final Supplier<
+            EntityType<KnockingGhost>
+            > KNOCKING_GHOST =
+            ENTITY_TYPES.register(
+                    "knocking_ghost",
+                    () -> EntityType.Builder
+                            .of(
+                                    KnockingGhost::new,
+                                    MobCategory.MONSTER
+                            )
+                            .sized(
+                                    0.8F,
+                                    1.95F
+                            )
+                            .clientTrackingRange(64)
+                            .build(
+                                    ResourceLocation.fromNamespaceAndPath(
+                                            MODID,
+                                            "knocking_ghost"
+                                    ).toString()
+                            )
+            );
+
+    public static final DeferredItem<SpawnEggItem> KNOCKING_GHOST_SPAWN_EGG =
+            ITEMS.register(
+                    "knocking_ghost_spawn_egg",
+                    () -> new SpawnEggItem(
+                            KNOCKING_GHOST.get(),
+                            0x191919, // 基础颜色
+                            0x6B6B6B, // 斑点颜色
+                            new Item.Properties()
+                    )
+            );
+
+    public static final DeferredHolder<
+            SoundEvent,
+            SoundEvent
+            > GHOST_KNOCK =
+            SOUND_EVENTS.register(
+                    "ghost_knock",
+                    () -> SoundEvent.createVariableRangeEvent(
+                            ResourceLocation.fromNamespaceAndPath(
+                                    MODID,
+                                    "ghost_knock"
+                            )
+                    )
+            );
+
 
     // 创造物品栏
     public static final DeferredRegister<CreativeModeTab> CREATIVE_MODE_TABS =
@@ -625,6 +675,7 @@ public class QisPlan2 {
                         output.accept(GHOST_UMBRELLA);
                         output.accept(NIGHT_WANDERER_SPAWN_EGG);
                         output.accept(NINVISIBLE_GHOST_SPAWN_EGG);
+                        output.accept(KNOCKING_GHOST_SPAWN_EGG);
                     })
                     .build()
             );
@@ -730,6 +781,13 @@ public class QisPlan2 {
         event.put(
                 INVISIBLE_GHOST.get(),
                 InvisibleGhost.createAttributes()
+                        .build()
+        );
+
+        // 敲门鬼
+        event.put(
+                KNOCKING_GHOST.get(),
+                KnockingGhost.createAttributes()
                         .build()
         );
     }

@@ -6,5 +6,12 @@
         "stream": true
       }
     ]
+  },
+  "ghost_knock": {
+    "sounds": [
+      {
+        "name": "qisplan2:ghost_knock"
+      }
+    ]
   }
 }
