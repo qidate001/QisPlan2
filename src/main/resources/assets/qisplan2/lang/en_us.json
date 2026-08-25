@@ -26,9 +26,11 @@
   "item.qisplan2.ghost_umbrella": "§4Ghost Umbrella",
   "item.qisplan2.night_wanderer_spawn_egg": "§4Night wanderer spawn egg",
   "item.qisplan2.invisible_ghost_spawn_egg": "§4Invisible ghost spawn egg",
+  "item.qisplan2.knocking_ghost_spawn_egg": "§4Knocking ghost spawn egg",
 
   "entity.qisplan2.night_wanderer": "§4Night Wanderer",
   "entity.qisplan2.invisible_ghost": "§4Invisible Ghost",
+  "entity.qisplan2.knocking_ghost": "§4Knocking Ghost",
 
   "screen.qisplan2.ghost_book": "§4Ghost Book",
 
@@ -43,6 +45,7 @@
   "death.attack.ghost_piano": "%1$s was shaken unconscious by the §4Ghost Music§r from the §4Ghost Piano§r",
   "death.attack.invisible_ghost": "%1$s consciousness was erased by supernatural forces",
   "death.attack.ghost_umbrella": "%1$s has been turned into a corpse by §4Ghost Rain§r.",
+  "death.attack.knocking_ghost": "%1$s was killed by §4Knocking Curse§r.",
 
   "qisplan2.death_curse.triggered": "☠ The §4Death Curse§r has been triggered! The §4Death Curse Sword§r has shattered!",
   "qisplan2.death_curse.reflection": "☠ The §4Death Curse§r has rebounded!",
