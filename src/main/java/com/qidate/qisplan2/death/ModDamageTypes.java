@@ -96,13 +96,36 @@ public class ModDamageTypes {
     /**
      * 敲门鬼灵异攻击
      */
-    public static final ResourceKey<DamageType>
-            KNOCKING_GHOST =
+    public static final ResourceKey<DamageType> KNOCKING_GHOST =
             ResourceKey.create(
                     Registries.DAMAGE_TYPE,
                     ResourceLocation.fromNamespaceAndPath(
                             QisPlan2.MODID,
                             "knocking_ghost"
+                    )
+            );
+
+    /**
+     * 开门鬼灵异攻击
+     */
+    public static final ResourceKey<DamageType> OPENING_GHOST =
+            ResourceKey.create(
+                    Registries.DAMAGE_TYPE,
+                    ResourceLocation.fromNamespaceAndPath(
+                            QisPlan2.MODID,
+                            "opening_ghost"
+                    )
+            );
+
+    /**
+     * 关门鬼灵异攻击
+     */
+    public static final ResourceKey<DamageType> CLOSING_GHOST =
+            ResourceKey.create(
+                    Registries.DAMAGE_TYPE,
+                    ResourceLocation.fromNamespaceAndPath(
+                            QisPlan2.MODID,
+                            "closing_ghost"
                     )
             );
 
@@ -298,6 +321,44 @@ public class ModDamageTypes {
                         )
                         .getHolderOrThrow(
                                 KNOCKING_GHOST
+                        ),
+                entity
+        );
+    }
+
+    /**
+     * 创建开门鬼死亡 DamageSource
+     */
+    public static DamageSource openingGhost(
+            Entity entity
+    ) {
+        return new DamageSource(
+                entity.level()
+                        .registryAccess()
+                        .registryOrThrow(
+                                Registries.DAMAGE_TYPE
+                        )
+                        .getHolderOrThrow(
+                                OPENING_GHOST
+                        ),
+                entity
+        );
+    }
+
+    /**
+     * 创建关门鬼死亡 DamageSource
+     */
+    public static DamageSource closingGhost(
+            Entity entity
+    ) {
+        return new DamageSource(
+                entity.level()
+                        .registryAccess()
+                        .registryOrThrow(
+                                Registries.DAMAGE_TYPE
+                        )
+                        .getHolderOrThrow(
+                                CLOSING_GHOST
                         ),
                 entity
         );
