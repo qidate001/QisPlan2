@@ -89,7 +89,7 @@ public final class GhostCommands {
                                                 }
                                         )
                                         .executes(
-                                                GhostCommands::possess
+                                                GhostCommands::release
                                         )
                         )
         );
@@ -145,7 +145,7 @@ public final class GhostCommands {
                                                                 }
                                                         )
                                                         .executes(
-                                                                GhostCommands::possess
+                                                                GhostCommands::stun
                                                         )
                                         )
                         )
@@ -180,7 +180,7 @@ public final class GhostCommands {
                                                 }
                                         )
                                         .executes(
-                                                GhostCommands::possess
+                                                GhostCommands::permanentStun
                                         )
                         )
         );
