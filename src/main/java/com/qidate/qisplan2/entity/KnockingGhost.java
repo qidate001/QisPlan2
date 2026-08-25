@@ -1,6 +1,7 @@
 package com.qidate.qisplan2.entity;
 
 import com.qidate.qisplan2.QisPlan2;
+import com.qidate.qisplan2.block.GhostDoorBlock;
 import com.qidate.qisplan2.death.ModDamageTypes;
 import com.qidate.qisplan2.death.SupernaturalCombatHandler;
 import com.qidate.qisplan2.death.SupernaturalDeathHandler;
@@ -9,7 +10,6 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.tags.BlockTags;
 import net.minecraft.world.damagesource.DamageSource;
@@ -70,6 +70,26 @@ public class KnockingGhost
      */
     private static final int KNOCK_ATTACK_DELAY = 10;
 
+    /**
+     * 鬼门共鸣范围。
+     */
+    private static final int GHOST_DOOR_ECHO_RADIUS = 50;
+
+    /**
+     * 鬼门共鸣的垂直搜索范围。
+     */
+    private static final int GHOST_DOOR_ECHO_VERTICAL_RADIUS = 20;
+
+    /**
+     * 共鸣门最早什么时候响。
+     */
+    private static final int GHOST_DOOR_ECHO_MIN_DELAY = 5;
+
+    /**
+     * 共鸣门最晚什么时候响。
+     */
+    private static final int GHOST_DOOR_ECHO_MAX_DELAY = 40;
+
     private final List<PendingKnockAttack>
             pendingKnockAttacks =
             new ArrayList<>();
@@ -77,8 +97,19 @@ public class KnockingGhost
     private record PendingKnockAttack(
             UUID target,
             int remainingTicks
-    ) {
-    }
+    ) { }
+
+    /**
+     * 延迟播放的敲门声。
+     */
+    private final List<PendingDoorKnock>
+            pendingDoorKnocks =
+            new ArrayList<>();
+
+    private record PendingDoorKnock(
+            BlockPos doorPos,
+            int remainingTicks
+    ) { }
 
     /*
      * ============================================================
@@ -264,6 +295,10 @@ public class KnockingGhost
         if (!level().isClientSide()) {
             tickPendingKnockAttacks();
         }
+
+        if (!level().isClientSide()) {
+            tickPendingDoorKnocks();
+        }
     }
 
     private void tickPendingKnockAttacks() {
@@ -324,6 +359,65 @@ public class KnockingGhost
         }
     }
 
+    private void tickPendingDoorKnocks() {
+
+        if (pendingDoorKnocks.isEmpty()) {
+            return;
+        }
+
+        for (int i =
+             pendingDoorKnocks.size() - 1;
+             i >= 0;
+             i--) {
+
+            PendingDoorKnock pending =
+                    pendingDoorKnocks.get(i);
+
+            int remaining =
+                    pending.remainingTicks() - 1;
+
+            if (remaining > 0) {
+
+                pendingDoorKnocks.set(
+                        i,
+                        new PendingDoorKnock(
+                                pending.doorPos(),
+                                remaining
+                        )
+                );
+
+                continue;
+            }
+
+            BlockPos doorPos =
+                    pending.doorPos();
+
+            /*
+             * 门在等待期间可能已经被破坏。
+             */
+            if (level() instanceof ServerLevel serverLevel
+                    && isDoor(
+                    serverLevel,
+                    doorPos
+            )) {
+
+                /*
+                 * 这扇门现在正式响起。
+                 *
+                 * false：
+                 * 不再向外递归传播。
+                 */
+                triggerDoorKnock(
+                        serverLevel,
+                        doorPos,
+                        false
+                );
+            }
+
+            pendingDoorKnocks.remove(i);
+        }
+    }
+
     /*
      * ============================================================
      * 寻找门
@@ -332,10 +426,40 @@ public class KnockingGhost
 
     private BlockPos findNearestDoor() {
 
+        /*
+         * ========================================================
+         * 第一优先级：鬼门
+         * ========================================================
+         */
+
+        BlockPos ghostDoor =
+                findNearestDoor(
+                        true
+                );
+
+        if (ghostDoor != null) {
+            return ghostDoor;
+        }
+
+        /*
+         * ========================================================
+         * 第二优先级：普通门
+         * ========================================================
+         */
+
+        return findNearestDoor(
+                false
+        );
+    }
+
+    private BlockPos findNearestDoor(
+            boolean onlyGhostDoor
+    ) {
+
         BlockPos center =
                 blockPosition();
 
-        BlockPos bestDoor =
+        BlockPos best =
                 null;
 
         double bestDistance =
@@ -363,10 +487,23 @@ public class KnockingGhost
                                     z
                             );
 
-                    /*
-                     * 已经敲过。
-                     */
                     if (recentlyKnocked.contains(pos)) {
+                        continue;
+                    }
+
+                    boolean ghostDoor =
+                            isGhostDoor(
+                                    level(),
+                                    pos
+                            );
+
+                    if (onlyGhostDoor
+                            && !ghostDoor) {
+                        continue;
+                    }
+
+                    if (!onlyGhostDoor
+                            && ghostDoor) {
                         continue;
                     }
 
@@ -385,14 +522,14 @@ public class KnockingGhost
                         bestDistance =
                                 distance;
 
-                        bestDoor =
+                        best =
                                 pos.immutable();
                     }
                 }
             }
         }
 
-        return bestDoor;
+        return best;
     }
 
     /*
@@ -453,22 +590,50 @@ public class KnockingGhost
         return false;
     }
 
+    private static boolean isGhostDoor(
+            Level level,
+            BlockPos pos
+    ) {
+        BlockState state =
+                level.getBlockState(pos);
+
+        /*
+         * 如果你的 GhostDoorBlock 继承 DoorBlock，
+         * 同样只接受下半部分。
+         */
+        if (state.getBlock()
+                instanceof GhostDoorBlock) {
+
+            if (state.hasProperty(
+                    DoorBlock.HALF
+            )) {
+
+                return state.getValue(
+                        DoorBlock.HALF
+                ) == DoubleBlockHalf.LOWER;
+            }
+
+            return true;
+        }
+
+        return false;
+    }
+
     /*
      * ============================================================
      * 实际敲门
      * ============================================================
      */
 
-    private void knockDoor(
-            BlockPos doorPos
+    private void triggerDoorKnock(
+            ServerLevel serverLevel,
+            BlockPos doorPos,
+            boolean allowGhostDoorEcho
     ) {
 
-        if (!(level()
-                instanceof ServerLevel serverLevel)) {
-
-            return;
-        }
-
+        /*
+         * 门已经没了。
+         */
         if (!isDoor(
                 serverLevel,
                 doorPos
@@ -478,7 +643,19 @@ public class KnockingGhost
 
         /*
          * ========================================================
-         * 先播放敲门声
+         * 标记为最近敲过
+         * ========================================================
+         */
+        recentlyKnocked.add(
+                doorPos.immutable()
+        );
+
+        recentDoorResetTicks =
+                RECENT_DOOR_MEMORY_TIME;
+
+        /*
+         * ========================================================
+         * 播放敲门声
          * ========================================================
          */
         serverLevel.playSound(
@@ -492,14 +669,51 @@ public class KnockingGhost
 
         /*
          * ========================================================
-         * 查找听到敲门声的生物
+         * 安排灵异攻击
          * ========================================================
          */
+        queueKnockAttacks(
+                serverLevel,
+                doorPos
+        );
+
+        /*
+         * ========================================================
+         * 鬼门共鸣
+         * ========================================================
+         *
+         * 只有敲门鬼真正敲下鬼门时才允许传播。
+         */
+        if (allowGhostDoorEcho
+                && isGhostDoor(
+                serverLevel,
+                doorPos
+        )) {
+
+            scheduleGhostDoorEchoes(
+                    serverLevel,
+                    doorPos
+            );
+        }
+    }
+
+    /*
+     * ============================================================
+     * 听到门声的生物
+     * ============================================================
+     */
+
+    private void queueKnockAttacks(
+            ServerLevel serverLevel,
+            BlockPos doorPos
+    ) {
+
         AABB hearingBox =
-                new AABB(doorPos)
-                        .inflate(
-                                KNOCK_HEARING_RADIUS
-                        );
+                new AABB(
+                        doorPos
+                ).inflate(
+                        KNOCK_HEARING_RADIUS
+                );
 
         for (LivingEntity entity :
                 serverLevel.getEntitiesOfClass(
@@ -537,16 +751,147 @@ public class KnockingGhost
             }
 
             /*
-             * ====================================================
-             * 不立即攻击。
-             *
-             * 记录下来，10 tick 后再攻击。
-             * ====================================================
+             * 10 tick 后攻击。
              */
             pendingKnockAttacks.add(
                     new PendingKnockAttack(
                             entity.getUUID(),
                             KNOCK_ATTACK_DELAY
+                    )
+            );
+        }
+    }
+
+    /*
+     * ============================================================
+     * 鬼门的 50 格共鸣
+     * ============================================================
+     */
+
+    private void scheduleGhostDoorEchoes(
+            ServerLevel serverLevel,
+            BlockPos sourceDoor
+    ) {
+
+        Set<BlockPos> doors =
+                new HashSet<>();
+
+        int radius =
+                GHOST_DOOR_ECHO_RADIUS;
+
+        int vertical =
+                GHOST_DOOR_ECHO_VERTICAL_RADIUS;
+
+        BlockPos.MutableBlockPos mutable =
+                new BlockPos.MutableBlockPos();
+
+        for (int x = -radius;
+             x <= radius;
+             x++) {
+
+            for (int y = -vertical;
+                 y <= vertical;
+                 y++) {
+
+                for (int z = -radius;
+                     z <= radius;
+                     z++) {
+
+                    /*
+                     * 圆形范围。
+                     */
+                    double distanceSqr =
+                            x * x
+                                    + z * z;
+
+                    if (distanceSqr
+                            > radius * radius) {
+
+                        continue;
+                    }
+
+                    mutable.set(
+                            sourceDoor.getX() + x,
+                            sourceDoor.getY() + y,
+                            sourceDoor.getZ() + z
+                    );
+
+                    /*
+                     * 没加载的区块不处理，
+                     * 避免为了寻找门强行加载大量区块。
+                     */
+                    if (!serverLevel.hasChunkAt(
+                            mutable
+                    )) {
+                        continue;
+                    }
+
+                    /*
+                     * 自己不再添加。
+                     */
+                    if (mutable.equals(
+                            sourceDoor
+                    )) {
+                        continue;
+                    }
+
+                    /*
+                     * 只认门的下半部分。
+                     */
+                    if (!isDoor(
+                            serverLevel,
+                            mutable
+                    )) {
+                        continue;
+                    }
+
+                    doors.add(
+                            mutable.immutable()
+                    );
+                }
+            }
+        }
+
+        /*
+         * ========================================================
+         * 安排这些门依次响起
+         * ========================================================
+         */
+        for (BlockPos door :
+                doors) {
+
+            double dx =
+                    door.getX()
+                            - sourceDoor.getX();
+
+            double dz =
+                    door.getZ()
+                            - sourceDoor.getZ();
+
+            double distance =
+                    Math.sqrt(
+                            dx * dx
+                                    + dz * dz
+                    );
+
+            /*
+             * 距离越远，稍微晚一点响。
+             *
+             * 50 格：
+             * 最多大概 8 tick。
+             */
+            int delay =
+                    GHOST_DOOR_ECHO_MIN_DELAY
+                            + (int) Math.min(
+                            GHOST_DOOR_ECHO_MAX_DELAY
+                                    - GHOST_DOOR_ECHO_MIN_DELAY,
+                            distance / 8.0D
+                    );
+
+            pendingDoorKnocks.add(
+                    new PendingDoorKnock(
+                            door,
+                            delay
                     )
             );
         }
@@ -720,8 +1065,10 @@ public class KnockingGhost
                 /*
                  * 瞬移完成以后立即敲门。
                  */
-                ghost.knockDoor(
-                        targetDoor
+                ghost.triggerDoorKnock(
+                        (ServerLevel) ghost.level(),
+                        targetDoor,
+                        true
                 );
 
                 /*
@@ -774,8 +1121,10 @@ public class KnockingGhost
 
             ghost.getNavigation().stop();
 
-            ghost.knockDoor(
-                    targetDoor
+            ghost.triggerDoorKnock(
+                    (ServerLevel) ghost.level(),
+                    targetDoor,
+                    true
             );
 
             /*
