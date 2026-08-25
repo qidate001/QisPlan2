@@ -4,6 +4,8 @@ import com.qidate.qisplan2.death.ModDamageTypes;
 import com.qidate.qisplan2.death.SupernaturalDeathHandler;
 import com.qidate.qisplan2.item.GhostUmbrellaItem;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.effect.MobEffectInstance;
+import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
@@ -30,6 +32,11 @@ public final class GhostUmbrellaAttackHandler {
      */
     private static final int ATTACK_INTERVAL = 20;
 
+    /**
+     * 反噬分母
+     */
+    private static final double SELF_ATTACK_DIVISOR = 4.0D;
+
     private GhostUmbrellaAttackHandler() {
     }
 
@@ -37,13 +44,40 @@ public final class GhostUmbrellaAttackHandler {
     public static void onServerTick(
             ServerTickEvent.Post event
     ) {
-        if (event.getServer().getTickCount()
-                % ATTACK_INTERVAL != 0) {
+        var server =
+                event.getServer();
+
+        /*
+         * ========================================
+         * 每 tick 处理持伞副作用
+         * ========================================
+         */
+        for (ServerLevel level :
+                server.getAllLevels()) {
+
+            for (Player player :
+                    level.players()) {
+
+                if (hasOpenUmbrella(player)) {
+
+                    updateUmbrellaHolderState(
+                            player
+                    );
+                }
+            }
+        }
+
+        /*
+         * ========================================
+         * 每秒一次灵异攻击
+         * ========================================
+         */
+        if (server.getTickCount() % 20 != 0) {
             return;
         }
 
         for (ServerLevel level :
-                event.getServer().getAllLevels()) {
+                server.getAllLevels()) {
 
             attackFromOpenUmbrellas(level);
         }
@@ -63,26 +97,101 @@ public final class GhostUmbrellaAttackHandler {
                 continue;
             }
 
-            /*
-             * ========================================
-             * 当前领域参数
-             * ========================================
-             *
-             * 以后这里直接换成动态计算即可。
-             */
             double radius =
                     getDomainRadius(source);
 
             double strength =
                     getAttackStrength(source);
 
+            /*
+             * ========================================
+             * 鬼雨领域攻击其他生物
+             * ========================================
+             */
             attackEntitiesInDomain(
                     level,
                     source,
                     radius,
                     strength
             );
+
+            /*
+             * ========================================
+             * 鬼雨反噬持伞者自己
+             * ========================================
+             */
+            attackUmbrellaHolder(
+                    source,
+                    strength / SELF_ATTACK_DIVISOR
+            );
         }
+    }
+
+    private static void updateUmbrellaHolderState(
+            Player player
+    ) {
+
+        /*
+         * 失明。
+         *
+         * 40 tick 会不断刷新，
+         * 所以伞一旦关闭立即停止。
+         */
+        player.addEffect(
+                new MobEffectInstance(
+                        MobEffects.BLINDNESS,
+                        40,
+                        0,
+                        false,
+                        false,
+                        true
+                )
+        );
+
+        /*
+         * 极强缓慢作为客户端/移动系统层面的保险。
+         */
+        player.addEffect(
+                new MobEffectInstance(
+                        MobEffects.MOVEMENT_SLOWDOWN,
+                        40,
+                        255,
+                        false,
+                        false,
+                        false
+                )
+        );
+
+        /*
+         * ========================================
+         * 彻底禁止移动
+         * ========================================
+         */
+        player.setDeltaMovement(
+                0.0D,
+                0.0D,
+                0.0D
+        );
+
+        player.hasImpulse = true;
+    }
+
+    private static void attackUmbrellaHolder(
+            Player player,
+            double strength
+    ) {
+
+        if (!player.isAlive()) {
+            return;
+        }
+
+        SupernaturalDeathHandler.tryKill(
+                player,
+                ModDamageTypes.ghostUmbrella(
+                        player
+                ),
+                strength
+        );
     }
 
     private static boolean hasOpenUmbrella(
