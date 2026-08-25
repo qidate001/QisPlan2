@@ -40,6 +40,20 @@ public final class GhostCommands {
                                                 "ghost",
                                                 ResourceLocationArgument.id()
                                         )
+                                        .suggests(
+                                                (context, builder) -> {
+
+                                                    for (ResourceLocation id :
+                                                            GhostAbilityRegistry.ids()) {
+
+                                                        builder.suggest(
+                                                                id.toString()
+                                                        );
+                                                    }
+
+                                                    return builder.buildFuture();
+                                                }
+                                        )
                                         .executes(
                                                 GhostCommands::possess
                                         )
@@ -60,8 +74,22 @@ public final class GhostCommands {
                                                 "ghost",
                                                 ResourceLocationArgument.id()
                                         )
+                                        .suggests(
+                                                (context, builder) -> {
+
+                                                    for (ResourceLocation id :
+                                                            GhostAbilityRegistry.ids()) {
+
+                                                        builder.suggest(
+                                                                id.toString()
+                                                        );
+                                                    }
+
+                                                    return builder.buildFuture();
+                                                }
+                                        )
                                         .executes(
-                                                GhostCommands::release
+                                                GhostCommands::possess
                                         )
                         )
         );
@@ -102,8 +130,22 @@ public final class GhostCommands {
                                                                         3600
                                                                 )
                                                         )
+                                                        .suggests(
+                                                                (context, builder) -> {
+
+                                                                    for (ResourceLocation id :
+                                                                            GhostAbilityRegistry.ids()) {
+
+                                                                        builder.suggest(
+                                                                                id.toString()
+                                                                        );
+                                                                    }
+
+                                                                    return builder.buildFuture();
+                                                                }
+                                                        )
                                                         .executes(
-                                                                GhostCommands::stun
+                                                                GhostCommands::possess
                                                         )
                                         )
                         )
@@ -123,8 +165,22 @@ public final class GhostCommands {
                                                 "ghost",
                                                 ResourceLocationArgument.id()
                                         )
+                                        .suggests(
+                                                (context, builder) -> {
+
+                                                    for (ResourceLocation id :
+                                                            GhostAbilityRegistry.ids()) {
+
+                                                        builder.suggest(
+                                                                id.toString()
+                                                        );
+                                                    }
+
+                                                    return builder.buildFuture();
+                                                }
+                                        )
                                         .executes(
-                                                GhostCommands::permanentStun
+                                                GhostCommands::possess
                                         )
                         )
         );
