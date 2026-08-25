@@ -17,12 +17,6 @@ public final class GhostAbilityInteractionHandler {
 
     /**
      * 注册事件。
-     *
-     * 在你的模组初始化阶段调用一次：
-     *
-     * NeoForge.EVENT_BUS.register(
-     *         GhostAbilityInteractionHandler.class
-     * );
      */
     public static void register() {
 
