@@ -9,9 +9,7 @@ import com.qidate.qisplan2.block.entity.GhostStoveBlockEntity;
 import com.qidate.qisplan2.client.*;
 import com.qidate.qisplan2.core.QisConfig;
 import com.qidate.qisplan2.death.SupernaturalEntity;
-import com.qidate.qisplan2.entity.InvisibleGhost;
-import com.qidate.qisplan2.entity.KnockingGhost;
-import com.qidate.qisplan2.entity.NightWanderer;
+import com.qidate.qisplan2.entity.*;
 import com.qidate.qisplan2.event.GhostShroudHandler;
 import com.qidate.qisplan2.event.GhostUmbrellaAttackHandler;
 import com.qidate.qisplan2.event.PossessionHudOverlay;
@@ -639,6 +637,79 @@ public class QisPlan2 {
                     )
             );
 
+    // 开门鬼
+    public static final Supplier<
+            EntityType<OpeningGhost>
+            > OPENING_GHOST =
+            ENTITY_TYPES.register(
+                    "opening_ghost",
+                    () -> EntityType.Builder
+                            .of(
+                                    OpeningGhost::new,
+                                    MobCategory.MONSTER
+                            )
+                            .sized(
+                                    0.8F,
+                                    1.95F
+                            )
+                            .clientTrackingRange(64)
+                            .build(
+                                    ResourceLocation.fromNamespaceAndPath(
+                                            MODID,
+                                            "opening_ghost"
+                                    ).toString()
+                            )
+            );
+
+    public static final DeferredItem<SpawnEggItem>
+            OPENING_GHOST_SPAWN_EGG =
+            ITEMS.register(
+                    "opening_ghost_spawn_egg",
+                    () -> new SpawnEggItem(
+                            OPENING_GHOST.get(),
+                            0x191919,
+                            0x4A90E2,
+                            new Item.Properties()
+                    )
+            );
+
+
+    // 关门鬼
+    public static final Supplier<
+            EntityType<ClosingGhost>
+            > CLOSING_GHOST =
+            ENTITY_TYPES.register(
+                    "closing_ghost",
+                    () -> EntityType.Builder
+                            .of(
+                                    ClosingGhost::new,
+                                    MobCategory.MONSTER
+                            )
+                            .sized(
+                                    0.8F,
+                                    1.95F
+                            )
+                            .clientTrackingRange(64)
+                            .build(
+                                    ResourceLocation.fromNamespaceAndPath(
+                                            MODID,
+                                            "closing_ghost"
+                                    ).toString()
+                            )
+            );
+
+    public static final DeferredItem<SpawnEggItem>
+            CLOSING_GHOST_SPAWN_EGG =
+            ITEMS.register(
+                    "closing_ghost_spawn_egg",
+                    () -> new SpawnEggItem(
+                            CLOSING_GHOST.get(),
+                            0x191919,
+                            0xB44AFF,
+                            new Item.Properties()
+                    )
+            );
+
     public static final DeferredHolder<
             SoundEvent,
             SoundEvent
@@ -678,6 +749,8 @@ public class QisPlan2 {
                         output.accept(NIGHT_WANDERER_SPAWN_EGG);
                         output.accept(NINVISIBLE_GHOST_SPAWN_EGG);
                         output.accept(KNOCKING_GHOST_SPAWN_EGG);
+                        output.accept(OPENING_GHOST_SPAWN_EGG);
+                        output.accept(CLOSING_GHOST_SPAWN_EGG);
                     })
                     .build()
             );
@@ -796,6 +869,20 @@ public class QisPlan2 {
         event.put(
                 KNOCKING_GHOST.get(),
                 KnockingGhost.createAttributes()
+                        .build()
+        );
+
+        // 开门鬼
+        event.put(
+                OPENING_GHOST.get(),
+                OpeningGhost.createAttributes()
+                        .build()
+        );
+
+// 关门鬼
+        event.put(
+                CLOSING_GHOST.get(),
+                ClosingGhost.createAttributes()
                         .build()
         );
     }
