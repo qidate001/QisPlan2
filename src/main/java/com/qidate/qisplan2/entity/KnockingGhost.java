@@ -90,6 +90,11 @@ public class KnockingGhost
      */
     private static final int GHOST_DOOR_ECHO_MAX_DELAY = 40;
 
+    /**
+     * 鬼门共鸣最大递归深度。
+     */
+    private static final int MAX_GHOST_DOOR_ECHO_DEPTH = 50;
+
     private final List<PendingKnockAttack>
             pendingKnockAttacks =
             new ArrayList<>();
@@ -108,7 +113,19 @@ public class KnockingGhost
 
     private record PendingDoorKnock(
             BlockPos doorPos,
-            int remainingTicks
+
+            /**
+             * 距离最初敲门鬼敲下的鬼门，
+             * 当前已经传播了多少层。
+             */
+            int echoDepth,
+
+            int remainingTicks,
+
+            /**
+             * 同一轮共鸣共享的访问记录。
+             */
+            Set<BlockPos> visitedDoors
     ) { }
 
     /*
@@ -382,7 +399,9 @@ public class KnockingGhost
                         i,
                         new PendingDoorKnock(
                                 pending.doorPos(),
-                                remaining
+                                pending.echoDepth(),
+                                remaining,
+                                pending.visitedDoors()
                         )
                 );
 
@@ -393,7 +412,9 @@ public class KnockingGhost
                     pending.doorPos();
 
             /*
-             * 门在等待期间可能已经被破坏。
+             * ====================================================
+             * 门仍然存在
+             * ====================================================
              */
             if (level() instanceof ServerLevel serverLevel
                     && isDoor(
@@ -402,15 +423,15 @@ public class KnockingGhost
             )) {
 
                 /*
-                 * 这扇门现在正式响起。
+                 * 正式让这扇门响。
                  *
-                 * false：
-                 * 不再向外递归传播。
+                 * 它自己的 echoDepth 会继续向下一层传播。
                  */
                 triggerDoorKnock(
                         serverLevel,
                         doorPos,
-                        false
+                        pending.echoDepth(),
+                        pending.visitedDoors()
                 );
             }
 
@@ -628,11 +649,15 @@ public class KnockingGhost
     private void triggerDoorKnock(
             ServerLevel serverLevel,
             BlockPos doorPos,
-            boolean allowGhostDoorEcho
+            int echoDepth,
+            Set<BlockPos> visitedDoors
     ) {
 
+        doorPos =
+                doorPos.immutable();
+
         /*
-         * 门已经没了。
+         * 门已经不存在。
          */
         if (!isDoor(
                 serverLevel,
@@ -643,11 +668,23 @@ public class KnockingGhost
 
         /*
          * ========================================================
-         * 标记为最近敲过
+         * 同一轮共鸣中：
+         * 同一扇门只允许触发一次。
+         * ========================================================
+         */
+        if (!visitedDoors.add(
+                doorPos
+        )) {
+            return;
+        }
+
+        /*
+         * ========================================================
+         * 标记最近敲过
          * ========================================================
          */
         recentlyKnocked.add(
-                doorPos.immutable()
+                doorPos
         );
 
         recentDoorResetTicks =
@@ -679,22 +716,39 @@ public class KnockingGhost
 
         /*
          * ========================================================
-         * 鬼门共鸣
+         * 鬼门递归
          * ========================================================
-         *
-         * 只有敲门鬼真正敲下鬼门时才允许传播。
          */
-        if (allowGhostDoorEcho
-                && isGhostDoor(
+
+        /*
+         * 普通门：
+         * 到此结束。
+         */
+        if (!isGhostDoor(
                 serverLevel,
                 doorPos
         )) {
-
-            scheduleGhostDoorEchoes(
-                    serverLevel,
-                    doorPos
-            );
+            return;
         }
+
+        /*
+         * 已经达到最大层数。
+         */
+        if (echoDepth
+                >= MAX_GHOST_DOOR_ECHO_DEPTH) {
+
+            return;
+        }
+
+        /*
+         * 继续向下一层传播。
+         */
+        scheduleGhostDoorEchoes(
+                serverLevel,
+                doorPos,
+                echoDepth + 1,
+                visitedDoors
+        );
     }
 
     /*
@@ -770,11 +824,10 @@ public class KnockingGhost
 
     private void scheduleGhostDoorEchoes(
             ServerLevel serverLevel,
-            BlockPos sourceDoor
+            BlockPos sourceDoor,
+            int echoDepth,
+            Set<BlockPos> visitedDoors
     ) {
-
-        Set<BlockPos> doors =
-                new HashSet<>();
 
         int radius =
                 GHOST_DOOR_ECHO_RADIUS;
@@ -782,9 +835,17 @@ public class KnockingGhost
         int vertical =
                 GHOST_DOOR_ECHO_VERTICAL_RADIUS;
 
+        Set<BlockPos> nearbyDoors =
+                new HashSet<>();
+
         BlockPos.MutableBlockPos mutable =
                 new BlockPos.MutableBlockPos();
 
+        /*
+         * ========================================================
+         * 扫描 50 格鬼门领域
+         * ========================================================
+         */
         for (int x = -radius;
              x <= radius;
              x++) {
@@ -800,11 +861,7 @@ public class KnockingGhost
                     /*
                      * 圆形范围。
                      */
-                    double distanceSqr =
-                            x * x
-                                    + z * z;
-
-                    if (distanceSqr
+                    if (x * x + z * z
                             > radius * radius) {
 
                         continue;
@@ -817,8 +874,7 @@ public class KnockingGhost
                     );
 
                     /*
-                     * 没加载的区块不处理，
-                     * 避免为了寻找门强行加载大量区块。
+                     * 不强制加载新区块。
                      */
                     if (!serverLevel.hasChunkAt(
                             mutable
@@ -826,27 +882,39 @@ public class KnockingGhost
                         continue;
                     }
 
+                    BlockPos candidate =
+                            mutable.immutable();
+
                     /*
-                     * 自己不再添加。
+                     * 自己跳过。
                      */
-                    if (mutable.equals(
+                    if (candidate.equals(
                             sourceDoor
                     )) {
                         continue;
                     }
 
                     /*
-                     * 只认门的下半部分。
+                     * 这轮共鸣已经访问过。
                      */
-                    if (!isDoor(
-                            serverLevel,
-                            mutable
+                    if (visitedDoors.contains(
+                            candidate
                     )) {
                         continue;
                     }
 
-                    doors.add(
-                            mutable.immutable()
+                    /*
+                     * 必须是门下半部分。
+                     */
+                    if (!isDoor(
+                            serverLevel,
+                            candidate
+                    )) {
+                        continue;
+                    }
+
+                    nearbyDoors.add(
+                            candidate
                     );
                 }
             }
@@ -857,8 +925,13 @@ public class KnockingGhost
          * 安排这些门依次响起
          * ========================================================
          */
+
         for (BlockPos door :
-                doors) {
+                nearbyDoors) {
+
+            /*
+             * 由 triggerDoorKnock() 统一标记。
+             */
 
             double dx =
                     door.getX()
@@ -874,12 +947,6 @@ public class KnockingGhost
                                     + dz * dz
                     );
 
-            /*
-             * 距离越远，稍微晚一点响。
-             *
-             * 50 格：
-             * 最多大概 8 tick。
-             */
             int delay =
                     GHOST_DOOR_ECHO_MIN_DELAY
                             + (int) Math.min(
@@ -891,7 +958,9 @@ public class KnockingGhost
             pendingDoorKnocks.add(
                     new PendingDoorKnock(
                             door,
-                            delay
+                            echoDepth,
+                            delay,
+                            visitedDoors
                     )
             );
         }
@@ -988,10 +1057,23 @@ public class KnockingGhost
             }
 
             /*
-             * 门没了。
+             * ========================================================
+             * 必须是服务器世界
+             * ========================================================
+             */
+            if (!(ghost.level()
+                    instanceof ServerLevel serverLevel)) {
+
+                return;
+            }
+
+            /*
+             * ========================================================
+             * 门没了
+             * ========================================================
              */
             if (!isDoor(
-                    ghost.level(),
+                    serverLevel,
                     targetDoor
             )) {
 
@@ -1001,9 +1083,9 @@ public class KnockingGhost
             }
 
             /*
-             * ========================================
+             * ========================================================
              * 看向门
-             * ========================================
+             * ========================================================
              */
             ghost.getLookControl().setLookAt(
                     targetDoor.getX() + 0.5D,
@@ -1014,9 +1096,9 @@ public class KnockingGhost
             );
 
             /*
-             * ========================================
-             * 前往门
-             * ========================================
+             * ========================================================
+             * 计算距离
+             * ========================================================
              */
             double distanceSqr =
                     ghost.distanceToSqr(
@@ -1032,7 +1114,8 @@ public class KnockingGhost
              *
              * 不再继续寻路。
              *
-             * 直接出现在门前。
+             * 直接瞬移到门前，
+             * 然后敲门。
              */
             if (distanceSqr <= 25.0D) {
 
@@ -1050,8 +1133,8 @@ public class KnockingGhost
                 } else {
 
                     /*
-                     * 如果周围没有合适的门前位置，
-                     * 就直接到门的一侧。
+                     * 如果找不到合适的门前位置，
+                     * 就直接到门中心附近。
                      */
                     ghost.teleportTo(
                             targetDoor.getX() + 0.5D,
@@ -1063,31 +1146,29 @@ public class KnockingGhost
                 ghost.getNavigation().stop();
 
                 /*
-                 * 瞬移完成以后立即敲门。
+                 * ====================================================
+                 * 开始一轮新的鬼门共鸣
+                 * ====================================================
                  */
+                Set<BlockPos> visitedDoors =
+                        new HashSet<>();
+
                 ghost.triggerDoorKnock(
-                        (ServerLevel) ghost.level(),
+                        serverLevel,
                         targetDoor,
-                        true
+                        0,
+                        visitedDoors
                 );
 
                 /*
-                 * 记录这扇门。
-                 */
-                ghost.recentlyKnocked.add(
-                        targetDoor.immutable()
-                );
-
-                ghost.recentDoorResetTicks =
-                        RECENT_DOOR_MEMORY_TIME;
-
-                /*
-                 * 当前目标结束。
+                 * ====================================================
+                 * 当前目标结束
+                 * ====================================================
                  */
                 targetDoor = null;
 
                 /*
-                 * 下一扇门。
+                 * 下一扇门之前稍微停顿。
                  */
                 cooldown =
                         KNOCK_COOLDOWN;
@@ -1095,67 +1176,14 @@ public class KnockingGhost
                 return;
             }
 
-
             /*
              * ========================================================
-             * 还比较远
+             * 距离还大于 5 格
              * ========================================================
+             *
+             * 正常寻路。
              */
             moveToDoor();
-
-            /*
-             * 进入门附近就敲。
-             */
-            if (distanceSqr > 3.0D) {
-
-                moveToDoor();
-
-                return;
-            }
-
-            /*
-             * ========================================
-             * 敲一次
-             * ========================================
-             */
-
-            ghost.getNavigation().stop();
-
-            ghost.triggerDoorKnock(
-                    (ServerLevel) ghost.level(),
-                    targetDoor,
-                    true
-            );
-
-            /*
-             * ====================================================
-             * 重点：
-             *
-             * 敲完以后，这扇门立刻进入 recentlyKnocked。
-             *
-             * 下一轮寻找时不会再选它。
-             * ====================================================
-             */
-            ghost.recentlyKnocked.add(
-                    targetDoor.immutable()
-            );
-
-            /*
-             * 让最近门记忆持续 30 秒。
-             */
-            ghost.recentDoorResetTicks =
-                    RECENT_DOOR_MEMORY_TIME;
-
-            /*
-             * 当前目标作废。
-             */
-            targetDoor = null;
-
-            /*
-             * 稍微休息一下，然后找下一扇。
-             */
-            cooldown =
-                    KNOCK_COOLDOWN;
         }
 
         private void moveToDoor() {
