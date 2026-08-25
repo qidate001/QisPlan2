@@ -17,6 +17,7 @@ import com.qidate.qisplan2.event.GhostUmbrellaAttackHandler;
 import com.qidate.qisplan2.event.PossessionHudOverlay;
 import com.qidate.qisplan2.ghost.PossessedGhostState;
 import com.qidate.qisplan2.ghost.PossessionHandler;
+import com.qidate.qisplan2.ghost.ability.GhostAbilityRegistry;
 import com.qidate.qisplan2.item.*;
 import com.qidate.qisplan2.menu.GhostStoveMenu;
 import com.qidate.qisplan2.recipe.GhostStoveRecipe;
@@ -756,6 +757,10 @@ public class QisPlan2 {
         NeoForge.EVENT_BUS.register(
                 GhostUmbrellaAttackHandler.class
         );
+
+        // 驭鬼注册
+        // 夜游鬼
+        GhostAbilityRegistry.bootstrap();
 
         // 驭鬼 HUD 注册
         NeoForge.EVENT_BUS.addListener(PossessionHudOverlay::render);
