@@ -5,7 +5,10 @@
   "compatibilityLevel": "JAVA_21",
   "client": [
     "HumanoidModelMixin",
-    "LevelRendererMixin",
+    "LevelRendererMixin"
+  ],
+
+  "mixins": [
     "DoorBlockMixin"
   ]
 }
