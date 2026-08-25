@@ -32,4 +32,11 @@ public interface SupernaturalEntity {
      * 当前是否永久死机。
      */
     boolean isPermanentlySupernaturallyStunned();
+
+    /**
+     * 清除普通死机状态。
+     *
+     * 永久死机不应该被这个方法清除。
+     */
+    void clearSupernaturalStun();
 }

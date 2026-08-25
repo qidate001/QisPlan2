@@ -1,10 +1,17 @@
 package com.qidate.qisplan2.entity;
 
+import com.qidate.qisplan2.death.SupernaturalCombatHandler;
 import com.qidate.qisplan2.death.SupernaturalEntity;
+import com.qidate.qisplan2.ghost.GhostPossessionManager;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.PathfinderMob;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 
 /**
@@ -337,7 +344,6 @@ public abstract class AbstractGhostEntity
         return false;
     }
 
-
     /*
      * 需要持久保存的自定义实体
      */
@@ -346,12 +352,92 @@ public abstract class AbstractGhostEntity
         return true;
     }
 
-
     /*
      * 和平难度也不因为和平模式自动消失
      */
     @Override
     protected boolean shouldDespawnInPeaceful() {
         return false;
+    }
+
+    /*
+     * 清除普通死机状态。
+     *
+     * 永久死机不应该被这个方法清除。
+     */
+    @Override
+    public void clearSupernaturalStun() {
+
+        supernaturalStunTicks = 0;
+    }
+
+    /*
+     * 无敌特性
+     */
+    @Override
+    public boolean isInvulnerableTo(
+            DamageSource damageSource
+    ) {
+        return SupernaturalCombatHandler.isInvulnerableTo(
+                this,
+                damageSource
+        );
+    }
+
+    @Override
+    public InteractionResult mobInteract(
+            Player player,
+            InteractionHand hand
+    ) {
+
+        /*
+         * ========================================================
+         * 只允许主手
+         * ========================================================
+         */
+        if (hand != InteractionHand.MAIN_HAND) {
+
+            return super.mobInteract(
+                    player,
+                    hand
+            );
+        }
+
+        /*
+         * ========================================================
+         * 必须空手
+         * ========================================================
+         */
+        if (!player.getItemInHand(hand).isEmpty()) {
+
+            return super.mobInteract(
+                    player,
+                    hand
+            );
+        }
+
+        /*
+         * ========================================================
+         * 服务端真正开始驾驭
+         * ========================================================
+         */
+        if (!level().isClientSide()
+                && player instanceof ServerPlayer serverPlayer) {
+
+            boolean started =
+                    GhostPossessionManager.start(
+                            serverPlayer,
+                            this
+                    );
+
+            if (started) {
+
+                return InteractionResult.CONSUME;
+            }
+        }
+
+        return InteractionResult.sidedSuccess(
+                level().isClientSide()
+        );
     }
 }
