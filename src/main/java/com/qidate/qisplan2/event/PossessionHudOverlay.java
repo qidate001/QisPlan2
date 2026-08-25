@@ -3,6 +3,8 @@ package com.qidate.qisplan2.event;
 import com.qidate.qisplan2.QisPlan2;
 import com.qidate.qisplan2.ghost.PossessedGhostState;
 import com.qidate.qisplan2.ghost.PossessionHandler;
+import com.qidate.qisplan2.ghost.ability.GhostAbilityRegistry;
+import com.qidate.qisplan2.ghost.ability.PossessedGhostAbility;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
@@ -455,7 +457,6 @@ public class PossessionHudOverlay {
         }
     }
 
-
     /**
      * 获取显示名称。
      */
@@ -463,12 +464,20 @@ public class PossessionHudOverlay {
             ResourceLocation id
     ) {
 
-        if (id.equals(
-                PossessionHandler.NIGHT_WANDERER
-        )) {
-            return "夜游鬼";
+        PossessedGhostAbility ability =
+                GhostAbilityRegistry.get(id);
+
+        if (ability != null) {
+            return ability.displayName()
+                    .getString();
         }
 
+        /*
+         * 没有对应能力时，
+         * 才退回显示 ID。
+         *
+         * 主要用于防止数据中存在已经不存在的旧鬼。
+         */
         return id.toString();
     }
 }
