@@ -1,5 +1,6 @@
 package com.qidate.qisplan2.ghost.ability;
 
+import com.qidate.qisplan2.ghost.ability.knockingghost.KnockingGhostAbility;
 import com.qidate.qisplan2.ghost.ability.nightwanderer.NightWandererAbility;
 import net.minecraft.resources.ResourceLocation;
 
@@ -45,8 +46,14 @@ public final class GhostAbilityRegistry {
 
         initialized = true;
 
+        // 夜游鬼
         register(
                 new NightWandererAbility()
+        );
+
+        // 敲门鬼
+        register(
+                new KnockingGhostAbility()
         );
     }
 }
