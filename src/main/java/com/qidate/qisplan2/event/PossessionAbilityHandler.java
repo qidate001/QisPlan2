@@ -62,8 +62,9 @@ public class PossessionAbilityHandler {
 
         event.setCanceled(true);
 
-        PossessionHandler.useNightWandererAbility(
+        PossessionHandler.useAbility(
                 player,
+                PossessionHandler.NIGHT_WANDERER,
                 target
         );
     }
