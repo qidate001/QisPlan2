@@ -103,6 +103,10 @@ public final class PossessionHandler {
             ServerPlayer player,
             ResourceLocation ghost
     ) {
+        // 防驾驭未实现的鬼
+        if (!GhostAbilityRegistry.contains(ghost)) {
+            return false;
+        }
 
         Map<ResourceLocation, PossessedGhostState> oldData =
                 player.getData(QisPlan2.POSSESSED_GHOSTS);

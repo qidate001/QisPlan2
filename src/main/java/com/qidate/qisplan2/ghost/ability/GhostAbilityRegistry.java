@@ -4,8 +4,10 @@ import com.qidate.qisplan2.ghost.ability.knockingghost.KnockingGhostAbility;
 import com.qidate.qisplan2.ghost.ability.nightwanderer.NightWandererAbility;
 import net.minecraft.resources.ResourceLocation;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 
 public final class GhostAbilityRegistry {
 
@@ -35,6 +37,18 @@ public final class GhostAbilityRegistry {
         return ABILITIES.get(id);
     }
 
+    public static boolean contains(
+            ResourceLocation id
+    ) {
+        return ABILITIES.containsKey(id);
+    }
+
+    public static Set<ResourceLocation> ids() {
+        return Collections.unmodifiableSet(
+                ABILITIES.keySet()
+        );
+    }
+
     /**
      * 注册所有鬼的驾驭能力。
      */
@@ -46,12 +60,10 @@ public final class GhostAbilityRegistry {
 
         initialized = true;
 
-        // 夜游鬼
         register(
                 new NightWandererAbility()
         );
 
-        // 敲门鬼
         register(
                 new KnockingGhostAbility()
         );
