@@ -4,6 +4,7 @@ import com.qidate.qisplan2.QisPlan2;
 import com.qidate.qisplan2.ghost.ability.GhostAbilityRegistry;
 import com.qidate.qisplan2.ghost.ability.PossessedGhostAbility;
 import com.qidate.qisplan2.ghost.ability.nightwanderer.NightWandererAbility;
+import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.LivingEntity;
@@ -592,6 +593,60 @@ public final class PossessionHandler {
         /*
          * Ability 执行成功后，
          * 将 Context 中修改后的状态统一写回 Attachment。
+         */
+        if (success) {
+
+            setState(
+                    player,
+                    ghost,
+                    context.state()
+            );
+        }
+
+        return success;
+    }
+
+    public static boolean useAbilityOnBlock(
+            ServerPlayer player,
+            ResourceLocation ghost,
+            BlockPos pos
+    ) {
+
+        PossessedGhostState state =
+                getState(
+                        player,
+                        ghost
+                );
+
+        if (state == null) {
+            return false;
+        }
+
+        PossessedGhostAbility ability =
+                GhostAbilityRegistry.get(
+                        ghost
+                );
+
+        if (ability == null) {
+            return false;
+        }
+
+        GhostAbilityContext context =
+                new GhostAbilityContext(
+                        player,
+                        ghost,
+                        state
+                );
+
+        boolean success =
+                ability.useOnBlock(
+                        context,
+                        pos
+                );
+
+        /*
+         * Ability 执行成功以后，
+         * 统一提交 Context 中的新状态。
          */
         if (success) {
 

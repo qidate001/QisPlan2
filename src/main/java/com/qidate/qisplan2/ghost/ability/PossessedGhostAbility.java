@@ -1,6 +1,7 @@
 package com.qidate.qisplan2.ghost.ability;
 
 import com.qidate.qisplan2.ghost.GhostAbilityContext;
+import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceLocation;
 
 public interface PossessedGhostAbility {
@@ -19,7 +20,7 @@ public interface PossessedGhostAbility {
     }
 
     /**
-     * 玩家每 tick 驾驭这只鬼时调用。
+     * 每 tick 调用。
      */
     default void tick(
             GhostAbilityContext context
@@ -27,10 +28,23 @@ public interface PossessedGhostAbility {
     }
 
     /**
-     * 使用主动能力。
+     * 对 LivingEntity 使用主动能力。
      */
     default boolean use(
             GhostAbilityContext context
+    ) {
+        return false;
+    }
+
+    /**
+     * 对方块使用主动能力。
+     *
+     * 例如：
+     * Shift + 右键门。
+     */
+    default boolean useOnBlock(
+            GhostAbilityContext context,
+            BlockPos pos
     ) {
         return false;
     }
