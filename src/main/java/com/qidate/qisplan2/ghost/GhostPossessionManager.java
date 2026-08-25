@@ -144,10 +144,15 @@ public final class GhostPossessionManager {
              * 鬼不存在了。
              */
             if (ghost == null
-                    || ghost.getUUID()
-                    .compareTo(
-                            session.ghostUUID()
-                    ) != 0) {
+                    || ghost.getUUID().compareTo(
+                    session.ghostUUID()
+            ) != 0) {
+
+                QisNetwork.sendPossessionEnd(
+                        player,
+                        false,
+                        session.success()
+                );
 
                 iterator.remove();
 
@@ -158,7 +163,20 @@ public final class GhostPossessionManager {
              * 鬼已经不是普通死机。
              */
             if (!(ghost instanceof SupernaturalEntity supernatural)
-                    || !supernatural.isSupernaturallyStunned()) {
+                    || !supernatural.isSupernaturallyStunned()
+                    || supernatural.isPermanentlySupernaturallyStunned()) {
+
+                /*
+                 * 鬼已经提前结束普通死机。
+                 *
+                 * 驾驭小游戏必须同步结束，
+                 * 否则客户端 GUI 会永远停在那里。
+                 */
+                QisNetwork.sendPossessionEnd(
+                        player,
+                        false,
+                        session.success()
+                );
 
                 iterator.remove();
 
