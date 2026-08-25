@@ -27,14 +27,20 @@
   "item.qisplan2.night_wanderer_spawn_egg": "§4夜游鬼刷怪蛋",
   "item.qisplan2.invisible_ghost_spawn_egg": "§4不可视之鬼刷怪蛋",
   "item.qisplan2.knocking_ghost_spawn_egg": "§4敲门鬼刷怪蛋",
+  "item.qisplan2.opening_ghost_spawn_egg": "§4开门鬼刷怪蛋",
+  "item.qisplan2.closing_ghost_spawn_egg": "§4关门鬼刷怪蛋",
 
   "entity.qisplan2.night_wanderer": "§4夜游鬼",
   "entity.qisplan2.invisible_ghost": "§4不可视之鬼",
   "entity.qisplan2.knocking_ghost": "§4敲门鬼",
+  "entity.qisplan2.opening_ghost": "§4开门鬼",
+  "entity.qisplan2.closing_ghost": "§4关门鬼",
 
   "ghost.qisplan2.night_wanderer": "夜游鬼",
   "ghost.qisplan2.invisible_ghost": "不可视之鬼",
   "ghost.qisplan2.knocking_ghost": "敲门鬼",
+  "ghost.qisplan2.opening_ghost": "开门鬼",
+  "ghost.qisplan2.closing_ghost": "关门鬼",
 
   "screen.qisplan2.ghost_book": "§4鬼书",
 
@@ -50,6 +56,8 @@
   "death.attack.invisible_ghost": "%1$s 被灵异抹除了意识",
   "death.attack.ghost_umbrella": "%1$s 被§4鬼雨§r变成了尸体",
   "death.attack.knocking_ghost": "%1$s 被§4敲门声诅咒§r杀死",
+  "death.attack.opening_ghost": "%1$s 受到§4开门诅咒§r的影响，被§4开门鬼§r杀死",
+  "death.attack.closing_ghost": "%1$s 受到§4关门诅咒§r的影响，被§4关门鬼§r杀死",
 
   "qisplan2.death_curse.triggered": "☠ §4死亡诅咒§r触发！§4死亡诅咒之剑§r已损坏！",
   "qisplan2.death_curse.reflection": "☠ §4死亡诅咒§r反噬！",
