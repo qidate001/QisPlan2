@@ -56,17 +56,11 @@ public final class GhostAbilityContext {
     }
 
     /**
-     * 修改当前这只鬼的状态。
+     * 修改当前这只鬼在本次操作中的状态。
      */
     public void setState(
             PossessedGhostState state
     ) {
         this.state = state;
-
-        PossessionHandler.setState(
-                player,
-                ghost,
-                state
-        );
     }
 }

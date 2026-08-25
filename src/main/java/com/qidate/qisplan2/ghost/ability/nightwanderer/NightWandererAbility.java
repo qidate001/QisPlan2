@@ -167,10 +167,14 @@ public final class NightWandererAbility
          * 1 点 / 10 秒
          * ========================================
          */
-        PossessionHandler.addShallowStun(
-                player,
-                id(),
-                DAY_SHALLOW_STUN_PER_TICK
+        PossessedGhostState newState =
+                PossessionHandler.addShallowStun(
+                        state,
+                        DAY_SHALLOW_STUN_PER_TICK
+                );
+
+        context.setState(
+                newState
         );
     }
 

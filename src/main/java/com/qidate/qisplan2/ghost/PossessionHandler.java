@@ -306,6 +306,29 @@ public final class PossessionHandler {
         return true;
     }
 
+    public static PossessedGhostState addShallowStun(
+            PossessedGhostState state,
+            double amount
+    ) {
+        if (amount <= 0.0D) {
+            return state;
+        }
+
+        double newShallowStun =
+                Math.min(
+                        PossessedGhostState.MAX_SHALLOW_STUN,
+                        state.shallowStun() + amount
+                );
+
+        return new PossessedGhostState(
+                state.revival(),
+                newShallowStun,
+                state.stunTicks(),
+                state.permanentStun(),
+                state.lastAbilityUseTick()
+        );
+    }
+
     public static boolean testStun(
             ServerPlayer player,
             ResourceLocation ghost,
@@ -484,16 +507,29 @@ public final class PossessionHandler {
 
             if (ability != null) {
 
-                PossessedGhostState currentState =
+                PossessedGhostState beforeAbility =
                         data.get(ghost);
 
-                ability.tick(
+                GhostAbilityContext context =
                         new GhostAbilityContext(
                                 player,
                                 ghost,
-                                currentState
-                        )
+                                beforeAbility
+                        );
+
+                ability.tick(context);
+
+                PossessedGhostState afterAbility =
+                        context.state();
+
+                data.put(
+                        ghost,
+                        afterAbility
                 );
+
+                if (afterAbility != beforeAbility) {
+                    changed = true;
+                }
             }
 
             /*
@@ -572,18 +608,41 @@ public final class PossessionHandler {
                         QisPlan2.POSSESSED_GHOSTS
                 );
 
+        if (oldData.isEmpty()) {
+            return 0;
+        }
+
+        Map<ResourceLocation, PossessedGhostState> data =
+                new HashMap<>(oldData);
+
         int count = 0;
 
-        for (ResourceLocation ghost :
-                oldData.keySet()) {
+        for (var entry : oldData.entrySet()) {
 
-            if (addShallowStun(
-                    player,
-                    ghost,
-                    amount
-            )) {
+            PossessedGhostState oldState =
+                    entry.getValue();
+
+            PossessedGhostState newState =
+                    addShallowStun(
+                            oldState,
+                            amount
+                    );
+
+            if (newState != oldState) {
+                data.put(
+                        entry.getKey(),
+                        newState
+                );
+
                 count++;
             }
+        }
+
+        if (count > 0) {
+            player.setData(
+                    QisPlan2.POSSESSED_GHOSTS,
+                    data
+            );
         }
 
         return count;
