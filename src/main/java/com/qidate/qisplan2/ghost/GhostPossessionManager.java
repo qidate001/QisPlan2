@@ -2,6 +2,7 @@ package com.qidate.qisplan2.ghost;
 
 import com.qidate.qisplan2.QisPlan2;
 import com.qidate.qisplan2.death.SupernaturalEntity;
+import com.qidate.qisplan2.network.QisNetwork;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -81,15 +82,12 @@ public final class GhostPossessionManager {
         );
 
         /*
-         * 后面这里发 S2C：
-         *
          * 打开驾驭小游戏。
          */
-        QisPlan2.GHOST_POSSESSION_NETWORK
-                .sendPossessionStart(
-                        player,
-                        session
-                );
+        QisNetwork.sendPossessionStart(
+                player,
+                session
+        );
 
         return true;
     }
@@ -173,15 +171,25 @@ public final class GhostPossessionManager {
             session.tick();
 
             /*
-             * 同步给客户端。
-             *
-             * 后面实现。
+             * 防止最后的 tick 会先发送一个 remainingTicks = 0 的 Update，然后马上发送 End
              */
-            QisPlan2.GHOST_POSSESSION_NETWORK
-                    .sendPossessionUpdate(
-                            player,
-                            session
-                    );
+            if (session.remainingTicks() <= 0) {
+
+                finish(
+                        player,
+                        ghost,
+                        session
+                );
+
+                iterator.remove();
+
+                continue;
+            }
+
+            QisNetwork.sendPossessionUpdate(
+                    player,
+                    session
+            );
 
             /*
              * 时间结束。
@@ -229,8 +237,6 @@ public final class GhostPossessionManager {
 
             /*
              * 获取实体类型对应的 ResourceLocation。
-             *
-             * 这里以后可以直接和你的 PossessionHandler 对接。
              */
             var typeKey =
                     net.minecraft.core.registries.BuiltInRegistries
@@ -273,11 +279,18 @@ public final class GhostPossessionManager {
         /*
          * 最终关闭客户端小游戏。
          */
-        QisPlan2.GHOST_POSSESSION_NETWORK
-                .sendPossessionEnd(
-                        player,
-                        won,
-                        success
-                );
+        QisNetwork.sendPossessionEnd(
+                player,
+                won,
+                success
+        );
+    }
+
+    public static GhostPossessionSession get(
+            ServerPlayer player
+    ) {
+        return SESSIONS.get(
+                player.getUUID()
+        );
     }
 }

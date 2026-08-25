@@ -76,11 +76,11 @@ public class SupernaturalDeathHandler {
             DamageSource damageSource,
             double supernaturalIntensity
     ) {
-        QisPlan2.LOGGER.info(
-                "[QisPlan2] tryKill 被调用：目标={}，强度={}",
-                entity.getName().getString(),
-                supernaturalIntensity
-        );
+//        QisPlan2.LOGGER.info(
+//                "[QisPlan2] tryKill 被调用：目标={}，强度={}",
+//                entity.getName().getString(),
+//                supernaturalIntensity
+//        );
 
 
         if (!entity.isAlive()) {
@@ -98,11 +98,11 @@ public class SupernaturalDeathHandler {
         )) {
 
 
-            QisPlan2.LOGGER.info(
-                    "[QisPlan2] 鬼寿衣抵挡灵异攻击：{}，强度={}",
-                    entity.getName().getString(),
-                    supernaturalIntensity
-            );
+//            QisPlan2.LOGGER.info(
+//                    "[QisPlan2] 鬼寿衣抵挡灵异攻击：{}，强度={}",
+//                    entity.getName().getString(),
+//                    supernaturalIntensity
+//            );
             return false;
         }
 
@@ -110,10 +110,10 @@ public class SupernaturalDeathHandler {
          * 灵异实体受到灵异攻击
          */
         if (entity instanceof SupernaturalEntity supernaturalEntity) {
-            QisPlan2.LOGGER.info(
-                    "[QisPlan2] 灵异攻击命中灵异实体：{}",
-                    entity.getName().getString()
-            );
+//            QisPlan2.LOGGER.info(
+//                    "[QisPlan2] 灵异攻击命中灵异实体：{}",
+//                    entity.getName().getString()
+//            );
             double defense =
                     Math.max(
                             0.01D,
