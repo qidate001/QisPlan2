@@ -1,6 +1,7 @@
 package com.qidate.qisplan2.ghost;
 
 import net.minecraft.server.level.ServerPlayer;
+import java.util.Random;
 
 import java.util.UUID;
 
@@ -44,17 +45,35 @@ public final class GhostPossessionSession {
      */
     private double cursorPosition = 0.5D;
 
-    /**
-     * 当前判定点：
-     *
-     * 0.0 ~ 1.0
-     */
     private double targetPosition = 0.5D;
 
     /**
-     * 判定点移动速度。
+     * 当前这一段移动的目标位置。
      */
-    private double targetVelocity = 0.015D;
+    private double targetDestination = 0.5D;
+
+    /**
+     * 当前是否正在移动。
+     */
+    private boolean targetMoving = false;
+
+    /**
+     * 当前阶段剩余 tick。
+     *
+     * 移动时：
+     *     表示还允许移动多久。
+     *
+     * 停顿时：
+     *     表示还要停多久。
+     */
+    private int targetPhaseTicks = 0;
+
+    /**
+     * 当前移动速度。
+     */
+    private double targetVelocity = 0.0D;
+
+    private final Random random;
 
     /**
      * 当前成功率。
@@ -70,6 +89,53 @@ public final class GhostPossessionSession {
      * 随机种子。
      */
     private final long randomSeed;
+
+
+    /*
+     * 静态参数
+     */
+
+    /**
+     * 最短停顿。
+     */
+    private static final int TARGET_PAUSE_MIN = 8;
+
+    /**
+     * 最长停顿。
+     */
+    private static final int TARGET_PAUSE_MAX = 28;
+
+    /**
+     * 最短移动时间。
+     */
+    private static final int TARGET_MOVE_MIN = 10;
+
+    /**
+     * 最长移动时间。
+     */
+    private static final int TARGET_MOVE_MAX = 35;
+
+    /**
+     * 判定点一次移动的最小距离。
+     */
+    private static final double TARGET_MOVE_DISTANCE_MIN = 0.08D;
+
+    /**
+     * 判定点一次移动的最大距离。
+     */
+    private static final double TARGET_MOVE_DISTANCE_MAX = 0.32D;
+
+    /**
+     * 最低移动速度。
+     */
+    private static final double TARGET_SPEED_MIN = 0.004D;
+
+    /**
+     * 最高移动速度。
+     */
+    private static final double TARGET_SPEED_MAX = 0.018D;
+
+
 
     public GhostPossessionSession(
             ServerPlayer player,
@@ -88,6 +154,50 @@ public final class GhostPossessionSession {
 
         this.randomSeed =
                 randomSeed;
+
+        this.random =
+                new Random(
+                        randomSeed
+                );
+
+        /*
+         * 开局先停一会儿。
+         */
+        this.targetMoving =
+                false;
+
+        this.targetPhaseTicks =
+                randomPauseTicks();
+    }
+
+    private int randomPauseTicks() {
+
+        return TARGET_PAUSE_MIN
+                + random.nextInt(
+                TARGET_PAUSE_MAX
+                        - TARGET_PAUSE_MIN
+                        + 1
+        );
+    }
+
+    private int randomMoveTicks() {
+
+        return TARGET_MOVE_MIN
+                + random.nextInt(
+                TARGET_MOVE_MAX
+                        - TARGET_MOVE_MIN
+                        + 1
+        );
+    }
+
+    private double randomRange(
+            double min,
+            double max
+    ) {
+
+        return min
+                + random.nextDouble()
+                * (max - min);
     }
 
     public UUID playerUUID() {
@@ -162,32 +272,7 @@ public final class GhostPossessionSession {
          * 判定点移动
          * ========================================
          */
-
-        targetPosition +=
-                targetVelocity;
-
-        /*
-         * 撞边反弹。
-         */
-        if (targetPosition <= 0.0D) {
-
-            targetPosition = 0.0D;
-
-            targetVelocity =
-                    Math.abs(
-                            targetVelocity
-                    );
-
-        } else if (targetPosition >= 1.0D) {
-
-            targetPosition = 1.0D;
-
-            targetVelocity =
-                    -Math.abs(
-                            targetVelocity
-                    );
-        }
-
+        tickTarget();
 
         /*
          * ========================================
@@ -247,5 +332,209 @@ public final class GhostPossessionSession {
                                 success
                         )
                 );
+    }
+
+    private void tickTarget() {
+
+        /*
+         * ========================================================
+         * 当前正在停顿
+         * ========================================================
+         */
+        if (!targetMoving) {
+
+            targetPhaseTicks--;
+
+            if (targetPhaseTicks <= 0) {
+
+                startTargetMovement();
+            }
+
+            return;
+        }
+
+
+        /*
+         * ========================================================
+         * 当前正在移动
+         * ========================================================
+         */
+        targetPosition +=
+                targetVelocity;
+
+        /*
+         * 到达目标位置。
+         */
+        boolean reached =
+                targetVelocity > 0.0D
+                        ? targetPosition
+                        >= targetDestination
+                        : targetPosition
+                        <= targetDestination;
+
+        if (reached) {
+
+            targetPosition =
+                    targetDestination;
+
+            targetMoving =
+                    false;
+
+            /*
+             * 到达以后停一会。
+             */
+            targetPhaseTicks =
+                    randomPauseTicks();
+
+            targetVelocity = 0.0D;
+        }
+    }
+
+    private void startTargetMovement() {
+
+        /*
+         * ========================================================
+         * 决定移动方向
+         * ========================================================
+         */
+
+        boolean moveRight =
+                random.nextBoolean();
+
+        /*
+         * ========================================================
+         * 随机移动距离
+         * ========================================================
+         */
+        double distance =
+                randomRange(
+                        TARGET_MOVE_DISTANCE_MIN,
+                        TARGET_MOVE_DISTANCE_MAX
+                );
+
+        double destination;
+
+        if (moveRight) {
+
+            destination =
+                    targetPosition
+                            + distance;
+
+        } else {
+
+            destination =
+                    targetPosition
+                            - distance;
+        }
+
+        /*
+         * 防止越界。
+         */
+        destination =
+                Math.max(
+                        0.0D,
+                        Math.min(
+                                1.0D,
+                                destination
+                        )
+                );
+
+        /*
+         * 如果因为靠近边缘，
+         * 实际上没移动多少，
+         * 就反向尝试一次。
+         */
+        if (Math.abs(
+                destination
+                        - targetPosition
+        ) < TARGET_MOVE_DISTANCE_MIN / 2.0D) {
+
+            destination =
+                    moveRight
+                            ? Math.max(
+                            0.0D,
+                            targetPosition
+                                    - distance
+                    )
+                            : Math.min(
+                            1.0D,
+                            targetPosition
+                                    + distance
+                    );
+        }
+
+        targetDestination =
+                destination;
+
+        /*
+         * ========================================================
+         * 移动时间
+         * ========================================================
+         */
+        int moveTicks =
+                randomMoveTicks();
+
+        targetPhaseTicks =
+                moveTicks;
+
+        /*
+         * ========================================================
+         * 速度
+         * ========================================================
+         */
+        double totalDistance =
+                Math.abs(
+                        targetDestination
+                                - targetPosition
+                );
+
+        if (totalDistance <= 0.0001D) {
+
+            targetMoving =
+                    false;
+
+            targetPhaseTicks =
+                    randomPauseTicks();
+
+            targetVelocity =
+                    0.0D;
+
+            return;
+        }
+
+        targetVelocity =
+                Math.copySign(
+                        totalDistance
+                                / moveTicks,
+                        targetDestination
+                                - targetPosition
+                );
+
+        /*
+         * 限制一下速度范围，
+         * 防止太慢或者突然飞过去。
+         */
+        double absVelocity =
+                Math.abs(
+                        targetVelocity
+                );
+
+        absVelocity =
+                Math.max(
+                        TARGET_SPEED_MIN,
+                        Math.min(
+                                TARGET_SPEED_MAX,
+                                absVelocity
+                        )
+                );
+
+        targetVelocity =
+                Math.copySign(
+                        absVelocity,
+                        targetVelocity
+                );
+
+        targetMoving =
+                true;
     }
 }

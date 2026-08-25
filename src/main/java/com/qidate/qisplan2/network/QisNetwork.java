@@ -3,11 +3,13 @@ package com.qidate.qisplan2.network;
 import com.qidate.qisplan2.QisPlan2;
 import com.qidate.qisplan2.client.GhostPianoMusicClient;
 import com.qidate.qisplan2.client.GhostPossessionClientState;
+import com.qidate.qisplan2.client.GhostPossessionScreen;
 import com.qidate.qisplan2.ghost.GhostPossessionSession;
 import com.qidate.qisplan2.network.payload.GhostPossessionEndPayload;
 import com.qidate.qisplan2.network.payload.GhostPossessionInputPayload;
 import com.qidate.qisplan2.network.payload.GhostPossessionStartPayload;
 import com.qidate.qisplan2.network.payload.GhostPossessionUpdatePayload;
+import net.minecraft.client.Minecraft;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.network.PacketDistributor;
@@ -154,6 +156,10 @@ public final class QisNetwork {
                     payload.totalTicks()
             );
 
+            Minecraft.getInstance().setScreen(
+                    new GhostPossessionScreen()
+            );
+
             QisPlan2.LOGGER.info(
                     "[QisPlan2] 开始驾驭小游戏：鬼实体ID={}，总时间={} tick",
                     payload.ghostEntityId(),
@@ -196,6 +202,15 @@ public final class QisNetwork {
         context.enqueueWork(() -> {
 
             GhostPossessionClientState.end();
+
+            Minecraft minecraft =
+                    Minecraft.getInstance();
+
+            if (minecraft.screen
+                    instanceof GhostPossessionScreen) {
+
+                minecraft.setScreen(null);
+            }
 
             QisPlan2.LOGGER.info(
                     "[QisPlan2] 驾驭结束：{}，最终成功率={}%",
