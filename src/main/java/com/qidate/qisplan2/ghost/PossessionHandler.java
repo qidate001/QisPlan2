@@ -578,14 +578,31 @@ public final class PossessionHandler {
             return false;
         }
 
-        return ability.use(
+        GhostAbilityContext context =
                 new GhostAbilityContext(
                         player,
                         ghost,
                         state,
                         target
-                )
-        );
+                );
+
+        boolean success =
+                ability.use(context);
+
+        /*
+         * Ability 执行成功后，
+         * 将 Context 中修改后的状态统一写回 Attachment。
+         */
+        if (success) {
+
+            setState(
+                    player,
+                    ghost,
+                    context.state()
+            );
+        }
+
+        return success;
     }
 
     /**
