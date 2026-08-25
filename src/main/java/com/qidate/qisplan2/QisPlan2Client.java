@@ -3,6 +3,7 @@ package com.qidate.qisplan2;
 import com.qidate.qisplan2.client.BlackRainParticle;
 import com.qidate.qisplan2.client.GhostUmbrellaDomainClient;
 import com.qidate.qisplan2.client.model.NightWandererModel;
+import com.qidate.qisplan2.client.renderer.KnockingGhostRenderer;
 import com.qidate.qisplan2.client.renderer.NightWandererRenderer;
 import com.qidate.qisplan2.event.DeathCurseHudOverlay;
 
@@ -54,6 +55,8 @@ public class QisPlan2Client {
                 QisPlan2Client::registerEntityRenderers
         );
 
+
+
         // 鬼黑雨
         modEventBus.addListener(
                 QisPlan2Client::registerParticleProviders
@@ -101,7 +104,7 @@ public class QisPlan2Client {
     }
 
     /**
-     * 注册夜游鬼 Renderer
+     * 注册 Renderer
      */
     private static void registerEntityRenderers(
             EntityRenderersEvent.RegisterRenderers event
@@ -113,6 +116,15 @@ public class QisPlan2Client {
         event.registerEntityRenderer(
                 QisPlan2.NIGHT_WANDERER.get(),
                 NightWandererRenderer::new
+        );
+
+        QisPlan2.LOGGER.info(
+                "[QisPlan2] 注册 KnockingGhost Renderer"
+        );
+
+        event.registerEntityRenderer(
+                QisPlan2.KNOCKING_GHOST.get(),
+                KnockingGhostRenderer::new
         );
     }
 }
