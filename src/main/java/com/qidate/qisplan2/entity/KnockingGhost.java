@@ -1,5 +1,6 @@
 package com.qidate.qisplan2.entity;
 
+import com.qidate.qisplan2.entity.ai.GhostWanderGoal;
 import com.qidate.qisplan2.ghost.ability.knockingghost.KnockingGhostDoorSystem;
 
 import net.minecraft.core.BlockPos;
@@ -74,11 +75,10 @@ public class KnockingGhost
      */
 
     @Override
-    protected void registerGoals() {
+    protected void registerGoals()
+    {
 
         /*
-         * 敲门鬼唯一的 AI：
-         *
          * 找门 → 走门 → 敲门。
          *
          * 没有主动攻击目标。
@@ -88,6 +88,19 @@ public class KnockingGhost
                 new KnockDoorGoal(
                         this,
                         1.0D
+                )
+        );
+
+        /*
+         * ========================================
+         * 没有目标，四处游荡
+         * ========================================
+         */
+        this.goalSelector.addGoal(
+                8,
+                new GhostWanderGoal(
+                        this,
+                        0.7D
                 )
         );
     }

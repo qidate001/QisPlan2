@@ -1,6 +1,7 @@
 package com.qidate.qisplan2.entity;
 
 import com.qidate.qisplan2.death.SupernaturalCombatHandler;
+import com.qidate.qisplan2.entity.ai.GhostWanderGoal;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.Mob;
@@ -25,11 +26,17 @@ public class InvisibleGhost
     @Override
     protected void registerGoals() {
         /*
-         * 暂时不需要自己的移动 AI。
-         *
-         * “看到玩家攻击”由
-         * InvisibleGhostHandler 统一处理。
+         * ========================================
+         * 四处游荡
+         * ========================================
          */
+        this.goalSelector.addGoal(
+                8,
+                new GhostWanderGoal(
+                        this,
+                        0.7D
+                )
+        );
     }
 
     // 灵异防御
