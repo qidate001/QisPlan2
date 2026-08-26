@@ -96,6 +96,11 @@ public final class NightWandererAbility
         return ID;
     }
 
+    @Override
+    public double initialIntrinsicStrength() {
+        return 4.0D;
+    }
+
     /*
      * ============================================================
      * 驾驭后的持续能力
@@ -242,7 +247,8 @@ public final class NightWandererAbility
                         newState.shallowStun(),
                         newState.stunTicks(),
                         newState.permanentStun(),
-                        now
+                        now,
+                        state.intrinsicStrength()
                 );
 
         context.setState(
@@ -263,7 +269,7 @@ public final class NightWandererAbility
 
         /*
          * ========================================================
-         * 夜游鬼灵异攻击
+         * 音效 与 粒子效果
          * ========================================================
          */
         if (player.level()
@@ -293,12 +299,24 @@ public final class NightWandererAbility
             );
         }
 
+        /*
+         * ========================================================
+         * 灵异袭击
+         * ========================================================
+         */
+
+        double attackStrength =
+                PossessionHandler.getEffectiveStrength(
+                        player,
+                        ID
+                );
+
         SupernaturalDeathHandler.tryKill(
                 target,
                 ModDamageTypes.ghostNightWanderer(
                         player
                 ),
-                4.0D
+                attackStrength
         );
 
         return true;

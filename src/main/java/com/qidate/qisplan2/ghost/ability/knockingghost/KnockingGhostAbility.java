@@ -56,6 +56,14 @@ public final class KnockingGhostAbility
     }
 
     /**
+     * 敲门鬼完整复苏时的本质灵异强度。
+     */
+    @Override
+    public double initialIntrinsicStrength() {
+        return 20.0D;
+    }
+
+    /**
      * 敲门鬼目前没有 LivingEntity 主动能力。
      */
     @Override
@@ -135,10 +143,17 @@ public final class KnockingGhostAbility
          * ========================================================
          */
 
+        double attackStrength =
+                PossessionHandler.getEffectiveStrength(
+                        player,
+                        ID
+                );
+
         KnockingGhostDoorSystem.knock(
                 serverLevel,
                 player,
-                doorPos
+                doorPos,
+                attackStrength
         );
 
 
@@ -189,7 +204,8 @@ public final class KnockingGhostAbility
                         newState.shallowStun(),
                         newState.stunTicks(),
                         newState.permanentStun(),
-                        now
+                        now,
+                        state.intrinsicStrength()
                 );
 
         context.setState(

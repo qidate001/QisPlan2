@@ -76,11 +76,11 @@ public class SupernaturalDeathHandler {
             DamageSource damageSource,
             double supernaturalIntensity
     ) {
-//        QisPlan2.LOGGER.info(
-//                "[QisPlan2] tryKill 被调用：目标={}，强度={}",
-//                entity.getName().getString(),
-//                supernaturalIntensity
-//        );
+        QisPlan2.LOGGER.info(
+                "[QisPlan2] tryKill 被调用：目标={}，强度={}",
+                entity.getName().getString(),
+                supernaturalIntensity
+        );
 
 
         if (!entity.isAlive()) {

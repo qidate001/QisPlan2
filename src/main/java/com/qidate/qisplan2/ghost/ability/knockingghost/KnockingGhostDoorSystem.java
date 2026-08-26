@@ -108,9 +108,9 @@ public final class KnockingGhostDoorSystem {
             ServerLevel level,
             LivingEntity source,
             UUID target,
-            int remainingTicks
-    ) {
-    }
+            int remainingTicks,
+            double attackStrength
+    ) { }
 
 
     /*
@@ -129,7 +129,8 @@ public final class KnockingGhostDoorSystem {
             BlockPos doorPos,
             int echoDepth,
             int remainingTicks,
-            Set<BlockPos> visitedDoors
+            Set<BlockPos> visitedDoors,
+            double attackStrength
     ) {
     }
 
@@ -172,6 +173,21 @@ public final class KnockingGhostDoorSystem {
             BlockPos doorPos
     ) {
 
+        return knock(
+                level,
+                source,
+                doorPos,
+                5.0D
+        );
+    }
+
+    public static KnockResult knock(
+            ServerLevel level,
+            LivingEntity source,
+            BlockPos doorPos,
+            double attackStrength
+    ) {
+
         Set<BlockPos> visitedDoors =
                 new HashSet<>();
 
@@ -180,9 +196,11 @@ public final class KnockingGhostDoorSystem {
                 source,
                 doorPos,
                 0,
-                visitedDoors
+                visitedDoors,
+                attackStrength
         );
     }
+
 
 
     /**
@@ -193,7 +211,8 @@ public final class KnockingGhostDoorSystem {
             LivingEntity source,
             BlockPos doorPos,
             int echoDepth,
-            Set<BlockPos> visitedDoors
+            Set<BlockPos> visitedDoors,
+            double attackStrength
     ) {
 
         doorPos =
@@ -267,7 +286,8 @@ public final class KnockingGhostDoorSystem {
                 queueKnockAttacks(
                         level,
                         source,
-                        doorPos
+                        doorPos,
+                        attackStrength
                 );
 
 
@@ -320,7 +340,8 @@ public final class KnockingGhostDoorSystem {
                 source,
                 doorPos,
                 echoDepth + 1,
-                visitedDoors
+                visitedDoors,
+                attackStrength
         );
 
 
@@ -364,7 +385,8 @@ public final class KnockingGhostDoorSystem {
     private static int queueKnockAttacks(
             ServerLevel level,
             LivingEntity source,
-            BlockPos doorPos
+            BlockPos doorPos,
+            double attackStrength
     ) {
 
         AABB hearingBox =
@@ -374,9 +396,7 @@ public final class KnockingGhostDoorSystem {
                         KNOCK_HEARING_RADIUS
                 );
 
-
         int count = 0;
-
 
         for (LivingEntity entity :
                 level.getEntitiesOfClass(
@@ -392,13 +412,6 @@ public final class KnockingGhostDoorSystem {
                 continue;
             }
 
-
-            /*
-             * ====================================================
-             * 真正球形距离
-             * ====================================================
-             */
-
             double dx =
                     entity.getX()
                             - (doorPos.getX() + 0.5D);
@@ -411,7 +424,6 @@ public final class KnockingGhostDoorSystem {
                     entity.getZ()
                             - (doorPos.getZ() + 0.5D);
 
-
             if (dx * dx
                     + dy * dy
                     + dz * dz
@@ -421,26 +433,18 @@ public final class KnockingGhostDoorSystem {
                 continue;
             }
 
-
             count++;
-
-
-            /*
-             * ====================================================
-             * 延迟攻击
-             * ====================================================
-             */
 
             PENDING_ATTACKS.add(
                     new PendingKnockAttack(
                             level,
                             source,
                             entity.getUUID(),
-                            KNOCK_ATTACK_DELAY
+                            KNOCK_ATTACK_DELAY,
+                            attackStrength
                     )
             );
         }
-
 
         return count;
     }
@@ -457,7 +461,8 @@ public final class KnockingGhostDoorSystem {
             LivingEntity source,
             BlockPos sourceDoor,
             int echoDepth,
-            Set<BlockPos> visitedDoors
+            Set<BlockPos> visitedDoors,
+            double attackStrength
     ) {
 
         int radius =
@@ -614,7 +619,8 @@ public final class KnockingGhostDoorSystem {
                             door,
                             echoDepth,
                             delay,
-                            visitedDoors
+                            visitedDoors,
+                            attackStrength
                     )
             );
         }
@@ -667,7 +673,8 @@ public final class KnockingGhostDoorSystem {
                                 pending.level(),
                                 pending.source(),
                                 pending.target(),
-                                remaining
+                                remaining,
+                                pending.attackStrength()
                         )
                 );
 
@@ -704,7 +711,7 @@ public final class KnockingGhostDoorSystem {
                             ModDamageTypes.knockingGhost(
                                     pending.source()
                             ),
-                            KNOCK_ATTACK_STRENGTH
+                            pending.attackStrength()
                     );
                 }
             }
@@ -731,11 +738,9 @@ public final class KnockingGhostDoorSystem {
             PendingDoorKnock pending =
                     PENDING_DOOR_KNOCKS.get(i);
 
-
             int remaining =
                     pending.remainingTicks()
                             - 1;
-
 
             if (remaining > 0) {
 
@@ -747,21 +752,19 @@ public final class KnockingGhostDoorSystem {
                                 pending.doorPos(),
                                 pending.echoDepth(),
                                 remaining,
-                                pending.visitedDoors()
+                                pending.visitedDoors(),
+                                pending.attackStrength()
                         )
                 );
 
                 continue;
             }
 
-
             ServerLevel level =
                     pending.level();
 
-
             BlockPos doorPos =
                     pending.doorPos();
-
 
             /*
              * 门还存在才响。
@@ -776,10 +779,10 @@ public final class KnockingGhostDoorSystem {
                         pending.source(),
                         doorPos,
                         pending.echoDepth(),
-                        pending.visitedDoors()
+                        pending.visitedDoors(),
+                        pending.attackStrength()
                 );
             }
-
 
             PENDING_DOOR_KNOCKS.remove(i);
         }
