@@ -1,9 +1,6 @@
 package com.qidate.qisplan2.ghost.ability.knockingghost;
 
 import com.qidate.qisplan2.QisPlan2;
-import com.qidate.qisplan2.block.GhostDoorBlock;
-import com.qidate.qisplan2.death.ModDamageTypes;
-import com.qidate.qisplan2.death.SupernaturalDeathHandler;
 import com.qidate.qisplan2.ghost.GhostAbilityContext;
 import com.qidate.qisplan2.ghost.PossessedGhostState;
 import com.qidate.qisplan2.ghost.PossessionHandler;
@@ -13,13 +10,10 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.sounds.SoundSource;
-import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.level.block.DoorBlock;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.DoubleBlockHalf;
 import net.minecraft.tags.BlockTags;
-import net.minecraft.world.phys.AABB;
 
 public final class KnockingGhostAbility
         implements PossessedGhostAbility {
@@ -56,19 +50,6 @@ public final class KnockingGhostAbility
      */
     private static final double TARGET_REVIVAL_BONUS = 2.0D;
 
-    /**
-     * 敲门攻击范围。
-     *
-     * 与敲门鬼本体保持一致：
-     * 16 格。
-     */
-    private static final double KNOCK_RANGE = 16.0D;
-
-    /**
-     * 敲门灵异攻击强度。
-     */
-    private static final double KNOCK_ATTACK_STRENGTH = 5.0D;
-
     @Override
     public ResourceLocation id() {
         return ID;
@@ -102,11 +83,13 @@ public final class KnockingGhostAbility
             return false;
         }
 
+
         /*
          * ========================================================
          * 找到门的下半部分
          * ========================================================
          */
+
         BlockPos doorPos =
                 getLowerDoorPos(
                         serverLevel,
@@ -117,89 +100,51 @@ public final class KnockingGhostAbility
             return false;
         }
 
+
         /*
          * ========================================================
-         * 判断是否为鬼门
+         * 计算这一次“直接敲下这扇门”
+         * 有多少生物听见。
+         *
+         * 注意：
+         *
+         * 鬼门后续传播产生的其他门，
+         * 不在这里重复增加驾驭者复苏。
          * ========================================================
          */
-        boolean ghostDoor =
-                isGhostDoor(
+
+        int targetCount =
+                KnockingGhostDoorSystem.countHearingTargets(
                         serverLevel,
+                        player,
                         doorPos
                 );
 
+
         /*
          * ========================================================
-         * 找出敲门范围内所有袭击目标
+         * 真正执行敲门。
+         *
+         * 包括：
+         *
+         * 声音
+         * 延迟攻击
+         * 鬼门
+         * 50 格共鸣
+         * 50 层递归
          * ========================================================
          */
-        int targetCount = 0;
 
-        AABB attackBox =
-                new AABB(
-                        doorPos
-                ).inflate(
-                        KNOCK_RANGE
-                );
+        KnockingGhostDoorSystem.knock(
+                serverLevel,
+                player,
+                doorPos
+        );
 
-        for (LivingEntity entity :
-                serverLevel.getEntitiesOfClass(
-                        LivingEntity.class,
-                        attackBox,
-                        LivingEntity::isAlive
-                )) {
-
-            /*
-             * 不攻击自己。
-             */
-            if (entity == player) {
-                continue;
-            }
-
-            /*
-             * 使用真正的球形距离，
-             * 防止 AABB 角落里的实体被算进去。
-             */
-            double dx =
-                    entity.getX()
-                            - (doorPos.getX() + 0.5D);
-
-            double dy =
-                    entity.getY()
-                            - (doorPos.getY() + 0.5D);
-
-            double dz =
-                    entity.getZ()
-                            - (doorPos.getZ() + 0.5D);
-
-            if (dx * dx
-                    + dy * dy
-                    + dz * dz
-                    > KNOCK_RANGE
-                    * KNOCK_RANGE) {
-
-                continue;
-            }
-
-            targetCount++;
-
-            /*
-             * ====================================================
-             * 灵异袭击
-             * ====================================================
-             */
-            SupernaturalDeathHandler.tryKill(
-                    entity,
-                    ModDamageTypes.knockingGhost(
-                            player
-                    ),
-                    KNOCK_ATTACK_STRENGTH
-            );
-        }
 
         /*
          * ========================================================
-         * 计算本次复苏增长
+         * 驾驭代价
          * ========================================================
          */
 
@@ -207,57 +152,37 @@ public final class KnockingGhostAbility
                 context.state();
 
         long now =
-                player.serverLevel()
-                        .getGameTime();
+                serverLevel.getGameTime();
 
-        long lastUse =
-                state.lastAbilityUseTick();
-
-        /*
-         * 10 秒内再次敲门：
-         * 基础复苏从 10% 变成 30%。
-         *
-         * 这里额外目标奖励仍然是：
-         * 每个目标 +2%。
-         *
-         * 因此：
-         *
-         * 1 个目标：
-         * 32%
-         *
-         * 5 个目标：
-         * 40%
-         */
         boolean rapid =
-                lastUse > 0
-                        && now - lastUse < TEN_SECONDS;
+                state.lastAbilityUseTick() > 0
+                        && now - state.lastAbilityUseTick()
+                        < TEN_SECONDS;
+
 
         double baseGain =
                 rapid
                         ? RAPID_REVIVAL_GAIN
                         : NORMAL_REVIVAL_GAIN;
 
+
         double revivalGain =
                 baseGain
                         + targetCount
                         * TARGET_REVIVAL_BONUS;
 
-        /*
-         * ========================================================
-         * 加入复苏值
-         * ========================================================
-         */
+
         PossessedGhostState newState =
                 PossessionHandler.addRevival(
                         state,
                         revivalGain
                 );
 
+
         /*
-         * ========================================================
-         * 记录本次敲门时间。
-         * ========================================================
+         * 记录能力使用时间。
          */
+
         newState =
                 new PossessedGhostState(
                         newState.revival(),
@@ -271,31 +196,22 @@ public final class KnockingGhostAbility
                 newState
         );
 
-        /*
-         * ========================================================
-         * 播放敲门声
-         * ========================================================
-         */
-        serverLevel.playSound(
-                null,
-                doorPos,
-                QisPlan2.GHOST_KNOCK.get(),
-                SoundSource.HOSTILE,
-                1.0F,
-                1.0F
-        );
 
         /*
          * ========================================================
          * 普通门：
          *
-         * 敲一次就损毁。
+         * 敲一次就毁掉。
          *
          * 鬼门：
-         * 不损毁。
+         * 不毁。
          * ========================================================
          */
-        if (!ghostDoor) {
+
+        if (!KnockingGhostDoorSystem.isGhostDoor(
+                serverLevel,
+                doorPos
+        )) {
 
             serverLevel.destroyBlock(
                     doorPos,
@@ -303,15 +219,19 @@ public final class KnockingGhostAbility
             );
         }
 
+
         /*
-         * 如果这次已经涨到 100%，
-         * 直接死亡。
+         * ========================================================
+         * 复苏到 100%
+         * ========================================================
          */
+
         if (newState.revival()
                 >= 1.0D) {
 
             player.setHealth(0.0F);
         }
+
 
         return true;
     }
@@ -376,18 +296,5 @@ public final class KnockingGhostAbility
         }
 
         return null;
-    }
-
-    /**
-     * 判断是不是鬼门。
-     */
-    private static boolean isGhostDoor(
-            ServerLevel level,
-            BlockPos pos
-    ) {
-
-        return level.getBlockState(pos)
-                .getBlock()
-                instanceof GhostDoorBlock;
     }
 }
