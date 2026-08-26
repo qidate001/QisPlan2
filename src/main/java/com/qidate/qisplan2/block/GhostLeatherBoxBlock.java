@@ -3,6 +3,7 @@ package com.qidate.qisplan2.block;
 import com.mojang.serialization.MapCodec;
 import com.qidate.qisplan2.QisPlan2;
 import com.qidate.qisplan2.block.entity.GhostLeatherBoxBlockEntity;
+import com.qidate.qisplan2.ghost.partition.PartitionReturnManager;
 import com.qidate.qisplan2.ghost.partition.PartitionSpaceManager;
 import com.qidate.qisplan2.ghost.partition.PartitionSpaceSavedData;
 
@@ -145,27 +146,42 @@ public class GhostLeatherBoxBlock
 
         /*
          * ========================================================
-         * 1.21.1 DimensionTransition：
+         * 确保该区域已经生成初始石盒。
+         * ========================================================
+         */
+        PartitionSpaceManager.ensureRegionInitialized(
+                partitionLevel,
+                regionId
+        );
+
+        /*
+         * ========================================================
+         * 记录玩家原来的位置。
          *
-         * 位置使用 Vec3
-         * 速度使用 Vec3
+         * 以后从出口方块出去，
+         * 就回到这里。
+         * ========================================================
+         */
+        PartitionReturnManager.capture(
+                serverPlayer
+        );
+
+        /*
+         * ========================================================
+         * 传送。
          * ========================================================
          */
         DimensionTransition transition =
                 new DimensionTransition(
                         partitionLevel,
-
                         new Vec3(
                                 x,
                                 y,
                                 z
                         ),
-
                         serverPlayer.getDeltaMovement(),
-
                         serverPlayer.getYRot(),
                         serverPlayer.getXRot(),
-
                         DimensionTransition.DO_NOTHING
                 );
 

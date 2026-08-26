@@ -18,6 +18,7 @@ import com.qidate.qisplan2.ghost.GhostAbilityInteractionHandler;
 import com.qidate.qisplan2.ghost.PossessedGhostState;
 import com.qidate.qisplan2.ghost.PossessionHandler;
 import com.qidate.qisplan2.ghost.ability.GhostAbilityRegistry;
+import com.qidate.qisplan2.ghost.partition.PartitionReturnData;
 import com.qidate.qisplan2.item.*;
 import com.qidate.qisplan2.menu.GhostStoveMenu;
 import com.qidate.qisplan2.recipe.GhostStoveRecipe;
@@ -218,6 +219,25 @@ public class QisPlan2 {
                             GhostManorMarkerBlockEntity::new,
                             GHOST_MANOR_MARKER.get()
                     ).build(null)
+            );
+
+    // 分割维度离开方块
+    public static final DeferredBlock<PartitionExitBlock>
+            PARTITION_EXIT =
+            BLOCKS.registerBlock(
+                    "partition_exit",
+                    PartitionExitBlock::new,
+                    BlockBehaviour.Properties
+                            .of()
+                            .strength(2.0F)
+                            .noOcclusion()
+            );
+
+    public static final DeferredItem<BlockItem>
+            PARTITION_EXIT_ITEM =
+            ITEMS.registerSimpleBlockItem(
+                    PARTITION_EXIT,
+                    new Item.Properties()
             );
 
     // 必死诅咒层数（0~10，同步到客户端供骷髅条显示）
@@ -787,6 +807,7 @@ public class QisPlan2 {
                         output.accept(KNOCKING_GHOST_SPAWN_EGG);
                         output.accept(OPENING_GHOST_SPAWN_EGG);
                         output.accept(CLOSING_GHOST_SPAWN_EGG);
+                        output.accept(PARTITION_EXIT_ITEM);
                     })
                     .build()
             );
@@ -804,9 +825,7 @@ public class QisPlan2 {
                     .build()
             );
 
-    // ========================================
     // 鬼灶台 Recipe 注册
-    // ========================================
     public static final Supplier<RecipeType<GhostStoveRecipe>>
             GHOST_STOVE_RECIPE_TYPE =
             RECIPE_TYPES.register(
@@ -835,6 +854,24 @@ public class QisPlan2 {
                             QisPlan2.MODID,
                             "partition"
                     )
+            );
+
+    public static final DeferredHolder<
+            AttachmentType<?>,
+            AttachmentType<PartitionReturnData>
+            > PARTITION_RETURN_DATA =
+            ATTACHMENT_TYPES.register(
+                    "partition_return_data",
+                    () ->
+                            AttachmentType
+                                    .builder(
+                                            () ->
+                                                    PartitionReturnData.EMPTY
+                                    )
+                                    .serialize(
+                                            PartitionReturnData.CODEC
+                                    )
+                                    .build()
             );
 
 

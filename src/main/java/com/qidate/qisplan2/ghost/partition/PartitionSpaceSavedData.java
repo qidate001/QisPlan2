@@ -5,23 +5,55 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.world.level.saveddata.SavedData;
 
+import java.util.HashSet;
+import java.util.Set;
+
 public class PartitionSpaceSavedData
         extends SavedData {
 
     private static final String DATA_NAME =
             "qisplan2_partition_spaces";
 
+    /*
+     * ============================================================
+     * 区域 ID 分配
+     * ============================================================
+     */
+
     /**
-     * 下一次分配的区域 ID。
+     * 下一个可分配区域 ID。
      */
     private long nextRegionId = 0L;
+
+
+    /*
+     * ============================================================
+     * 区域初始化记录
+     * ============================================================
+     */
+
+    /**
+     * 已经完成初始空间生成的区域。
+     *
+     * 例如：
+     *
+     * 0 → 已生成
+     * 1 → 已生成
+     */
+    private final Set<Long> initializedRegions =
+            new HashSet<>();
+
 
     public PartitionSpaceSavedData() {
     }
 
-    /**
-     * 从存档读取。
+
+    /*
+     * ============================================================
+     * 加载
+     * ============================================================
      */
+
     public static PartitionSpaceSavedData load(
             CompoundTag tag,
             HolderLookup.Provider registries
@@ -30,6 +62,9 @@ public class PartitionSpaceSavedData
         PartitionSpaceSavedData data =
                 new PartitionSpaceSavedData();
 
+        /*
+         * 下一 ID。
+         */
         data.nextRegionId =
                 Math.max(
                         0L,
@@ -38,12 +73,36 @@ public class PartitionSpaceSavedData
                         )
                 );
 
+
+        /*
+         * 已初始化区域。
+         */
+        long[] regions =
+                tag.getLongArray(
+                        "initialized_regions"
+                );
+
+        for (long regionId :
+                regions) {
+
+            if (regionId >= 0L) {
+
+                data.initializedRegions.add(
+                        regionId
+                );
+            }
+        }
+
         return data;
     }
 
-    /**
-     * 分配一个新的区域。
+
+    /*
+     * ============================================================
+     * 区域分配
+     * ============================================================
      */
+
     public long allocateRegion() {
 
         long id =
@@ -54,30 +113,90 @@ public class PartitionSpaceSavedData
         return id;
     }
 
-    /**
-     * NeoForge 21.1：
-     * save 需要 HolderLookup.Provider。
+
+    /*
+     * ============================================================
+     * 初始化状态
+     * ============================================================
      */
+
+    public boolean isRegionInitialized(
+            long regionId
+    ) {
+
+        return initializedRegions.contains(
+                regionId
+        );
+    }
+
+
+    public void markRegionInitialized(
+            long regionId
+    ) {
+
+        if (initializedRegions.add(
+                regionId
+        )) {
+
+            setDirty();
+        }
+    }
+
+
+    /*
+     * ============================================================
+     * 保存
+     * ============================================================
+     */
+
     @Override
     public CompoundTag save(
             CompoundTag tag,
             HolderLookup.Provider registries
     ) {
 
+        /*
+         * 下一 ID。
+         */
         tag.putLong(
                 "next_region_id",
                 nextRegionId
         );
 
+
+        /*
+         * 初始化区域。
+         */
+        long[] regions =
+                new long[
+                        initializedRegions.size()
+                        ];
+
+        int index = 0;
+
+        for (long regionId :
+                initializedRegions) {
+
+            regions[index++] =
+                    regionId;
+        }
+
+        tag.putLongArray(
+                "initialized_regions",
+                regions
+        );
+
+
         return tag;
     }
 
-    /**
-     * 获取全服务器共用的划分空间数据。
-     *
-     * 这类数据与具体维度无关，
-     * 所以存到 Overworld。
+
+    /*
+     * ============================================================
+     * 获取全服务器数据
+     * ============================================================
      */
+
     public static PartitionSpaceSavedData get(
             MinecraftServer server
     ) {
