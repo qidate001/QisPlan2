@@ -4,6 +4,7 @@ import com.qidate.qisplan2.QisPlan2;
 import com.qidate.qisplan2.ghost.ability.GhostAbilityRegistry;
 import com.qidate.qisplan2.ghost.ability.PossessedGhostAbility;
 import com.qidate.qisplan2.ghost.ability.nightwanderer.NightWandererAbility;
+
 import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
@@ -17,6 +18,13 @@ public final class PossessionHandler {
     private PossessionHandler() {
     }
 
+
+    /*
+     * ============================================================
+     * 兼容旧代码
+     * ============================================================
+     */
+
     /**
      * 兼容旧代码的夜游鬼 ID。
      */
@@ -24,34 +32,60 @@ public final class PossessionHandler {
     public static final ResourceLocation NIGHT_WANDERER =
             NightWandererAbility.ID;
 
-    /**
-     * 白天浅死机值增长：
-     * 1 点 / 10 秒
+
+    /*
+     * ============================================================
+     * 浅死机
+     * ============================================================
      */
-    private static final double DAY_SHALLOW_STUN_PER_TICK =
-            1.0D / 200.0D;
 
     /**
-     * 浅死机值最大 100 点
+     * 浅死机值最大 100 点。
      */
-    public static final double MAX_SHALLOW_STUN = PossessedGhostState.MAX_SHALLOW_STUN;
+    public static final double MAX_SHALLOW_STUN =
+            PossessedGhostState.MAX_SHALLOW_STUN;
 
 
+    /*
+     * ============================================================
+     * 复苏
+     * ============================================================
+     */
+
+    /**
+     * 给状态增加复苏值。
+     *
+     * revivalPercent 使用百分比。
+     *
+     * 例如：
+     *
+     * 10.0 = 10%
+     */
     public static PossessedGhostState addRevival(
             PossessedGhostState state,
             double revivalPercent
     ) {
+
+        if (state == null) {
+            return null;
+        }
+
         if (revivalPercent <= 0.0D) {
             return state;
         }
 
+
         /*
-         * 死机期间：
-         * 不增加复苏。
+         * ========================================================
+         * 死机期间不复苏。
+         * ========================================================
          */
+
         if (state.isAnyStun()) {
+
             return state;
         }
+
 
         double revival =
                 state.revival();
@@ -59,24 +93,34 @@ public final class PossessionHandler {
         double shallowStun =
                 state.shallowStun();
 
+
         /*
+         * ========================================================
          * 浅死机优先抵消复苏增长。
+         * ========================================================
          */
+
         double consumed =
                 Math.min(
                         shallowStun,
                         revivalPercent
                 );
 
-        shallowStun -= consumed;
+        shallowStun -=
+                consumed;
+
 
         double actualRevival =
                 revivalPercent
                         - consumed;
 
+
         /*
-         * 剩余才进入复苏值。
+         * ========================================================
+         * 剩余部分进入复苏值。
+         * ========================================================
          */
+
         revival +=
                 actualRevival / 100.0D;
 
@@ -86,15 +130,23 @@ public final class PossessionHandler {
                         revival
                 );
 
+
         return new PossessedGhostState(
                 revival,
                 shallowStun,
                 state.stunTicks(),
                 state.permanentStun(),
-                state.lastAbilityUseTick()
+                state.lastAbilityUseTick(),
+                state.intrinsicStrength()
         );
     }
 
+
+    /*
+     * ============================================================
+     * 驭鬼
+     * ============================================================
+     */
 
     /**
      * 驭鬼。
@@ -103,83 +155,144 @@ public final class PossessionHandler {
             ServerPlayer player,
             ResourceLocation ghost
     ) {
-        // 防驾驭未实现的鬼
-        if (!GhostAbilityRegistry.contains(ghost)) {
+
+        /*
+         * ========================================================
+         * 必须存在对应 Ability。
+         * ========================================================
+         */
+
+        if (!GhostAbilityRegistry.contains(
+                ghost
+        )) {
+
             return false;
         }
+
 
         Map<ResourceLocation, PossessedGhostState> oldData =
-                player.getData(QisPlan2.POSSESSED_GHOSTS);
+                player.getData(
+                        QisPlan2.POSSESSED_GHOSTS
+                );
 
-        if (oldData.containsKey(ghost)) {
+
+        /*
+         * 已经驾驭。
+         */
+
+        if (oldData.containsKey(
+                ghost
+        )) {
+
             return false;
         }
 
-        Map<ResourceLocation, PossessedGhostState> data =
-                new HashMap<>(oldData);
+
+        /*
+         * ========================================================
+         * 获取 Ability。
+         * ========================================================
+         */
+
+        PossessedGhostAbility ability =
+                GhostAbilityRegistry.get(
+                        ghost
+                );
+
+        if (ability == null) {
+            return false;
+        }
+
+
+        /*
+         * ========================================================
+         * 创建状态。
+         *
+         * 初始本质强度由 Ability 决定。
+         * ========================================================
+         */
 
         PossessedGhostState state =
-                PossessedGhostState.create();
+                PossessedGhostState.create(
+                        ability.initialIntrinsicStrength()
+                );
+
+
+        Map<ResourceLocation, PossessedGhostState> data =
+                new HashMap<>(
+                        oldData
+                );
+
 
         data.put(
                 ghost,
                 state
         );
 
+
         player.setData(
                 QisPlan2.POSSESSED_GHOSTS,
                 data
         );
 
+
         /*
-         * 通知对应能力：
-         * 玩家刚刚驾驭这只鬼。
+         * ========================================================
+         * 通知 Ability：
+         *
+         * 玩家刚刚驾驭了这只鬼。
+         * ========================================================
          */
-        PossessedGhostAbility ability =
-                GhostAbilityRegistry.get(
-                        ghost
-                );
 
-        if (ability != null) {
+        ability.onPossess(
+                new GhostAbilityContext(
+                        player,
+                        ghost,
+                        state
+                )
+        );
 
-            ability.onPossess(
-                    new GhostAbilityContext(
-                            player,
-                            ghost,
-                            state
-                    )
-            );
-        }
 
         return true;
     }
 
 
-    /**
-     * 解除驭鬼。
+    /*
+     * ============================================================
+     * 解除驾驭
+     * ============================================================
      */
+
     public static boolean release(
             ServerPlayer player,
             ResourceLocation ghost
     ) {
 
         Map<ResourceLocation, PossessedGhostState> oldData =
-                player.getData(QisPlan2.POSSESSED_GHOSTS);
+                player.getData(
+                        QisPlan2.POSSESSED_GHOSTS
+                );
 
-        if (!oldData.containsKey(ghost)) {
+
+        if (!oldData.containsKey(
+                ghost
+        )) {
+
             return false;
         }
 
-        Map<ResourceLocation, PossessedGhostState> data =
-                new HashMap<>(oldData);
 
         PossessedGhostState state =
-                oldData.get(ghost);
+                oldData.get(
+                        ghost
+                );
+
 
         PossessedGhostAbility ability =
                 GhostAbilityRegistry.get(
                         ghost
                 );
+
 
         if (ability != null) {
 
@@ -192,16 +305,33 @@ public final class PossessionHandler {
             );
         }
 
-        data.remove(ghost);
+
+        Map<ResourceLocation, PossessedGhostState> data =
+                new HashMap<>(
+                        oldData
+                );
+
+
+        data.remove(
+                ghost
+        );
+
 
         player.setData(
                 QisPlan2.POSSESSED_GHOSTS,
                 data
         );
 
+
         return true;
     }
 
+
+    /*
+     * ============================================================
+     * 查询
+     * ============================================================
+     */
 
     /**
      * 是否驾驭了某只鬼。
@@ -213,7 +343,9 @@ public final class PossessionHandler {
 
         return player.getData(
                 QisPlan2.POSSESSED_GHOSTS
-        ).containsKey(ghost);
+        ).containsKey(
+                ghost
+        );
     }
 
 
@@ -227,8 +359,11 @@ public final class PossessionHandler {
 
         return player.getData(
                 QisPlan2.POSSESSED_GHOSTS
-        ).get(ghost);
+        ).get(
+                ghost
+        );
     }
+
 
     /**
      * 设置某只鬼的状态。
@@ -239,6 +374,11 @@ public final class PossessionHandler {
             PossessedGhostState state
     ) {
 
+        if (state == null) {
+            return;
+        }
+
+
         Map<ResourceLocation, PossessedGhostState> data =
                 new HashMap<>(
                         player.getData(
@@ -246,10 +386,12 @@ public final class PossessionHandler {
                         )
                 );
 
+
         data.put(
                 ghost,
                 state
         );
+
 
         player.setData(
                 QisPlan2.POSSESSED_GHOSTS,
@@ -257,40 +399,208 @@ public final class PossessionHandler {
         );
     }
 
+
+    /*
+     * ============================================================
+     * 强度
+     * ============================================================
+     */
+
+    /**
+     * 获取一只已经驾驭的鬼当前实际发挥出来的强度。
+     *
+     * 这个方法以后应该作为其他系统读取
+     * “当前鬼有多强”的统一入口。
+     */
+    public static double getEffectiveStrength(
+            ServerPlayer player,
+            ResourceLocation ghost
+    ) {
+
+        PossessedGhostState state =
+                getState(
+                        player,
+                        ghost
+                );
+
+
+        if (state == null) {
+            return 0.0D;
+        }
+
+
+        PossessedGhostAbility ability =
+                GhostAbilityRegistry.get(
+                        ghost
+                );
+
+
+        if (ability == null) {
+            return 0.0D;
+        }
+
+
+        return GhostStrengthSystem.calculate(
+                state,
+                ability.minimumStrengthRatio()
+        );
+    }
+
+
+    /**
+     * 获取指定鬼当前的本质强度。
+     */
+    public static double getIntrinsicStrength(
+            ServerPlayer player,
+            ResourceLocation ghost
+    ) {
+
+        PossessedGhostState state =
+                getState(
+                        player,
+                        ghost
+                );
+
+
+        if (state == null) {
+            return 0.0D;
+        }
+
+
+        return state.intrinsicStrength();
+    }
+
+
+    /**
+     * 增加指定鬼的本质强度。
+     */
+    public static boolean addIntrinsicStrength(
+            ServerPlayer player,
+            ResourceLocation ghost,
+            double amount
+    ) {
+
+        PossessedGhostState state =
+                getState(
+                        player,
+                        ghost
+                );
+
+
+        if (state == null) {
+            return false;
+        }
+
+
+        PossessedGhostState newState =
+                GhostStrengthSystem
+                        .addIntrinsicStrength(
+                                state,
+                                amount
+                        );
+
+
+        setState(
+                player,
+                ghost,
+                newState
+        );
+
+
+        return true;
+    }
+
+
+    /**
+     * 直接设置指定鬼的本质强度。
+     */
+    public static boolean setIntrinsicStrength(
+            ServerPlayer player,
+            ResourceLocation ghost,
+            double strength
+    ) {
+
+        PossessedGhostState state =
+                getState(
+                        player,
+                        ghost
+                );
+
+
+        if (state == null) {
+            return false;
+        }
+
+
+        PossessedGhostState newState =
+                GhostStrengthSystem
+                        .setIntrinsicStrength(
+                                state,
+                                strength
+                        );
+
+
+        setState(
+                player,
+                ghost,
+                newState
+        );
+
+
+        return true;
+    }
+
+
+    /*
+     * ============================================================
+     * 浅死机
+     * ============================================================
+     */
+
     /**
      * 给指定厉鬼增加浅死机值。
-     *
-     * 自动限制在 0~100。
      */
     public static boolean addShallowStun(
             ServerPlayer player,
             ResourceLocation ghost,
             double amount
     ) {
+
         if (amount <= 0.0D) {
             return false;
         }
+
 
         Map<ResourceLocation, PossessedGhostState> oldData =
                 player.getData(
                         QisPlan2.POSSESSED_GHOSTS
                 );
 
+
         PossessedGhostState state =
-                oldData.get(ghost);
+                oldData.get(
+                        ghost
+                );
+
 
         if (state == null) {
             return false;
         }
 
+
         double newShallowStun =
                 Math.min(
                         PossessedGhostState.MAX_SHALLOW_STUN,
-                        state.shallowStun() + amount
+                        state.shallowStun()
+                                + amount
                 );
 
+
         Map<ResourceLocation, PossessedGhostState> data =
-                new HashMap<>(oldData);
+                new HashMap<>(
+                        oldData
+                );
+
 
         data.put(
                 ghost,
@@ -299,46 +609,70 @@ public final class PossessionHandler {
                         newShallowStun,
                         state.stunTicks(),
                         state.permanentStun(),
-                        state.lastAbilityUseTick()
+                        state.lastAbilityUseTick(),
+                        state.intrinsicStrength()
                 )
         );
+
 
         player.setData(
                 QisPlan2.POSSESSED_GHOSTS,
                 data
         );
 
+
         return true;
     }
 
+
+    /**
+     * 给状态增加浅死机值。
+     */
     public static PossessedGhostState addShallowStun(
             PossessedGhostState state,
             double amount
     ) {
+
+        if (state == null) {
+            return null;
+        }
+
         if (amount <= 0.0D) {
             return state;
         }
 
+
         double newShallowStun =
                 Math.min(
                         PossessedGhostState.MAX_SHALLOW_STUN,
-                        state.shallowStun() + amount
+                        state.shallowStun()
+                                + amount
                 );
+
 
         return new PossessedGhostState(
                 state.revival(),
                 newShallowStun,
                 state.stunTicks(),
                 state.permanentStun(),
-                state.lastAbilityUseTick()
+                state.lastAbilityUseTick(),
+                state.intrinsicStrength()
         );
     }
+
+
+    /*
+     * ============================================================
+     * 普通死机
+     * ============================================================
+     */
 
     public static boolean testStun(
             ServerPlayer player,
             ResourceLocation ghost,
             long ticks
     ) {
+
         Map<ResourceLocation, PossessedGhostState> data =
                 new HashMap<>(
                         player.getData(
@@ -346,37 +680,55 @@ public final class PossessionHandler {
                         )
                 );
 
+
         PossessedGhostState state =
-                data.get(ghost);
+                data.get(
+                        ghost
+                );
+
 
         if (state == null) {
             return false;
         }
+
 
         data.put(
                 ghost,
                 new PossessedGhostState(
                         state.revival(),
                         state.shallowStun(),
-                        Math.max(1L, ticks),
+                        Math.max(
+                                1L,
+                                ticks
+                        ),
                         false,
-                        state.lastAbilityUseTick()
+                        state.lastAbilityUseTick(),
+                        state.intrinsicStrength()
                 )
         );
+
 
         player.setData(
                 QisPlan2.POSSESSED_GHOSTS,
                 data
         );
 
+
         return true;
     }
 
+
+    /*
+     * ============================================================
+     * 永久死机
+     * ============================================================
+     */
 
     public static boolean testPermanentStun(
             ServerPlayer player,
             ResourceLocation ghost
     ) {
+
         Map<ResourceLocation, PossessedGhostState> data =
                 new HashMap<>(
                         player.getData(
@@ -384,12 +736,17 @@ public final class PossessionHandler {
                         )
                 );
 
+
         PossessedGhostState state =
-                data.get(ghost);
+                data.get(
+                        ghost
+                );
+
 
         if (state == null) {
             return false;
         }
+
 
         data.put(
                 ghost,
@@ -398,44 +755,62 @@ public final class PossessionHandler {
                         state.shallowStun(),
                         0L,
                         true,
-                        state.lastAbilityUseTick()
+                        state.lastAbilityUseTick(),
+                        state.intrinsicStrength()
                 )
         );
+
 
         player.setData(
                 QisPlan2.POSSESSED_GHOSTS,
                 data
         );
 
+
         return true;
     }
 
 
+    /*
+     * ============================================================
+     * Tick
+     * ============================================================
+     */
+
     public static void tick(
             ServerPlayer player
     ) {
+
         Map<ResourceLocation, PossessedGhostState> oldData =
-                player.getData(QisPlan2.POSSESSED_GHOSTS);
+                player.getData(
+                        QisPlan2.POSSESSED_GHOSTS
+                );
+
 
         if (oldData.isEmpty()) {
             return;
         }
 
+
         Map<ResourceLocation, PossessedGhostState> data =
-                new HashMap<>(oldData);
+                new HashMap<>(
+                        oldData
+                );
 
-        boolean changed = false;
 
-        boolean isDay =
-                player.level().isDay();
+        boolean changed =
+                false;
 
-        for (var entry : oldData.entrySet()) {
+
+        for (var entry :
+                oldData.entrySet()) {
 
             ResourceLocation ghost =
                     entry.getKey();
 
             PossessedGhostState state =
                     entry.getValue();
+
 
             double revival =
                     state.revival();
@@ -449,71 +824,93 @@ public final class PossessionHandler {
             boolean permanentStun =
                     state.permanentStun();
 
+
             /*
-             * ========================================
+             * ====================================================
              * 永久死机
-             * ========================================
-             *
-             * 完全不复苏。
+             * ====================================================
              */
+
             if (permanentStun) {
 
-                // 什么都不处理
-
+                /*
+                 * 什么都不处理。
+                 */
             }
+
+
             /*
-             * ========================================
+             * ====================================================
              * 普通死机
-             * ========================================
-             *
-             * 死机期间：
-             * 不复苏
-             * 不增加浅死机
+             * ====================================================
              */
+
             else if (stunTicks > 0) {
 
                 stunTicks--;
 
+                changed = true;
             }
 
+
             /*
-             * ========================================
+             * ====================================================
              * 复苏达到 100%
-             * ========================================
+             * ====================================================
              */
+
             if (revival >= 1.0D) {
 
-                player.setHealth(0.0F);
+                player.setHealth(
+                        0.0F
+                );
 
                 return;
             }
 
+
             /*
-             * 保存新的状态
+             * ====================================================
+             * 保存通用状态。
+             * ====================================================
              */
+
             PossessedGhostState newState =
                     new PossessedGhostState(
                             revival,
                             shallowStun,
                             stunTicks,
                             permanentStun,
-                            state.lastAbilityUseTick()
+                            state.lastAbilityUseTick(),
+                            state.intrinsicStrength()
                     );
+
 
             data.put(
                     ghost,
                     newState
             );
 
+
+            /*
+             * ====================================================
+             * 调用具体鬼的 Ability。
+             * ====================================================
+             */
+
             PossessedGhostAbility ability =
                     GhostAbilityRegistry.get(
                             ghost
                     );
 
+
             if (ability != null) {
 
                 PossessedGhostState beforeAbility =
-                        data.get(ghost);
+                        data.get(
+                                ghost
+                        );
+
 
                 GhostAbilityContext context =
                         new GhostAbilityContext(
@@ -522,24 +919,35 @@ public final class PossessionHandler {
                                 beforeAbility
                         );
 
-                ability.tick(context);
+
+                ability.tick(
+                        context
+                );
+
 
                 PossessedGhostState afterAbility =
                         context.state();
+
+
+                if (afterAbility != beforeAbility) {
+
+                    changed = true;
+                }
+
 
                 data.put(
                         ghost,
                         afterAbility
                 );
-
-                if (afterAbility != beforeAbility) {
-                    changed = true;
-                }
             }
 
+
             /*
-             * 判断是否变化
+             * ====================================================
+             * 判断通用状态是否改变。
+             * ====================================================
              */
+
             if (revival != state.revival()
                     || shallowStun != state.shallowStun()
                     || stunTicks != state.stunTicks()
@@ -549,7 +957,15 @@ public final class PossessionHandler {
             }
         }
 
+
+        /*
+         * ========================================================
+         * 统一提交。
+         * ========================================================
+         */
+
         if (changed) {
+
             player.setData(
                     QisPlan2.POSSESSED_GHOSTS,
                     data
@@ -557,6 +973,12 @@ public final class PossessionHandler {
         }
     }
 
+
+    /*
+     * ============================================================
+     * 主动能力
+     * ============================================================
+     */
 
     public static boolean useAbility(
             ServerPlayer player,
@@ -570,18 +992,22 @@ public final class PossessionHandler {
                         ghost
                 );
 
+
         if (state == null) {
             return false;
         }
+
 
         PossessedGhostAbility ability =
                 GhostAbilityRegistry.get(
                         ghost
                 );
 
+
         if (ability == null) {
             return false;
         }
+
 
         GhostAbilityContext context =
                 new GhostAbilityContext(
@@ -591,12 +1017,16 @@ public final class PossessionHandler {
                         target
                 );
 
+
         boolean success =
-                ability.use(context);
+                ability.use(
+                        context
+                );
+
 
         /*
          * Ability 执行成功后，
-         * 将 Context 中修改后的状态统一写回 Attachment。
+         * 将 Context 中修改后的状态统一写回。
          */
         if (success) {
 
@@ -607,8 +1037,16 @@ public final class PossessionHandler {
             );
         }
 
+
         return success;
     }
+
+
+    /*
+     * ============================================================
+     * 方块主动能力
+     * ============================================================
+     */
 
     public static boolean useAbilityOnBlock(
             ServerPlayer player,
@@ -622,18 +1060,22 @@ public final class PossessionHandler {
                         ghost
                 );
 
+
         if (state == null) {
             return false;
         }
+
 
         PossessedGhostAbility ability =
                 GhostAbilityRegistry.get(
                         ghost
                 );
 
+
         if (ability == null) {
             return false;
         }
+
 
         GhostAbilityContext context =
                 new GhostAbilityContext(
@@ -642,15 +1084,17 @@ public final class PossessionHandler {
                         state
                 );
 
+
         boolean success =
                 ability.useOnBlock(
                         context,
                         pos
                 );
 
+
         /*
-         * Ability 执行成功以后，
-         * 统一提交 Context 中的新状态。
+         * Ability 执行成功后，
+         * 统一提交状态。
          */
         if (success) {
 
@@ -661,42 +1105,59 @@ public final class PossessionHandler {
             );
         }
 
+
         return success;
     }
+
+
+    /*
+     * ============================================================
+     * 所有鬼统一增加浅死机
+     * ============================================================
+     */
 
     /**
      * 让玩家驾驭的所有厉鬼增加浅死机值。
      *
-     * @param player 玩家
-     * @param amount 增加的浅死机值
-     * @return 实际被修改的厉鬼数量
+     * @return 实际修改的厉鬼数量
      */
     public static int addShallowStunToAll(
             ServerPlayer player,
             double amount
     ) {
+
         if (amount <= 0.0D) {
             return 0;
         }
+
 
         Map<ResourceLocation, PossessedGhostState> oldData =
                 player.getData(
                         QisPlan2.POSSESSED_GHOSTS
                 );
 
+
         if (oldData.isEmpty()) {
             return 0;
         }
 
+
         Map<ResourceLocation, PossessedGhostState> data =
-                new HashMap<>(oldData);
+                new HashMap<>(
+                        oldData
+                );
 
-        int count = 0;
 
-        for (var entry : oldData.entrySet()) {
+        int count =
+                0;
+
+
+        for (var entry :
+                oldData.entrySet()) {
 
             PossessedGhostState oldState =
                     entry.getValue();
+
 
             PossessedGhostState newState =
                     addShallowStun(
@@ -704,7 +1165,9 @@ public final class PossessionHandler {
                             amount
                     );
 
+
             if (newState != oldState) {
+
                 data.put(
                         entry.getKey(),
                         newState
@@ -714,12 +1177,15 @@ public final class PossessionHandler {
             }
         }
 
+
         if (count > 0) {
+
             player.setData(
                     QisPlan2.POSSESSED_GHOSTS,
                     data
             );
         }
+
 
         return count;
     }
