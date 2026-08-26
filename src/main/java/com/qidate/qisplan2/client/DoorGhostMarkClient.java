@@ -1,20 +1,8 @@
 package com.qidate.qisplan2.client;
 
-import com.qidate.qisplan2.QisPlan2;
-import net.minecraft.client.Minecraft;
-import net.minecraft.world.entity.Entity;
-import net.neoforged.api.distmarker.Dist;
-import net.neoforged.bus.api.SubscribeEvent;
-import net.neoforged.fml.common.EventBusSubscriber;
-import net.neoforged.neoforge.client.event.ClientTickEvent;
-
 import java.util.HashSet;
 import java.util.Set;
 
-@EventBusSubscriber(
-        modid = QisPlan2.MODID,
-        value = Dist.CLIENT
-)
 public final class DoorGhostMarkClient {
 
     /**
@@ -42,140 +30,40 @@ public final class DoorGhostMarkClient {
                     entityId
             );
 
-            refreshEntity(
-                    entityId
-            );
-
         } else {
 
-            remove(
+            MARKED.remove(
                     entityId
             );
         }
     }
 
     /**
-     * 客户端 Tick。
+     * 获取当前所有被标记的实体。
      *
-     * 持续维持本地 Glowing。
+     * 返回副本，避免渲染过程中修改原集合。
      */
-    @SubscribeEvent
-    public static void onClientTick(
-            ClientTickEvent.Post event
-    ) {
+    public static Set<Integer> getMarkedEntities() {
 
-        tick();
-    }
-
-    /**
-     * 每 tick 重新维持本地 Glowing。
-     */
-    private static void tick() {
-
-        Minecraft minecraft =
-                Minecraft.getInstance();
-
-        if (minecraft.level == null) {
-            return;
-        }
-
-        /*
-         * 使用副本，避免遍历过程中发生修改。
-         */
-        for (Integer entityId :
-                Set.copyOf(MARKED)) {
-
-            refreshEntity(
-                    entityId
-            );
-        }
-    }
-
-    /**
-     * 刷新一个实体的本地高亮状态。
-     */
-    private static void refreshEntity(
-            int entityId
-    ) {
-
-        Minecraft minecraft =
-                Minecraft.getInstance();
-
-        if (minecraft.level == null) {
-            return;
-        }
-
-        Entity entity =
-                minecraft.level.getEntity(
-                        entityId
-                );
-
-        if (entity == null) {
-            return;
-        }
-
-        entity.setGlowingTag(
-                true
+        return Set.copyOf(
+                MARKED
         );
     }
 
     /**
-     * 清除一个实体的标记。
+     * 当前是否存在任何标记。
      */
-    public static void remove(
-            int entityId
-    ) {
+    public static boolean isEmpty() {
 
-        MARKED.remove(
-                entityId
-        );
-
-        Minecraft minecraft =
-                Minecraft.getInstance();
-
-        if (minecraft.level == null) {
-            return;
-        }
-
-        Entity entity =
-                minecraft.level.getEntity(
-                        entityId
-                );
-
-        if (entity != null) {
-
-            entity.setGlowingTag(
-                    false
-            );
-        }
+        return MARKED.isEmpty();
     }
 
     /**
      * 清空全部标记。
+     *
+     * 切换世界、退出服务器等场景可以调用。
      */
     public static void clear() {
-
-        Minecraft minecraft =
-                Minecraft.getInstance();
-
-        if (minecraft.level != null) {
-
-            for (Integer entityId :
-                    Set.copyOf(MARKED)) {
-
-                Entity entity =
-                        minecraft.level.getEntity(
-                                entityId
-                        );
-
-                if (entity != null) {
-
-                    entity.setGlowingTag(
-                            false
-                    );
-                }
-            }
-        }
 
         MARKED.clear();
     }
