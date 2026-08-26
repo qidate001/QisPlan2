@@ -67,14 +67,14 @@ public abstract class DoorBlockMixin {
                         DoorBlock.OPEN
                 );
 
-        QisPlan2.LOGGER.info(
-                "[QisPlan2] 玩家 {} {} 门：{}",
-                player.getName().getString(),
-                opening
-                        ? "打开"
-                        : "关闭",
-                pos
-        );
+//        QisPlan2.LOGGER.info(
+//                "[QisPlan2] 玩家 {} {} 门：{}",
+//                player.getName().getString(),
+//                opening
+//                        ? "打开"
+//                        : "关闭",
+//                pos
+//        );
 
         DoorGhostTriggerHandler.onDoorChanged(
                 serverLevel,
@@ -139,14 +139,14 @@ public abstract class DoorBlockMixin {
             return;
         }
 
-        QisPlan2.LOGGER.info(
-                "[QisPlan2] 生物 {} {} 门：{}",
-                living.getName().getString(),
-                open
-                        ? "打开"
-                        : "关闭",
-                pos
-        );
+//        QisPlan2.LOGGER.info(
+//                "[QisPlan2] 生物 {} {} 门：{}",
+//                living.getName().getString(),
+//                open
+//                        ? "打开"
+//                        : "关闭",
+//                pos
+//        );
 
         DoorGhostTriggerHandler.onDoorChanged(
                 serverLevel,

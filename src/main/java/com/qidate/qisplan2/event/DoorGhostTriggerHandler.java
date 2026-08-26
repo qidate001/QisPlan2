@@ -4,6 +4,7 @@ import com.qidate.qisplan2.entity.AbstractDoorTriggerGhost;
 import com.qidate.qisplan2.entity.ClosingGhost;
 import com.qidate.qisplan2.entity.OpeningGhost;
 
+import com.qidate.qisplan2.ghost.ability.doorghost.DoorGhostAbilityHandler;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.LivingEntity;
@@ -67,6 +68,12 @@ public final class DoorGhostTriggerHandler {
         if (doorPos == null) {
             return;
         }
+
+        DoorGhostAbilityHandler.onDoorChanged(
+                level,
+                pos,
+                source
+        );
 
         /*
          * 重新读取门的真正下半部分状态。

@@ -1,14 +1,12 @@
 package com.qidate.qisplan2.network;
 
 import com.qidate.qisplan2.QisPlan2;
+import com.qidate.qisplan2.client.DoorGhostMarkClient;
 import com.qidate.qisplan2.client.GhostPianoMusicClient;
 import com.qidate.qisplan2.client.GhostPossessionClientState;
 import com.qidate.qisplan2.client.GhostPossessionScreen;
 import com.qidate.qisplan2.ghost.GhostPossessionSession;
-import com.qidate.qisplan2.network.payload.GhostPossessionEndPayload;
-import com.qidate.qisplan2.network.payload.GhostPossessionInputPayload;
-import com.qidate.qisplan2.network.payload.GhostPossessionStartPayload;
-import com.qidate.qisplan2.network.payload.GhostPossessionUpdatePayload;
+import com.qidate.qisplan2.network.payload.*;
 import net.minecraft.client.Minecraft;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
@@ -94,6 +92,27 @@ public final class QisNetwork {
                 GhostPossessionEndPayload.TYPE,
                 GhostPossessionEndPayload.STREAM_CODEC,
                 QisNetwork::handleGhostPossessionEnd
+        );
+
+        registrar.playToClient(
+                DoorGhostMarkPayload.TYPE,
+                DoorGhostMarkPayload.STREAM_CODEC,
+                (payload, context) -> {
+
+                    context.enqueueWork(() -> {
+
+                        QisPlan2.LOGGER.info(
+                                "[QisPlan2] 客户端收到门鬼标记：entityId={} marked={}",
+                                payload.entityId(),
+                                payload.marked()
+                        );
+
+                        DoorGhostMarkClient.apply(
+                                payload.entityId(),
+                                payload.marked()
+                        );
+                    });
+                }
         );
     }
 

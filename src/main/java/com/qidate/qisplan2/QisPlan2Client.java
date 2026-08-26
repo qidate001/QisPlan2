@@ -1,6 +1,7 @@
 package com.qidate.qisplan2;
 
 import com.qidate.qisplan2.client.BlackRainParticle;
+import com.qidate.qisplan2.client.DoorGhostMarkClient;
 import com.qidate.qisplan2.client.GhostUmbrellaDomainClient;
 import com.qidate.qisplan2.client.model.NightWandererModel;
 import com.qidate.qisplan2.client.renderer.ClosingGhostRenderer;
@@ -57,13 +58,10 @@ public class QisPlan2Client {
                 QisPlan2Client::registerEntityRenderers
         );
 
-
-
         // 鬼黑雨
         modEventBus.addListener(
                 QisPlan2Client::registerParticleProviders
         );
-
 
         /*
          * 鬼雨领域客户端逻辑
