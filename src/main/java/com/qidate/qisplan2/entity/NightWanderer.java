@@ -4,6 +4,7 @@ import com.qidate.qisplan2.QisPlan2;
 import com.qidate.qisplan2.death.ModDamageTypes;
 import com.qidate.qisplan2.death.SupernaturalCombatHandler;
 import com.qidate.qisplan2.death.SupernaturalDeathHandler;
+import com.qidate.qisplan2.entity.ai.GhostWanderGoal;
 import com.qidate.qisplan2.item.DeathCurseSword;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.nbt.CompoundTag;
@@ -117,13 +118,6 @@ public class NightWanderer
                         3.0D
                 )
         );
-
-        /*
-         * ========================================
-         * 目标选择
-         * ========================================
-         */
-
         /*
          * ========================================
          * 玩家优先
@@ -155,6 +149,19 @@ public class NightWanderer
                         true,
                         false,
                         target -> !(target instanceof Player)
+                )
+        );
+
+        /*
+         * ========================================
+         * 没有目标，四处游荡
+         * ========================================
+         */
+        this.goalSelector.addGoal(
+                8,
+                new GhostWanderGoal(
+                        this,
+                        0.7D
                 )
         );
     }
