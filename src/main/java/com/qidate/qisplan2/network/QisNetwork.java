@@ -6,6 +6,7 @@ import com.qidate.qisplan2.client.GhostPianoMusicClient;
 import com.qidate.qisplan2.client.GhostPossessionClientState;
 import com.qidate.qisplan2.client.GhostPossessionScreen;
 import com.qidate.qisplan2.ghost.GhostPossessionSession;
+import com.qidate.qisplan2.ghost.ability.doorghost.DoorGhostAbilityHandler;
 import com.qidate.qisplan2.network.payload.*;
 import net.minecraft.client.Minecraft;
 import net.neoforged.bus.api.SubscribeEvent;
@@ -101,16 +102,28 @@ public final class QisNetwork {
 
                     context.enqueueWork(() -> {
 
-                        QisPlan2.LOGGER.info(
-                                "[QisPlan2] 客户端收到门鬼标记：entityId={} marked={}",
-                                payload.entityId(),
-                                payload.marked()
-                        );
-
                         DoorGhostMarkClient.apply(
                                 payload.entityId(),
                                 payload.marked()
                         );
+                    });
+                }
+        );
+
+        registrar.playToServer(
+                DoorGhostAbilityPayload.TYPE,
+                DoorGhostAbilityPayload.STREAM_CODEC,
+                (payload, context) -> {
+
+                    context.enqueueWork(() -> {
+
+                        if (context.player()
+                                instanceof net.minecraft.server.level.ServerPlayer player) {
+
+                            DoorGhostAbilityHandler.use(
+                                    player
+                            );
+                        }
                     });
                 }
         );
