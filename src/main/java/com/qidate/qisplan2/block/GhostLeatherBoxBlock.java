@@ -8,6 +8,7 @@ import com.qidate.qisplan2.ghost.partition.PartitionSpaceManager;
 import com.qidate.qisplan2.ghost.partition.PartitionSpaceSavedData;
 
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
@@ -18,11 +19,14 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.TooltipFlag;
+import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.block.BaseEntityBlock;
-import net.minecraft.world.level.block.RenderShape;
+import net.minecraft.world.level.block.*;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.state.StateDefinition;
+import net.minecraft.world.level.block.state.properties.BlockStateProperties;
+import net.minecraft.world.level.block.state.properties.DirectionProperty;
 import net.minecraft.world.level.portal.DimensionTransition;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
@@ -32,9 +36,9 @@ import java.util.List;
 public class GhostLeatherBoxBlock
         extends BaseEntityBlock {
 
-    /**
-     * 1.21.1 BaseEntityBlock 必须提供 codec。
-     */
+    public static final DirectionProperty FACING =
+            BlockStateProperties.HORIZONTAL_FACING;
+
     public static final MapCodec<GhostLeatherBoxBlock> CODEC =
             simpleCodec(
                     GhostLeatherBoxBlock::new
@@ -45,6 +49,14 @@ public class GhostLeatherBoxBlock
     ) {
         super(
                 properties
+                        .sound(SoundType.WOOD)
+        );
+
+        registerDefaultState(
+                stateDefinition.any().setValue(
+                        FACING,
+                        Direction.NORTH
+                )
         );
     }
 
@@ -335,6 +347,74 @@ public class GhostLeatherBoxBlock
                 context,
                 tooltip,
                 flag
+        );
+    }
+
+    /**
+     * 放置时根据玩家方向决定鬼皮箱朝向。
+     */
+    @Override
+    public BlockState getStateForPlacement(
+            BlockPlaceContext context
+    ) {
+
+        return defaultBlockState().setValue(
+                FACING,
+                context.getHorizontalDirection()
+                        .getOpposite()
+        );
+    }
+
+    /**
+     * 支持方块旋转。
+     */
+    @Override
+    protected BlockState rotate(
+            BlockState state,
+            Rotation rotation
+    ) {
+
+        return state.setValue(
+                FACING,
+                rotation.rotate(
+                        state.getValue(
+                                FACING
+                        )
+                )
+        );
+    }
+
+    /**
+     * 支持方块镜像。
+     */
+    @Override
+    protected BlockState mirror(
+            BlockState state,
+            Mirror mirror
+    ) {
+
+        return state.rotate(
+                mirror.getRotation(
+                        state.getValue(
+                                FACING
+                        )
+                )
+        );
+    }
+
+    /**
+     * 注册 FACING 属性。
+     */
+    @Override
+    protected void createBlockStateDefinition(
+            StateDefinition.Builder<
+                    Block,
+                    BlockState
+                    > builder
+    ) {
+
+        builder.add(
+                FACING
         );
     }
 }
