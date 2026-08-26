@@ -539,6 +539,24 @@ public class QisPlan2 {
                     new Item.Properties()
             );
 
+    public static final DeferredHolder<
+            DataComponentType<?>,
+            DataComponentType<Long>
+            > GHOST_LEATHER_BOX_REGION_ID =
+            DATA_COMPONENTS.register(
+                    "ghost_leather_box_region_id",
+                    () ->
+                            DataComponentType
+                                    .<Long>builder()
+                                    .persistent(
+                                            Codec.LONG
+                                    )
+                                    .networkSynchronized(
+                                            ByteBufCodecs.VAR_LONG
+                                    )
+                                    .build()
+            );
+
     // 鬼伞
     public static final DeferredHolder<
             DataComponentType<?>,
