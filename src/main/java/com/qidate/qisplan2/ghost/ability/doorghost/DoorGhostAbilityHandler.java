@@ -19,11 +19,6 @@ public final class DoorGhostAbilityHandler {
             BlockPos doorPos,
             LivingEntity source
     ) {
-        QisPlan2.LOGGER.info(
-                "[QisPlan2] DoorGhostAbilityHandler：触发者={}，门={}",
-                source.getName().getString(),
-                doorPos
-        );
 
         double centerX =
                 doorPos.getX() + 0.5D;
@@ -60,6 +55,19 @@ public final class DoorGhostAbilityHandler {
                         ServerPlayer.class,
                         box
                 )) {
+            /*
+             * ========================================================
+             * 驾驭者自己触发门事件：
+             *
+             * 不标记自己。
+             *
+             * 否则第一人称下会把自己的整个屏幕
+             * 都套上 Outline。
+             * ========================================================
+             */
+            if (player == source) {
+                continue;
+            }
 
             if (player.distanceToSqr(
                     centerX,
@@ -75,19 +83,6 @@ public final class DoorGhostAbilityHandler {
              * 开门鬼驾驭者
              * ====================================================
              */
-
-            QisPlan2.LOGGER.info(
-                    "[QisPlan2] 玩家 {}：开门鬼={}，关门鬼={}",
-                    player.getName().getString(),
-                    PossessionHandler.hasGhost(
-                            player,
-                            OpeningGhostAbility.ID
-                    ),
-                    PossessionHandler.hasGhost(
-                            player,
-                            ClosingGhostAbility.ID
-                    )
-            );
 
             if (PossessionHandler.hasGhost(
                     player,
