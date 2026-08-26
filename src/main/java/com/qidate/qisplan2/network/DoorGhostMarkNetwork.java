@@ -28,13 +28,6 @@ public final class DoorGhostMarkNetwork {
             return;
         }
 
-        QisPlan2.LOGGER.info(
-                "[QisPlan2] 发送门鬼标记：玩家={}，实体ID={}，marked={}",
-                player.getName().getString(),
-                entity.getId(),
-                marked
-        );
-
         PacketDistributor.sendToPlayer(
                 player,
                 new DoorGhostMarkPayload(

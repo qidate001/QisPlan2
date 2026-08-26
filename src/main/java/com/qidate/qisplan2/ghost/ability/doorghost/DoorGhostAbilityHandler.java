@@ -3,6 +3,7 @@ package com.qidate.qisplan2.ghost.ability.doorghost;
 import com.qidate.qisplan2.QisPlan2;
 import com.qidate.qisplan2.death.ModDamageTypes;
 import com.qidate.qisplan2.death.SupernaturalDeathHandler;
+import com.qidate.qisplan2.ghost.PossessedGhostState;
 import com.qidate.qisplan2.ghost.PossessionHandler;
 
 import net.minecraft.core.BlockPos;
@@ -45,7 +46,8 @@ public final class DoorGhostAbilityHandler {
     public static void onDoorChanged(
             ServerLevel level,
             BlockPos doorPos,
-            LivingEntity source
+            LivingEntity source,
+            boolean opening
     ) {
 
         if (source == null
@@ -78,7 +80,7 @@ public final class DoorGhostAbilityHandler {
 
         /*
          * ========================================================
-         * 100 格范围内所有玩家
+         * 找附近所有驾驭门鬼的玩家
          * ========================================================
          */
 
@@ -97,11 +99,9 @@ public final class DoorGhostAbilityHandler {
 
             /*
              * ====================================================
-             * 自己触发门事件：
+             * 驾驭者自己触发门事件：
              *
              * 不标记自己。
-             *
-             * 否则会给自己画 Outline。
              * ====================================================
              */
 
@@ -111,7 +111,7 @@ public final class DoorGhostAbilityHandler {
 
             /*
              * ====================================================
-             * 真正球形范围
+             * 球形范围。
              * ====================================================
              */
 
@@ -125,54 +125,62 @@ public final class DoorGhostAbilityHandler {
             }
 
 
-            boolean opening =
-                    PossessionHandler.hasGhost(
-                            player,
-                            OpeningGhostAbility.ID
-                    );
-
-            boolean closing =
-                    PossessionHandler.hasGhost(
-                            player,
-                            ClosingGhostAbility.ID
-                    );
-
-
-            QisPlan2.LOGGER.info(
-                    "[QisPlan2] 玩家 {}：开门鬼={}，关门鬼={}",
-                    player.getName().getString(),
-                    opening,
-                    closing
-            );
-
-
             /*
              * ====================================================
-             * 开门鬼
+             * 这次到底是什么门事件？
+             * ====================================================
+             *
+             * 开门：
+             * 只检查开门鬼
+             *
+             * 关门：
+             * 只检查关门鬼
              * ====================================================
              */
 
             if (opening) {
 
-                DoorGhostMarkManager.mark(
-                        player,
-                        source.getUUID()
+                boolean hasOpeningGhost =
+                        PossessionHandler.hasGhost(
+                                player,
+                                OpeningGhostAbility.ID
+                        );
+
+                QisPlan2.LOGGER.info(
+                        "[QisPlan2] 玩家 {}：本次=开门，开门鬼={}",
+                        player.getName().getString(),
+                        hasOpeningGhost
                 );
-            }
 
+                if (hasOpeningGhost) {
 
-            /*
-             * ====================================================
-             * 关门鬼
-             * ====================================================
-             */
+                    DoorGhostMarkManager.markOpening(
+                            player,
+                            source.getUUID()
+                    );
+                }
 
-            if (closing) {
+            } else {
 
-                DoorGhostMarkManager.mark(
-                        player,
-                        source.getUUID()
+                boolean hasClosingGhost =
+                        PossessionHandler.hasGhost(
+                                player,
+                                ClosingGhostAbility.ID
+                        );
+
+                QisPlan2.LOGGER.info(
+                        "[QisPlan2] 玩家 {}：本次=关门，关门鬼={}",
+                        player.getName().getString(),
+                        hasClosingGhost
                 );
+
+                if (hasClosingGhost) {
+
+                    DoorGhostMarkManager.markClosing(
+                            player,
+                            source.getUUID()
+                    );
+                }
             }
         }
     }
@@ -204,33 +212,37 @@ public final class DoorGhostAbilityHandler {
             return;
         }
 
-
         /*
          * ========================================================
-         * 判断是否驾驭门鬼
+         * 玩家当前驾驭情况
          * ========================================================
          */
 
-        boolean opening =
+        boolean possessingOpening =
                 PossessionHandler.hasGhost(
                         player,
                         OpeningGhostAbility.ID
                 );
 
-        boolean closing =
+        boolean possessingClosing =
                 PossessionHandler.hasGhost(
                         player,
                         ClosingGhostAbility.ID
                 );
 
-        if (!opening && !closing) {
+        /*
+         * 一个门鬼都没有。
+         */
+        if (!possessingOpening
+                && !possessingClosing) {
+
             return;
         }
 
 
         /*
          * ========================================================
-         * 寻找最近的标记目标
+         * 找最近的标记目标
          * ========================================================
          */
 
@@ -247,7 +259,36 @@ public final class DoorGhostAbilityHandler {
 
         /*
          * ========================================================
-         * 找目标旁边的位置
+         * 查询这个目标身上具体有什么标记
+         * ========================================================
+         */
+
+        boolean openingMarked =
+                DoorGhostMarkManager.hasOpeningMark(
+                        player,
+                        target.getUUID()
+                );
+
+        boolean closingMarked =
+                DoorGhostMarkManager.hasClosingMark(
+                        player,
+                        target.getUUID()
+                );
+
+
+        /*
+         * 极端情况下目标已经没有有效标记。
+         */
+        if (!openingMarked
+                && !closingMarked) {
+
+            return;
+        }
+
+
+        /*
+         * ========================================================
+         * 找到目标旁边的位置
          * ========================================================
          */
 
@@ -274,22 +315,9 @@ public final class DoorGhostAbilityHandler {
                 approach.getZ() + 0.5D
         );
 
-
-        /*
-         * 玩家没有 Mob Navigation。
-         *
-         * 直接清掉速度。
-         */
         player.setDeltaMovement(
                 Vec3.ZERO
         );
-
-
-        /*
-         * ========================================================
-         * 面向目标
-         * ========================================================
-         */
 
         faceTarget(
                 player,
@@ -299,30 +327,366 @@ public final class DoorGhostAbilityHandler {
 
         /*
          * ========================================================
-         * 发动对应鬼的袭击
+         * 情况一：
+         *
+         * 只驾驭开门鬼
          * ========================================================
-         *
-         * 如果同时驾驭：
-         *
-         * 暂时开门鬼优先。
-         *
-         * 后续再做真正的双鬼组合规则。
          */
 
-        if (opening) {
+        if (possessingOpening
+                && !possessingClosing) {
 
+            /*
+             * 必须是开门鬼标记。
+             */
+            if (!openingMarked) {
+                return;
+            }
+
+            double attackStrength =
+                    PossessionHandler.getEffectiveStrength(
+                            player,
+                            OpeningGhostAbility.ID
+                    );
+
+            /*
+             * 先攻击。
+             */
             attackWithOpeningGhost(
                     player,
-                    target
+                    target,
+                    attackStrength
             );
 
-        } else {
+            /*
+             * 这次攻击成功执行后：
+             *
+             * 开门鬼复苏 +5%。
+             */
+            PossessedGhostState state =
+                    PossessionHandler.getState(
+                            player,
+                            OpeningGhostAbility.ID
+                    );
 
+            if (state != null) {
+
+                PossessionHandler.setState(
+                        player,
+                        OpeningGhostAbility.ID,
+                        PossessionHandler.addRevival(
+                                state,
+                                5.0D
+                        )
+                );
+            }
+
+            /*
+             * 目标本次门鬼标记消失。
+             */
+            DoorGhostMarkManager.clearMarks(
+                    player,
+                    target.getUUID()
+            );
+
+            return;
+        }
+
+
+        /*
+         * ========================================================
+         * 情况二：
+         *
+         * 只驾驭关门鬼
+         * ========================================================
+         */
+
+        if (!possessingOpening
+                && possessingClosing) {
+
+            /*
+             * 必须是关门鬼标记。
+             */
+            if (!closingMarked) {
+                return;
+            }
+
+            double attackStrength =
+                    PossessionHandler.getEffectiveStrength(
+                            player,
+                            ClosingGhostAbility.ID
+                    );
+
+            /*
+             * 先攻击。
+             */
             attackWithClosingGhost(
                     player,
-                    target
+                    target,
+                    attackStrength
             );
+
+            /*
+             * 关门鬼复苏 +5%。
+             */
+            PossessedGhostState state =
+                    PossessionHandler.getState(
+                            player,
+                            ClosingGhostAbility.ID
+                    );
+
+            if (state != null) {
+
+                PossessionHandler.setState(
+                        player,
+                        ClosingGhostAbility.ID,
+                        PossessionHandler.addRevival(
+                                state,
+                                5.0D
+                        )
+                );
+            }
+
+            /*
+             * 清除目标全部门鬼标记。
+             */
+            DoorGhostMarkManager.clearMarks(
+                    player,
+                    target.getUUID()
+            );
+
+            return;
         }
+
+
+        /*
+         * ========================================================
+         * 情况三：
+         *
+         * 同时驾驭开门鬼 + 关门鬼
+         * ========================================================
+         */
+
+        if (possessingOpening
+                && possessingClosing) {
+
+            /*
+             * --------------------------------------------------------
+             * 只有开门鬼标记
+             * --------------------------------------------------------
+             *
+             * 攻击：
+             * 开门鬼强度
+             *
+             * 复苏：
+             * 开门鬼 +1%
+             */
+            if (openingMarked
+                    && !closingMarked) {
+
+                double attackStrength =
+                        PossessionHandler.getEffectiveStrength(
+                                player,
+                                OpeningGhostAbility.ID
+                        );
+
+                attackWithOpeningGhost(
+                        player,
+                        target,
+                        attackStrength
+                );
+
+                PossessedGhostState state =
+                        PossessionHandler.getState(
+                                player,
+                                OpeningGhostAbility.ID
+                        );
+
+                if (state != null) {
+
+                    PossessionHandler.setState(
+                            player,
+                            OpeningGhostAbility.ID,
+                            PossessionHandler.addRevival(
+                                    state,
+                                    1.0D
+                            )
+                    );
+                }
+
+                /*
+                 * 攻击以后清除标记。
+                 */
+                DoorGhostMarkManager.clearMarks(
+                        player,
+                        target.getUUID()
+                );
+
+                return;
+            }
+
+
+            /*
+             * --------------------------------------------------------
+             * 只有关门鬼标记
+             * --------------------------------------------------------
+             *
+             * 攻击：
+             * 关门鬼强度
+             *
+             * 复苏：
+             * 关门鬼 +1%
+             */
+            if (!openingMarked
+                    && closingMarked) {
+
+                double attackStrength =
+                        PossessionHandler.getEffectiveStrength(
+                                player,
+                                ClosingGhostAbility.ID
+                        );
+
+                attackWithClosingGhost(
+                        player,
+                        target,
+                        attackStrength
+                );
+
+                PossessedGhostState state =
+                        PossessionHandler.getState(
+                                player,
+                                ClosingGhostAbility.ID
+                        );
+
+                if (state != null) {
+
+                    PossessionHandler.setState(
+                            player,
+                            ClosingGhostAbility.ID,
+                            PossessionHandler.addRevival(
+                                    state,
+                                    1.0D
+                            )
+                    );
+                }
+
+                /*
+                 * 攻击以后清除标记。
+                 */
+                DoorGhostMarkManager.clearMarks(
+                        player,
+                        target.getUUID()
+                );
+
+                return;
+            }
+
+
+            /*
+             * --------------------------------------------------------
+             * 同时拥有开门鬼 + 关门鬼标记
+             * --------------------------------------------------------
+             *
+             * 特殊组合：
+             *
+             * 总攻击强度 =
+             *
+             * 开门鬼当前强度
+             * +
+             * 关门鬼当前强度
+             *
+             * 本次：
+             *
+             * 不增加任何复苏。
+             */
+            if (openingMarked
+                    && closingMarked) {
+
+                double openingStrength =
+                        PossessionHandler.getEffectiveStrength(
+                                player,
+                                OpeningGhostAbility.ID
+                        );
+
+                double closingStrength =
+                        PossessionHandler.getEffectiveStrength(
+                                player,
+                                ClosingGhostAbility.ID
+                        );
+
+                double attackStrength =
+                        openingStrength
+                                + closingStrength;
+
+
+                QisPlan2.LOGGER.info(
+                        "[QisPlan2] 开关门鬼组合袭击：目标={}，开门强度={}，关门强度={}，总强度={}",
+                        target.getName().getString(),
+                        openingStrength,
+                        closingStrength,
+                        attackStrength
+                );
+
+
+                SupernaturalDeathHandler.tryKill(
+                        target,
+                        ModDamageTypes.openingGhost(
+                                player
+                        ),
+                        attackStrength
+                );
+
+
+                /*
+                 * 双标记组合：
+                 *
+                 * 不增加任何复苏。
+                 */
+
+
+                /*
+                 * 攻击之后清除两个标记。
+                 */
+                DoorGhostMarkManager.clearMarks(
+                        player,
+                        target.getUUID()
+                );
+
+                return;
+            }
+        }
+    }
+
+    private static void teleportToTarget(
+            ServerLevel level,
+            ServerPlayer player,
+            LivingEntity target
+    ) {
+
+        BlockPos approach =
+                findApproachPosition(
+                        level,
+                        target
+                );
+
+        if (approach == null) {
+            return;
+        }
+
+        player.teleportTo(
+                approach.getX() + 0.5D,
+                approach.getY(),
+                approach.getZ() + 0.5D
+        );
+
+        player.setDeltaMovement(
+                net.minecraft.world.phys.Vec3.ZERO
+        );
+
+        faceTarget(
+                player,
+                target
+        );
     }
 
 
@@ -334,27 +698,15 @@ public final class DoorGhostAbilityHandler {
 
     private static void attackWithOpeningGhost(
             ServerPlayer player,
-            LivingEntity target
+            LivingEntity target,
+            double attackStrength
     ) {
-
-        double strength =
-                PossessionHandler.getEffectiveStrength(
-                        player,
-                        OpeningGhostAbility.ID
-                );
-
-        QisPlan2.LOGGER.info(
-                "[QisPlan2] 开门鬼主动袭击：目标={}，强度={}",
-                target.getName().getString(),
-                strength
-        );
-
         SupernaturalDeathHandler.tryKill(
                 target,
                 ModDamageTypes.openingGhost(
                         player
                 ),
-                strength
+                attackStrength
         );
     }
 
@@ -367,27 +719,15 @@ public final class DoorGhostAbilityHandler {
 
     private static void attackWithClosingGhost(
             ServerPlayer player,
-            LivingEntity target
+            LivingEntity target,
+            double attackStrength
     ) {
-
-        double strength =
-                PossessionHandler.getEffectiveStrength(
-                        player,
-                        ClosingGhostAbility.ID
-                );
-
-        QisPlan2.LOGGER.info(
-                "[QisPlan2] 关门鬼主动袭击：目标={}，强度={}",
-                target.getName().getString(),
-                strength
-        );
-
         SupernaturalDeathHandler.tryKill(
                 target,
                 ModDamageTypes.closingGhost(
                         player
                 ),
-                strength
+                attackStrength
         );
     }
 

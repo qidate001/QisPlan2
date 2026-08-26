@@ -71,8 +71,9 @@ public final class DoorGhostTriggerHandler {
 
         DoorGhostAbilityHandler.onDoorChanged(
                 level,
-                pos,
-                source
+                doorPos,
+                source,
+                opening
         );
 
         /*
