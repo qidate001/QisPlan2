@@ -3,6 +3,7 @@ package com.qidate.qisplan2;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.serialization.Codec;
 import com.qidate.qisplan2.block.*;
+import com.qidate.qisplan2.block.entity.GhostLeatherBoxBlockEntity;
 import com.qidate.qisplan2.block.entity.GhostManorMarkerBlockEntity;
 import com.qidate.qisplan2.block.entity.GhostPianoBlockEntity;
 import com.qidate.qisplan2.block.entity.GhostStoveBlockEntity;
@@ -35,6 +36,7 @@ import net.minecraft.core.particles.ParticleType;
 import net.minecraft.core.particles.SimpleParticleType;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.codec.ByteBufCodecs;
+import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvent;
@@ -52,6 +54,7 @@ import net.minecraft.world.item.enchantment.Enchantment;
 import net.minecraft.world.item.enchantment.Enchantments;
 import net.minecraft.world.item.enchantment.ItemEnchantments;
 import net.minecraft.world.level.GameRules;
+import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.SoundType;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.properties.BlockSetType;
@@ -484,6 +487,38 @@ public class QisPlan2 {
                     )
             );
 
+    // 鬼皮箱
+    public static final DeferredBlock<GhostLeatherBoxBlock>
+            GHOST_LEATHER_BOX =
+            BLOCKS.registerBlock(
+                    "ghost_leather_box",
+                    GhostLeatherBoxBlock::new,
+                    net.minecraft.world.level.block.state.BlockBehaviour.Properties
+                            .of()
+                            .strength(2.0F)
+                            .noOcclusion()
+            );
+
+    public static final DeferredHolder<
+            BlockEntityType<?>,
+            BlockEntityType<GhostLeatherBoxBlockEntity>
+            > GHOST_LEATHER_BOX_BLOCK_ENTITY =
+            BLOCK_ENTITY_TYPES.register(
+                    "ghost_leather_box",
+                    () ->
+                            BlockEntityType.Builder.of(
+                                    GhostLeatherBoxBlockEntity::new,
+                                    GHOST_LEATHER_BOX.get()
+                            ).build(null)
+            );
+
+    public static final DeferredItem<BlockItem>
+            GHOST_LEATHER_BOX_ITEM =
+            ITEMS.registerSimpleBlockItem(
+                    GHOST_LEATHER_BOX,
+                    new Item.Properties()
+            );
+
     // 鬼伞
     public static final DeferredHolder<
             DataComponentType<?>,
@@ -746,6 +781,7 @@ public class QisPlan2 {
                         output.accept(GHOST_PIANO);
                         output.accept(GHOST_WHITE_PORRIDGE);
                         output.accept(GHOST_UMBRELLA);
+                        output.accept(GHOST_LEATHER_BOX_ITEM);
                         output.accept(NIGHT_WANDERER_SPAWN_EGG);
                         output.accept(NINVISIBLE_GHOST_SPAWN_EGG);
                         output.accept(KNOCKING_GHOST_SPAWN_EGG);
@@ -789,6 +825,16 @@ public class QisPlan2 {
             RECIPE_SERIALIZERS.register(
                     "ghost_stove",
                     GhostStoveRecipeSerializer::new
+            );
+
+    // 划分维度
+    public static final ResourceKey<Level> PARTITION_DIMENSION =
+            ResourceKey.create(
+                    Registries.DIMENSION,
+                    ResourceLocation.fromNamespaceAndPath(
+                            QisPlan2.MODID,
+                            "partition"
+                    )
             );
 
 
