@@ -1,0 +1,19 @@
+{
+  "variants": {
+    "facing=north": {
+      "model": "qisplan2:block/ghost_leather_box",
+      "y": 90
+    },
+    "facing=east": {
+      "model": "qisplan2:block/ghost_leather_box",
+      "y": 180
+    },
+    "facing=south": {
+      "model": "qisplan2:block/ghost_leather_box",
+      "y": 270
+    },
+    "facing=west": {
+      "model": "qisplan2:block/ghost_leather_box"
+    }
+  }
+}

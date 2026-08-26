@@ -32,6 +32,8 @@
   "item.qisplan2.knocking_ghost_spawn_egg": "§4Knocking ghost spawn egg",
   "item.qisplan2.opening_ghost_spawn_egg": "§4Opening ghost spawn egg",
   "item.qisplan2.closing_ghost_spawn_egg": "§4Closing ghost spawn egg",
+  "block.qisplan2.ghost_leather_box": "§4Ghost Leather Box",
+  "block.qisplan2.partition_exit": "Partition dimension exit block",
 
   "entity.qisplan2.night_wanderer": "§4Night Wanderer",
   "entity.qisplan2.invisible_ghost": "§4Invisible Ghost",
