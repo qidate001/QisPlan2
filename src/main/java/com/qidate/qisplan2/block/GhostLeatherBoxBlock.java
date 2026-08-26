@@ -8,11 +8,16 @@ import com.qidate.qisplan2.ghost.partition.PartitionSpaceManager;
 import com.qidate.qisplan2.ghost.partition.PartitionSpaceSavedData;
 
 import net.minecraft.core.BlockPos;
+import net.minecraft.network.chat.Component;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionResult;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.BaseEntityBlock;
 import net.minecraft.world.level.block.RenderShape;
@@ -21,6 +26,8 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.portal.DimensionTransition;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
+
+import java.util.List;
 
 public class GhostLeatherBoxBlock
         extends BaseEntityBlock {
@@ -210,5 +217,124 @@ public class GhostLeatherBoxBlock
     ) {
 
         return RenderShape.MODEL;
+    }
+
+    @Override
+    public void setPlacedBy(
+            Level level,
+            BlockPos pos,
+            BlockState state,
+            LivingEntity placer,
+            ItemStack stack
+    ) {
+
+        super.setPlacedBy(
+                level,
+                pos,
+                state,
+                placer,
+                stack
+        );
+
+        if (level.isClientSide()) {
+            return;
+        }
+
+        if (level.getBlockEntity(pos)
+                instanceof GhostLeatherBoxBlockEntity box) {
+
+            box.loadRegionFromItem(
+                    stack
+            );
+        }
+    }
+
+    @Override
+    public void playerDestroy(
+            Level level,
+            Player player,
+            BlockPos pos,
+            BlockState state,
+            BlockEntity blockEntity,
+            ItemStack tool
+    ) {
+
+        if (level.isClientSide()) {
+            return;
+        }
+
+        /*
+         * ========================================================
+         * 创建掉落物
+         * ========================================================
+         */
+
+        ItemStack drop =
+                new ItemStack(
+                        QisPlan2.GHOST_LEATHER_BOX_ITEM.get()
+                );
+
+        /*
+         * ========================================================
+         * 携带 RegionId
+         * ========================================================
+         */
+
+        if (blockEntity
+                instanceof GhostLeatherBoxBlockEntity box) {
+
+            box.saveRegionToItem(
+                    drop
+            );
+        }
+
+        /*
+         * ========================================================
+         * 掉落
+         * ========================================================
+         */
+
+        popResource(
+                level,
+                pos,
+                drop
+        );
+
+        /*
+         * 不调用 super.playerDestroy()
+         *
+         * 防止原版再生成一次普通鬼皮箱掉落。
+         */
+    }
+
+    @Override
+    public void appendHoverText(
+            ItemStack stack,
+            Item.TooltipContext context,
+            List<Component> tooltip,
+            TooltipFlag flag
+    ) {
+
+        Long regionId =
+                stack.get(
+                        QisPlan2.GHOST_LEATHER_BOX_REGION_ID
+                );
+
+        if (regionId != null) {
+
+            tooltip.add(
+                    Component.literal(
+                            "区域 ID："
+                                    + regionId
+                    )
+            );
+        }
+
+        super.appendHoverText(
+                stack,
+                context,
+                tooltip,
+                flag
+        );
     }
 }

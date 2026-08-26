@@ -4,6 +4,7 @@ import com.qidate.qisplan2.QisPlan2;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 
@@ -68,10 +69,6 @@ public class GhostLeatherBoxBlockEntity
         }
     }
 
-    /**
-     * NeoForge 21.1：
-     * loadAdditional 需要 HolderLookup.Provider。
-     */
     @Override
     protected void loadAdditional(
             CompoundTag tag,
@@ -86,5 +83,38 @@ public class GhostLeatherBoxBlockEntity
                 tag.contains("RegionId")
                         ? tag.getLong("RegionId")
                         : UNASSIGNED;
+    }
+
+    public void saveRegionToItem(
+            ItemStack stack
+    ) {
+
+        if (!hasRegion()) {
+            return;
+        }
+
+        stack.set(
+                QisPlan2.GHOST_LEATHER_BOX_REGION_ID,
+                regionId
+        );
+    }
+
+    public void loadRegionFromItem(
+            ItemStack stack
+    ) {
+
+        Long regionId =
+                stack.get(
+                        QisPlan2.GHOST_LEATHER_BOX_REGION_ID
+                );
+
+        if (regionId != null
+                && regionId >= 0L) {
+
+            this.regionId =
+                    regionId;
+
+            setChanged();
+        }
     }
 }
