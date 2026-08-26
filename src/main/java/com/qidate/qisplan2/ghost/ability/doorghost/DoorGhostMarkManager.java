@@ -1,7 +1,10 @@
 package com.qidate.qisplan2.ghost.ability.doorghost;
 
 import com.qidate.qisplan2.network.DoorGhostMarkNetwork;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.LivingEntity;
 
 import java.util.*;
 
@@ -198,6 +201,81 @@ public final class DoorGhostMarkManager {
         }
     }
 
+    public static LivingEntity findNearestMarkedTarget(
+            ServerPlayer viewer,
+            ServerLevel level
+    ) {
+
+        Map<UUID, Integer> marks =
+                MARKS.get(
+                        viewer.getUUID()
+                );
+
+        if (marks == null
+                || marks.isEmpty()) {
+
+            return null;
+        }
+
+        LivingEntity best =
+                null;
+
+        double bestDistance =
+                Double.MAX_VALUE;
+
+        Iterator<UUID> iterator =
+                marks.keySet().iterator();
+
+        while (iterator.hasNext()) {
+
+            UUID targetUUID =
+                    iterator.next();
+
+            Entity entity =
+                    level.getEntity(
+                            targetUUID
+                    );
+
+            if (!(entity instanceof LivingEntity living)
+                    || !living.isAlive()) {
+
+                iterator.remove();
+
+                continue;
+            }
+
+            if (living == viewer) {
+
+                iterator.remove();
+
+                continue;
+            }
+
+            double distance =
+                    viewer.distanceToSqr(
+                            living
+                    );
+
+            if (distance < bestDistance) {
+
+                bestDistance =
+                        distance;
+
+                best =
+                        living;
+            }
+        }
+
+        if (marks.isEmpty()) {
+
+            MARKS.remove(
+                    viewer.getUUID()
+            );
+        }
+
+        return best;
+    }
+
     /**
      * 找到当前在线玩家。
      *
@@ -216,6 +294,8 @@ public final class DoorGhostMarkManager {
          */
         return null;
     }
+
+
 
     /**
      * 玩家退出服务器时清理。
