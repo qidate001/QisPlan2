@@ -2,6 +2,7 @@ package com.qidate.qisplan2.entity;
 
 import com.qidate.qisplan2.death.SupernaturalCombatHandler;
 import com.qidate.qisplan2.death.SupernaturalEntity;
+import com.qidate.qisplan2.entity.ai.GhostWanderGoal;
 import com.qidate.qisplan2.ghost.GhostPossessionManager;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerPlayer;
@@ -438,6 +439,23 @@ public abstract class AbstractGhostEntity
 
         return InteractionResult.sidedSuccess(
                 level().isClientSide()
+        );
+    }
+
+    @Override
+    protected void registerGoals() {
+
+        /*
+         * ========================================================
+         * 所有厉鬼的默认游荡行为
+         * ========================================================
+         */
+        this.goalSelector.addGoal(
+                8,
+                new GhostWanderGoal(
+                        this,
+                        0.7D
+                )
         );
     }
 }

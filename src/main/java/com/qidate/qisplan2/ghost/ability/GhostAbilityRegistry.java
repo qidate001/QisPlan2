@@ -1,5 +1,7 @@
 package com.qidate.qisplan2.ghost.ability;
 
+import com.qidate.qisplan2.ghost.ability.doorghost.ClosingGhostAbility;
+import com.qidate.qisplan2.ghost.ability.doorghost.OpeningGhostAbility;
 import com.qidate.qisplan2.ghost.ability.knockingghost.KnockingGhostAbility;
 import com.qidate.qisplan2.ghost.ability.nightwanderer.NightWandererAbility;
 import net.minecraft.resources.ResourceLocation;
@@ -66,6 +68,14 @@ public final class GhostAbilityRegistry {
 
         register(
                 new KnockingGhostAbility()
+        );
+
+        register(
+                new OpeningGhostAbility()
+        );
+
+        register(
+                new ClosingGhostAbility()
         );
     }
 }
