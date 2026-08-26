@@ -9,6 +9,9 @@
   "gamerule.ghostCarpetKillTime": "§4Haunted Carpet§r Time-Consuming Overlay",
   "gamerule.ghostDamageInstantlyKill": "Ghost damage instantly kills",
 
+  "key.categories.qisplan2": "Qis Plan 2",
+  "key.qisplan2.door_ghost_ability": "§4Opening Ghost§r/§4Closing Ghost§r Spiritual Attack",
+
   "block.qisplan2.ghost_carpet": "§4Ghost Carpet",
   "block.qisplan2.ghost_stone_bricks": "§4Ghost Stone Bricks",
   "block.qisplan2.ghost_stove": "§4Ghost Stove",
