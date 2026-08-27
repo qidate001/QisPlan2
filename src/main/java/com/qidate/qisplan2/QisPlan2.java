@@ -14,6 +14,7 @@ import com.qidate.qisplan2.entity.*;
 import com.qidate.qisplan2.event.GhostShroudHandler;
 import com.qidate.qisplan2.event.GhostUmbrellaAttackHandler;
 import com.qidate.qisplan2.event.PossessionHudOverlay;
+import com.qidate.qisplan2.fluid.ModFluids;
 import com.qidate.qisplan2.ghost.GhostAbilityInteractionHandler;
 import com.qidate.qisplan2.ghost.PossessedGhostState;
 import com.qidate.qisplan2.ghost.PossessionHandler;
@@ -59,6 +60,7 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.SoundType;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.properties.BlockSetType;
+import net.minecraft.world.level.material.Fluid;
 import net.minecraft.world.level.material.PushReaction;
 import net.minecraft.world.phys.AABB;
 import net.neoforged.api.distmarker.Dist;
@@ -71,6 +73,7 @@ import net.neoforged.neoforge.client.extensions.common.RegisterClientExtensionsE
 import net.neoforged.neoforge.event.ModifyDefaultComponentsEvent;
 import net.neoforged.neoforge.event.RegisterCommandsEvent;
 import net.neoforged.neoforge.event.entity.EntityAttributeCreationEvent;
+import net.neoforged.neoforge.fluids.FluidType;
 import net.neoforged.neoforge.registries.NeoForgeRegistries;
 import com.mojang.brigadier.arguments.DoubleArgumentType;
 import org.slf4j.Logger;
@@ -153,7 +156,20 @@ public class QisPlan2 {
                     MODID
             );
     public static final DeferredRegister<AttachmentType<?>> ATTACHMENT_TYPES =
-            DeferredRegister.create(NeoForgeRegistries.ATTACHMENT_TYPES, MODID);
+            DeferredRegister.create(
+                    NeoForgeRegistries.ATTACHMENT_TYPES,
+                    MODID
+            );
+    public static final DeferredRegister<FluidType> FLUID_TYPES =
+            DeferredRegister.create(
+                    NeoForgeRegistries.FLUID_TYPES,
+                    MODID
+            );
+    public static final DeferredRegister<Fluid> FLUIDS =
+            DeferredRegister.create(
+                    BuiltInRegistries.FLUID,
+                    MODID
+            );
 
     /**
      * 玩家当前驾驭的鬼及其状态。
@@ -950,6 +966,15 @@ public class QisPlan2 {
         RECIPE_SERIALIZERS.register(modEventBus);
         DATA_COMPONENTS.register(modEventBus);
         PARTICLE_TYPES.register(modEventBus);
+        FLUID_TYPES.register(modEventBus);
+        FLUIDS.register(modEventBus);
+
+        /*
+         * ========================================================
+         * 强制初始化流体注册项。
+         * ========================================================
+         */
+        ModFluids.init();
 
         // 实体属性注册
         modEventBus.addListener(this::onEntityAttributeCreation);

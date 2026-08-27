@@ -37,6 +37,10 @@
   "item.qisplan2.opening_ghost_spawn_egg": "§4开门鬼刷怪蛋",
   "item.qisplan2.closing_ghost_spawn_egg": "§4关门鬼刷怪蛋",
 
+  "fluid_type.qisplan2.ghost_lake_water": "鬼湖水",
+  "item.qisplan2.ghost_lake_water_bucket": "鬼湖水桶",
+  "block.qisplan2.ghost_lake_water": "鬼湖水",
+
   "entity.qisplan2.night_wanderer": "§4夜游鬼",
   "entity.qisplan2.invisible_ghost": "§4不可视之鬼",
   "entity.qisplan2.knocking_ghost": "§4敲门鬼",
