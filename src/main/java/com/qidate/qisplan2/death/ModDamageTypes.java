@@ -129,6 +129,18 @@ public class ModDamageTypes {
                     )
             );
 
+    /**
+     * 关门湖灵异攻击
+     */
+    public static final ResourceKey<DamageType>
+            GHOST_LAKE_WATER =
+            ResourceKey.create(
+                    Registries.DAMAGE_TYPE,
+                    ResourceLocation.fromNamespaceAndPath(
+                            QisPlan2.MODID,
+                            "ghost_lake_water"
+                    )
+            );
 
     /**
      * 创建鬼地毯死亡 DamageSource
@@ -362,5 +374,18 @@ public class ModDamageTypes {
                         ),
                 entity
         );
+    }
+
+    /**
+     * 创建鬼湖死亡 DamageSource
+     */
+    public static DamageSource ghostLakeWater(
+            Entity source
+    ) {
+
+        return source.damageSources()
+                .source(
+                        GHOST_LAKE_WATER
+                );
     }
 }

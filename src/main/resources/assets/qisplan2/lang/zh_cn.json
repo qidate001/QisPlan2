@@ -21,7 +21,10 @@
   "block.qisplan2.ghost_piano": "§4鬼钢琴",
   "block.qisplan2.ghost_leather_box": "§4鬼皮箱",
   "block.qisplan2.ghost_leather_wall": "§4鬼皮墙",
+  "block.qisplan2.ghost_lake_water": "§4鬼湖水",
   "block.qisplan2.partition_exit": "分割维度出口方块",
+
+  "fluid_type.qisplan2.ghost_lake_water": "§4鬼湖水",
 
   "item.qisplan2.death_curse_sword": "§4必死诅咒之剑",
   "item.qisplan2.ghost_coin": "鬼金币",
@@ -31,15 +34,12 @@
   "item.qisplan2.ghost_book": "§4鬼书",
   "item.qisplan2.ghost_white_porridge": "§4鬼白粥",
   "item.qisplan2.ghost_umbrella": "§4鬼雨伞",
+  "item.qisplan2.ghost_lake_water_bucket": "§4鬼湖水桶",
   "item.qisplan2.night_wanderer_spawn_egg": "§4夜游鬼刷怪蛋",
   "item.qisplan2.invisible_ghost_spawn_egg": "§4不可视之鬼刷怪蛋",
   "item.qisplan2.knocking_ghost_spawn_egg": "§4敲门鬼刷怪蛋",
   "item.qisplan2.opening_ghost_spawn_egg": "§4开门鬼刷怪蛋",
   "item.qisplan2.closing_ghost_spawn_egg": "§4关门鬼刷怪蛋",
-
-  "fluid_type.qisplan2.ghost_lake_water": "鬼湖水",
-  "item.qisplan2.ghost_lake_water_bucket": "鬼湖水桶",
-  "block.qisplan2.ghost_lake_water": "鬼湖水",
 
   "entity.qisplan2.night_wanderer": "§4夜游鬼",
   "entity.qisplan2.invisible_ghost": "§4不可视之鬼",
@@ -69,6 +69,7 @@
   "death.attack.knocking_ghost": "%1$s 被§4敲门声诅咒§r杀死",
   "death.attack.opening_ghost": "%1$s 受到§4开门诅咒§r的影响，被§4开门鬼§r杀死",
   "death.attack.closing_ghost": "%1$s 受到§4关门诅咒§r的影响，被§4关门鬼§r杀死",
+  "death.attack.ghost_lake_water": "%1$s 被鬼湖水吞没了",
 
   "qisplan2.death_curse.triggered": "☠ §4死亡诅咒§r触发！§4死亡诅咒之剑§r已损坏！",
   "qisplan2.death_curse.reflection": "☠ §4死亡诅咒§r反噬！",
