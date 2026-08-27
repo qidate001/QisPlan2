@@ -1,6 +1,5 @@
 package com.qidate.qisplan2.ghost;
 
-import com.qidate.qisplan2.QisPlan2;
 import com.qidate.qisplan2.death.SupernaturalEntity;
 import com.qidate.qisplan2.network.QisNetwork;
 import net.minecraft.server.MinecraftServer;

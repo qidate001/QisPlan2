@@ -1,5 +1,6 @@
 package com.qidate.qisplan2.entity;
 
+import com.qidate.qisplan2.QisPlan2;
 import com.qidate.qisplan2.death.SupernaturalCombatHandler;
 import com.qidate.qisplan2.death.SupernaturalEntity;
 import com.qidate.qisplan2.entity.ai.GhostWanderGoal;
@@ -13,6 +14,7 @@ import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.PathfinderMob;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 
 /**
@@ -68,6 +70,9 @@ public abstract class AbstractGhostEntity
 
     private static final String NBT_PERMANENT_STUN =
             "QisPlan2PermanentSupernaturalStun";
+
+    private static final String COFFIN_NAIL_KEY =
+            "QisPlan2CoffinNailed";
 
 
     protected AbstractGhostEntity(
@@ -144,6 +149,36 @@ public abstract class AbstractGhostEntity
                                 result
                         )
                 );
+    }
+
+
+    /*
+     * ========================================
+     * 棺材钉
+     * ========================================
+     */
+
+    /**
+     * 是否被棺材钉钉住。
+     */
+    public boolean isCoffinNailed() {
+
+        return getPersistentData().getBoolean(
+                COFFIN_NAIL_KEY
+        );
+    }
+
+    /**
+     * 设置棺材钉状态。
+     */
+    public void setCoffinNailed(
+            boolean nailed
+    ) {
+
+        getPersistentData().putBoolean(
+                COFFIN_NAIL_KEY,
+                nailed
+        );
     }
 
 
@@ -250,6 +285,12 @@ public abstract class AbstractGhostEntity
 
         super.aiStep();
 
+        /*
+         * ========================================================
+         * 永久死机
+         * ========================================================
+         */
+
         if (permanentSupernaturalStun) {
 
             getNavigation().stop();
@@ -259,6 +300,12 @@ public abstract class AbstractGhostEntity
             return;
         }
 
+        /*
+         * ========================================================
+         * 普通死机自然倒计时
+         * ========================================================
+         */
+
         if (supernaturalStunTicks > 0) {
 
             supernaturalStunTicks--;
@@ -266,8 +313,28 @@ public abstract class AbstractGhostEntity
             getNavigation().stop();
             setTarget(null);
             setAggressive(false);
+        }
 
-            return;
+        /*
+         * ========================================================
+         * 棺材钉
+         * ========================================================
+         *
+         * 在本 tick 所有普通死机逻辑执行完之后，
+         * 再把普通死机值重新设为 20。
+         *
+         * 所以最终每一个 tick 结束时：
+         *
+         * supernaturalStunTicks = 20
+         */
+        if (isCoffinNailed()) {
+
+            supernaturalStunTicks =
+                    20;
+
+            getNavigation().stop();
+            setTarget(null);
+            setAggressive(false);
         }
     }
 
@@ -406,9 +473,86 @@ public abstract class AbstractGhostEntity
 
         /*
          * ========================================================
-         * 必须空手
+         * Shift + 右键
+         * ========================================================
+         *
+         * 棺材钉的拔出操作：
+         *
+         * 不要求玩家手里拿着任何东西。
+         *
+         * 空手 + Shift + 右键
+         * 就可以拔出。
+         */
+        if (player.isShiftKeyDown()) {
+
+            if (isCoffinNailed()) {
+
+                /*
+                 * 必须服务端修改状态。
+                 */
+                if (!level().isClientSide()
+                        && player instanceof ServerPlayer serverPlayer) {
+
+                    /*
+                     * 拔出棺材钉。
+                     */
+                    setCoffinNailed(
+                            false
+                    );
+
+                    /*
+                     * 解除棺材钉提供的普通死机。
+                     */
+                    setSupernaturalStunTicks(
+                            0
+                    );
+
+                    /*
+                     * 返还一根棺材钉。
+                     */
+                    ItemStack nail =
+                            new ItemStack(
+                                    QisPlan2.COFFIN_NAIL.get()
+                            );
+
+                    if (!serverPlayer.isCreative()) {
+
+                        if (!serverPlayer.getInventory().add(
+                                nail
+                        )) {
+
+                            serverPlayer.drop(
+                                    nail,
+                                    false
+                            );
+                        }
+                    }
+
+                    return InteractionResult.CONSUME;
+                }
+
+                /*
+                 * 客户端预测成功。
+                 */
+                return InteractionResult.SUCCESS;
+            }
+
+            /*
+             * Shift + 右键，但没有棺材钉：
+             *
+             * 不进入驾驭小游戏。
+             */
+            return InteractionResult.PASS;
+        }
+
+        /*
+         * ========================================================
+         * 非 Shift：
+         *
+         * 必须空手才能驾驭。
          * ========================================================
          */
+
         if (!player.getItemInHand(hand).isEmpty()) {
 
             return super.mobInteract(
@@ -419,9 +563,10 @@ public abstract class AbstractGhostEntity
 
         /*
          * ========================================================
-         * 服务端真正开始驾驭
+         * 服务端真正开始驾驭。
          * ========================================================
          */
+
         if (!level().isClientSide()
                 && player instanceof ServerPlayer serverPlayer) {
 
