@@ -3,6 +3,7 @@ package com.qidate.qisplan2.ghost.ability.nightwanderer;
 import com.qidate.qisplan2.QisPlan2;
 import com.qidate.qisplan2.death.ModDamageTypes;
 import com.qidate.qisplan2.death.SupernaturalDeathHandler;
+import com.qidate.qisplan2.entity.AbstractGhostEntity;
 import com.qidate.qisplan2.ghost.GhostAbilityContext;
 import com.qidate.qisplan2.ghost.PossessedGhostState;
 import com.qidate.qisplan2.ghost.PossessionHandler;
@@ -15,6 +16,7 @@ import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
+import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.attributes.AttributeInstance;
 import net.minecraft.world.entity.ai.attributes.AttributeModifier;
@@ -94,6 +96,12 @@ public final class NightWandererAbility
     @Override
     public ResourceLocation id() {
         return ID;
+    }
+
+    @Override
+    public EntityType<? extends AbstractGhostEntity> entityType() {
+
+        return QisPlan2.NIGHT_WANDERER.get();
     }
 
     @Override

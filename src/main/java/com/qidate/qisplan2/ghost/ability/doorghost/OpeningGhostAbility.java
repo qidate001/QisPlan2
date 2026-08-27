@@ -1,8 +1,10 @@
 package com.qidate.qisplan2.ghost.ability.doorghost;
 
 import com.qidate.qisplan2.QisPlan2;
+import com.qidate.qisplan2.entity.AbstractGhostEntity;
 import com.qidate.qisplan2.ghost.ability.PossessedGhostAbility;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.entity.EntityType;
 
 public final class OpeningGhostAbility
         implements PossessedGhostAbility {
@@ -16,6 +18,12 @@ public final class OpeningGhostAbility
     @Override
     public ResourceLocation id() {
         return ID;
+    }
+
+    @Override
+    public EntityType<? extends AbstractGhostEntity> entityType() {
+
+        return QisPlan2.OPENING_GHOST.get();
     }
 
     @Override
