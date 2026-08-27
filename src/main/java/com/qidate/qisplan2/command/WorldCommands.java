@@ -7,6 +7,7 @@ import com.mojang.brigadier.context.CommandContext;
 
 import com.qidate.qisplan2.QisPlan2;
 import com.qidate.qisplan2.death.SupernaturalEntity;
+import com.qidate.qisplan2.structure.GhostLakeGenerationManager;
 import com.qidate.qisplan2.structure.GhostManorGenerationManager;
 import com.qidate.qisplan2.structure.StructureSplitter;
 
@@ -92,6 +93,20 @@ public final class WorldCommands {
                 Commands.literal("generate_ghost_manor")
                         .executes(
                                 WorldCommands::generateGhostManor
+                        )
+        );
+
+
+        /*
+         * ========================================================
+         * /qisplan2 generate_ghost_lake
+         * ========================================================
+         */
+
+        root.then(
+                Commands.literal("generate_ghost_lake")
+                        .executes(
+                                WorldCommands::generateGhostLake
                         )
         );
     }
@@ -312,4 +327,53 @@ public final class WorldCommands {
 
         return 1;
     }
+
+
+    private static int generateGhostLake(
+            CommandContext<CommandSourceStack> context
+    ) {
+
+        CommandSourceStack source =
+                context.getSource();
+
+        if (!(source.getEntity()
+                instanceof net.minecraft.server.level.ServerPlayer player)) {
+
+            source.sendFailure(
+                    Component.literal(
+                            "这个命令必须由玩家执行。"
+                    )
+            );
+
+            return 0;
+        }
+
+        boolean success =
+                GhostLakeGenerationManager.start(
+                        player.serverLevel(),
+                        player.blockPosition()
+                );
+
+        if (!success) {
+
+            source.sendFailure(
+                    Component.literal(
+                            "现在已经有一个鬼湖正在生成。"
+                    )
+            );
+
+            return 0;
+        }
+
+        source.sendSuccess(
+                () -> Component.literal(
+                        "已开始生成鬼湖。"
+                ),
+                true
+        );
+
+        return 1;
+    }
 }
+
+
