@@ -1,11 +1,14 @@
 package com.qidate.qisplan2.ghost;
 
+import com.qidate.qisplan2.QisPlan2;
 import com.qidate.qisplan2.death.SupernaturalEntity;
+import com.qidate.qisplan2.entity.AbstractGhostEntity;
 import com.qidate.qisplan2.network.QisNetwork;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.item.ItemStack;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -264,17 +267,55 @@ public final class GhostPossessionManager {
 
             if (typeKey != null) {
 
-                PossessionHandler.possess(
-                        player,
-                        typeKey
-                );
+                boolean possessed =
+                        PossessionHandler.possess(
+                                player,
+                                typeKey
+                        );
+
+                /*
+                 * ====================================================
+                 * 驾驭成功：
+                 *
+                 * 如果鬼原本被棺材钉钉住，
+                 * 视为棺材钉被拔出。
+                 *
+                 * 棺材钉返还给玩家。
+                 * ====================================================
+                 */
+
+                if (possessed
+                        && ghost instanceof AbstractGhostEntity abstractGhost
+                        && abstractGhost.isCoffinNailed()) {
+
+                    abstractGhost.setCoffinNailed(
+                            false
+                    );
+
+                    ItemStack nail =
+                            new ItemStack(
+                                    QisPlan2.COFFIN_NAIL.get()
+                            );
+
+                    if (!player.isCreative()) {
+
+                        if (!player.getInventory().add(
+                                nail
+                        )) {
+
+                            player.drop(
+                                    nail,
+                                    false
+                            );
+                        }
+                    }
+                }
             }
 
             /*
              * 鬼消失。
              */
             ghost.discard();
-
         }
 
         /*
