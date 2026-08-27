@@ -1,6 +1,7 @@
 package com.qidate.qisplan2.ghost.ability.knockingghost;
 
 import com.qidate.qisplan2.QisPlan2;
+import com.qidate.qisplan2.entity.AbstractGhostEntity;
 import com.qidate.qisplan2.ghost.GhostAbilityContext;
 import com.qidate.qisplan2.ghost.PossessedGhostState;
 import com.qidate.qisplan2.ghost.PossessionHandler;
@@ -10,6 +11,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.level.block.DoorBlock;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.DoubleBlockHalf;
@@ -53,6 +55,12 @@ public final class KnockingGhostAbility
     @Override
     public ResourceLocation id() {
         return ID;
+    }
+
+    @Override
+    public EntityType<? extends AbstractGhostEntity> entityType() {
+
+        return QisPlan2.KNOCKING_GHOST.get();
     }
 
     /**

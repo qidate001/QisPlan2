@@ -1,8 +1,10 @@
 package com.qidate.qisplan2.ghost.ability;
 
+import com.qidate.qisplan2.entity.AbstractGhostEntity;
 import com.qidate.qisplan2.ghost.GhostAbilityContext;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.entity.EntityType;
 
 public interface PossessedGhostAbility {
 
@@ -10,6 +12,23 @@ public interface PossessedGhostAbility {
      * 这个能力对应的鬼。
      */
     ResourceLocation id();
+
+    /**
+     * 这个能力对应的实体类型。
+     *
+     * 默认情况下不直接要求每个 Ability
+     * 重复声明，破体系统会通过 Registry
+     * 根据 id() 查找。
+     *
+     * 如果以后出现：
+     *
+     * Ability ID ≠ Entity ID
+     *
+     * 可以在具体 Ability 中覆盖这个方法。
+     */
+    default EntityType<? extends AbstractGhostEntity> entityType() {
+        return null;
+    }
 
 
     /*

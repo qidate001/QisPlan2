@@ -1,6 +1,7 @@
 package com.qidate.qisplan2.ghost;
 
 import com.qidate.qisplan2.QisPlan2;
+import com.qidate.qisplan2.event.GhostBreakoutHandler;
 import com.qidate.qisplan2.ghost.ability.GhostAbilityRegistry;
 import com.qidate.qisplan2.ghost.ability.PossessedGhostAbility;
 import com.qidate.qisplan2.ghost.ability.nightwanderer.NightWandererAbility;
@@ -361,6 +362,44 @@ public final class PossessionHandler {
                 QisPlan2.POSSESSED_GHOSTS
         ).get(
                 ghost
+        );
+    }
+
+    /**
+     * 获取玩家当前驾驭的所有厉鬼状态。
+     *
+     * 返回副本，避免外部直接修改玩家内部 Attachment 数据。
+     */
+    public static Map<
+            ResourceLocation,
+            PossessedGhostState
+            > getAllStates(
+            ServerPlayer player
+    ) {
+
+        return new HashMap<>(
+                player.getData(
+                        QisPlan2.POSSESSED_GHOSTS
+                )
+        );
+    }
+
+    /**
+     * 清空玩家当前驾驭的全部厉鬼。
+     *
+     * 用于：
+     *
+     * 玩家死亡
+     * 厉鬼破体
+     * 特殊强制失去全部驾驭
+     */
+    public static void clearAll(
+            ServerPlayer player
+    ) {
+
+        player.setData(
+                QisPlan2.POSSESSED_GHOSTS,
+                new HashMap<>()
         );
     }
 
@@ -861,13 +900,28 @@ public final class PossessionHandler {
 
             if (revival >= 1.0D) {
 
+                /*
+                 * ========================================================
+                 * 厉鬼复苏导致死亡。
+                 *
+                 * 这种死亡不会依赖 LivingDeathEvent，
+                 * 所以必须主动触发破体。
+                 * ========================================================
+                 */
+
+                GhostBreakoutHandler.breakout(
+                        player
+                );
+
+                /*
+                 * 然后再真正让玩家死亡。
+                 */
                 player.setHealth(
                         0.0F
                 );
 
                 return;
             }
-
 
             /*
              * ====================================================
