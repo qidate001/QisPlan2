@@ -1,0 +1,6 @@
+{
+  "parent": "minecraft:block/cube_all",
+  "textures": {
+    "all": "qisplan2:block/ghost_leather_wall"
+  }
+}

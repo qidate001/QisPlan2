@@ -539,6 +539,32 @@ public class QisPlan2 {
                     new Item.Properties()
             );
 
+    // 鬼皮墙
+    public static final DeferredBlock<GhostLeatherWallBlock>
+            GHOST_LEATHER_WALL =
+            BLOCKS.registerBlock(
+                    "ghost_leather_wall",
+                    GhostLeatherWallBlock::new,
+                    BlockBehaviour.Properties
+                            .of()
+                            .mapColor(MapColor.COLOR_BLACK)
+                            .strength(-1.0F, 3600000.0F)
+                            .noLootTable()
+                            .pushReaction(
+                                    PushReaction.BLOCK
+                            )
+                            .sound(
+                                    SoundType.STONE
+                            )
+            );
+
+    public static final DeferredItem<BlockItem>
+            GHOST_LEATHER_WALL_ITEM =
+            ITEMS.registerSimpleBlockItem(
+                    GHOST_LEATHER_WALL,
+                    new Item.Properties()
+            );
+
     public static final DeferredHolder<
             DataComponentType<?>,
             DataComponentType<Long>
@@ -825,7 +851,6 @@ public class QisPlan2 {
                         output.accept(KNOCKING_GHOST_SPAWN_EGG);
                         output.accept(OPENING_GHOST_SPAWN_EGG);
                         output.accept(CLOSING_GHOST_SPAWN_EGG);
-                        output.accept(PARTITION_EXIT_ITEM);
                     })
                     .build()
             );
@@ -839,6 +864,18 @@ public class QisPlan2 {
                         output.accept(GHOST_COIN);
                         output.accept(GHOST_STONE_FINGER);
                         output.accept(INCENSE_ASH);
+                    })
+                    .build()
+            );
+
+    // 创造物品栏（齐计划2：鬼）
+    public static final DeferredHolder<CreativeModeTab, CreativeModeTab> QIS_PLAN_ELSE_TAB =
+            CREATIVE_MODE_TABS.register("qis_plan_else", () -> CreativeModeTab.builder()
+                    .title(Component.translatable("itemGroup.qisplan2.qis_plan_else"))
+                    .icon(() -> GHOST_LEATHER_BOX_ITEM.get().getDefaultInstance())
+                    .displayItems((parameters, output) -> {
+                        output.accept(PARTITION_EXIT_ITEM);
+                        output.accept(GHOST_LEATHER_WALL_ITEM);
                     })
                     .build()
             );
