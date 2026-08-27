@@ -1,7 +1,25 @@
 {
   "variants": {
-    "": {
-      "model": "qisplan2:block/ghost_leather_wall"
-    }
+    "": [
+      {
+        "model": "qisplan2:block/ghost_leather_wall",
+        "weight": 4
+      },
+      {
+        "model": "qisplan2:block/ghost_leather_wall",
+        "y": 90,
+        "weight": 2
+      },
+      {
+        "model": "qisplan2:block/ghost_leather_wall",
+        "y": 180,
+        "weight": 2
+      },
+      {
+        "model": "qisplan2:block/ghost_leather_wall",
+        "y": 270,
+        "weight": 2
+      }
+    ]
   }
 }
