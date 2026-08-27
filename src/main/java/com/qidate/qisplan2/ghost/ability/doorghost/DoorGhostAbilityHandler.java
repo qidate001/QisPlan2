@@ -11,7 +11,9 @@ import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.util.Mth;
+import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 
 /**
@@ -23,6 +25,14 @@ import net.minecraft.world.phys.Vec3;
  * 2. 玩家按 G 时，寻找最近的标记目标并发动突袭。
  */
 public final class DoorGhostAbilityHandler {
+    /**
+     * 驾驭后的开门鬼 / 关门鬼：
+     *
+     * 玩家主动开门 / 关门时，
+     * 对附近生物发动灵异袭击的范围。
+     */
+    private static final double ACTIVE_ATTACK_RADIUS = 30.0D;
+
 
     private DoorGhostAbilityHandler() {
     }
@@ -56,12 +66,6 @@ public final class DoorGhostAbilityHandler {
             return;
         }
 
-        /*
-         * ========================================================
-         * 搜索范围
-         * ========================================================
-         */
-
         double centerX =
                 doorPos.getX() + 0.5D;
 
@@ -77,17 +81,16 @@ public final class DoorGhostAbilityHandler {
         double radiusSqr =
                 radius * radius;
 
-
         /*
          * ========================================================
-         * 找附近所有驾驭门鬼的玩家
+         * 查找附近驾驭了门鬼的玩家。
          * ========================================================
          */
 
         for (ServerPlayer player :
                 level.getEntitiesOfClass(
                         ServerPlayer.class,
-                        new net.minecraft.world.phys.AABB(
+                        new AABB(
                                 centerX,
                                 centerY,
                                 centerZ,
@@ -98,23 +101,15 @@ public final class DoorGhostAbilityHandler {
                 )) {
 
             /*
-             * ====================================================
-             * 驾驭者自己触发门事件：
-             *
-             * 不标记自己。
-             * ====================================================
+             * 自己触发门事件时，不标记自己。
              */
-
             if (player == source) {
                 continue;
             }
 
             /*
-             * ====================================================
              * 球形范围。
-             * ====================================================
              */
-
             if (player.distanceToSqr(
                     centerX,
                     centerY,
@@ -124,17 +119,9 @@ public final class DoorGhostAbilityHandler {
                 continue;
             }
 
-
             /*
              * ====================================================
-             * 这次到底是什么门事件？
-             * ====================================================
-             *
-             * 开门：
-             * 只检查开门鬼
-             *
-             * 关门：
-             * 只检查关门鬼
+             * 开门
              * ====================================================
              */
 
@@ -146,12 +133,6 @@ public final class DoorGhostAbilityHandler {
                                 OpeningGhostAbility.ID
                         );
 
-                QisPlan2.LOGGER.info(
-                        "[QisPlan2] 玩家 {}：本次=开门，开门鬼={}",
-                        player.getName().getString(),
-                        hasOpeningGhost
-                );
-
                 if (hasOpeningGhost) {
 
                     DoorGhostMarkManager.markOpening(
@@ -160,19 +141,21 @@ public final class DoorGhostAbilityHandler {
                     );
                 }
 
-            } else {
+            }
+
+            /*
+             * ====================================================
+             * 关门
+             * ====================================================
+             */
+
+            else {
 
                 boolean hasClosingGhost =
                         PossessionHandler.hasGhost(
                                 player,
                                 ClosingGhostAbility.ID
                         );
-
-                QisPlan2.LOGGER.info(
-                        "[QisPlan2] 玩家 {}：本次=关门，关门鬼={}",
-                        player.getName().getString(),
-                        hasClosingGhost
-                );
 
                 if (hasClosingGhost) {
 
@@ -183,6 +166,316 @@ public final class DoorGhostAbilityHandler {
                 }
             }
         }
+
+
+        /*
+         * ========================================================
+         * 重点：
+         *
+         * 如果“开关门的人自己”就是门鬼驾驭者，
+         * 那么发动主动能力。
+         * ========================================================
+         */
+
+        if (!(source instanceof ServerPlayer player)) {
+            return;
+        }
+
+
+        /*
+         * ========================================================
+         * 开门鬼
+         * ========================================================
+         */
+
+        if (opening
+                && PossessionHandler.hasGhost(
+                player,
+                OpeningGhostAbility.ID
+        )) {
+
+            useOpeningGhostDoorAbility(
+                    player,
+                    level,
+                    doorPos
+            );
+
+            return;
+        }
+
+
+        /*
+         * ========================================================
+         * 关门鬼
+         * ========================================================
+         */
+
+        if (!opening
+                && PossessionHandler.hasGhost(
+                player,
+                ClosingGhostAbility.ID
+        )) {
+
+            useClosingGhostDoorAbility(
+                    player,
+                    level,
+                    doorPos
+            );
+        }
+    }
+
+    private static void useOpeningGhostDoorAbility(
+            ServerPlayer player,
+            ServerLevel level,
+            BlockPos doorPos
+    ) {
+
+        /*
+         * ========================================================
+         * 读取当前有效灵异强度。
+         *
+         * 注意：
+         * 这里必须在增加复苏之前读取。
+         * ========================================================
+         */
+
+        double attackStrength =
+                PossessionHandler.getEffectiveStrength(
+                        player,
+                        OpeningGhostAbility.ID
+                );
+
+
+        /*
+         * ========================================================
+         * 袭击附近所有生物。
+         * ========================================================
+         */
+
+        int targetCount =
+                attackNearbyLivingEntities(
+                        player,
+                        level,
+                        doorPos,
+                        attackStrength,
+                        ModDamageTypes.openingGhost(
+                                player
+                        )
+                );
+
+
+        /*
+         * ========================================================
+         * 本次复苏：
+         *
+         * 基础 +10%
+         * 每个目标 +2%
+         * ========================================================
+         */
+
+        double revivalGain =
+                10.0D
+                        + targetCount * 2.0D;
+
+
+        PossessedGhostState state =
+                PossessionHandler.getState(
+                        player,
+                        OpeningGhostAbility.ID
+                );
+
+        if (state == null) {
+            return;
+        }
+
+
+        PossessedGhostState newState =
+                PossessionHandler.addRevival(
+                        state,
+                        revivalGain
+                );
+
+
+        PossessionHandler.setState(
+                player,
+                OpeningGhostAbility.ID,
+                newState
+        );
+    }
+
+    private static void useClosingGhostDoorAbility(
+            ServerPlayer player,
+            ServerLevel level,
+            BlockPos doorPos
+    ) {
+
+        /*
+         * ========================================================
+         * 当前有效强度。
+         * ========================================================
+         */
+
+        double attackStrength =
+                PossessionHandler.getEffectiveStrength(
+                        player,
+                        ClosingGhostAbility.ID
+                );
+
+
+        /*
+         * ========================================================
+         * 袭击附近所有生物。
+         * ========================================================
+         */
+
+        int targetCount =
+                attackNearbyLivingEntities(
+                        player,
+                        level,
+                        doorPos,
+                        attackStrength,
+                        ModDamageTypes.closingGhost(
+                                player
+                        )
+                );
+
+
+        /*
+         * ========================================================
+         * 复苏：
+         *
+         * 基础 +10%
+         * 每个目标 +2%
+         * ========================================================
+         */
+
+        double revivalGain =
+                10.0D
+                        + targetCount * 2.0D;
+
+
+        PossessedGhostState state =
+                PossessionHandler.getState(
+                        player,
+                        ClosingGhostAbility.ID
+                );
+
+        if (state == null) {
+            return;
+        }
+
+
+        PossessedGhostState newState =
+                PossessionHandler.addRevival(
+                        state,
+                        revivalGain
+                );
+
+
+        PossessionHandler.setState(
+                player,
+                ClosingGhostAbility.ID,
+                newState
+        );
+    }
+
+    private static int attackNearbyLivingEntities(
+            ServerPlayer player,
+            ServerLevel level,
+            BlockPos doorPos,
+            double attackStrength,
+            DamageSource damageSource
+    ) {
+
+        double radius =
+                ACTIVE_ATTACK_RADIUS;
+
+        double radiusSqr =
+                radius * radius;
+
+        AABB box =
+                new AABB(
+                        doorPos
+                ).inflate(
+                        radius
+                );
+
+        int targetCount = 0;
+
+        /*
+         * ========================================================
+         * 查找 30 格内所有活着的生物。
+         * ========================================================
+         */
+
+        for (LivingEntity entity :
+                level.getEntitiesOfClass(
+                        LivingEntity.class,
+                        box,
+                        LivingEntity::isAlive
+                )) {
+
+            /*
+             * ====================================================
+             * 绝对不能袭击驾驭者自己。
+             *
+             * 同时使用对象判断 + UUID 判断。
+             * ====================================================
+             */
+
+            if (entity == player
+                    || entity.getUUID().equals(
+                    player.getUUID()
+            )) {
+
+                continue;
+            }
+
+            /*
+             * ====================================================
+             * 计算真正的球形距离。
+             * ====================================================
+             */
+
+            double dx =
+                    entity.getX()
+                            - (doorPos.getX() + 0.5D);
+
+            double dy =
+                    entity.getY()
+                            - (doorPos.getY() + 0.5D);
+
+            double dz =
+                    entity.getZ()
+                            - (doorPos.getZ() + 0.5D);
+
+            double distanceSqr =
+                    dx * dx
+                            + dy * dy
+                            + dz * dz;
+
+            if (distanceSqr
+                    > radiusSqr) {
+
+                continue;
+            }
+
+            /*
+             * ====================================================
+             * 算作一个实际袭击目标。
+             * ====================================================
+             */
+
+            targetCount++;
+
+            SupernaturalDeathHandler.tryKill(
+                    entity,
+                    damageSource,
+                    attackStrength
+            );
+        }
+
+        return targetCount;
     }
 
 
