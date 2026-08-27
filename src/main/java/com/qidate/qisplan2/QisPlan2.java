@@ -308,9 +308,12 @@ public class QisPlan2 {
     // 棺材钉
     public static final DeferredItem<CoffinNailItem>
             COFFIN_NAIL =
-            ITEMS.registerItem(
+            ITEMS.register(
                     "coffin_nail",
-                    CoffinNailItem::new
+                    () -> new CoffinNailItem(
+                            new Item.Properties()
+                                    .stacksTo(1)
+                    )
             );
 
     // 鬼地毯
