@@ -30,7 +30,7 @@ public final class ModFluids {
             QisPlan2.FLUID_TYPES.register(
                     "ghost_lake_water",
                     () ->
-                            new FluidType(
+                            new GhostLakeFluidType(
                                     FluidType.Properties.create()
                                             .descriptionId(
                                                     "fluid_type.qisplan2.ghost_lake_water"
