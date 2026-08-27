@@ -217,15 +217,24 @@ public final class PartitionSpaceManager {
          * ========================================================
          */
 
-        BlockPos center =
+        BlockPos roomCenter =
                 getRoomCenter(
                         regionId,
                         initialRoom
                 );
 
+        BlockPos exitPos =
+                new BlockPos(
+                        roomCenter.getX(),
+                        roomCenter.getY()
+                                - ROOM_SIZE / 2
+                                + 1,
+                        roomCenter.getZ()
+                );
+
         BlockState state =
                 level.getBlockState(
-                        center
+                        exitPos
                 );
 
         if (!state.is(
@@ -233,7 +242,7 @@ public final class PartitionSpaceManager {
         )) {
 
             level.setBlock(
-                    center,
+                    exitPos,
                     QisPlan2.PARTITION_EXIT
                             .get()
                             .defaultBlockState(),
@@ -243,7 +252,7 @@ public final class PartitionSpaceManager {
             QisPlan2.LOGGER.info(
                     "[QisPlan2] 补充划分空间出口：regionId={}，pos={}",
                     regionId,
-                    center
+                    exitPos
             );
         }
     }
@@ -281,8 +290,31 @@ public final class PartitionSpaceManager {
                 );
 
         /*
-         * 已经存在。
+         * ========================================================
+         * 防止超出世界高度。
+         * ========================================================
          */
+
+        if (!isRoomWithinWorldHeight(
+                level,
+                regionId,
+                targetRoom
+        )) {
+
+            QisPlan2.LOGGER.warn(
+                    "[QisPlan2] 鬼皮箱空间扩展失败：房间 {} 超出世界高度范围",
+                    targetRoom
+            );
+
+            return false;
+        }
+
+        /*
+         * ========================================================
+         * 已经存在。
+         * ========================================================
+         */
+
         if (data.hasRoom(
                 regionId,
                 targetRoom
@@ -293,14 +325,7 @@ public final class PartitionSpaceManager {
 
         /*
          * ========================================================
-         * 记录新房间。
-         *
-         * 注意：
-         *
-         * 不再单独 generateRoom。
-         *
-         * 后面由 rebuildSpaceGeometry()
-         * 根据整个空间统一生成。
+         * 创建房间记录。
          * ========================================================
          */
 
@@ -311,7 +336,7 @@ public final class PartitionSpaceManager {
 
         /*
          * ========================================================
-         * 根据整个 Space 重新计算墙壁。
+         * 根据整个 Space 重新计算几何。
          * ========================================================
          */
 
@@ -556,6 +581,45 @@ public final class PartitionSpaceManager {
                 }
             }
         }
+    }
+
+    /**
+     * 检查一个房间是否完全处于世界有效高度范围内。
+     */
+    private static boolean isRoomWithinWorldHeight(
+            ServerLevel level,
+            long regionId,
+            PartitionRoomPos room
+    ) {
+
+        BlockPos center =
+                getRoomCenter(
+                        regionId,
+                        room
+                );
+
+        int half =
+                ROOM_SIZE / 2;
+
+        int minY =
+                center.getY()
+                        - half;
+
+        int maxY =
+                center.getY()
+                        + half;
+
+        /*
+         * Minecraft 当前维度的有效建造高度。
+         */
+        int minBuildY =
+                level.getMinBuildHeight();
+
+        int maxBuildY =
+                level.getMaxBuildHeight() - 1;
+
+        return minY >= minBuildY
+                && maxY <= maxBuildY;
     }
 
     public static long findRegionId(
