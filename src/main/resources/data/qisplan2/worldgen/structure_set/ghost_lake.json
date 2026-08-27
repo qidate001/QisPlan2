@@ -1,0 +1,14 @@
+{
+  "structures": [
+    {
+      "structure": "qisplan2:ghost_lake",
+      "weight": 1
+    }
+  ],
+  "placement": {
+    "type": "minecraft:random_spread",
+    "salt": 18374629,
+    "spacing": 80,
+    "separation": 60
+  }
+}

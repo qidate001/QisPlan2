@@ -2,10 +2,7 @@ package com.qidate.qisplan2;
 
 import com.mojang.serialization.Codec;
 import com.qidate.qisplan2.block.*;
-import com.qidate.qisplan2.block.entity.GhostLeatherBoxBlockEntity;
-import com.qidate.qisplan2.block.entity.GhostManorMarkerBlockEntity;
-import com.qidate.qisplan2.block.entity.GhostPianoBlockEntity;
-import com.qidate.qisplan2.block.entity.GhostStoveBlockEntity;
+import com.qidate.qisplan2.block.entity.*;
 import com.qidate.qisplan2.client.*;
 import com.qidate.qisplan2.core.QisConfig;
 import com.qidate.qisplan2.entity.*;
@@ -210,6 +207,36 @@ public class QisPlan2 {
                     () -> BlockEntityType.Builder.of(
                             GhostManorMarkerBlockEntity::new,
                             GHOST_MANOR_MARKER.get()
+                    ).build(null)
+            );
+
+    // 鬼湖生成占位符方块
+    public static final DeferredHolder<
+            Block,
+            GhostLakeMarkerBlock
+            > GHOST_LAKE_MARKER =
+            BLOCKS.register(
+                    "ghost_lake_marker",
+                    () -> new GhostLakeMarkerBlock(
+                            BlockBehaviour.Properties.of()
+                                    .noLootTable()
+                                    .noOcclusion()
+                                    .strength(
+                                            -1.0F,
+                                            3600000.0F
+                                    )
+                    )
+            );
+
+    public static final DeferredHolder<
+            BlockEntityType<?>,
+            BlockEntityType<GhostLakeMarkerBlockEntity>
+            > GHOST_LAKE_MARKER_BLOCK_ENTITY =
+            BLOCK_ENTITY_TYPES.register(
+                    "ghost_lake_marker",
+                    () -> BlockEntityType.Builder.of(
+                            GhostLakeMarkerBlockEntity::new,
+                            GHOST_LAKE_MARKER.get()
                     ).build(null)
             );
 
