@@ -49,13 +49,10 @@ public final class PartitionSpaceManager {
 
     /**
      * 初始空间盒子的方块。
-     *
-     * 后面可以直接换成其他方块，
-     * 或者改成按区域等级决定。
      */
     private static final net.minecraft.world.level.block.Block
             STARTER_BOX_BLOCK =
-            Blocks.STONE;
+            QisPlan2.GHOST_LEATHER_WALL.get();
 
 
     private PartitionSpaceManager() {
