@@ -305,6 +305,14 @@ public class QisPlan2 {
                     )
             );
 
+    // 棺材钉
+    public static final DeferredItem<CoffinNailItem>
+            COFFIN_NAIL =
+            ITEMS.registerItem(
+                    "coffin_nail",
+                    CoffinNailItem::new
+            );
+
     // 鬼地毯
     public static final DeferredBlock<GhostCarpetBlock> GHOST_CARPET =
             BLOCKS.registerBlock(
