@@ -78,7 +78,7 @@ public final class GhostLakeHandler {
      * 每 tick 向下推。
      */
     private static final double SINK_SPEED =
-            0.35D;
+            0.1D;
 
 
     @SubscribeEvent
@@ -89,24 +89,9 @@ public final class GhostLakeHandler {
         Entity entity =
                 event.getEntity();
 
-        /*
-         * ========================================================
-         * 只处理服务端。
-         * ========================================================
-         */
-
-        if (!(entity.level()
-                instanceof Level level)
-                || level.isClientSide()) {
-
+        if (entity.level().isClientSide()) {
             return;
         }
-
-        /*
-         * ========================================================
-         * 只处理活着的 LivingEntity。
-         * ========================================================
-         */
 
         if (!(entity instanceof LivingEntity living)
                 || !living.isAlive()) {
@@ -114,29 +99,8 @@ public final class GhostLakeHandler {
             return;
         }
 
-        /*
-         * 不处理观察者。
-         *
-         * Spectator 本身不会正常参与实体交互。
-         */
-        if (living.isSpectator()) {
-            return;
-        }
-
-        /*
-         * ========================================================
-         * 鬼湖水 FluidType
-         * ========================================================
-         */
-
         var fluidType =
                 ModFluids.GHOST_LAKE_WATER_TYPE.get();
-
-        /*
-         * ========================================================
-         * 判断是否接触鬼湖水。
-         * ========================================================
-         */
 
         if (!living.isInFluidType(
                 fluidType
@@ -145,21 +109,9 @@ public final class GhostLakeHandler {
             return;
         }
 
-        /*
-         * ========================================================
-         * 获取沉下深度。
-         *
-         * NeoForge：
-         *
-         * getFluidTypeHeight()
-         *
-         * 返回该流体在实体包围盒中的实际高度。
-         * ========================================================
-         */
-
         double depth =
                 calculateGhostLakeDepth(
-                        level,
+                        living.level(),
                         living
                 );
 
@@ -168,52 +120,23 @@ public final class GhostLakeHandler {
         }
 
         /*
-         * ========================================================
-         * 极快速下沉。
-         *
-         * X / Z 直接清零：
-         *
-         * 不允许水平移动。
-         *
-         * Y：
-         *
-         * 向下快速沉。
-         * ========================================================
+         * 先强制移动。
          */
-
-        sinkEntity(
+        forceGhostLakeMovement(
                 living
         );
 
         /*
-         * ========================================================
-         * 每秒结算一次灵异效果。
-         * ========================================================
+         * 每秒结算一次。
          */
-
-        long gameTime =
-                level.getGameTime();
-
-        if (gameTime % DAMAGE_INTERVAL != 0L) {
+        if (living.level().getGameTime() % 20L != 0L) {
             return;
         }
-
-        /*
-         * ========================================================
-         * 普通灵异袭击。
-         * ========================================================
-         */
 
         applyGhostLakeAttack(
                 living,
                 depth
         );
-
-        /*
-         * ========================================================
-         * 玩家体内厉鬼复苏值下降。
-         * ========================================================
-         */
 
         if (living instanceof ServerPlayer player) {
 
@@ -222,6 +145,31 @@ public final class GhostLakeHandler {
                     depth
             );
         }
+    }
+
+    private static void forceGhostLakeMovement(
+            LivingEntity entity
+    ) {
+        /*
+         * ========================================================
+         * 鬼湖中完全禁止：
+         *
+         * X 移动
+         * Z 移动
+         * 向上移动
+         * ========================================================
+         *
+         * 每 tick 都重新覆盖，
+         * 所以 WASD / 游泳 / 跳跃都无法改变结果。
+         */
+
+        entity.setDeltaMovement(
+                0.0D,
+                -SINK_SPEED,
+                0.0D
+        );
+
+        entity.hasImpulse = true;
     }
 
     private static double calculateGhostLakeDepth(
