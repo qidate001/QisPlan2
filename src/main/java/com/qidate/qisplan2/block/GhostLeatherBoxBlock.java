@@ -4,6 +4,7 @@ import com.mojang.serialization.MapCodec;
 import com.qidate.qisplan2.QisPlan2;
 import com.qidate.qisplan2.block.entity.GhostLeatherBoxBlockEntity;
 import com.qidate.qisplan2.ghost.partition.PartitionReturnManager;
+import com.qidate.qisplan2.ghost.partition.PartitionRoomPos;
 import com.qidate.qisplan2.ghost.partition.PartitionSpaceManager;
 import com.qidate.qisplan2.ghost.partition.PartitionSpaceSavedData;
 
@@ -150,25 +151,34 @@ public class GhostLeatherBoxBlock
         long regionId =
                 box.getRegionId();
 
-        double x =
-                PartitionSpaceManager.getCenterX(
-                        regionId
+        PartitionRoomPos initialRoom =
+                new PartitionRoomPos(
+                        0,
+                        0,
+                        0
                 );
+
+        BlockPos roomCenter =
+                PartitionSpaceManager.getRoomCenter(
+                        regionId,
+                        initialRoom
+                );
+
+        double x =
+                roomCenter.getX() + 0.5D;
 
         double y =
-                PartitionSpaceManager.getCenterY();
+                roomCenter.getY();
 
         double z =
-                PartitionSpaceManager.getCenterZ(
-                        regionId
-                );
+                roomCenter.getZ() + 0.5D;
 
         /*
          * ========================================================
          * 确保该区域已经生成初始石盒。
          * ========================================================
          */
-        PartitionSpaceManager.ensureRegionInitialized(
+        PartitionSpaceManager.ensureInitialRoom(
                 partitionLevel,
                 regionId
         );
