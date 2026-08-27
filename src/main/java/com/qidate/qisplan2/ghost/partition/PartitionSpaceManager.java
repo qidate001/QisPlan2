@@ -267,6 +267,12 @@ public final class PartitionSpaceManager {
                         server
                 );
 
+        /*
+         * ========================================================
+         * 目标房间
+         * ========================================================
+         */
+
         PartitionRoomPos targetRoom =
                 sourceRoom.relative(
                         direction
@@ -284,8 +290,11 @@ public final class PartitionSpaceManager {
         }
 
         /*
-         * 先生成新房间。
+         * ========================================================
+         * 创建目标房间
+         * ========================================================
          */
+
         generateRoom(
                 level,
                 regionId,
@@ -293,8 +302,21 @@ public final class PartitionSpaceManager {
         );
 
         /*
-         * 打通连接。
+         * 先记录房间。
          */
+        data.addRoom(
+                regionId,
+                targetRoom
+        );
+
+        /*
+         * ========================================================
+         * 打通：
+         *
+         * source → target
+         * ========================================================
+         */
+
         connectRooms(
                 level,
                 regionId,
@@ -303,10 +325,69 @@ public final class PartitionSpaceManager {
                 direction
         );
 
-        data.addRoom(
-                regionId,
-                targetRoom
-        );
+        /*
+         * ========================================================
+         * 检查新房间周围的所有邻居。
+         *
+         * 如果已经存在，则也立即打通。
+         *
+         * 这样：
+         *
+         *    A ─ B
+         *        │
+         *        C
+         *
+         * 当创建 B 时，
+         * 如果 C 已经存在，
+         * B 和 C 会自动连接。
+         * ========================================================
+         */
+
+        for (Direction neighborDirection :
+                Direction.values()) {
+
+            PartitionRoomPos neighborRoom =
+                    targetRoom.relative(
+                            neighborDirection
+                    );
+
+            /*
+             * 没有这个邻居。
+             */
+            if (!data.hasRoom(
+                    regionId,
+                    neighborRoom
+            )) {
+
+                continue;
+            }
+
+            /*
+             * 不需要对自己连接。
+             */
+            if (neighborRoom.equals(
+                    sourceRoom
+            )) {
+
+                continue;
+            }
+
+            /*
+             * ====================================================
+             * 当前房间与这个邻居都存在。
+             *
+             * 直接打通。
+             * ====================================================
+             */
+
+            connectRooms(
+                    level,
+                    regionId,
+                    targetRoom,
+                    neighborRoom,
+                    neighborDirection
+            );
+        }
 
         return true;
     }
@@ -417,6 +498,12 @@ public final class PartitionSpaceManager {
             Direction direction
     ) {
 
+        /*
+         * ========================================================
+         * 获取两个房间中心。
+         * ========================================================
+         */
+
         BlockPos sourceCenter =
                 getRoomCenter(
                         regionId,
@@ -424,10 +511,11 @@ public final class PartitionSpaceManager {
                 );
 
         /*
-         * 两个房间中心之间，
-         * 间距正好 10。
+         * ========================================================
+         * 房间墙体位置。
          *
-         * 共用的墙面就在中心之间。
+         * 源房间中心 + 半个房间尺寸。
+         * ========================================================
          */
 
         BlockPos wallCenter =
@@ -437,61 +525,100 @@ public final class PartitionSpaceManager {
                 );
 
         /*
-         * 做一个中央 3×4 门洞。
+         * ========================================================
+         * 9×9 完整打通。
          *
-         * 这里只是第一版，
-         * 以后可以做成不同大小。
+         * 因为房间本身是 11×11×11，
+         * 外壳厚度为 1，
+         * 所以内部宽高都是 9。
+         *
+         * 我们只拆掉：
+         *
+         * 墙体上的 9×9 区域。
+         * ========================================================
          */
-        int halfWidth = 1;
 
-        int halfHeight = 2;
+        int innerSize =
+                ROOM_SIZE - 2;
+
+        int half =
+                innerSize / 2;
 
         Direction.Axis axis =
                 direction.getAxis();
 
-        for (int a = -halfWidth;
-             a <= halfWidth;
+        for (int a = -half;
+             a <= half;
              a++) {
 
-            for (int b = 0;
-                 b <= halfHeight;
+            for (int b = -half;
+                 b <= half;
                  b++) {
 
                 BlockPos pos;
+
+                /*
+                 * ====================================================
+                 * EAST / WEST
+                 *
+                 * 墙面固定 X，
+                 * Y/Z 展开 9×9。
+                 * ====================================================
+                 */
 
                 if (axis == Direction.Axis.X) {
 
                     pos =
                             wallCenter.offset(
                                     0,
-                                    b - 1,
-                                    a
+                                    a,
+                                    b
                             );
 
-                } else if (axis == Direction.Axis.Z) {
+                }
+
+                /*
+                 * ====================================================
+                 * NORTH / SOUTH
+                 *
+                 * 墙面固定 Z，
+                 * X/Y 展开 9×9。
+                 * ====================================================
+                 */
+
+                else if (axis == Direction.Axis.Z) {
 
                     pos =
                             wallCenter.offset(
                                     a,
-                                    b - 1,
+                                    b,
                                     0
                             );
 
-                } else {
+                }
 
-                    /*
-                     * 上下扩展：
-                     *
-                     * 暂时使用水平 3×3 洞。
-                     */
+                /*
+                 * ====================================================
+                 * UP / DOWN
+                 *
+                 * 墙面固定 Y，
+                 * X/Z 展开 9×9。
+                 * ====================================================
+                 */
+
+                else {
+
                     pos =
                             wallCenter.offset(
                                     a,
                                     0,
-                                    b - 1
+                                    b
                             );
                 }
 
+                /*
+                 * 删除这一格墙。
+                 */
                 level.removeBlock(
                         pos,
                         false
