@@ -846,6 +846,7 @@ public class QisPlan2 {
                         output.accept(GHOST_WHITE_PORRIDGE);
                         output.accept(GHOST_UMBRELLA);
                         output.accept(GHOST_LEATHER_BOX_ITEM);
+                        output.accept(GHOST_LEATHER_WALL_ITEM);
                         output.accept(NIGHT_WANDERER_SPAWN_EGG);
                         output.accept(NINVISIBLE_GHOST_SPAWN_EGG);
                         output.accept(KNOCKING_GHOST_SPAWN_EGG);
@@ -868,17 +869,16 @@ public class QisPlan2 {
                     .build()
             );
 
-    // 创造物品栏（齐计划2：鬼）
-    public static final DeferredHolder<CreativeModeTab, CreativeModeTab> QIS_PLAN_ELSE_TAB =
-            CREATIVE_MODE_TABS.register("qis_plan_else", () -> CreativeModeTab.builder()
-                    .title(Component.translatable("itemGroup.qisplan2.qis_plan_else"))
-                    .icon(() -> GHOST_LEATHER_BOX_ITEM.get().getDefaultInstance())
-                    .displayItems((parameters, output) -> {
-                        output.accept(PARTITION_EXIT_ITEM);
-                        output.accept(GHOST_LEATHER_WALL_ITEM);
-                    })
-                    .build()
-            );
+    // 创造物品栏（齐计划2：其他）
+//    public static final DeferredHolder<CreativeModeTab, CreativeModeTab> QIS_PLAN_ELSE_TAB =
+//            CREATIVE_MODE_TABS.register("qis_plan_else", () -> CreativeModeTab.builder()
+//                    .title(Component.translatable("itemGroup.qisplan2.qis_plan_else"))
+//                    .icon(() -> GHOST_LEATHER_BOX_ITEM.get().getDefaultInstance())
+//                    .displayItems((parameters, output) -> {
+//                        output.accept(PARTITION_EXIT_ITEM);
+//                    })
+//                    .build()
+//            );
 
     // 鬼灶台 Recipe 注册
     public static final Supplier<RecipeType<GhostStoveRecipe>>

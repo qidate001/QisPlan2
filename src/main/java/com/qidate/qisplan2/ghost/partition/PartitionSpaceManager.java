@@ -10,6 +10,9 @@ import net.minecraft.util.Mth;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
 
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 public final class PartitionSpaceManager {
@@ -194,17 +197,16 @@ public final class PartitionSpaceManager {
                 initialRoom
         )) {
 
-            generateRoom(
-                    level,
-                    regionId,
-                    initialRoom
-            );
-
             data.addRoom(
                     regionId,
                     initialRoom
             );
         }
+
+        rebuildSpaceGeometry(
+                level,
+                regionId
+        );
 
         /*
          * ========================================================
@@ -291,19 +293,17 @@ public final class PartitionSpaceManager {
 
         /*
          * ========================================================
-         * 创建目标房间
+         * 记录新房间。
+         *
+         * 注意：
+         *
+         * 不再单独 generateRoom。
+         *
+         * 后面由 rebuildSpaceGeometry()
+         * 根据整个空间统一生成。
          * ========================================================
          */
 
-        generateRoom(
-                level,
-                regionId,
-                targetRoom
-        );
-
-        /*
-         * 先记录房间。
-         */
         data.addRoom(
                 regionId,
                 targetRoom
@@ -311,83 +311,14 @@ public final class PartitionSpaceManager {
 
         /*
          * ========================================================
-         * 打通：
-         *
-         * source → target
+         * 根据整个 Space 重新计算墙壁。
          * ========================================================
          */
 
-        connectRooms(
+        rebuildSpaceGeometry(
                 level,
-                regionId,
-                sourceRoom,
-                targetRoom,
-                direction
+                regionId
         );
-
-        /*
-         * ========================================================
-         * 检查新房间周围的所有邻居。
-         *
-         * 如果已经存在，则也立即打通。
-         *
-         * 这样：
-         *
-         *    A ─ B
-         *        │
-         *        C
-         *
-         * 当创建 B 时，
-         * 如果 C 已经存在，
-         * B 和 C 会自动连接。
-         * ========================================================
-         */
-
-        for (Direction neighborDirection :
-                Direction.values()) {
-
-            PartitionRoomPos neighborRoom =
-                    targetRoom.relative(
-                            neighborDirection
-                    );
-
-            /*
-             * 没有这个邻居。
-             */
-            if (!data.hasRoom(
-                    regionId,
-                    neighborRoom
-            )) {
-
-                continue;
-            }
-
-            /*
-             * 不需要对自己连接。
-             */
-            if (neighborRoom.equals(
-                    sourceRoom
-            )) {
-
-                continue;
-            }
-
-            /*
-             * ====================================================
-             * 当前房间与这个邻居都存在。
-             *
-             * 直接打通。
-             * ====================================================
-             */
-
-            connectRooms(
-                    level,
-                    regionId,
-                    targetRoom,
-                    neighborRoom,
-                    neighborDirection
-            );
-        }
 
         return true;
     }
@@ -398,231 +329,231 @@ public final class PartitionSpaceManager {
      * ============================================================
      */
 
-    private static void generateRoom(
+    private static void rebuildSpaceGeometry(
             ServerLevel level,
-            long regionId,
-            PartitionRoomPos room
+            long regionId
     ) {
 
-        BlockPos center =
-                getRoomCenter(
-                        regionId,
-                        room
+        PartitionSpaceSavedData data =
+                PartitionSpaceSavedData.get(
+                        level.getServer()
                 );
 
-        int half =
-                ROOM_SIZE / 2;
+        Set<PartitionRoomPos> rooms =
+                data.getRooms(
+                        regionId
+                );
 
-        int minX =
-                center.getX()
-                        - half;
-
-        int minY =
-                center.getY()
-                        - half;
-
-        int minZ =
-                center.getZ()
-                        - half;
-
-        int maxX =
-                minX
-                        + ROOM_SIZE
-                        - 1;
-
-        int maxY =
-                minY
-                        + ROOM_SIZE
-                        - 1;
-
-        int maxZ =
-                minZ
-                        + ROOM_SIZE
-                        - 1;
-
-        Block wallBlock =
-                QisPlan2.GHOST_LEATHER_WALL.get();
+        if (rooms.isEmpty()) {
+            return;
+        }
 
         /*
-         * 只生成外壳。
+         * ========================================================
+         * 第一阶段：
+         *
+         * 收集所有房间占据的方块。
+         *
+         * 每个房间：
+         *
+         * 11 × 11 × 11
+         *
+         * 相邻房间：
+         *
+         * 中心间距 10
+         *
+         * 所以相邻房间会共享一层方块。
+         * ========================================================
          */
-        for (int x = minX;
-             x <= maxX;
-             x++) {
 
-            for (int y = minY;
-                 y <= maxY;
-                 y++) {
+        Set<Long> occupied =
+                new HashSet<>();
 
-                for (int z = minZ;
-                     z <= maxZ;
-                     z++) {
+        for (PartitionRoomPos room :
+                rooms) {
 
-                    boolean shell =
-                            x == minX
-                                    || x == maxX
-                                    || y == minY
-                                    || y == maxY
-                                    || z == minZ
-                                    || z == maxZ;
-
-                    if (!shell) {
-                        continue;
-                    }
-
-                    level.setBlock(
-                            new BlockPos(
-                                    x,
-                                    y,
-                                    z
-                            ),
-                            wallBlock.defaultBlockState(),
-                            3
+            BlockPos center =
+                    getRoomCenter(
+                            regionId,
+                            room
                     );
+
+            int half =
+                    ROOM_SIZE / 2;
+
+            for (int x = -half;
+                 x <= half;
+                 x++) {
+
+                for (int y = -half;
+                     y <= half;
+                     y++) {
+
+                    for (int z = -half;
+                         z <= half;
+                         z++) {
+
+                        BlockPos pos =
+                                center.offset(
+                                        x,
+                                        y,
+                                        z
+                                );
+
+                        occupied.add(
+                                pos.asLong()
+                        );
+                    }
                 }
             }
         }
-    }
-
-    /*
-     * ============================================================
-     * 打通房间
-     * ============================================================
-     */
-
-    private static void connectRooms(
-            ServerLevel level,
-            long regionId,
-            PartitionRoomPos sourceRoom,
-            PartitionRoomPos targetRoom,
-            Direction direction
-    ) {
 
         /*
          * ========================================================
-         * 获取两个房间中心。
+         * 第二阶段：
+         *
+         * 根据“房间并集”重新计算边界。
+         *
+         * 一个方块：
+         *
+         * 只要它的六个方向中有一个方向
+         * 不属于房间并集，
+         *
+         * 它就是外墙。
+         *
+         * 否则：
+         *
+         * 它就是内部空气。
          * ========================================================
          */
 
-        BlockPos sourceCenter =
-                getRoomCenter(
-                        regionId,
-                        sourceRoom
-                );
+        for (PartitionRoomPos room :
+                rooms) {
 
-        /*
-         * ========================================================
-         * 房间墙体位置。
-         *
-         * 源房间中心 + 半个房间尺寸。
-         * ========================================================
-         */
+            BlockPos center =
+                    getRoomCenter(
+                            regionId,
+                            room
+                    );
 
-        BlockPos wallCenter =
-                sourceCenter.relative(
-                        direction,
-                        ROOM_SIZE / 2
-                );
+            int half =
+                    ROOM_SIZE / 2;
 
-        /*
-         * ========================================================
-         * 9×9 完整打通。
-         *
-         * 因为房间本身是 11×11×11，
-         * 外壳厚度为 1，
-         * 所以内部宽高都是 9。
-         *
-         * 我们只拆掉：
-         *
-         * 墙体上的 9×9 区域。
-         * ========================================================
-         */
+            for (int x = -half;
+                 x <= half;
+                 x++) {
 
-        int innerSize =
-                ROOM_SIZE - 2;
+                for (int y = -half;
+                     y <= half;
+                     y++) {
 
-        int half =
-                innerSize / 2;
+                    for (int z = -half;
+                         z <= half;
+                         z++) {
 
-        Direction.Axis axis =
-                direction.getAxis();
+                        BlockPos pos =
+                                center.offset(
+                                        x,
+                                        y,
+                                        z
+                                );
 
-        for (int a = -half;
-             a <= half;
-             a++) {
+                        long packed =
+                                pos.asLong();
 
-            for (int b = -half;
-                 b <= half;
-                 b++) {
+                        /*
+                         * 六个方向。
+                         */
+                        boolean outside =
+                                !occupied.contains(
+                                        pos.relative(
+                                                Direction.NORTH
+                                        ).asLong()
+                                )
+                                        || !occupied.contains(
+                                        pos.relative(
+                                                Direction.SOUTH
+                                        ).asLong()
+                                )
+                                        || !occupied.contains(
+                                        pos.relative(
+                                                Direction.EAST
+                                        ).asLong()
+                                )
+                                        || !occupied.contains(
+                                        pos.relative(
+                                                Direction.WEST
+                                        ).asLong()
+                                )
+                                        || !occupied.contains(
+                                        pos.relative(
+                                                Direction.UP
+                                        ).asLong()
+                                )
+                                        || !occupied.contains(
+                                        pos.relative(
+                                                Direction.DOWN
+                                        ).asLong()
+                                );
 
-                BlockPos pos;
+                        BlockState current =
+                                level.getBlockState(
+                                        pos
+                                );
 
-                /*
-                 * ====================================================
-                 * EAST / WEST
-                 *
-                 * 墙面固定 X，
-                 * Y/Z 展开 9×9。
-                 * ====================================================
-                 */
+                        /*
+                         * ====================================================
+                         * 外墙
+                         * ====================================================
+                         */
 
-                if (axis == Direction.Axis.X) {
+                        if (outside) {
 
-                    pos =
-                            wallCenter.offset(
-                                    0,
-                                    a,
-                                    b
+                            /*
+                             * 不覆盖特殊方块。
+                             *
+                             * 比如出口。
+                             */
+                            if (current.isAir()
+                                    || current.is(
+                                    QisPlan2.GHOST_LEATHER_WALL.get()
+                            )) {
+
+                                level.setBlock(
+                                        pos,
+                                        QisPlan2
+                                                .GHOST_LEATHER_WALL
+                                                .get()
+                                                .defaultBlockState(),
+                                        3
+                                );
+                            }
+
+                            continue;
+                        }
+
+                        /*
+                         * ====================================================
+                         * 内部空间：
+                         *
+                         * 如果当前是鬼皮墙，
+                         * 就把它拆掉。
+                         *
+                         * 其他特殊方块保留。
+                         * ====================================================
+                         */
+
+                        if (current.is(
+                                QisPlan2.GHOST_LEATHER_WALL.get()
+                        )) {
+
+                            level.removeBlock(
+                                    pos,
+                                    false
                             );
-
+                        }
+                    }
                 }
-
-                /*
-                 * ====================================================
-                 * NORTH / SOUTH
-                 *
-                 * 墙面固定 Z，
-                 * X/Y 展开 9×9。
-                 * ====================================================
-                 */
-
-                else if (axis == Direction.Axis.Z) {
-
-                    pos =
-                            wallCenter.offset(
-                                    a,
-                                    b,
-                                    0
-                            );
-
-                }
-
-                /*
-                 * ====================================================
-                 * UP / DOWN
-                 *
-                 * 墙面固定 Y，
-                 * X/Z 展开 9×9。
-                 * ====================================================
-                 */
-
-                else {
-
-                    pos =
-                            wallCenter.offset(
-                                    a,
-                                    0,
-                                    b
-                            );
-                }
-
-                /*
-                 * 删除这一格墙。
-                 */
-                level.removeBlock(
-                        pos,
-                        false
-                );
             }
         }
     }
