@@ -24,7 +24,7 @@ public class GhostLakeGenerationTask {
             SOURCE_ID =
             ResourceLocation.fromNamespaceAndPath(
                     QisPlan2.MODID,
-                    "ghost_lake"
+                    "ghost_lake_full"
             );
 
     private static final String PARTS_ROOT =
@@ -166,7 +166,7 @@ public class GhostLakeGenerationTask {
                                 >> 4
                                 << 4,
 
-                        origin.getY(),
+                        origin.getY() - 41,
 
                         origin.getZ()
                                 >> 4
