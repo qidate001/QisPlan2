@@ -2,6 +2,7 @@ package com.qidate.qisplan2.block.entity;
 
 import com.qidate.qisplan2.QisPlan2;
 import com.qidate.qisplan2.core.ModBlocks;
+import com.qidate.qisplan2.core.ModDataComponents;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
@@ -95,7 +96,7 @@ public class GhostLeatherBoxBlockEntity
         }
 
         stack.set(
-                QisPlan2.GHOST_LEATHER_BOX_REGION_ID,
+                ModDataComponents.GHOST_LEATHER_BOX_REGION_ID,
                 regionId
         );
     }
@@ -106,7 +107,7 @@ public class GhostLeatherBoxBlockEntity
 
         Long regionId =
                 stack.get(
-                        QisPlan2.GHOST_LEATHER_BOX_REGION_ID
+                        ModDataComponents.GHOST_LEATHER_BOX_REGION_ID
                 );
 
         if (regionId != null

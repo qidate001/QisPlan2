@@ -1,6 +1,7 @@
 package com.qidate.qisplan2.item;
 
 import com.qidate.qisplan2.QisPlan2;
+import com.qidate.qisplan2.core.ModDataComponents;
 import com.qidate.qisplan2.core.ModItems;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.InteractionHand;
@@ -62,7 +63,7 @@ public class GhostUmbrellaItem extends Item {
 
             Long openedAt =
                     stack.get(
-                            QisPlan2.GHOST_UMBRELLA_OPENED_AT
+                            ModDataComponents.GHOST_UMBRELLA_OPENED_AT
                     );
 
             /*
@@ -131,7 +132,7 @@ public class GhostUmbrellaItem extends Item {
             );
 
             stack.remove(
-                    QisPlan2.GHOST_UMBRELLA_OPENED_AT
+                    ModDataComponents.GHOST_UMBRELLA_OPENED_AT
             );
 
             return InteractionResultHolder.sidedSuccess(
@@ -160,7 +161,7 @@ public class GhostUmbrellaItem extends Item {
         if (!level.isClientSide()) {
 
             stack.set(
-                    QisPlan2.GHOST_UMBRELLA_OPENED_AT,
+                    ModDataComponents.GHOST_UMBRELLA_OPENED_AT,
                     level.getGameTime()
             );
         }
