@@ -1,10 +1,12 @@
 package com.qidate.qisplan2;
 
 import com.qidate.qisplan2.client.BlackRainParticle;
+import com.qidate.qisplan2.client.GhostStoveScreen;
 import com.qidate.qisplan2.client.GhostUmbrellaDomainClient;
 import com.qidate.qisplan2.client.model.NightWandererModel;
 import com.qidate.qisplan2.client.renderer.*;
 import com.qidate.qisplan2.core.ModEntities;
+import com.qidate.qisplan2.core.ModMenus;
 import com.qidate.qisplan2.core.ModParticles;
 import com.qidate.qisplan2.event.DeathCurseHudOverlay;
 
@@ -20,6 +22,7 @@ import net.neoforged.fml.common.Mod;
 import net.neoforged.api.distmarker.Dist;
 
 import net.neoforged.neoforge.client.event.EntityRenderersEvent;
+import net.neoforged.neoforge.client.event.RegisterMenuScreensEvent;
 import net.neoforged.neoforge.client.event.RegisterParticleProvidersEvent;
 import net.neoforged.neoforge.client.extensions.common.IClientFluidTypeExtensions;
 import net.neoforged.neoforge.client.extensions.common.RegisterClientExtensionsEvent;
@@ -45,17 +48,22 @@ public class QisPlan2Client {
                         )
         );
 
-        // 注册客户端 HUD
+        // 注册 必死诅咒之剑 HUD
         modEventBus.addListener(
                 DeathCurseHudOverlay::registerDeathCurseLayer
         );
 
-        // 注册夜游鬼模型 Layer
+        // 注册 GUI
+        modEventBus.addListener(
+                QisPlan2Client::registerMenuScreens
+        );
+
+        // 注册 Layer
         modEventBus.addListener(
                 QisPlan2Client::registerLayerDefinitions
         );
 
-        // 注册夜游鬼 Renderer
+        // 注册 Renderer
         modEventBus.addListener(
                 QisPlan2Client::registerEntityRenderers
         );
@@ -186,6 +194,19 @@ public class QisPlan2Client {
         event.registerEntityRenderer(
                 ModEntities.INVISIBLE_GHOST.get(),
                 InvisibleGhostRenderer::new
+        );
+    }
+
+
+    /**
+     * 注册GUI
+     */
+    public static void registerMenuScreens(
+            RegisterMenuScreensEvent event
+    ) {
+        event.register(
+                ModMenus.GHOST_STOVE_MENU.get(),
+                GhostStoveScreen::new
         );
     }
 }

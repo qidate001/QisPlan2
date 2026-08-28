@@ -133,10 +133,6 @@ public class QisPlan2 {
                 ModEntityAttributes::register
         );
 
-        modEventBus.addListener(
-                QisPlan2::registerMenuScreens
-        );
-
         modEventBus.register(
                 GhostUmbrellaClient.class
         );
@@ -163,14 +159,7 @@ public class QisPlan2 {
 
 
 
-    public static void registerMenuScreens(
-            RegisterMenuScreensEvent event
-    ) {
-        event.register(
-                ModMenus.GHOST_STOVE_MENU.get(),
-                GhostStoveScreen::new
-        );
-    }
+
 
     public static void registerClientItemExtensions(
             RegisterClientExtensionsEvent event
