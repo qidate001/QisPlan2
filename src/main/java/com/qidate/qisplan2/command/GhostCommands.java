@@ -5,6 +5,7 @@ import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
 
 import com.qidate.qisplan2.QisPlan2;
+import com.qidate.qisplan2.core.ModAttachments;
 import com.qidate.qisplan2.ghost.PossessedGhostState;
 import com.qidate.qisplan2.ghost.PossessionHandler;
 import com.qidate.qisplan2.ghost.ability.GhostAbilityRegistry;
@@ -346,7 +347,7 @@ public final class GhostCommands {
 
         Map<ResourceLocation, PossessedGhostState> ghosts =
                 player.getData(
-                        QisPlan2.POSSESSED_GHOSTS
+                        ModAttachments.POSSESSED_GHOSTS
                 );
 
         if (ghosts.isEmpty()) {

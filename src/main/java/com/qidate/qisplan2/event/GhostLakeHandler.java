@@ -1,6 +1,7 @@
 package com.qidate.qisplan2.event;
 
 import com.qidate.qisplan2.QisPlan2;
+import com.qidate.qisplan2.core.ModAttachments;
 import com.qidate.qisplan2.death.ModDamageTypes;
 import com.qidate.qisplan2.death.SupernaturalDeathHandler;
 import com.qidate.qisplan2.core.ModFluids;
@@ -356,7 +357,7 @@ public final class GhostLakeHandler {
                 PossessedGhostState
                 > oldData =
                 player.getData(
-                        QisPlan2.POSSESSED_GHOSTS
+                        ModAttachments.POSSESSED_GHOSTS
                 );
 
         if (oldData.isEmpty()) {

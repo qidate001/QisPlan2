@@ -78,58 +78,7 @@ public class QisPlan2 {
     public static final String MODID = "qisplan2";
     public static final Logger LOGGER = LogUtils.getLogger();
 
-    /**
-     * 玩家当前驾驭的鬼及其状态。
-     *
-     * Key：
-     *     鬼的 ResourceLocation
-     *
-     * Value：
-     *     该鬼的复苏值、上次使用时间等状态
-     *
-     * 因此玩家可以同时驾驭多只鬼。
-     */
-    public static final DeferredHolder<
-            AttachmentType<?>,
-            AttachmentType<Map<ResourceLocation, PossessedGhostState>>
-            > POSSESSED_GHOSTS =
-            ATTACHMENT_TYPES.register(
-                    "possessed_ghosts",
-                    () -> AttachmentType
-                            .<Map<ResourceLocation, PossessedGhostState>>builder(
-                                    (java.util.function.Supplier<
-                                            Map<ResourceLocation, PossessedGhostState>
-                                            >)
-                                            HashMap::new
-                            )
-                            .serialize(
-                                    Codec.unboundedMap(
-                                            ResourceLocation.CODEC,
-                                            PossessedGhostState.CODEC
-                                    )
-                            )
-                            .sync(
-                                    ByteBufCodecs.map(
-                                            HashMap::new,
-                                            ResourceLocation.STREAM_CODEC,
-                                            PossessedGhostState.STREAM_CODEC,
-                                            32
-                                    )
-                            )
-                            .build()
-            );
 
-
-
-    // 必死诅咒层数（0~10，同步到客户端供骷髅条显示）
-    public static final DeferredHolder<AttachmentType<?>, AttachmentType<Integer>> DEATH_CURSE_COUNT =
-            ATTACHMENT_TYPES.register(
-                    "death_curse_count",
-                    () -> AttachmentType.builder(() -> 0)
-                            .serialize(Codec.INT)        // 存档用
-                            .sync(ByteBufCodecs.VAR_INT) // 同步到客户端用
-                            .build()
-            );
 
 
 
@@ -268,23 +217,7 @@ public class QisPlan2 {
                     )
             );
 
-    public static final DeferredHolder<
-            AttachmentType<?>,
-            AttachmentType<PartitionReturnData>
-            > PARTITION_RETURN_DATA =
-            ATTACHMENT_TYPES.register(
-                    "partition_return_data",
-                    () ->
-                            AttachmentType
-                                    .builder(
-                                            () ->
-                                                    PartitionReturnData.EMPTY
-                                    )
-                                    .serialize(
-                                            PartitionReturnData.CODEC
-                                    )
-                                    .build()
-            );
+
 
 
 
@@ -315,6 +248,7 @@ public class QisPlan2 {
          * 强制初始化注册项。
          * ========================================================
          */
+        ModAttachments.init();
         ModFluids.init();
         ModEntities.init();
         ModItems.init();

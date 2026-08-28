@@ -1,6 +1,7 @@
 package com.qidate.qisplan2.event;
 
 import com.qidate.qisplan2.QisPlan2;
+import com.qidate.qisplan2.core.ModAttachments;
 import com.qidate.qisplan2.death.ModDamageTypes;
 import com.qidate.qisplan2.death.SupernaturalDeathHandler;
 import com.qidate.qisplan2.death.SupernaturalEntity;
@@ -77,7 +78,7 @@ public class DeathCurseHandler {
          */
 
         int count =
-                target.getData(QisPlan2.DEATH_CURSE_COUNT.get()) + 1;
+                target.getData(ModAttachments.DEATH_CURSE_COUNT.get()) + 1;
 
 
         if (count >= MAX_CURSE_COUNT) {
@@ -89,12 +90,12 @@ public class DeathCurseHandler {
              */
 
             target.removeData(
-                    QisPlan2.DEATH_CURSE_COUNT.get()
+                    ModAttachments.DEATH_CURSE_COUNT.get()
             );
 
             AttachmentSync.syncEntityUpdate(
                     target,
-                    QisPlan2.DEATH_CURSE_COUNT.get()
+                    ModAttachments.DEATH_CURSE_COUNT.get()
             );
 
             breakDeathCurseSword(
@@ -119,13 +120,13 @@ public class DeathCurseHandler {
         } else {
 
             target.setData(
-                    QisPlan2.DEATH_CURSE_COUNT.get(),
+                    ModAttachments.DEATH_CURSE_COUNT.get(),
                     count
             );
 
             AttachmentSync.syncEntityUpdate(
                     target,
-                    QisPlan2.DEATH_CURSE_COUNT.get()
+                    ModAttachments.DEATH_CURSE_COUNT.get()
             );
         }
 
@@ -139,7 +140,7 @@ public class DeathCurseHandler {
         if (player.getRandom().nextFloat() < 0.5F) {
 
             int playerCurseCount =
-                    player.getData(QisPlan2.DEATH_CURSE_COUNT.get()) + 1;
+                    player.getData(ModAttachments.DEATH_CURSE_COUNT.get()) + 1;
 
 
             if (playerCurseCount >= MAX_CURSE_COUNT) {
@@ -149,12 +150,12 @@ public class DeathCurseHandler {
                  */
 
                 player.removeData(
-                        QisPlan2.DEATH_CURSE_COUNT.get()
+                        ModAttachments.DEATH_CURSE_COUNT.get()
                 );
 
                 AttachmentSync.syncEntityUpdate(
                         player,
-                        QisPlan2.DEATH_CURSE_COUNT.get()
+                        ModAttachments.DEATH_CURSE_COUNT.get()
                 );
 
                 breakDeathCurseSword(
@@ -179,13 +180,13 @@ public class DeathCurseHandler {
             } else {
 
                 player.setData(
-                        QisPlan2.DEATH_CURSE_COUNT.get(),
+                        ModAttachments.DEATH_CURSE_COUNT.get(),
                         playerCurseCount
                 );
 
                 AttachmentSync.syncEntityUpdate(
                         player,
-                        QisPlan2.DEATH_CURSE_COUNT.get()
+                        ModAttachments.DEATH_CURSE_COUNT.get()
                 );
 
 //                QisPlan2.LOGGER.info(
@@ -214,7 +215,7 @@ public class DeathCurseHandler {
             PlayerEvent.Clone event
     ) {
         event.getEntity()
-                .removeData(QisPlan2.DEATH_CURSE_COUNT.get());
+                .removeData(ModAttachments.DEATH_CURSE_COUNT.get());
     }
 
 

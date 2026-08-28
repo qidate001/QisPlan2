@@ -1,6 +1,7 @@
 package com.qidate.qisplan2.event;
 
 import com.qidate.qisplan2.QisPlan2;
+import com.qidate.qisplan2.core.ModAttachments;
 import com.qidate.qisplan2.item.DeathCurseSword;
 import net.minecraft.client.DeltaTracker;
 import net.minecraft.client.Minecraft;
@@ -106,7 +107,7 @@ public class DeathCurseHudOverlay {
 
         int playerCurse =
                 player.getData(
-                        QisPlan2.DEATH_CURSE_COUNT.get()
+                        ModAttachments.DEATH_CURSE_COUNT.get()
                 );
 
         if (playerCurse > 0) {
@@ -170,7 +171,7 @@ public class DeathCurseHudOverlay {
 
         int targetCurse =
                 target.getData(
-                        QisPlan2.DEATH_CURSE_COUNT.get()
+                        ModAttachments.DEATH_CURSE_COUNT.get()
                 );
 
         /*

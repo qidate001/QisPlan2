@@ -1,6 +1,7 @@
 package com.qidate.qisplan2.ghost;
 
 import com.qidate.qisplan2.QisPlan2;
+import com.qidate.qisplan2.core.ModAttachments;
 import com.qidate.qisplan2.event.GhostBreakoutHandler;
 import com.qidate.qisplan2.ghost.ability.GhostAbilityRegistry;
 import com.qidate.qisplan2.ghost.ability.PossessedGhostAbility;
@@ -173,7 +174,7 @@ public final class PossessionHandler {
 
         Map<ResourceLocation, PossessedGhostState> oldData =
                 player.getData(
-                        QisPlan2.POSSESSED_GHOSTS
+                        ModAttachments.POSSESSED_GHOSTS
                 );
 
 
@@ -232,7 +233,7 @@ public final class PossessionHandler {
 
 
         player.setData(
-                QisPlan2.POSSESSED_GHOSTS,
+                ModAttachments.POSSESSED_GHOSTS,
                 data
         );
 
@@ -271,7 +272,7 @@ public final class PossessionHandler {
 
         Map<ResourceLocation, PossessedGhostState> oldData =
                 player.getData(
-                        QisPlan2.POSSESSED_GHOSTS
+                        ModAttachments.POSSESSED_GHOSTS
                 );
 
 
@@ -319,7 +320,7 @@ public final class PossessionHandler {
 
 
         player.setData(
-                QisPlan2.POSSESSED_GHOSTS,
+                ModAttachments.POSSESSED_GHOSTS,
                 data
         );
 
@@ -343,7 +344,7 @@ public final class PossessionHandler {
     ) {
 
         return player.getData(
-                QisPlan2.POSSESSED_GHOSTS
+                ModAttachments.POSSESSED_GHOSTS
         ).containsKey(
                 ghost
         );
@@ -359,7 +360,7 @@ public final class PossessionHandler {
     ) {
 
         return player.getData(
-                QisPlan2.POSSESSED_GHOSTS
+                ModAttachments.POSSESSED_GHOSTS
         ).get(
                 ghost
         );
@@ -379,7 +380,7 @@ public final class PossessionHandler {
 
         return new HashMap<>(
                 player.getData(
-                        QisPlan2.POSSESSED_GHOSTS
+                        ModAttachments.POSSESSED_GHOSTS
                 )
         );
     }
@@ -398,7 +399,7 @@ public final class PossessionHandler {
     ) {
 
         player.setData(
-                QisPlan2.POSSESSED_GHOSTS,
+                ModAttachments.POSSESSED_GHOSTS,
                 new HashMap<>()
         );
     }
@@ -421,7 +422,7 @@ public final class PossessionHandler {
         Map<ResourceLocation, PossessedGhostState> data =
                 new HashMap<>(
                         player.getData(
-                                QisPlan2.POSSESSED_GHOSTS
+                                ModAttachments.POSSESSED_GHOSTS
                         )
                 );
 
@@ -433,7 +434,7 @@ public final class PossessionHandler {
 
 
         player.setData(
-                QisPlan2.POSSESSED_GHOSTS,
+                ModAttachments.POSSESSED_GHOSTS,
                 data
         );
     }
@@ -612,7 +613,7 @@ public final class PossessionHandler {
 
         Map<ResourceLocation, PossessedGhostState> oldData =
                 player.getData(
-                        QisPlan2.POSSESSED_GHOSTS
+                        ModAttachments.POSSESSED_GHOSTS
                 );
 
 
@@ -655,7 +656,7 @@ public final class PossessionHandler {
 
 
         player.setData(
-                QisPlan2.POSSESSED_GHOSTS,
+                ModAttachments.POSSESSED_GHOSTS,
                 data
         );
 
@@ -715,7 +716,7 @@ public final class PossessionHandler {
         Map<ResourceLocation, PossessedGhostState> data =
                 new HashMap<>(
                         player.getData(
-                                QisPlan2.POSSESSED_GHOSTS
+                                ModAttachments.POSSESSED_GHOSTS
                         )
                 );
 
@@ -748,7 +749,7 @@ public final class PossessionHandler {
 
 
         player.setData(
-                QisPlan2.POSSESSED_GHOSTS,
+                ModAttachments.POSSESSED_GHOSTS,
                 data
         );
 
@@ -771,7 +772,7 @@ public final class PossessionHandler {
         Map<ResourceLocation, PossessedGhostState> data =
                 new HashMap<>(
                         player.getData(
-                                QisPlan2.POSSESSED_GHOSTS
+                                ModAttachments.POSSESSED_GHOSTS
                         )
                 );
 
@@ -801,7 +802,7 @@ public final class PossessionHandler {
 
 
         player.setData(
-                QisPlan2.POSSESSED_GHOSTS,
+                ModAttachments.POSSESSED_GHOSTS,
                 data
         );
 
@@ -822,7 +823,7 @@ public final class PossessionHandler {
 
         Map<ResourceLocation, PossessedGhostState> oldData =
                 player.getData(
-                        QisPlan2.POSSESSED_GHOSTS
+                        ModAttachments.POSSESSED_GHOSTS
                 );
 
 
@@ -1021,7 +1022,7 @@ public final class PossessionHandler {
         if (changed) {
 
             player.setData(
-                    QisPlan2.POSSESSED_GHOSTS,
+                    ModAttachments.POSSESSED_GHOSTS,
                     data
             );
         }
@@ -1187,7 +1188,7 @@ public final class PossessionHandler {
 
         Map<ResourceLocation, PossessedGhostState> oldData =
                 player.getData(
-                        QisPlan2.POSSESSED_GHOSTS
+                        ModAttachments.POSSESSED_GHOSTS
                 );
 
 
@@ -1235,7 +1236,7 @@ public final class PossessionHandler {
         if (count > 0) {
 
             player.setData(
-                    QisPlan2.POSSESSED_GHOSTS,
+                    ModAttachments.POSSESSED_GHOSTS,
                     data
             );
         }

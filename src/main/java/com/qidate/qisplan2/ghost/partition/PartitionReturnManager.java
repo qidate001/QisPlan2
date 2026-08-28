@@ -2,6 +2,7 @@ package com.qidate.qisplan2.ghost.partition;
 
 import com.qidate.qisplan2.QisPlan2;
 
+import com.qidate.qisplan2.core.ModAttachments;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.level.Level;
@@ -33,7 +34,7 @@ public final class PartitionReturnManager {
                 );
 
         player.setData(
-                QisPlan2.PARTITION_RETURN_DATA,
+                ModAttachments.PARTITION_RETURN_DATA,
                 data
         );
     }
@@ -47,7 +48,7 @@ public final class PartitionReturnManager {
 
         PartitionReturnData data =
                 player.getData(
-                        QisPlan2.PARTITION_RETURN_DATA
+                        ModAttachments.PARTITION_RETURN_DATA
                 );
 
         return data.valid();
@@ -64,7 +65,7 @@ public final class PartitionReturnManager {
 
         PartitionReturnData data =
                 player.getData(
-                        QisPlan2.PARTITION_RETURN_DATA
+                        ModAttachments.PARTITION_RETURN_DATA
                 );
 
         if (!data.valid()) {
@@ -129,7 +130,7 @@ public final class PartitionReturnManager {
          */
 
         player.setData(
-                QisPlan2.PARTITION_RETURN_DATA,
+                ModAttachments.PARTITION_RETURN_DATA,
                 PartitionReturnData.EMPTY
         );
 

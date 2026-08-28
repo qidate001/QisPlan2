@@ -3,6 +3,7 @@ package com.qidate.qisplan2.agent;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.qidate.qisplan2.QisPlan2;
+import com.qidate.qisplan2.core.ModAttachments;
 import com.qidate.qisplan2.core.ModItems;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.nbt.CompoundTag;
@@ -270,7 +271,7 @@ public class AgentExecutor {
          */
         int currentCount =
                 player.getData(
-                        QisPlan2.DEATH_CURSE_COUNT.get()
+                        ModAttachments.DEATH_CURSE_COUNT.get()
                 );
 
         if (currentCount <= 0) {
@@ -288,12 +289,10 @@ public class AgentExecutor {
          * 至少清除 1 层，
          * 最多清除当前全部层数
          */
-        int removeCount = Math.max(
+        int removeCount = Math.clamp(
+                requestedCount,
                 1,
-                Math.min(
-                        requestedCount,
-                        currentCount
-                )
+                currentCount
         );
 
         int cost =
@@ -322,7 +321,7 @@ public class AgentExecutor {
          * 写回 Attachment
          */
         player.setData(
-                QisPlan2.DEATH_CURSE_COUNT.get(),
+                ModAttachments.DEATH_CURSE_COUNT.get(),
                 remaining
         );
 
@@ -331,7 +330,7 @@ public class AgentExecutor {
          */
         AttachmentSync.syncEntityUpdate(
                 player,
-                QisPlan2.DEATH_CURSE_COUNT.get()
+                ModAttachments.DEATH_CURSE_COUNT.get()
         );
 
         /*
