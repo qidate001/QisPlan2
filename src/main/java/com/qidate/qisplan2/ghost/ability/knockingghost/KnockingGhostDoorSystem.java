@@ -519,13 +519,9 @@ public final class KnockingGhostDoorSystem {
                     /*
                      * 不强制加载新区块。
                      */
-                    if (!level.hasChunkAt(
-                            mutable
-                    )) {
-
+                    if (!level.isLoaded(mutable)) {
                         continue;
                     }
-
 
                     BlockPos candidate =
                             mutable.immutable();

@@ -3,13 +3,14 @@ package com.qidate.qisplan2.event;
 import com.qidate.qisplan2.QisPlan2;
 import com.qidate.qisplan2.core.ModAttachments;
 import com.qidate.qisplan2.ghost.PossessedGhostState;
-import com.qidate.qisplan2.ghost.PossessionHandler;
 import com.qidate.qisplan2.ghost.ability.GhostAbilityRegistry;
 import com.qidate.qisplan2.ghost.ability.PossessedGhostAbility;
+import com.qidate.qisplan2.ghost.ability.nightwanderer.NightWandererAbility;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.util.Mth;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.client.event.RenderGuiEvent;
@@ -384,7 +385,7 @@ public class PossessionHudOverlay {
         );
 
         if (ghostId.equals(
-                PossessionHandler.NIGHT_WANDERER
+                NightWandererAbility.ID
         )) {
             graphics.fill(
                     x + 7,
@@ -418,14 +419,7 @@ public class PossessionHudOverlay {
             int fillColor
     ) {
 
-        progress =
-                Math.max(
-                        0.0D,
-                        Math.min(
-                                1.0D,
-                                progress
-                        )
-                );
+        progress = Mth.clamp(progress, 0.0D, 1.0D);
 
         /*
          * 背景
