@@ -93,50 +93,9 @@ public class QisPlan2 {
 
 
 
-    // 创造物品栏
-    public static final DeferredRegister<CreativeModeTab> CREATIVE_MODE_TABS =
-            DeferredRegister.create(Registries.CREATIVE_MODE_TAB, MODID);
 
-    // 创造物品栏（齐计划2：鬼）
-    public static final DeferredHolder<CreativeModeTab, CreativeModeTab> QIS_PLAN_GHOST_TAB =
-            CREATIVE_MODE_TABS.register("qis_plan_ghost", () -> CreativeModeTab.builder()
-                    .title(Component.translatable("itemGroup.qisplan2.qis_plan_ghost"))
-                    .icon(() -> GHOST_CARPET_ITEM.get().getDefaultInstance())
-                    .displayItems((parameters, output) -> {
-                        output.accept(DEATH_CURSE_SWORD);
-                        output.accept(GHOST_CARPET_ITEM);
-                        output.accept(GHOST_STONE_BRICKS_ITEM);
-                        output.accept(GHOST_STOVE_ITEM);
-                        output.accept(GHOST_DOOR_ITEM);
-                        output.accept(GHOST_GRASS_ITEM);
-                        output.accept(GHOST_SHROUD);
-                        output.accept(GHOST_BOOK);
-                        output.accept(GHOST_PIANO);
-                        output.accept(GHOST_WHITE_PORRIDGE);
-                        output.accept(GHOST_UMBRELLA);
-                        output.accept(GHOST_LEATHER_BOX_ITEM);
-                        output.accept(GHOST_LEATHER_WALL_ITEM);
-                        output.accept(NIGHT_WANDERER_SPAWN_EGG);
-                        output.accept(INVISIBLE_GHOST_SPAWN_EGG);
-                        output.accept(KNOCKING_GHOST_SPAWN_EGG);
-                        output.accept(OPENING_GHOST_SPAWN_EGG);
-                        output.accept(CLOSING_GHOST_SPAWN_EGG);
-                    })
-                    .build()
-            );
 
-    // 创造物品栏（齐计划2：灵异材料）
-    public static final DeferredHolder<CreativeModeTab, CreativeModeTab> QIS_PLAN_GHOST_ITEM_TAB =
-            CREATIVE_MODE_TABS.register("qis_plan_ghost_items", () -> CreativeModeTab.builder()
-                    .title(Component.translatable("itemGroup.qisplan2.qis_plan_ghost_items"))
-                    .icon(() -> GHOST_COIN.get().getDefaultInstance())
-                    .displayItems((parameters, output) -> {
-                        output.accept(GHOST_COIN);
-                        output.accept(GHOST_STONE_FINGER);
-                        output.accept(INCENSE_ASH);
-                    })
-                    .build()
-            );
+
 
     // 创造物品栏（齐计划2：其他）
 //    public static final DeferredHolder<CreativeModeTab, CreativeModeTab> QIS_PLAN_ELSE_TAB =
@@ -149,18 +108,7 @@ public class QisPlan2 {
 //                    .build()
 //            );
 
-    // 鬼灶台 Recipe 注册
-    public static final Supplier<RecipeType<GhostStoveRecipe>>
-            GHOST_STOVE_RECIPE_TYPE =
-            RECIPE_TYPES.register(
-                    "ghost_stove",
-                    () -> RecipeType.simple(
-                            ResourceLocation.fromNamespaceAndPath(
-                                    MODID,
-                                    "ghost_stove"
-                            )
-                    )
-            );
+
 
 
     public static final Supplier<RecipeSerializer<GhostStoveRecipe>>
@@ -218,6 +166,9 @@ public class QisPlan2 {
         ModBlocks.init();
         ModSounds.init();
         ModMenus.init();
+        ModRecipes.init();
+        ModParticles.init();
+        ModCreativeTabs.init();
         ModDataComponents.init();
 
         // 实体属性注册

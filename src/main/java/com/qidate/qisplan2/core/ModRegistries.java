@@ -8,6 +8,7 @@ import net.minecraft.sounds.SoundEvent;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.inventory.MenuType;
 import net.minecraft.world.item.ArmorMaterial;
+import net.minecraft.world.item.CreativeModeTab;
 import net.minecraft.world.item.crafting.RecipeSerializer;
 import net.minecraft.world.item.crafting.RecipeType;
 import net.minecraft.world.level.block.entity.BlockEntityType;
@@ -102,6 +103,12 @@ public class ModRegistries {
     public static final DeferredRegister<Fluid> FLUIDS =
             DeferredRegister.create(
                     BuiltInRegistries.FLUID,
+                    MODID
+            );
+
+    public static final DeferredRegister<CreativeModeTab> CREATIVE_MODE_TABS =
+            DeferredRegister.create(
+                    Registries.CREATIVE_MODE_TAB,
                     MODID
             );
 }
