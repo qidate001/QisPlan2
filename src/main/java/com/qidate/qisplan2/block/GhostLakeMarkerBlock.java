@@ -4,6 +4,7 @@ import com.mojang.serialization.MapCodec;
 import com.qidate.qisplan2.QisPlan2;
 import com.qidate.qisplan2.block.entity.GhostLakeMarkerBlockEntity;
 
+import com.qidate.qisplan2.core.ModBlocks;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.BaseEntityBlock;
@@ -58,7 +59,7 @@ public class GhostLakeMarkerBlock
 
         return createTickerHelper(
                 blockEntityType,
-                QisPlan2.GHOST_LAKE_MARKER_BLOCK_ENTITY.get(),
+                ModBlocks.GHOST_LAKE_MARKER_BLOCK_ENTITY.get(),
                 GhostLakeMarkerBlockEntity::serverTick
         );
     }

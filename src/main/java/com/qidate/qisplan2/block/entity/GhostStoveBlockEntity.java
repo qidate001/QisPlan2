@@ -1,6 +1,7 @@
 package com.qidate.qisplan2.block.entity;
 
 import com.qidate.qisplan2.QisPlan2;
+import com.qidate.qisplan2.core.ModBlocks;
 import com.qidate.qisplan2.menu.GhostStoveMenu;
 import com.qidate.qisplan2.recipe.GhostStoveIngredient;
 import com.qidate.qisplan2.recipe.GhostStoveInput;
@@ -96,7 +97,7 @@ public class GhostStoveBlockEntity
             BlockState state
     ) {
         super(
-                QisPlan2.GHOST_STOVE_BLOCK_ENTITY.get(),
+                ModBlocks.GHOST_STOVE_BLOCK_ENTITY.get(),
                 pos,
                 state
         );

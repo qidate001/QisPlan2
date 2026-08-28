@@ -2,6 +2,7 @@ package com.qidate.qisplan2.block.entity;
 
 import com.qidate.qisplan2.QisPlan2;
 import com.qidate.qisplan2.block.GhostPianoBlock;
+import com.qidate.qisplan2.core.ModBlocks;
 import com.qidate.qisplan2.event.GhostPianoMusicHandler;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
@@ -17,7 +18,7 @@ public class GhostPianoBlockEntity extends BlockEntity {
             BlockState state
     ) {
         super(
-                QisPlan2.GHOST_PIANO_BLOCK_ENTITY.get(),
+                ModBlocks.GHOST_PIANO_BLOCK_ENTITY.get(),
                 pos,
                 state
         );

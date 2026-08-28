@@ -1,6 +1,7 @@
 package com.qidate.qisplan2.event;
 
 import com.qidate.qisplan2.QisPlan2;
+import com.qidate.qisplan2.core.ModBlocks;
 import com.qidate.qisplan2.death.ModDamageTypes;
 import com.qidate.qisplan2.death.SupernaturalDeathHandler;
 
@@ -63,6 +64,6 @@ public class GhostStoneBricksHandler {
     ) {
 
         return state.getBlock()
-                == QisPlan2.GHOST_STONE_BRICKS.get();
+                == ModBlocks.GHOST_STONE_BRICKS.get();
     }
 }

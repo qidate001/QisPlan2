@@ -1,6 +1,7 @@
 package com.qidate.qisplan2.block.entity;
 
 import com.qidate.qisplan2.QisPlan2;
+import com.qidate.qisplan2.core.ModBlocks;
 import com.qidate.qisplan2.structure.GhostLakeGenerationManager;
 
 import net.minecraft.core.BlockPos;
@@ -25,7 +26,7 @@ public class GhostLakeMarkerBlockEntity
             BlockState state
     ) {
         super(
-                QisPlan2.GHOST_LAKE_MARKER_BLOCK_ENTITY.get(),
+                ModBlocks.GHOST_LAKE_MARKER_BLOCK_ENTITY.get(),
                 pos,
                 state
         );

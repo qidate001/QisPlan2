@@ -1,6 +1,7 @@
 package com.qidate.qisplan2.block.entity;
 
 import com.qidate.qisplan2.QisPlan2;
+import com.qidate.qisplan2.core.ModBlocks;
 import com.qidate.qisplan2.structure.GhostManorGenerationManager;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
@@ -16,7 +17,7 @@ public class GhostManorMarkerBlockEntity extends BlockEntity {
             BlockState state
     ) {
         super(
-                QisPlan2.GHOST_MANOR_MARKER_BLOCK_ENTITY.get(),
+                ModBlocks.GHOST_MANOR_MARKER_BLOCK_ENTITY.get(),
                 pos,
                 state
         );

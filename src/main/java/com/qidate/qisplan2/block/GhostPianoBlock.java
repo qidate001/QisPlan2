@@ -3,6 +3,7 @@ package com.qidate.qisplan2.block;
 import com.mojang.serialization.MapCodec;
 import com.qidate.qisplan2.QisPlan2;
 import com.qidate.qisplan2.block.entity.GhostPianoBlockEntity;
+import com.qidate.qisplan2.core.ModBlocks;
 import com.qidate.qisplan2.event.GhostPianoMusicHandler;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -301,7 +302,7 @@ public class GhostPianoBlock extends BaseEntityBlock {
 
         return createTickerHelper(
                 blockEntityType,
-                QisPlan2.GHOST_PIANO_BLOCK_ENTITY.get(),
+                ModBlocks.GHOST_PIANO_BLOCK_ENTITY.get(),
                 GhostPianoBlockEntity::serverTick
         );
     }

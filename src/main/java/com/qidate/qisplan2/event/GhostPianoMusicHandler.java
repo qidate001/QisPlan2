@@ -1,6 +1,7 @@
 package com.qidate.qisplan2.event;
 
 import com.qidate.qisplan2.QisPlan2;
+import com.qidate.qisplan2.core.ModBlocks;
 import com.qidate.qisplan2.data.GhostPianoSavedData;
 import com.qidate.qisplan2.death.ModDamageTypes;
 import com.qidate.qisplan2.death.SupernaturalDeathHandler;
@@ -234,7 +235,7 @@ public final class GhostPianoMusicHandler {
                  */
                 if (!level.getBlockState(
                         pianoPos
-                ).is(QisPlan2.GHOST_PIANO_BLOCK.get())) {
+                ).is(ModBlocks.GHOST_PIANO_BLOCK.get())) {
 
                     GhostPianoSavedData.get(level)
                             .remove(pianoPos);
@@ -474,7 +475,7 @@ public final class GhostPianoMusicHandler {
          * 鬼石砖
          */
         if (state.is(
-                QisPlan2.GHOST_STONE_BRICKS.get()
+                ModBlocks.GHOST_STONE_BRICKS.get()
         )) {
             return true;
         }
@@ -486,7 +487,7 @@ public final class GhostPianoMusicHandler {
          * 打开：不阻挡
          */
         if (state.is(
-                QisPlan2.GHOST_DOOR.get()
+                ModBlocks.GHOST_DOOR.get()
         )) {
             return !state.getValue(
                     DoorBlock.OPEN

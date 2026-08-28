@@ -1,6 +1,7 @@
 package com.qidate.qisplan2.client;
 
 import com.qidate.qisplan2.QisPlan2;
+import com.qidate.qisplan2.core.ModItems;
 import net.minecraft.client.renderer.BlockEntityWithoutLevelRenderer;
 import net.minecraft.client.resources.model.ModelResourceLocation;
 import net.minecraft.resources.ResourceLocation;
@@ -56,7 +57,7 @@ public final class GhostUmbrellaClient {
                         return renderer;
                     }
                 },
-                QisPlan2.GHOST_UMBRELLA.get()
+                ModItems.GHOST_UMBRELLA.get()
         );
     }
 }

@@ -1,7 +1,10 @@
 package com.qidate.qisplan2.core;
 
+import com.mojang.serialization.Codec;
 import com.qidate.qisplan2.item.*;
 import net.minecraft.Util;
+import net.minecraft.core.component.DataComponentType;
+import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.world.item.ArmorItem;
@@ -19,8 +22,7 @@ import static com.qidate.qisplan2.QisPlan2.MODID;
 import static com.qidate.qisplan2.core.ModEntities.*;
 import static com.qidate.qisplan2.core.ModEntities.CLOSING_GHOST;
 import static com.qidate.qisplan2.core.ModEntities.OPENING_GHOST;
-import static com.qidate.qisplan2.core.ModRegistries.ARMOR_MATERIALS;
-import static com.qidate.qisplan2.core.ModRegistries.ITEMS;
+import static com.qidate.qisplan2.core.ModRegistries.*;
 
 public class ModItems {
 
@@ -129,6 +131,31 @@ public class ModItems {
             ITEMS.register(
                     "ghost_book",
                     () -> new GhostBookItem(
+                            new Item.Properties()
+                                    .stacksTo(1)
+                    )
+            );
+
+    // 鬼伞
+    public static final DeferredHolder<
+            DataComponentType<?>,
+            DataComponentType<Boolean>
+            > GHOST_UMBRELLA_OPEN =
+            DATA_COMPONENTS.register(
+                    "ghost_umbrella_open",
+                    () -> DataComponentType.<Boolean>builder()
+                            .persistent(Codec.BOOL)
+                            .networkSynchronized(
+                                    ByteBufCodecs.BOOL
+                            )
+                            .build()
+            );
+
+    public static final DeferredItem<GhostUmbrellaItem>
+            GHOST_UMBRELLA =
+            ITEMS.register(
+                    "ghost_umbrella",
+                    () -> new GhostUmbrellaItem(
                             new Item.Properties()
                                     .stacksTo(1)
                     )

@@ -2,6 +2,7 @@ package com.qidate.qisplan2.ghost.partition;
 
 import com.qidate.qisplan2.QisPlan2;
 
+import com.qidate.qisplan2.core.ModBlocks;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.server.MinecraftServer;
@@ -238,12 +239,12 @@ public final class PartitionSpaceManager {
                 );
 
         if (!state.is(
-                QisPlan2.PARTITION_EXIT.get()
+                ModBlocks.PARTITION_EXIT.get()
         )) {
 
             level.setBlock(
                     exitPos,
-                    QisPlan2.PARTITION_EXIT
+                    ModBlocks.PARTITION_EXIT
                             .get()
                             .defaultBlockState(),
                     3
@@ -541,12 +542,12 @@ public final class PartitionSpaceManager {
                              */
                             if (current.isAir()
                                     || current.is(
-                                    QisPlan2.GHOST_LEATHER_WALL.get()
+                                    ModBlocks.GHOST_LEATHER_WALL.get()
                             )) {
 
                                 level.setBlock(
                                         pos,
-                                        QisPlan2
+                                        ModBlocks
                                                 .GHOST_LEATHER_WALL
                                                 .get()
                                                 .defaultBlockState(),
@@ -569,7 +570,7 @@ public final class PartitionSpaceManager {
                          */
 
                         if (current.is(
-                                QisPlan2.GHOST_LEATHER_WALL.get()
+                                ModBlocks.GHOST_LEATHER_WALL.get()
                         )) {
 
                             level.removeBlock(

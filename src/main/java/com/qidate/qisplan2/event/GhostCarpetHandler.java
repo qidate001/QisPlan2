@@ -1,6 +1,7 @@
 package com.qidate.qisplan2.event;
 
 import com.qidate.qisplan2.QisPlan2;
+import com.qidate.qisplan2.core.ModBlocks;
 import com.qidate.qisplan2.death.ModDamageTypes;
 import com.qidate.qisplan2.death.SupernaturalDeathHandler;
 import net.minecraft.core.BlockPos;
@@ -74,8 +75,8 @@ public class GhostCarpetHandler {
                 entity.level().getBlockState(entityPos.below());
 
         boolean onGhostCarpet =
-                currentState.is(QisPlan2.GHOST_CARPET.get())
-                        || belowState.is(QisPlan2.GHOST_CARPET.get());
+                currentState.is(ModBlocks.GHOST_CARPET.get())
+                        || belowState.is(ModBlocks.GHOST_CARPET.get());
 
         /*
          * 没踩鬼地毯 → 清空累计时间
@@ -299,7 +300,7 @@ public class GhostCarpetHandler {
              */
             serverLevel.setBlock(
                     next,
-                    QisPlan2.GHOST_CARPET
+                    ModBlocks.GHOST_CARPET
                             .get()
                             .defaultBlockState(),
                     3
@@ -366,7 +367,7 @@ public class GhostCarpetHandler {
     ) {
 
         return level.getBlockState(pos)
-                .is(QisPlan2.GHOST_CARPET.get());
+                .is(ModBlocks.GHOST_CARPET.get());
     }
 
     /**
@@ -594,7 +595,7 @@ public class GhostCarpetHandler {
          */
         level.setBlock(
                 pos,
-                QisPlan2.GHOST_CARPET
+                ModBlocks.GHOST_CARPET
                         .get()
                         .defaultBlockState(),
                 3

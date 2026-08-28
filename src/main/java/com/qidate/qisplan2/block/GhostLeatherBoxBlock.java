@@ -3,6 +3,7 @@ package com.qidate.qisplan2.block;
 import com.mojang.serialization.MapCodec;
 import com.qidate.qisplan2.QisPlan2;
 import com.qidate.qisplan2.block.entity.GhostLeatherBoxBlockEntity;
+import com.qidate.qisplan2.core.ModBlocks;
 import com.qidate.qisplan2.ghost.partition.PartitionReturnManager;
 import com.qidate.qisplan2.ghost.partition.PartitionRoomPos;
 import com.qidate.qisplan2.ghost.partition.PartitionSpaceManager;
@@ -293,7 +294,7 @@ public class GhostLeatherBoxBlock
 
         ItemStack drop =
                 new ItemStack(
-                        QisPlan2.GHOST_LEATHER_BOX_ITEM.get()
+                        ModBlocks.GHOST_LEATHER_BOX_ITEM.get()
                 );
 
         /*

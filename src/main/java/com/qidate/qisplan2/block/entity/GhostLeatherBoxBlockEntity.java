@@ -1,6 +1,7 @@
 package com.qidate.qisplan2.block.entity;
 
 import com.qidate.qisplan2.QisPlan2;
+import com.qidate.qisplan2.core.ModBlocks;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
@@ -26,7 +27,7 @@ public class GhostLeatherBoxBlockEntity
             BlockState state
     ) {
         super(
-                QisPlan2.GHOST_LEATHER_BOX_BLOCK_ENTITY.get(),
+                ModBlocks.GHOST_LEATHER_BOX_BLOCK_ENTITY.get(),
                 pos,
                 state
         );

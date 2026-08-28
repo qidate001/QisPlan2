@@ -1,6 +1,7 @@
 package com.qidate.qisplan2.item;
 
 import com.qidate.qisplan2.QisPlan2;
+import com.qidate.qisplan2.core.ModItems;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
@@ -24,7 +25,7 @@ public class GhostUmbrellaItem extends Item {
     ) {
         Boolean value =
                 stack.get(
-                        QisPlan2.GHOST_UMBRELLA_OPEN
+                        ModItems.GHOST_UMBRELLA_OPEN
                 );
 
         return Boolean.TRUE.equals(value);
@@ -35,7 +36,7 @@ public class GhostUmbrellaItem extends Item {
             boolean open
     ) {
         stack.set(
-                QisPlan2.GHOST_UMBRELLA_OPEN,
+                ModItems.GHOST_UMBRELLA_OPEN,
                 open
         );
     }

@@ -1,6 +1,7 @@
 package com.qidate.qisplan2.event;
 
 import com.qidate.qisplan2.QisPlan2;
+import com.qidate.qisplan2.core.ModBlocks;
 import com.qidate.qisplan2.death.ModDamageTypes;
 import com.qidate.qisplan2.death.SupernaturalDeathHandler;
 import net.minecraft.core.BlockPos;
@@ -133,7 +134,7 @@ public class GhostStoveHandler {
 
 
                     if (state.is(
-                            QisPlan2.GHOST_STOVE.get()
+                            ModBlocks.GHOST_STOVE.get()
                     )) {
 
                         return true;

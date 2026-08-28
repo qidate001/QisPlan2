@@ -3,6 +3,7 @@ package com.qidate.qisplan2.block;
 import com.mojang.serialization.MapCodec;
 import com.qidate.qisplan2.QisPlan2;
 import com.qidate.qisplan2.block.entity.GhostStoveBlockEntity;
+import com.qidate.qisplan2.core.ModBlocks;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
@@ -78,7 +79,7 @@ public class GhostStoveBlock
 
         return createTickerHelper(
                 blockEntityType,
-                QisPlan2.GHOST_STOVE_BLOCK_ENTITY.get(),
+                ModBlocks.GHOST_STOVE_BLOCK_ENTITY.get(),
                 GhostStoveBlockEntity::serverTick
         );
     }
