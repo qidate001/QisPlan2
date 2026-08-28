@@ -1,7 +1,8 @@
-package com.qidate.qisplan2.fluid;
+package com.qidate.qisplan2.core;
 
 import com.qidate.qisplan2.QisPlan2;
 
+import com.qidate.qisplan2.fluid.GhostLakeFluidType;
 import net.minecraft.world.item.BucketItem;
 import net.minecraft.world.level.block.LiquidBlock;
 import net.minecraft.world.level.material.Fluid;
@@ -27,7 +28,7 @@ public final class ModFluids {
             FluidType,
             FluidType
             > GHOST_LAKE_WATER_TYPE =
-            QisPlan2.FLUID_TYPES.register(
+            ModRegistries.FLUID_TYPES.register(
                     "ghost_lake_water",
                     () ->
                             new GhostLakeFluidType(
@@ -55,7 +56,7 @@ public final class ModFluids {
             Fluid,
             BaseFlowingFluid
             > GHOST_LAKE_WATER =
-            QisPlan2.FLUIDS.register(
+            ModRegistries.FLUIDS.register(
                     "ghost_lake_water",
                     () ->
                             new BaseFlowingFluid.Source(
@@ -74,7 +75,7 @@ public final class ModFluids {
             Fluid,
             BaseFlowingFluid
             > FLOWING_GHOST_LAKE_WATER =
-            QisPlan2.FLUIDS.register(
+            ModRegistries.FLUIDS.register(
                     "flowing_ghost_lake_water",
                     () ->
                             new BaseFlowingFluid.Flowing(
@@ -91,7 +92,7 @@ public final class ModFluids {
 
     public static final DeferredItem<BucketItem>
             GHOST_LAKE_WATER_BUCKET =
-            QisPlan2.ITEMS.registerItem(
+            ModRegistries.ITEMS.registerItem(
                     "ghost_lake_water_bucket",
                     properties ->
                             new BucketItem(
@@ -109,7 +110,7 @@ public final class ModFluids {
 
     public static final DeferredBlock<LiquidBlock>
             GHOST_LAKE_WATER_BLOCK =
-            QisPlan2.BLOCKS.registerBlock(
+            ModRegistries.BLOCKS.registerBlock(
                     "ghost_lake_water",
                     properties ->
                             new LiquidBlock(

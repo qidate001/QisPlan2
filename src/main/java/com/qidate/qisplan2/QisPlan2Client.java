@@ -1,7 +1,6 @@
 package com.qidate.qisplan2;
 
 import com.qidate.qisplan2.client.BlackRainParticle;
-import com.qidate.qisplan2.client.DoorGhostMarkClient;
 import com.qidate.qisplan2.client.GhostUmbrellaDomainClient;
 import com.qidate.qisplan2.client.model.NightWandererModel;
 import com.qidate.qisplan2.client.renderer.ClosingGhostRenderer;
@@ -10,12 +9,11 @@ import com.qidate.qisplan2.client.renderer.NightWandererRenderer;
 import com.qidate.qisplan2.client.renderer.OpeningGhostRenderer;
 import com.qidate.qisplan2.event.DeathCurseHudOverlay;
 
-import com.qidate.qisplan2.fluid.ModFluids;
+import com.qidate.qisplan2.core.ModFluids;
 import net.minecraft.client.model.HumanoidModel;
 import net.minecraft.client.model.geom.builders.CubeDeformation;
 import net.minecraft.client.model.geom.builders.LayerDefinition;
 
-import net.minecraft.client.resources.model.Material;
 import net.minecraft.resources.ResourceLocation;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.ModContainer;

@@ -3,7 +3,7 @@ package com.qidate.qisplan2.event;
 import com.qidate.qisplan2.QisPlan2;
 import com.qidate.qisplan2.death.ModDamageTypes;
 import com.qidate.qisplan2.death.SupernaturalDeathHandler;
-import com.qidate.qisplan2.fluid.ModFluids;
+import com.qidate.qisplan2.core.ModFluids;
 import com.qidate.qisplan2.ghost.PossessedGhostState;
 import com.qidate.qisplan2.ghost.PossessionHandler;
 

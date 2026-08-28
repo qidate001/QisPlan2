@@ -8,7 +8,7 @@ import com.qidate.qisplan2.core.QisConfig;
 import com.qidate.qisplan2.entity.*;
 import com.qidate.qisplan2.event.GhostUmbrellaAttackHandler;
 import com.qidate.qisplan2.event.PossessionHudOverlay;
-import com.qidate.qisplan2.fluid.ModFluids;
+import com.qidate.qisplan2.core.ModFluids;
 import com.qidate.qisplan2.ghost.GhostAbilityInteractionHandler;
 import com.qidate.qisplan2.ghost.PossessedGhostState;
 import com.qidate.qisplan2.ghost.ability.GhostAbilityRegistry;
@@ -74,75 +74,13 @@ import net.neoforged.neoforge.registries.DeferredRegister;
 import java.util.*;
 import java.util.function.Supplier;
 
+import static com.qidate.qisplan2.core.ModRegistries.*;
+
 // The value here should match an entry in the META-INF/neoforge.mods.toml file
 @Mod(QisPlan2.MODID)
 public class QisPlan2 {
     public static final String MODID = "qisplan2";
     public static final Logger LOGGER = LogUtils.getLogger();
-
-    // 附件类型注册表
-    public static final DeferredRegister.Blocks BLOCKS = DeferredRegister.createBlocks(MODID);
-    public static final DeferredRegister.Items ITEMS = DeferredRegister.createItems(MODID);
-    public static final DeferredRegister<EntityType<?>> ENTITY_TYPES =
-            DeferredRegister.create(
-                    Registries.ENTITY_TYPE,
-                    MODID
-            );
-    public static final DeferredRegister<BlockEntityType<?>> BLOCK_ENTITY_TYPES =
-            DeferredRegister.create(
-                    Registries.BLOCK_ENTITY_TYPE,
-                    MODID
-            );
-    public static final DeferredRegister<ArmorMaterial> ARMOR_MATERIALS =
-            DeferredRegister.create(
-                    BuiltInRegistries.ARMOR_MATERIAL,
-                    MODID
-            );
-    public static final DeferredRegister<SoundEvent> SOUND_EVENTS =
-            DeferredRegister.create(
-                    BuiltInRegistries.SOUND_EVENT,
-                    MODID
-            );
-    public static final DeferredRegister<MenuType<?>> MENUS =
-            DeferredRegister.create(
-                    BuiltInRegistries.MENU,
-                    MODID
-            );
-    public static final DeferredRegister<RecipeType<?>> RECIPE_TYPES =
-            DeferredRegister.create(
-                    Registries.RECIPE_TYPE,
-                    MODID
-            );
-    public static final DeferredRegister<RecipeSerializer<?>> RECIPE_SERIALIZERS =
-            DeferredRegister.create(
-                    Registries.RECIPE_SERIALIZER,
-                    MODID
-            );
-    public static final DeferredRegister<DataComponentType<?>> DATA_COMPONENTS =
-            DeferredRegister.create(
-                    BuiltInRegistries.DATA_COMPONENT_TYPE,
-                    MODID
-            );
-    public static final DeferredRegister<ParticleType<?>> PARTICLE_TYPES =
-            DeferredRegister.create(
-                    BuiltInRegistries.PARTICLE_TYPE,
-                    MODID
-            );
-    public static final DeferredRegister<AttachmentType<?>> ATTACHMENT_TYPES =
-            DeferredRegister.create(
-                    NeoForgeRegistries.ATTACHMENT_TYPES,
-                    MODID
-            );
-    public static final DeferredRegister<FluidType> FLUID_TYPES =
-            DeferredRegister.create(
-                    NeoForgeRegistries.FLUID_TYPES,
-                    MODID
-            );
-    public static final DeferredRegister<Fluid> FLUIDS =
-            DeferredRegister.create(
-                    BuiltInRegistries.FLUID,
-                    MODID
-            );
 
     /**
      * 玩家当前驾驭的鬼及其状态。
