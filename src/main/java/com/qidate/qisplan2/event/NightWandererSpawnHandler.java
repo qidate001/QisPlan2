@@ -4,6 +4,7 @@ import com.qidate.qisplan2.QisPlan2;
 import com.qidate.qisplan2.core.ModEntities;
 import com.qidate.qisplan2.entity.NightWanderer;
 import com.qidate.qisplan2.ghost.PossessionHandler;
+import com.qidate.qisplan2.ghost.ability.nightwanderer.NightWandererAbility;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerLevel;
@@ -111,7 +112,7 @@ public class NightWandererSpawnHandler {
              */
             if (PossessionHandler.hasGhost(
                     player,
-                    PossessionHandler.NIGHT_WANDERER
+                    NightWandererAbility.ID
             )) {
                 continue;
             }

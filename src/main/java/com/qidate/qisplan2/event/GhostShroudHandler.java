@@ -63,11 +63,11 @@ public class GhostShroudHandler {
                 )
         );
 
-        QisPlan2.LOGGER.info(
-                "[QisPlan2] 鬼寿衣扣血：{} -> {}",
-                oldHealth,
-                player.getHealth()
-        );
+//        QisPlan2.LOGGER.info(
+//                "[QisPlan2] 鬼寿衣扣血：{} -> {}",
+//                oldHealth,
+//                player.getHealth()
+//        );
     }
 
     @SubscribeEvent
@@ -128,10 +128,10 @@ public class GhostShroudHandler {
             }
         }
 
-        QisPlan2.LOGGER.info(
-                "[QisPlan2] 鬼寿衣阻止脱下：{}",
-                player.getName().getString()
-        );
+//        QisPlan2.LOGGER.info(
+//                "[QisPlan2] 鬼寿衣阻止脱下：{}",
+//                player.getName().getString()
+//        );
     }
 
     private static void ensureBindingCurse(
