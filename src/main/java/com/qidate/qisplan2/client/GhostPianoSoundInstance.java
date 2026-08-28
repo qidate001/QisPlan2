@@ -1,6 +1,7 @@
 package com.qidate.qisplan2.client;
 
 import com.qidate.qisplan2.QisPlan2;
+import com.qidate.qisplan2.core.ModSounds;
 import net.minecraft.client.resources.sounds.AbstractTickableSoundInstance;
 import net.minecraft.client.resources.sounds.SoundInstance;
 import net.minecraft.core.BlockPos;
@@ -17,7 +18,7 @@ public class GhostPianoSoundInstance
             BlockPos pianoPos
     ) {
         super(
-                QisPlan2.GHOST_PIANO_MUSIC.get(),
+                ModSounds.GHOST_PIANO_MUSIC.get(),
                 SoundSource.BLOCKS,
                 SoundInstance.createUnseededRandom()
         );

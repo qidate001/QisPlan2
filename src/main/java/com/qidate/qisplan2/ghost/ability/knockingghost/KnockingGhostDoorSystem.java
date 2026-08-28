@@ -2,6 +2,7 @@ package com.qidate.qisplan2.ghost.ability.knockingghost;
 
 import com.qidate.qisplan2.QisPlan2;
 import com.qidate.qisplan2.block.GhostDoorBlock;
+import com.qidate.qisplan2.core.ModSounds;
 import com.qidate.qisplan2.death.ModDamageTypes;
 import com.qidate.qisplan2.death.SupernaturalDeathHandler;
 
@@ -269,7 +270,7 @@ public final class KnockingGhostDoorSystem {
         level.playSound(
                 null,
                 doorPos,
-                QisPlan2.GHOST_KNOCK.get(),
+                ModSounds.GHOST_KNOCK.get(),
                 SoundSource.HOSTILE,
                 1.0F,
                 1.0F

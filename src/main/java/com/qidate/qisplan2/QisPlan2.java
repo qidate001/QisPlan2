@@ -133,32 +133,7 @@ public class QisPlan2 {
 
 
 
-    // 鬼灶台 GUI
-    public static final DeferredHolder<
-            MenuType<?>,
-            MenuType<GhostStoveMenu>
-            > GHOST_STOVE_MENU =
-            MENUS.register(
-                    "ghost_stove",
-                    () -> new MenuType<>(
-                            GhostStoveMenu::new,
-                            FeatureFlags.DEFAULT_FLAGS
-                    )
-            );
 
-
-
-    // 鬼钢琴音乐
-    public static final DeferredHolder<SoundEvent, SoundEvent> GHOST_PIANO_MUSIC =
-            SOUND_EVENTS.register(
-                    "ghost_piano_music",
-                    () -> SoundEvent.createVariableRangeEvent(
-                            ResourceLocation.fromNamespaceAndPath(
-                                    MODID,
-                                    "ghost_piano_music"
-                            )
-                    )
-            );
 
 
 
@@ -203,20 +178,6 @@ public class QisPlan2 {
             PARTICLE_TYPES.register(
                     "black_rain",
                     () -> new SimpleParticleType(false)
-            );
-
-    public static final DeferredHolder<
-            SoundEvent,
-            SoundEvent
-            > GHOST_KNOCK =
-            SOUND_EVENTS.register(
-                    "ghost_knock",
-                    () -> SoundEvent.createVariableRangeEvent(
-                            ResourceLocation.fromNamespaceAndPath(
-                                    MODID,
-                                    "ghost_knock"
-                            )
-                    )
             );
 
 
@@ -358,6 +319,8 @@ public class QisPlan2 {
         ModEntities.init();
         ModItems.init();
         ModBlocks.init();
+        ModSounds.init();
+        ModMenus.init();
 
         // 实体属性注册
         modEventBus.addListener(
@@ -439,7 +402,7 @@ public class QisPlan2 {
             RegisterMenuScreensEvent event
     ) {
         event.register(
-                GHOST_STOVE_MENU.get(),
+                ModMenus.GHOST_STOVE_MENU.get(),
                 GhostStoveScreen::new
         );
     }
