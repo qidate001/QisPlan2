@@ -8,6 +8,7 @@ import com.qidate.qisplan2.client.renderer.KnockingGhostRenderer;
 import com.qidate.qisplan2.client.renderer.NightWandererRenderer;
 import com.qidate.qisplan2.client.renderer.OpeningGhostRenderer;
 import com.qidate.qisplan2.core.ModEntities;
+import com.qidate.qisplan2.core.ModParticles;
 import com.qidate.qisplan2.event.DeathCurseHudOverlay;
 
 import com.qidate.qisplan2.core.ModFluids;
@@ -82,7 +83,7 @@ public class QisPlan2Client {
             RegisterParticleProvidersEvent event
     ) {
         event.registerSpriteSet(
-                QisPlan2.BLACK_RAIN.get(),
+                ModParticles.BLACK_RAIN.get(),
                 BlackRainParticle.Provider::new
         );
     }

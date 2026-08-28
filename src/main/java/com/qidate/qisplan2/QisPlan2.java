@@ -90,15 +90,7 @@ public class QisPlan2 {
 
 
 
-    // 鬼黑雨
-    public static final DeferredHolder<
-            ParticleType<?>,
-            SimpleParticleType
-            > BLACK_RAIN =
-            PARTICLE_TYPES.register(
-                    "black_rain",
-                    () -> new SimpleParticleType(false)
-            );
+
 
 
     // 创造物品栏
