@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.qidate.qisplan2.QisPlan2;
 import com.qidate.qisplan2.core.ModAttachments;
+import com.qidate.qisplan2.core.ModGameRules;
 import com.qidate.qisplan2.core.ModItems;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.nbt.CompoundTag;
@@ -110,7 +111,7 @@ public class AgentExecutor {
             source.sendFailure(Component.literal("§c该命令只能在游戏内执行"));
             return;
         }
-        if (!level.getGameRules().getBoolean(QisPlan2.ISAY_ENABLED)) {
+        if (!level.getGameRules().getBoolean(ModGameRules.ISAY_ENABLED)) {
             source.sendFailure(Component.literal("§c/isay 功能已被管理员禁用"));
             return;
         }

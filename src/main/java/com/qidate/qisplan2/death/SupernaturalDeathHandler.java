@@ -1,6 +1,7 @@
 package com.qidate.qisplan2.death;
 
 import com.qidate.qisplan2.QisPlan2;
+import com.qidate.qisplan2.core.ModGameRules;
 import com.qidate.qisplan2.death.SupernaturalEntity;
 import com.qidate.qisplan2.item.GhostShroudItem;
 import net.minecraft.resources.ResourceLocation;
@@ -150,7 +151,7 @@ public class SupernaturalDeathHandler {
                 entity.level()
                         .getGameRules()
                         .getRule(
-                                QisPlan2.GHOST_DAMAGE_INSTANTLY_KILL
+                                ModGameRules.GHOST_DAMAGE_INSTANTLY_KILL
                         )
                         .get();
 

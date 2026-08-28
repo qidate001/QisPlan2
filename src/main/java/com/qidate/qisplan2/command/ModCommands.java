@@ -8,6 +8,7 @@ import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.qidate.qisplan2.QisPlan2;
 import com.qidate.qisplan2.agent.AgentExecutor;
 import com.qidate.qisplan2.agent.DeepSeekService;
+import com.qidate.qisplan2.core.ModGameRules;
 import com.qidate.qisplan2.core.QisConfig;
 
 import net.minecraft.commands.CommandSourceStack;
@@ -122,7 +123,7 @@ public final class ModCommands {
          */
         if (!level.getGameRules()
                 .getBoolean(
-                        QisPlan2.ISAY_ENABLED
+                        ModGameRules.ISAY_ENABLED
                 )) {
 
             source.sendFailure(

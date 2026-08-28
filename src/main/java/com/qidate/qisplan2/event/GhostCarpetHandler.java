@@ -2,6 +2,7 @@ package com.qidate.qisplan2.event;
 
 import com.qidate.qisplan2.QisPlan2;
 import com.qidate.qisplan2.core.ModBlocks;
+import com.qidate.qisplan2.core.ModGameRules;
 import com.qidate.qisplan2.death.ModDamageTypes;
 import com.qidate.qisplan2.death.SupernaturalDeathHandler;
 import net.minecraft.core.BlockPos;
@@ -102,7 +103,7 @@ public class GhostCarpetHandler {
         int triggerTicks =
                 entity.level()
                         .getGameRules()
-                        .getInt(QisPlan2.GHOST_CARPET_KILL_TIME);
+                        .getInt(ModGameRules.GHOST_CARPET_KILL_TIME);
 
         /*
          * 达到触发时间
