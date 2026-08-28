@@ -3,6 +3,7 @@ package com.qidate.qisplan2;
 import com.qidate.qisplan2.client.BlackRainParticle;
 import com.qidate.qisplan2.client.GhostStoveScreen;
 import com.qidate.qisplan2.client.GhostUmbrellaDomainClient;
+import com.qidate.qisplan2.client.GhostUmbrellaRenderer;
 import com.qidate.qisplan2.client.model.NightWandererModel;
 import com.qidate.qisplan2.client.renderer.*;
 import com.qidate.qisplan2.core.ModEntities;
@@ -15,6 +16,7 @@ import net.minecraft.client.model.HumanoidModel;
 import net.minecraft.client.model.geom.builders.CubeDeformation;
 import net.minecraft.client.model.geom.builders.LayerDefinition;
 
+import net.minecraft.client.renderer.BlockEntityWithoutLevelRenderer;
 import net.minecraft.resources.ResourceLocation;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.ModContainer;
@@ -25,10 +27,13 @@ import net.neoforged.neoforge.client.event.EntityRenderersEvent;
 import net.neoforged.neoforge.client.event.RegisterMenuScreensEvent;
 import net.neoforged.neoforge.client.event.RegisterParticleProvidersEvent;
 import net.neoforged.neoforge.client.extensions.common.IClientFluidTypeExtensions;
+import net.neoforged.neoforge.client.extensions.common.IClientItemExtensions;
 import net.neoforged.neoforge.client.extensions.common.RegisterClientExtensionsEvent;
 import net.neoforged.neoforge.client.gui.ConfigurationScreen;
 import net.neoforged.neoforge.client.gui.IConfigScreenFactory;
 import net.neoforged.neoforge.common.NeoForge;
+
+import static com.qidate.qisplan2.core.ModItems.GHOST_UMBRELLA;
 
 @Mod(value = QisPlan2.MODID, dist = Dist.CLIENT)
 public class QisPlan2Client {

@@ -122,9 +122,12 @@ public class QisPlan2 {
     // The constructor for the mod class is the first code that is run when your mod is loaded.
     // FML will recognize some parameter types like IEventBus or ModContainer and pass them in automatically.
     public QisPlan2(IEventBus modEventBus, ModContainer modContainer) {
-        // Register the commonSetup method for modloading
-        modContainer.registerConfig(net.neoforged.fml.config.ModConfig.Type.CLIENT, QisConfig.CLIENT_SPEC);
+        modContainer.registerConfig(
+                net.neoforged.fml.config.ModConfig.Type.CLIENT,
+                QisConfig.CLIENT_SPEC
+        );
 
+        // 完整注册模组 Bus
         ModRegistries.registerAll(modEventBus);
         ModRegistries.initAll();
 
@@ -146,42 +149,5 @@ public class QisPlan2 {
 
         // 驭鬼事件注册
         GhostAbilityInteractionHandler.register();
-
-        // 驭鬼 HUD 注册
-        NeoForge.EVENT_BUS.addListener(PossessionHudOverlay::render);
-
-        // Mod Event Bus 事件
-        NeoForge.EVENT_BUS.register(this);
-
-        // 普通 NeoForge 游戏事件
-        NeoForge.EVENT_BUS.register(this);
-    }
-
-
-
-
-
-    public static void registerClientItemExtensions(
-            RegisterClientExtensionsEvent event
-    ) {
-        event.registerItem(
-                new IClientItemExtensions() {
-
-                    private final GhostUmbrellaRenderer renderer =
-                            new GhostUmbrellaRenderer();
-
-                    @Override
-                    public BlockEntityWithoutLevelRenderer getCustomRenderer() {
-                        return renderer;
-                    }
-                },
-                GHOST_UMBRELLA.get()
-        );
-    }
-
-
-    @SubscribeEvent
-    public void onServerStarting(ServerStartingEvent event) {
-        // 什么都不干
     }
 }

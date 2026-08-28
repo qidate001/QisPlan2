@@ -1,13 +1,11 @@
 package com.qidate.qisplan2.ghost;
 
-import com.qidate.qisplan2.QisPlan2;
 import com.qidate.qisplan2.ghost.ability.knockingghost.KnockingGhostAbility;
 
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.ItemStack;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.neoforge.common.NeoForge;
-import net.neoforged.neoforge.event.entity.player.PlayerInteractEvent;
 import net.neoforged.neoforge.event.entity.player.PlayerInteractEvent.RightClickBlock;
 
 public final class GhostAbilityInteractionHandler {
