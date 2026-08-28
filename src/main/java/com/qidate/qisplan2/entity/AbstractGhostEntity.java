@@ -1,6 +1,7 @@
 package com.qidate.qisplan2.entity;
 
 import com.qidate.qisplan2.QisPlan2;
+import com.qidate.qisplan2.core.ModItems;
 import com.qidate.qisplan2.death.SupernaturalCombatHandler;
 import com.qidate.qisplan2.death.SupernaturalEntity;
 import com.qidate.qisplan2.entity.ai.GhostWanderGoal;
@@ -512,7 +513,7 @@ public abstract class AbstractGhostEntity
                      */
                     ItemStack nail =
                             new ItemStack(
-                                    QisPlan2.COFFIN_NAIL.get()
+                                    ModItems.COFFIN_NAIL.get()
                             );
 
                     if (!serverPlayer.isCreative()) {

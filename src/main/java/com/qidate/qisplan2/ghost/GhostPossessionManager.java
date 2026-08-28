@@ -1,6 +1,7 @@
 package com.qidate.qisplan2.ghost;
 
 import com.qidate.qisplan2.QisPlan2;
+import com.qidate.qisplan2.core.ModItems;
 import com.qidate.qisplan2.death.SupernaturalEntity;
 import com.qidate.qisplan2.entity.AbstractGhostEntity;
 import com.qidate.qisplan2.network.QisNetwork;
@@ -294,7 +295,7 @@ public final class GhostPossessionManager {
 
                     ItemStack nail =
                             new ItemStack(
-                                    QisPlan2.COFFIN_NAIL.get()
+                                    ModItems.COFFIN_NAIL.get()
                             );
 
                     if (!player.isCreative()) {

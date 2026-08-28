@@ -3,6 +3,7 @@ package com.qidate.qisplan2.agent;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.qidate.qisplan2.QisPlan2;
+import com.qidate.qisplan2.core.ModItems;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
@@ -53,7 +54,7 @@ public class AgentExecutor {
         }
 
         int available = player.getInventory().countItem(
-                QisPlan2.GHOST_COIN.get()
+                ModItems.GHOST_COIN.get()
         );
 
         // 鬼金币不足
@@ -66,7 +67,7 @@ public class AgentExecutor {
         for (int slot = 0; slot < player.getInventory().getContainerSize(); slot++) {
             ItemStack stack = player.getInventory().getItem(slot);
 
-            if (stack.is(QisPlan2.GHOST_COIN.get())) {
+            if (stack.is(ModItems.GHOST_COIN.get())) {
                 int remove = Math.min(stack.getCount(), remaining);
                 stack.shrink(remove);
                 remaining -= remove;

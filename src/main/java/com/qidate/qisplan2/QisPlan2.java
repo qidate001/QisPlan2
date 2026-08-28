@@ -5,6 +5,7 @@ import com.qidate.qisplan2.block.*;
 import com.qidate.qisplan2.block.entity.*;
 import com.qidate.qisplan2.client.*;
 import com.qidate.qisplan2.core.ModEntities;
+import com.qidate.qisplan2.core.ModItems;
 import com.qidate.qisplan2.core.QisConfig;
 import com.qidate.qisplan2.entity.*;
 import com.qidate.qisplan2.event.GhostUmbrellaAttackHandler;
@@ -71,6 +72,7 @@ import java.util.function.Supplier;
 
 import static com.qidate.qisplan2.core.ModEntities.*;
 import static com.qidate.qisplan2.core.ModRegistries.*;
+import static com.qidate.qisplan2.core.ModItems.*;
 
 // The value here should match an entry in the META-INF/neoforge.mods.toml file
 @Mod(QisPlan2.MODID)
@@ -203,53 +205,6 @@ public class QisPlan2 {
                             .build()
             );
 
-    public static final DeferredItem<DeathCurseSword> DEATH_CURSE_SWORD =
-            ITEMS.register(
-                    "death_curse_sword",
-                    () -> new DeathCurseSword(new Item.Properties())
-            );
-
-    // 鬼金币
-    public static final DeferredItem<GhostCoin> GHOST_COIN =
-            ITEMS.register(
-                    "ghost_coin",
-                    () -> new GhostCoin(new Item.Properties())
-            );
-
-    // 鬼石指
-    public static final DeferredItem<Item> GHOST_STONE_FINGER =
-            ITEMS.registerSimpleItem(
-                    "ghost_stone_finger"
-            );
-
-    // 香火灰
-    public static final DeferredItem<Item> INCENSE_ASH =
-            ITEMS.registerSimpleItem(
-                    "incense_ash"
-            );
-
-    // 鬼白粥
-    public static final DeferredItem<GhostWhitePorridgeItem>
-            GHOST_WHITE_PORRIDGE =
-            ITEMS.register(
-                    "ghost_white_porridge",
-                    () -> new GhostWhitePorridgeItem(
-                            new Item.Properties()
-                                    .stacksTo(1)
-                    )
-            );
-
-    // 棺材钉
-    public static final DeferredItem<CoffinNailItem>
-            COFFIN_NAIL =
-            ITEMS.register(
-                    "coffin_nail",
-                    () -> new CoffinNailItem(
-                            new Item.Properties()
-                                    .stacksTo(1)
-                    )
-            );
-
     // 鬼地毯
     public static final DeferredBlock<GhostCarpetBlock> GHOST_CARPET =
             BLOCKS.registerBlock(
@@ -350,82 +305,6 @@ public class QisPlan2 {
 
     public static final DeferredItem<BlockItem> GHOST_GRASS_ITEM =
             ITEMS.registerSimpleBlockItem(GHOST_GRASS);
-
-    // 鬼寿衣
-    public static final DeferredHolder<
-            ArmorMaterial,
-            ArmorMaterial
-            > GHOST_SHROUD_MATERIAL =
-            ARMOR_MATERIALS.register(
-                    "ghost_shroud",
-                    () -> new ArmorMaterial(
-                            Util.make(
-                                    new EnumMap<>(
-                                            ArmorItem.Type.class
-                                    ),
-                                    map -> {
-                                        map.put(
-                                                ArmorItem.Type.BOOTS,
-                                                0
-                                        );
-
-                                        map.put(
-                                                ArmorItem.Type.LEGGINGS,
-                                                0
-                                        );
-
-                                        map.put(
-                                                ArmorItem.Type.CHESTPLATE,
-                                                4
-                                        );
-
-                                        map.put(
-                                                ArmorItem.Type.HELMET,
-                                                0
-                                        );
-
-                                        map.put(
-                                                ArmorItem.Type.BODY,
-                                                0
-                                        );
-                                    }
-                            ),
-                            10,
-                            SoundEvents.ARMOR_EQUIP_LEATHER,
-                            () -> Ingredient.EMPTY,
-                            List.of(
-                                    new ArmorMaterial.Layer(
-                                            ResourceLocation.fromNamespaceAndPath(
-                                                    MODID,
-                                                    "ghost_shroud"
-                                            )
-                                    )
-                            ),
-                            0.0F,
-                            0.0F
-                    )
-            );
-
-    public static final DeferredItem<GhostShroudItem> GHOST_SHROUD =
-            ITEMS.register(
-                    "ghost_shroud",
-                    () -> new GhostShroudItem(
-                            GHOST_SHROUD_MATERIAL,
-                            ArmorItem.Type.CHESTPLATE,
-                            new Item.Properties()
-                                    .stacksTo(1)
-                    )
-            );
-
-    // 鬼书
-    public static final DeferredItem<GhostBookItem> GHOST_BOOK =
-            ITEMS.register(
-                    "ghost_book",
-                    () -> new GhostBookItem(
-                            new Item.Properties()
-                                    .stacksTo(1)
-                    )
-            );
 
     // 鬼钢琴
     public static final DeferredHolder<Block, GhostPianoBlock> GHOST_PIANO_BLOCK =
@@ -597,75 +476,6 @@ public class QisPlan2 {
                     () -> new SimpleParticleType(false)
             );
 
-
-
-
-    public static final DeferredItem<SpawnEggItem> NIGHT_WANDERER_SPAWN_EGG =
-            ITEMS.register(
-                    "night_wanderer_spawn_egg",
-                    () -> new SpawnEggItem(
-                            NIGHT_WANDERER.get(),
-                            0x191919, // 基础颜色
-                            0x6B6B6B, // 斑点颜色
-                            new Item.Properties()
-                    )
-            );
-
-
-
-    public static final DeferredItem<SpawnEggItem> INVISIBLE_GHOST_SPAWN_EGG =
-            ITEMS.register(
-                    "invisible_ghost_spawn_egg",
-                    () -> new SpawnEggItem(
-                            INVISIBLE_GHOST.get(),
-                            0x191919, // 基础颜色
-                            0x6B6B6B, // 斑点颜色
-                            new Item.Properties()
-                    )
-            );
-
-
-
-    public static final DeferredItem<SpawnEggItem> KNOCKING_GHOST_SPAWN_EGG =
-            ITEMS.register(
-                    "knocking_ghost_spawn_egg",
-                    () -> new SpawnEggItem(
-                            KNOCKING_GHOST.get(),
-                            0x191919, // 基础颜色
-                            0x6B6B6B, // 斑点颜色
-                            new Item.Properties()
-                    )
-            );
-
-
-
-    public static final DeferredItem<SpawnEggItem>
-            OPENING_GHOST_SPAWN_EGG =
-            ITEMS.register(
-                    "opening_ghost_spawn_egg",
-                    () -> new SpawnEggItem(
-                            OPENING_GHOST.get(),
-                            0x191919,
-                            0x4A90E2,
-                            new Item.Properties()
-                    )
-            );
-
-
-
-
-    public static final DeferredItem<SpawnEggItem>
-            CLOSING_GHOST_SPAWN_EGG =
-            ITEMS.register(
-                    "closing_ghost_spawn_egg",
-                    () -> new SpawnEggItem(
-                            CLOSING_GHOST.get(),
-                            0x191919,
-                            0xB44AFF,
-                            new Item.Properties()
-                    )
-            );
-
     public static final DeferredHolder<
             SoundEvent,
             SoundEvent
@@ -812,14 +622,17 @@ public class QisPlan2 {
 
         /*
          * ========================================================
-         * 强制初始化流体注册项。
+         * 强制初始化注册项。
          * ========================================================
          */
         ModFluids.init();
         ModEntities.init();
+        ModItems.init();
 
         // 实体属性注册
-        modEventBus.addListener(this::onEntityAttributeCreation);
+        modEventBus.addListener(
+                this::onEntityAttributeCreation
+        );
 
         modEventBus.addListener(
                 InvisibleGhostClient::registerRenderers

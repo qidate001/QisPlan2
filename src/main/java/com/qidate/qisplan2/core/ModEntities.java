@@ -20,7 +20,7 @@ public class ModEntities {
          * 故意留空。
          *
          * 调用这个方法本身，就会强制 JVM
-         * 在正确的时机完成 ModFluids 的静态初始化。
+         * 在正确的时机完成 ModEntities 的静态初始化。
          */
     }
 
