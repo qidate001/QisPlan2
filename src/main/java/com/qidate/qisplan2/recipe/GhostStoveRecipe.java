@@ -1,6 +1,7 @@
 package com.qidate.qisplan2.recipe;
 
 import com.qidate.qisplan2.QisPlan2;
+import com.qidate.qisplan2.core.ModRecipes;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.core.NonNullList;
 import net.minecraft.world.item.ItemStack;
@@ -150,11 +151,11 @@ public class GhostStoveRecipe
 
     @Override
     public RecipeType<?> getType() {
-        return QisPlan2.GHOST_STOVE_RECIPE_TYPE.get();
+        return ModRecipes.GHOST_STOVE_RECIPE_TYPE.get();
     }
 
     @Override
     public RecipeSerializer<?> getSerializer() {
-        return QisPlan2.GHOST_STOVE_RECIPE_SERIALIZER.get();
+        return ModRecipes.GHOST_STOVE_RECIPE_SERIALIZER.get();
     }
 }

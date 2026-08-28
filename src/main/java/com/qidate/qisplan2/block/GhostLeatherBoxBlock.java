@@ -5,6 +5,7 @@ import com.qidate.qisplan2.QisPlan2;
 import com.qidate.qisplan2.block.entity.GhostLeatherBoxBlockEntity;
 import com.qidate.qisplan2.core.ModBlocks;
 import com.qidate.qisplan2.core.ModDataComponents;
+import com.qidate.qisplan2.core.ModDimensions;
 import com.qidate.qisplan2.ghost.partition.PartitionReturnManager;
 import com.qidate.qisplan2.ghost.partition.PartitionRoomPos;
 import com.qidate.qisplan2.ghost.partition.PartitionSpaceManager;
@@ -137,14 +138,14 @@ public class GhostLeatherBoxBlock
          */
         ServerLevel partitionLevel =
                 server.getLevel(
-                        QisPlan2.PARTITION_DIMENSION
+                        ModDimensions.PARTITION_DIMENSION
                 );
 
         if (partitionLevel == null) {
 
             QisPlan2.LOGGER.error(
                     "[QisPlan2] 找不到划分维度：{}",
-                    QisPlan2.PARTITION_DIMENSION
+                    ModDimensions.PARTITION_DIMENSION
             );
 
             return InteractionResult.FAIL;

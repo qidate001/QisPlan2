@@ -2,6 +2,7 @@ package com.qidate.qisplan2.block.entity;
 
 import com.qidate.qisplan2.QisPlan2;
 import com.qidate.qisplan2.core.ModBlocks;
+import com.qidate.qisplan2.core.ModRecipes;
 import com.qidate.qisplan2.menu.GhostStoveMenu;
 import com.qidate.qisplan2.recipe.GhostStoveIngredient;
 import com.qidate.qisplan2.recipe.GhostStoveInput;
@@ -125,7 +126,7 @@ public class GhostStoveBlockEntity
         var optional =
                 serverLevel.getRecipeManager()
                         .getRecipeFor(
-                                QisPlan2.GHOST_STOVE_RECIPE_TYPE.get(),
+                                ModRecipes.GHOST_STOVE_RECIPE_TYPE.get(),
                                 input,
                                 serverLevel
                         );

@@ -1,12 +1,15 @@
 package com.qidate.qisplan2.core;
 
 import com.qidate.qisplan2.recipe.GhostStoveRecipe;
+import com.qidate.qisplan2.recipe.GhostStoveRecipeSerializer;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.item.crafting.RecipeSerializer;
 import net.minecraft.world.item.crafting.RecipeType;
 
 import java.util.function.Supplier;
 
 import static com.qidate.qisplan2.QisPlan2.MODID;
+import static com.qidate.qisplan2.core.ModRegistries.RECIPE_SERIALIZERS;
 import static com.qidate.qisplan2.core.ModRegistries.RECIPE_TYPES;
 
 public class ModRecipes {
@@ -34,5 +37,12 @@ public class ModRecipes {
                                     "ghost_stove"
                             )
                     )
+            );
+
+    public static final Supplier<RecipeSerializer<GhostStoveRecipe>>
+            GHOST_STOVE_RECIPE_SERIALIZER =
+            RECIPE_SERIALIZERS.register(
+                    "ghost_stove",
+                    GhostStoveRecipeSerializer::new
             );
 }

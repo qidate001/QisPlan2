@@ -111,22 +111,9 @@ public class QisPlan2 {
 
 
 
-    public static final Supplier<RecipeSerializer<GhostStoveRecipe>>
-            GHOST_STOVE_RECIPE_SERIALIZER =
-            RECIPE_SERIALIZERS.register(
-                    "ghost_stove",
-                    GhostStoveRecipeSerializer::new
-            );
 
-    // 划分维度
-    public static final ResourceKey<Level> PARTITION_DIMENSION =
-            ResourceKey.create(
-                    Registries.DIMENSION,
-                    ResourceLocation.fromNamespaceAndPath(
-                            QisPlan2.MODID,
-                            "partition"
-                    )
-            );
+
+
 
 
 
@@ -170,6 +157,7 @@ public class QisPlan2 {
         ModParticles.init();
         ModCreativeTabs.init();
         ModDataComponents.init();
+        ModDimensions.init();
 
         // 实体属性注册
         modEventBus.addListener(

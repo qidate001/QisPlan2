@@ -3,6 +3,7 @@ package com.qidate.qisplan2.block;
 import com.mojang.serialization.MapCodec;
 
 import com.qidate.qisplan2.QisPlan2;
+import com.qidate.qisplan2.core.ModDimensions;
 import com.qidate.qisplan2.ghost.partition.PartitionRoomPos;
 import com.qidate.qisplan2.ghost.partition.PartitionSpaceManager;
 import net.minecraft.core.BlockPos;
@@ -94,7 +95,7 @@ public class GhostLeatherWallBlock
          */
 
         if (!level.dimension().equals(
-                QisPlan2.PARTITION_DIMENSION
+                ModDimensions.PARTITION_DIMENSION
         )) {
 
             return ItemInteractionResult.FAIL;
