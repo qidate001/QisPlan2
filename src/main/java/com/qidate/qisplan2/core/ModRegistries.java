@@ -13,6 +13,7 @@ import net.minecraft.world.item.crafting.RecipeSerializer;
 import net.minecraft.world.item.crafting.RecipeType;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.material.Fluid;
+import net.neoforged.bus.api.IEventBus;
 import net.neoforged.neoforge.attachment.AttachmentType;
 import net.neoforged.neoforge.fluids.FluidType;
 import net.neoforged.neoforge.registries.DeferredRegister;
@@ -111,4 +112,42 @@ public class ModRegistries {
                     Registries.CREATIVE_MODE_TAB,
                     MODID
             );
+
+
+
+
+
+    public static void initAll() {
+        ModAttachments.init();
+        ModFluids.init();
+        ModEntities.init();
+        ModItems.init();
+        ModBlocks.init();
+        ModSounds.init();
+        ModMenus.init();
+        ModRecipes.init();
+        ModParticles.init();
+        ModCreativeTabs.init();
+        ModDataComponents.init();
+        ModDimensions.init();
+        ModGameRules.init();
+    }
+
+    public static void registerAll(IEventBus bus) {
+        BLOCKS.register(bus);
+        ITEMS.register(bus);
+        ATTACHMENT_TYPES.register(bus);
+        CREATIVE_MODE_TABS.register(bus);
+        ENTITY_TYPES.register(bus);
+        BLOCK_ENTITY_TYPES.register(bus);
+        ARMOR_MATERIALS.register(bus);
+        SOUND_EVENTS.register(bus);
+        MENUS.register(bus);
+        RECIPE_TYPES.register(bus);
+        RECIPE_SERIALIZERS.register(bus);
+        DATA_COMPONENTS.register(bus);
+        PARTICLE_TYPES.register(bus);
+        FLUID_TYPES.register(bus);
+        FLUIDS.register(bus);
+    }
 }

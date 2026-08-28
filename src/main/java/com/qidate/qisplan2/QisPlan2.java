@@ -125,40 +125,8 @@ public class QisPlan2 {
         // Register the commonSetup method for modloading
         modContainer.registerConfig(net.neoforged.fml.config.ModConfig.Type.CLIENT, QisConfig.CLIENT_SPEC);
 
-        BLOCKS.register(modEventBus);
-        ITEMS.register(modEventBus);
-        ATTACHMENT_TYPES.register(modEventBus);
-        CREATIVE_MODE_TABS.register(modEventBus);
-        ENTITY_TYPES.register(modEventBus);
-        BLOCK_ENTITY_TYPES.register(modEventBus);
-        ARMOR_MATERIALS.register(modEventBus);
-        SOUND_EVENTS.register(modEventBus);
-        MENUS.register(modEventBus);
-        RECIPE_TYPES.register(modEventBus);
-        RECIPE_SERIALIZERS.register(modEventBus);
-        DATA_COMPONENTS.register(modEventBus);
-        PARTICLE_TYPES.register(modEventBus);
-        FLUID_TYPES.register(modEventBus);
-        FLUIDS.register(modEventBus);
-
-        /*
-         * ========================================================
-         * 强制初始化注册项。
-         * ========================================================
-         */
-        ModAttachments.init();
-        ModFluids.init();
-        ModEntities.init();
-        ModItems.init();
-        ModBlocks.init();
-        ModSounds.init();
-        ModMenus.init();
-        ModRecipes.init();
-        ModParticles.init();
-        ModCreativeTabs.init();
-        ModDataComponents.init();
-        ModDimensions.init();
-        ModGameRules.init();
+        ModRegistries.registerAll(modEventBus);
+        ModRegistries.initAll();
 
         // 实体属性注册
         modEventBus.addListener(
