@@ -130,11 +130,7 @@ public class QisPlan2 {
 
         // 实体属性注册
         modEventBus.addListener(
-                this::onEntityAttributeCreation
-        );
-
-        modEventBus.addListener(
-                InvisibleGhostClient::registerRenderers
+                ModEntityAttributes::register
         );
 
         modEventBus.addListener(
@@ -165,44 +161,7 @@ public class QisPlan2 {
         NeoForge.EVENT_BUS.register(this);
     }
 
-    private void onEntityAttributeCreation(
-            EntityAttributeCreationEvent event
-    ) {
-        // 夜游鬼
-        event.put(
-                NIGHT_WANDERER.get(),
-                NightWanderer.createAttributes()
-                        .build()
-        );
 
-        // 不可视之鬼
-        event.put(
-                INVISIBLE_GHOST.get(),
-                InvisibleGhost.createAttributes()
-                        .build()
-        );
-
-        // 敲门鬼
-        event.put(
-                KNOCKING_GHOST.get(),
-                KnockingGhost.createAttributes()
-                        .build()
-        );
-
-        // 开门鬼
-        event.put(
-                OPENING_GHOST.get(),
-                OpeningGhost.createAttributes()
-                        .build()
-        );
-
-        // 关门鬼
-        event.put(
-                CLOSING_GHOST.get(),
-                ClosingGhost.createAttributes()
-                        .build()
-        );
-    }
 
     public static void registerMenuScreens(
             RegisterMenuScreensEvent event

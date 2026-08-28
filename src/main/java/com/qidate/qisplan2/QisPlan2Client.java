@@ -3,10 +3,7 @@ package com.qidate.qisplan2;
 import com.qidate.qisplan2.client.BlackRainParticle;
 import com.qidate.qisplan2.client.GhostUmbrellaDomainClient;
 import com.qidate.qisplan2.client.model.NightWandererModel;
-import com.qidate.qisplan2.client.renderer.ClosingGhostRenderer;
-import com.qidate.qisplan2.client.renderer.KnockingGhostRenderer;
-import com.qidate.qisplan2.client.renderer.NightWandererRenderer;
-import com.qidate.qisplan2.client.renderer.OpeningGhostRenderer;
+import com.qidate.qisplan2.client.renderer.*;
 import com.qidate.qisplan2.core.ModEntities;
 import com.qidate.qisplan2.core.ModParticles;
 import com.qidate.qisplan2.event.DeathCurseHudOverlay;
@@ -161,24 +158,34 @@ public class QisPlan2Client {
     private static void registerEntityRenderers(
             EntityRenderersEvent.RegisterRenderers event
     ) {
+        // 夜游鬼
         event.registerEntityRenderer(
                 ModEntities.NIGHT_WANDERER.get(),
                 NightWandererRenderer::new
         );
 
+        // 敲门鬼
         event.registerEntityRenderer(
                 ModEntities.KNOCKING_GHOST.get(),
                 KnockingGhostRenderer::new
         );
 
+        // 开门鬼
         event.registerEntityRenderer(
                 ModEntities.OPENING_GHOST.get(),
                 OpeningGhostRenderer::new
         );
 
+        // 关门鬼
         event.registerEntityRenderer(
                 ModEntities.CLOSING_GHOST.get(),
                 ClosingGhostRenderer::new
+        );
+
+        // 不可视之鬼
+        event.registerEntityRenderer(
+                ModEntities.INVISIBLE_GHOST.get(),
+                InvisibleGhostRenderer::new
         );
     }
 }
