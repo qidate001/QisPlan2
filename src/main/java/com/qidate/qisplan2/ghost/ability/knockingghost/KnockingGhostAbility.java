@@ -1,6 +1,7 @@
 package com.qidate.qisplan2.ghost.ability.knockingghost;
 
 import com.qidate.qisplan2.QisPlan2;
+import com.qidate.qisplan2.core.ModEntities;
 import com.qidate.qisplan2.entity.AbstractGhostEntity;
 import com.qidate.qisplan2.ghost.GhostAbilityContext;
 import com.qidate.qisplan2.ghost.PossessedGhostState;
@@ -60,7 +61,7 @@ public final class KnockingGhostAbility
     @Override
     public EntityType<? extends AbstractGhostEntity> entityType() {
 
-        return QisPlan2.KNOCKING_GHOST.get();
+        return ModEntities.KNOCKING_GHOST.get();
     }
 
     /**

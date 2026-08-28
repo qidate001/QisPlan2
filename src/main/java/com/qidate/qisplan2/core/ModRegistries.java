@@ -21,6 +21,8 @@ import static com.qidate.qisplan2.QisPlan2.MODID;
 
 public class ModRegistries {
 
+    private ModRegistries(){}
+
     public static final DeferredRegister.Blocks BLOCKS =
             DeferredRegister.createBlocks(
                     MODID

@@ -2,6 +2,7 @@ package com.qidate.qisplan2.client;
 
 import com.qidate.qisplan2.QisPlan2;
 import com.qidate.qisplan2.client.renderer.InvisibleGhostRenderer;
+import com.qidate.qisplan2.core.ModEntities;
 import net.neoforged.neoforge.client.event.EntityRenderersEvent;
 
 public final class InvisibleGhostClient {
@@ -13,7 +14,7 @@ public final class InvisibleGhostClient {
             EntityRenderersEvent.RegisterRenderers event
     ) {
         event.registerEntityRenderer(
-                QisPlan2.INVISIBLE_GHOST.get(),
+                ModEntities.INVISIBLE_GHOST.get(),
                 InvisibleGhostRenderer::new
         );
     }

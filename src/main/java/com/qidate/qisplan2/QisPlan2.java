@@ -4,6 +4,7 @@ import com.mojang.serialization.Codec;
 import com.qidate.qisplan2.block.*;
 import com.qidate.qisplan2.block.entity.*;
 import com.qidate.qisplan2.client.*;
+import com.qidate.qisplan2.core.ModEntities;
 import com.qidate.qisplan2.core.QisConfig;
 import com.qidate.qisplan2.entity.*;
 import com.qidate.qisplan2.event.GhostUmbrellaAttackHandler;
@@ -22,14 +23,11 @@ import net.minecraft.client.renderer.BlockEntityWithoutLevelRenderer;
 import net.minecraft.core.component.DataComponentType;
 import net.minecraft.core.particles.ParticleType;
 import net.minecraft.core.particles.SimpleParticleType;
-import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundEvents;
-import net.minecraft.world.entity.EntityType;
-import net.minecraft.world.entity.MobCategory;
 import net.minecraft.world.flag.FeatureFlags;
 import net.minecraft.world.inventory.MenuType;
 import net.minecraft.world.item.*;
@@ -41,15 +39,12 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.SoundType;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.properties.BlockSetType;
-import net.minecraft.world.level.material.Fluid;
 import net.minecraft.world.level.material.PushReaction;
 import net.neoforged.neoforge.attachment.AttachmentType;
 import net.neoforged.neoforge.client.event.RegisterMenuScreensEvent;
 import net.neoforged.neoforge.client.extensions.common.IClientItemExtensions;
 import net.neoforged.neoforge.client.extensions.common.RegisterClientExtensionsEvent;
 import net.neoforged.neoforge.event.entity.EntityAttributeCreationEvent;
-import net.neoforged.neoforge.fluids.FluidType;
-import net.neoforged.neoforge.registries.NeoForgeRegistries;
 import org.slf4j.Logger;
 
 import com.mojang.logging.LogUtils;
@@ -74,6 +69,7 @@ import net.neoforged.neoforge.registries.DeferredRegister;
 import java.util.*;
 import java.util.function.Supplier;
 
+import static com.qidate.qisplan2.core.ModEntities.*;
 import static com.qidate.qisplan2.core.ModRegistries.*;
 
 // The value here should match an entry in the META-INF/neoforge.mods.toml file
@@ -602,22 +598,7 @@ public class QisPlan2 {
             );
 
 
-    // 夜游鬼
-    public static final DeferredHolder<EntityType<?>, EntityType<NightWanderer>> NIGHT_WANDERER =
-            ENTITY_TYPES.register(
-                    "night_wanderer",
-                    () -> EntityType.Builder
-                            .of(NightWanderer::new, MobCategory.MISC)
-                            .sized(0.6F, 1.8F)
-                            .clientTrackingRange(8)
-                            .updateInterval(3)
-                            .build(
-                                    ResourceLocation.fromNamespaceAndPath(
-                                            MODID,
-                                            "night_wanderer"
-                                    ).toString()
-                            )
-            );
+
 
     public static final DeferredItem<SpawnEggItem> NIGHT_WANDERER_SPAWN_EGG =
             ITEMS.register(
@@ -630,35 +611,9 @@ public class QisPlan2 {
                     )
             );
 
-    // 不可视之鬼
-    public static final DeferredHolder<
-            EntityType<?>,
-            EntityType<InvisibleGhost>
-            > INVISIBLE_GHOST =
-            ENTITY_TYPES.register(
-                    "invisible_ghost",
-                    () -> EntityType.Builder
-                            .of(
-                                    InvisibleGhost::new,
-                                    MobCategory.MONSTER
-                            )
-                            .sized(
-                                    0.6F,
-                                    1.95F
-                            )
-                            .clientTrackingRange(8)
-                            .updateInterval(3)
-                            .build(
-                                    ResourceLocation
-                                            .fromNamespaceAndPath(
-                                                    MODID,
-                                                    "invisible_ghost"
-                                            )
-                                            .toString()
-                            )
-            );
 
-    public static final DeferredItem<SpawnEggItem> NINVISIBLE_GHOST_SPAWN_EGG =
+
+    public static final DeferredItem<SpawnEggItem> INVISIBLE_GHOST_SPAWN_EGG =
             ITEMS.register(
                     "invisible_ghost_spawn_egg",
                     () -> new SpawnEggItem(
@@ -669,29 +624,7 @@ public class QisPlan2 {
                     )
             );
 
-    // 敲门鬼
-    public static final Supplier<
-            EntityType<KnockingGhost>
-            > KNOCKING_GHOST =
-            ENTITY_TYPES.register(
-                    "knocking_ghost",
-                    () -> EntityType.Builder
-                            .of(
-                                    KnockingGhost::new,
-                                    MobCategory.MONSTER
-                            )
-                            .sized(
-                                    0.8F,
-                                    1.95F
-                            )
-                            .clientTrackingRange(64)
-                            .build(
-                                    ResourceLocation.fromNamespaceAndPath(
-                                            MODID,
-                                            "knocking_ghost"
-                                    ).toString()
-                            )
-            );
+
 
     public static final DeferredItem<SpawnEggItem> KNOCKING_GHOST_SPAWN_EGG =
             ITEMS.register(
@@ -704,29 +637,7 @@ public class QisPlan2 {
                     )
             );
 
-    // 开门鬼
-    public static final Supplier<
-            EntityType<OpeningGhost>
-            > OPENING_GHOST =
-            ENTITY_TYPES.register(
-                    "opening_ghost",
-                    () -> EntityType.Builder
-                            .of(
-                                    OpeningGhost::new,
-                                    MobCategory.MONSTER
-                            )
-                            .sized(
-                                    0.8F,
-                                    1.95F
-                            )
-                            .clientTrackingRange(64)
-                            .build(
-                                    ResourceLocation.fromNamespaceAndPath(
-                                            MODID,
-                                            "opening_ghost"
-                                    ).toString()
-                            )
-            );
+
 
     public static final DeferredItem<SpawnEggItem>
             OPENING_GHOST_SPAWN_EGG =
@@ -741,29 +652,7 @@ public class QisPlan2 {
             );
 
 
-    // 关门鬼
-    public static final Supplier<
-            EntityType<ClosingGhost>
-            > CLOSING_GHOST =
-            ENTITY_TYPES.register(
-                    "closing_ghost",
-                    () -> EntityType.Builder
-                            .of(
-                                    ClosingGhost::new,
-                                    MobCategory.MONSTER
-                            )
-                            .sized(
-                                    0.8F,
-                                    1.95F
-                            )
-                            .clientTrackingRange(64)
-                            .build(
-                                    ResourceLocation.fromNamespaceAndPath(
-                                            MODID,
-                                            "closing_ghost"
-                                    ).toString()
-                            )
-            );
+
 
     public static final DeferredItem<SpawnEggItem>
             CLOSING_GHOST_SPAWN_EGG =
@@ -816,7 +705,7 @@ public class QisPlan2 {
                         output.accept(GHOST_LEATHER_BOX_ITEM);
                         output.accept(GHOST_LEATHER_WALL_ITEM);
                         output.accept(NIGHT_WANDERER_SPAWN_EGG);
-                        output.accept(NINVISIBLE_GHOST_SPAWN_EGG);
+                        output.accept(INVISIBLE_GHOST_SPAWN_EGG);
                         output.accept(KNOCKING_GHOST_SPAWN_EGG);
                         output.accept(OPENING_GHOST_SPAWN_EGG);
                         output.accept(CLOSING_GHOST_SPAWN_EGG);
@@ -927,6 +816,7 @@ public class QisPlan2 {
          * ========================================================
          */
         ModFluids.init();
+        ModEntities.init();
 
         // 实体属性注册
         modEventBus.addListener(this::onEntityAttributeCreation);

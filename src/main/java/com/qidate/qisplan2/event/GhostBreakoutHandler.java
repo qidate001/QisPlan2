@@ -1,6 +1,7 @@
 package com.qidate.qisplan2.event;
 
 import com.qidate.qisplan2.QisPlan2;
+import com.qidate.qisplan2.core.ModEntities;
 import com.qidate.qisplan2.entity.AbstractGhostEntity;
 import com.qidate.qisplan2.ghost.PossessedGhostState;
 import com.qidate.qisplan2.ghost.PossessionHandler;
@@ -278,28 +279,28 @@ public final class GhostBreakoutHandler {
                 "qisplan2:opening_ghost"
         )) {
 
-            return QisPlan2.OPENING_GHOST.get();
+            return ModEntities.OPENING_GHOST.get();
         }
 
         if (ghostId.equals(
                 "qisplan2:closing_ghost"
         )) {
 
-            return QisPlan2.CLOSING_GHOST.get();
+            return ModEntities.CLOSING_GHOST.get();
         }
 
         if (ghostId.equals(
                 "qisplan2:knocking_ghost"
         )) {
 
-            return QisPlan2.KNOCKING_GHOST.get();
+            return ModEntities.KNOCKING_GHOST.get();
         }
 
         if (ghostId.equals(
                 "qisplan2:night_wanderer"
         )) {
 
-            return QisPlan2.NIGHT_WANDERER.get();
+            return ModEntities.NIGHT_WANDERER.get();
         }
 
         return null;

@@ -15,7 +15,15 @@ import net.neoforged.neoforge.registries.DeferredItem;
 
 public final class ModFluids {
 
-    private ModFluids() {
+    private ModFluids() {}
+
+    public static void init() {
+        /*
+         * 故意留空。
+         *
+         * 调用这个方法本身，就会强制 JVM
+         * 在正确的时机完成 ModFluids 的静态初始化。
+         */
     }
 
     /*
@@ -149,14 +157,5 @@ public final class ModFluids {
                         () ->
                                 GHOST_LAKE_WATER_BLOCK.get()
                 );
-    }
-
-    public static void init() {
-        /*
-         * 故意留空。
-         *
-         * 调用这个方法本身，就会强制 JVM
-         * 在正确的时机完成 ModFluids 的静态初始化。
-         */
     }
 }

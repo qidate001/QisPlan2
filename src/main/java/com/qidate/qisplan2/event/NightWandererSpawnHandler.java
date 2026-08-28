@@ -1,6 +1,7 @@
 package com.qidate.qisplan2.event;
 
 import com.qidate.qisplan2.QisPlan2;
+import com.qidate.qisplan2.core.ModEntities;
 import com.qidate.qisplan2.entity.NightWanderer;
 import com.qidate.qisplan2.ghost.PossessionHandler;
 import net.minecraft.core.BlockPos;
@@ -265,7 +266,7 @@ public class NightWandererSpawnHandler {
     ) {
 
         NightWanderer entity =
-                QisPlan2.NIGHT_WANDERER
+                ModEntities.NIGHT_WANDERER
                         .get()
                         .create(level);
 

@@ -7,6 +7,7 @@ import com.qidate.qisplan2.client.renderer.ClosingGhostRenderer;
 import com.qidate.qisplan2.client.renderer.KnockingGhostRenderer;
 import com.qidate.qisplan2.client.renderer.NightWandererRenderer;
 import com.qidate.qisplan2.client.renderer.OpeningGhostRenderer;
+import com.qidate.qisplan2.core.ModEntities;
 import com.qidate.qisplan2.event.DeathCurseHudOverlay;
 
 import com.qidate.qisplan2.core.ModFluids;
@@ -160,22 +161,22 @@ public class QisPlan2Client {
             EntityRenderersEvent.RegisterRenderers event
     ) {
         event.registerEntityRenderer(
-                QisPlan2.NIGHT_WANDERER.get(),
+                ModEntities.NIGHT_WANDERER.get(),
                 NightWandererRenderer::new
         );
 
         event.registerEntityRenderer(
-                QisPlan2.KNOCKING_GHOST.get(),
+                ModEntities.KNOCKING_GHOST.get(),
                 KnockingGhostRenderer::new
         );
 
         event.registerEntityRenderer(
-                QisPlan2.OPENING_GHOST.get(),
+                ModEntities.OPENING_GHOST.get(),
                 OpeningGhostRenderer::new
         );
 
         event.registerEntityRenderer(
-                QisPlan2.CLOSING_GHOST.get(),
+                ModEntities.CLOSING_GHOST.get(),
                 ClosingGhostRenderer::new
         );
     }

@@ -1,6 +1,7 @@
 package com.qidate.qisplan2.ghost.ability.doorghost;
 
 import com.qidate.qisplan2.QisPlan2;
+import com.qidate.qisplan2.core.ModEntities;
 import com.qidate.qisplan2.entity.AbstractGhostEntity;
 import com.qidate.qisplan2.ghost.ability.PossessedGhostAbility;
 import net.minecraft.resources.ResourceLocation;
@@ -23,7 +24,7 @@ public final class OpeningGhostAbility
     @Override
     public EntityType<? extends AbstractGhostEntity> entityType() {
 
-        return QisPlan2.OPENING_GHOST.get();
+        return ModEntities.OPENING_GHOST.get();
     }
 
     @Override

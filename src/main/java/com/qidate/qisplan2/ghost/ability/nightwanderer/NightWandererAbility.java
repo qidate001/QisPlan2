@@ -1,6 +1,7 @@
 package com.qidate.qisplan2.ghost.ability.nightwanderer;
 
 import com.qidate.qisplan2.QisPlan2;
+import com.qidate.qisplan2.core.ModEntities;
 import com.qidate.qisplan2.death.ModDamageTypes;
 import com.qidate.qisplan2.death.SupernaturalDeathHandler;
 import com.qidate.qisplan2.entity.AbstractGhostEntity;
@@ -101,7 +102,7 @@ public final class NightWandererAbility
     @Override
     public EntityType<? extends AbstractGhostEntity> entityType() {
 
-        return QisPlan2.NIGHT_WANDERER.get();
+        return ModEntities.NIGHT_WANDERER.get();
     }
 
     @Override
