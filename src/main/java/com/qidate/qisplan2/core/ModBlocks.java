@@ -281,4 +281,36 @@ public class ModBlocks {
                     GHOST_LEATHER_WALL,
                     new Item.Properties()
             );
+
+    // 鬼门牌
+    public static final DeferredBlock<GhostDoorPlateBlock>
+            GHOST_DOOR_PLATE =
+            BLOCKS.registerBlock(
+                    "ghost_door_plate",
+                    GhostDoorPlateBlock::new,
+                    net.minecraft.world.level.block.state.BlockBehaviour.Properties
+                            .of()
+                            .strength(2.0F)
+                            .noOcclusion()
+            );
+
+    public static final DeferredHolder<
+            BlockEntityType<?>,
+            BlockEntityType<GhostDoorPlateBlockEntity>
+            > GHOST_DOOR_PLATE_BLOCK_ENTITY =
+            BLOCK_ENTITY_TYPES.register(
+                    "ghost_door_plate",
+                    () ->
+                            BlockEntityType.Builder.of(
+                                    GhostDoorPlateBlockEntity::new,
+                                    GHOST_DOOR_PLATE.get()
+                            ).build(null)
+            );
+
+    public static final DeferredItem<BlockItem>
+            GHOST_DOOR_PLATE_ITEM =
+            ITEMS.registerSimpleBlockItem(
+                    GHOST_DOOR_PLATE,
+                    new Item.Properties()
+            );
 }

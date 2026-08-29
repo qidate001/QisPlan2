@@ -1,14 +1,17 @@
 package com.qidate.qisplan2.network;
 
 import com.qidate.qisplan2.QisPlan2;
+import com.qidate.qisplan2.block.entity.GhostDoorPlateBlockEntity;
 import com.qidate.qisplan2.client.DoorGhostMarkClient;
 import com.qidate.qisplan2.client.GhostPianoMusicClient;
 import com.qidate.qisplan2.client.GhostPossessionClientState;
 import com.qidate.qisplan2.client.GhostPossessionScreen;
+import com.qidate.qisplan2.client.screen.GhostDoorPlateScreen;
 import com.qidate.qisplan2.ghost.GhostPossessionSession;
 import com.qidate.qisplan2.ghost.ability.doorghost.DoorGhostAbilityHandler;
 import com.qidate.qisplan2.network.payload.*;
 import net.minecraft.client.Minecraft;
+import net.minecraft.core.BlockPos;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.network.PacketDistributor;
@@ -124,6 +127,67 @@ public final class QisNetwork {
                                     player
                             );
                         }
+                    });
+                }
+        );
+
+        /*
+         * ========================================================
+         * 鬼门牌
+         * ========================================================
+         */
+
+        registrar.playToClient(
+                OpenGhostDoorPlateScreenPayload.TYPE,
+                OpenGhostDoorPlateScreenPayload.STREAM_CODEC,
+                (payload, context) -> {
+
+                    context.enqueueWork(() -> {
+
+                        Minecraft.getInstance().setScreen(
+                                new GhostDoorPlateScreen(
+                                        payload.pos()
+                                )
+                        );
+                    });
+                }
+        );
+
+        registrar.playToServer(
+                SetGhostDoorPlateNumberPayload.TYPE,
+                SetGhostDoorPlateNumberPayload.STREAM_CODEC,
+                (payload, context) -> {
+
+                    context.enqueueWork(() -> {
+
+                        if (!(context.player()
+                                instanceof ServerPlayer player)) {
+
+                            return;
+                        }
+
+                        if (!(player.level()
+                                .getBlockEntity(payload.pos())
+                                instanceof GhostDoorPlateBlockEntity blockEntity)) {
+
+                            return;
+                        }
+
+                        /*
+                         * 防止客户端随便修改世界里的其他位置。
+                         */
+                        if (player.distanceToSqr(
+                                payload.pos().getX() + 0.5D,
+                                payload.pos().getY() + 0.5D,
+                                payload.pos().getZ() + 0.5D
+                        ) > 64.0D) {
+
+                            return;
+                        }
+
+                        blockEntity.setNumber(
+                                payload.number()
+                        );
                     });
                 }
         );
@@ -302,6 +366,32 @@ public final class QisNetwork {
                         left,
                         right,
                         attempt
+                )
+        );
+    }
+
+    public static void sendOpenGhostDoorPlateScreen(
+            ServerPlayer player,
+            BlockPos pos
+    ) {
+
+        PacketDistributor.sendToPlayer(
+                player,
+                new OpenGhostDoorPlateScreenPayload(
+                        pos
+                )
+        );
+    }
+
+    public static void sendSetGhostDoorPlateNumber(
+            BlockPos pos,
+            int number
+    ) {
+
+        PacketDistributor.sendToServer(
+                new SetGhostDoorPlateNumberPayload(
+                        pos,
+                        number
                 )
         );
     }
