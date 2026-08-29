@@ -8,30 +8,40 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.level.Level;
 
-import java.util.*;
+import java.util.Collections;
+import java.util.Set;
 
 /**
  * 鬼门牌全局注册表。
  *
  * 门牌号 -> 所有拥有这个门牌号的鬼门牌。
  *
+ * ============================================================
+ *
+ * 实际数据由 GhostDoorPlateSavedData 保存。
+ *
+ * Registry 本身只负责：
+ *
+ * 1. 提供操作接口
+ * 2. 查找目标门牌
+ * 3. 执行传送
+ *
+ * ============================================================
+ *
  * 数据属于整个服务器，而不是某一个维度。
+ *
+ * 因此可以：
+ *
+ * 主世界门牌 111
+ *        ↓
+ * 下界门牌 111
+ *
+ * 直接互相传送。
  */
 public final class GhostDoorPlateRegistry {
 
     private GhostDoorPlateRegistry() {
     }
-
-    /*
-     * ============================================================
-     * 注册表
-     * ============================================================
-     */
-
-    private static final Map<
-            Integer,
-            Set<DoorLocation>
-            > PLATES = new HashMap<>();
 
 
     /*
@@ -46,8 +56,29 @@ public final class GhostDoorPlateRegistry {
     ) {
 
         public DoorLocation {
-            pos = pos.immutable();
+
+            /*
+             * 防止外部 Mutable BlockPos 修改注册表数据。
+             */
+            pos =
+                    pos.immutable();
         }
+    }
+
+
+    /*
+     * ============================================================
+     * 获取 SavedData
+     * ============================================================
+     */
+
+    private static GhostDoorPlateSavedData getData(
+            ServerLevel level
+    ) {
+
+        return GhostDoorPlateSavedData.get(
+                level
+        );
     }
 
 
@@ -63,22 +94,14 @@ public final class GhostDoorPlateRegistry {
             BlockPos pos
     ) {
 
-        unregisterPosition(
-                level,
+        GhostDoorPlateSavedData data =
+                getData(level);
+
+        data.register(
+                number,
+                level.dimension(),
                 pos
         );
-
-        PLATES
-                .computeIfAbsent(
-                        number,
-                        ignored -> new HashSet<>()
-                )
-                .add(
-                        new DoorLocation(
-                                level.dimension(),
-                                pos
-                        )
-                );
 
         QisPlan2.LOGGER.info(
                 "[GhostDoorPlate] 注册门牌：{} -> {} {}",
@@ -100,36 +123,19 @@ public final class GhostDoorPlateRegistry {
             BlockPos pos
     ) {
 
-        ResourceKey<Level> dimension =
-                level.dimension();
+        GhostDoorPlateSavedData data =
+                getData(level);
 
-        for (Iterator<
-                Map.Entry<Integer, Set<DoorLocation>>
-                > iterator =
-             PLATES.entrySet().iterator();
-             iterator.hasNext();) {
+        data.unregisterPosition(
+                level.dimension(),
+                pos
+        );
 
-            Map.Entry<
-                    Integer,
-                    Set<DoorLocation>
-                    > entry =
-                    iterator.next();
-
-            Set<DoorLocation> locations =
-                    entry.getValue();
-
-            locations.removeIf(
-                    location ->
-                            location.dimension()
-                                    .equals(dimension)
-                                    && location.pos()
-                                    .equals(pos)
-            );
-
-            if (locations.isEmpty()) {
-                iterator.remove();
-            }
-        }
+        QisPlan2.LOGGER.info(
+                "[GhostDoorPlate] 删除门牌位置：{} {}",
+                level.dimension().location(),
+                pos
+        );
     }
 
 
@@ -148,12 +154,15 @@ public final class GhostDoorPlateRegistry {
             BlockPos currentPos
     ) {
 
+        GhostDoorPlateSavedData data =
+                getData(currentLevel);
+
         Set<DoorLocation> locations =
-                PLATES.get(number);
+                data.getLocations(
+                        number
+                );
 
-        if (locations == null
-                || locations.isEmpty()) {
-
+        if (locations.isEmpty()) {
             return null;
         }
 
@@ -164,16 +173,19 @@ public final class GhostDoorPlateRegistry {
                 );
 
         /*
-         * 目前先取第一个不是自己的门。
+         * 找第一个不是自己的门牌。
          */
-        for (DoorLocation location : locations) {
+        for (
+                DoorLocation location
+                : locations
+        ) {
 
             if (location.equals(current)) {
                 continue;
             }
 
             /*
-             * 确认目标维度仍然存在。
+             * 确认目标维度存在。
              */
             if (server.getLevel(
                     location.dimension()
@@ -195,25 +207,30 @@ public final class GhostDoorPlateRegistry {
      */
 
     public static Set<DoorLocation> getLocations(
+            ServerLevel level,
             int number
     ) {
 
-        Set<DoorLocation> locations =
-                PLATES.get(number);
-
-        if (locations == null) {
-            return Set.of();
-        }
-
-        return Collections.unmodifiableSet(
-                locations
-        );
+        return getData(level)
+                .getLocations(number);
     }
 
 
     /*
      * ============================================================
      * 传送玩家
+     *
+     * 当前版本：
+     *
+     * 直接传送到目标门牌。
+     *
+     * 后续再接：
+     *
+     * 目标门是否关闭
+     * ↓
+     * 关闭 -> 虚空杀人规律
+     * 开启 -> 正常穿越
+     *
      * ============================================================
      */
 
@@ -236,6 +253,12 @@ public final class GhostDoorPlateRegistry {
                 );
 
         if (destination == null) {
+
+            QisPlan2.LOGGER.warn(
+                    "[GhostDoorPlate] 找不到门牌 {} 的目标",
+                    number
+            );
+
             return false;
         }
 
@@ -252,10 +275,16 @@ public final class GhostDoorPlateRegistry {
                 destination.pos();
 
         /*
-         * 传送到门牌前方一点。
+         * ========================================================
+         * 目前先传送到目标门牌的位置。
          *
-         * 暂时直接根据目标门牌位置计算。
+         * 后面我们再恢复：
+         *
+         * 门牌 -> 绑定门 -> 检查门 OPEN
+         *
+         * ========================================================
          */
+
         double x =
                 destinationPos.getX()
                         + 0.5D;
