@@ -5,16 +5,14 @@ import com.qidate.qisplan2.client.GhostStoveScreen;
 import com.qidate.qisplan2.client.GhostUmbrellaDomainClient;
 import com.qidate.qisplan2.client.model.NightWandererModel;
 import com.qidate.qisplan2.client.renderer.*;
-import com.qidate.qisplan2.core.ModEntities;
-import com.qidate.qisplan2.core.ModMenus;
-import com.qidate.qisplan2.core.ModParticles;
+import com.qidate.qisplan2.core.*;
 import com.qidate.qisplan2.event.DeathCurseHudOverlay;
 
-import com.qidate.qisplan2.core.ModFluids;
 import net.minecraft.client.model.HumanoidModel;
 import net.minecraft.client.model.geom.builders.CubeDeformation;
 import net.minecraft.client.model.geom.builders.LayerDefinition;
 
+import net.minecraft.client.renderer.blockentity.BlockEntityRenderers;
 import net.minecraft.resources.ResourceLocation;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.ModContainer;
@@ -196,6 +194,11 @@ public class QisPlan2Client {
         event.registerEntityRenderer(
                 ModEntities.INVISIBLE_GHOST.get(),
                 InvisibleGhostRenderer::new
+        );
+
+        BlockEntityRenderers.register(
+                ModBlocks.GHOST_DOOR_PLATE_BLOCK_ENTITY.get(),
+                GhostDoorPlateBlockEntityRenderer::new
         );
     }
 

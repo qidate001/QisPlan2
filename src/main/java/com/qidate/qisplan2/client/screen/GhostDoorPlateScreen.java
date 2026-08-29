@@ -72,8 +72,6 @@ public class GhostDoorPlateScreen extends Screen {
         /*
          * 读取当前门牌号。
          */
-        Minecraft.getInstance();
-
         if (minecraft != null
                 && minecraft.level != null) {
 
@@ -90,6 +88,7 @@ public class GhostDoorPlateScreen extends Screen {
                                 ghostDoorPlate.getNumber()
                         )
                 );
+
             } else {
 
                 numberBox.setValue("666");
@@ -101,11 +100,19 @@ public class GhostDoorPlateScreen extends Screen {
         }
 
         /*
-         * 自动选中输入框。
+         * ========================================================
+         * 加入 GUI
+         * ========================================================
          */
-        numberBox.setFocused(true);
 
         addRenderableWidget(
+                numberBox
+        );
+
+        /*
+         * 打开 GUI 后自动把键盘焦点给输入框。
+         */
+        setInitialFocus(
                 numberBox
         );
 
