@@ -1,10 +1,12 @@
 package com.qidate.qisplan2.block.entity;
 
 import com.qidate.qisplan2.core.ModBlocks;
+import com.qidate.qisplan2.ghost.doorplate.GhostDoorPlateRegistry;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 
@@ -33,15 +35,17 @@ public class GhostDoorPlateBlockEntity extends BlockEntity {
 
         this.number = number;
 
-        /*
-         * 标记数据发生变化。
-         */
         setChanged();
 
-        /*
-         * 如果已经在世界中，
-         * 立即通知客户端更新这个 BlockEntity。
-         */
+        if (level instanceof ServerLevel serverLevel) {
+
+            GhostDoorPlateRegistry.register(
+                    number,
+                    serverLevel,
+                    worldPosition
+            );
+        }
+
         if (level != null) {
 
             level.sendBlockUpdated(
@@ -52,6 +56,8 @@ public class GhostDoorPlateBlockEntity extends BlockEntity {
             );
         }
     }
+
+
 
     @Override
     public CompoundTag getUpdateTag(
@@ -100,6 +106,22 @@ public class GhostDoorPlateBlockEntity extends BlockEntity {
             number = tag.getInt("Number");
         } else {
             number = DEFAULT_NUMBER;
+        }
+    }
+
+    @Override
+    public void setLevel(
+            net.minecraft.world.level.Level level
+    ) {
+        super.setLevel(level);
+
+        if (level instanceof ServerLevel serverLevel) {
+
+            GhostDoorPlateRegistry.register(
+                    number,
+                    serverLevel,
+                    worldPosition
+            );
         }
     }
 }

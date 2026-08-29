@@ -8,6 +8,7 @@ import com.qidate.qisplan2.core.QisConfig;
 import com.qidate.qisplan2.event.GhostUmbrellaAttackHandler;
 import com.qidate.qisplan2.ghost.GhostAbilityInteractionHandler;
 import com.qidate.qisplan2.ghost.ability.GhostAbilityRegistry;
+import com.qidate.qisplan2.ghost.doorplate.GhostDoorPlateTeleportHandler;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.ModContainer;
 import net.neoforged.fml.common.Mod;
@@ -48,5 +49,8 @@ public class QisPlan2 {
 
         // 驭鬼事件注册
         GhostAbilityInteractionHandler.register();
+
+        // 鬼门牌注册
+        GhostDoorPlateTeleportHandler.register();
     }
 }

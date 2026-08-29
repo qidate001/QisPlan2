@@ -2,9 +2,11 @@ package com.qidate.qisplan2.block;
 
 import com.mojang.serialization.MapCodec;
 import com.qidate.qisplan2.block.entity.GhostDoorPlateBlockEntity;
+import com.qidate.qisplan2.ghost.doorplate.GhostDoorPlateRegistry;
 import com.qidate.qisplan2.network.QisNetwork;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.player.Player;
@@ -250,6 +252,35 @@ public class GhostDoorPlateBlock
             CollisionContext context
     ) {
         return Shapes.empty();
+    }
+
+    @Override
+    public void onRemove(
+            BlockState state,
+            Level level,
+            BlockPos pos,
+            BlockState newState,
+            boolean isMoving
+    ) {
+
+        if (!state.is(newState.getBlock())) {
+
+            if (level instanceof ServerLevel serverLevel) {
+
+                GhostDoorPlateRegistry.unregisterPosition(
+                        serverLevel,
+                        pos
+                );
+            }
+        }
+
+        super.onRemove(
+                state,
+                level,
+                pos,
+                newState,
+                isMoving
+        );
     }
 
 
