@@ -44,5 +44,12 @@ public final class ModEntityAttributes {
                 ClosingGhost.createAttributes()
                         .build()
         );
+
+        // 喊人鬼
+        event.put(
+                ModEntities.CALLING_GHOST.get(),
+                CallingGhost.createAttributes()
+                        .build()
+        );
     }
 }

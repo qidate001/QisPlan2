@@ -196,6 +196,12 @@ public class QisPlan2Client {
                 InvisibleGhostRenderer::new
         );
 
+        // 喊人鬼
+        event.registerEntityRenderer(
+                ModEntities.CALLING_GHOST.get(),
+                CallingGhostRenderer::new
+        );
+
         BlockEntityRenderers.register(
                 ModBlocks.GHOST_DOOR_PLATE_BLOCK_ENTITY.get(),
                 GhostDoorPlateBlockEntityRenderer::new

@@ -140,4 +140,24 @@ public class ModEntities {
                                     ).toString()
                             )
             );
+
+    // 喊人鬼
+    public static final Supplier<EntityType<CallingGhost>> CALLING_GHOST =
+            ENTITY_TYPES.register(
+                    "calling_ghost",
+                    () -> EntityType.Builder
+                            .of(
+                                    CallingGhost::new,
+                                    MobCategory.MISC
+                            )
+                            .sized(
+                                    0.6F,
+                                    1.8F
+                            )
+                            .clientTrackingRange(64)
+                            .updateInterval(1)
+                            .build(
+                                    "qisplan2:calling_ghost"
+                            )
+            );
 }
