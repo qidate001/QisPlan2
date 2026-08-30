@@ -1,6 +1,7 @@
 package com.qidate.qisplan2.block;
 
 import com.mojang.serialization.MapCodec;
+import com.qidate.qisplan2.QisPlan2;
 import com.qidate.qisplan2.block.entity.GhostDoorPlateBlockEntity;
 import com.qidate.qisplan2.ghost.doorplate.GhostDoorPlateRegistry;
 import com.qidate.qisplan2.network.QisNetwork;
@@ -9,21 +10,21 @@ import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionResult;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.level.LevelReader;
-import net.minecraft.world.level.block.Block;
-import net.minecraft.world.level.block.Blocks;
-import net.minecraft.world.level.block.EntityBlock;
-import net.minecraft.world.level.block.HorizontalDirectionalBlock;
+import net.minecraft.world.level.block.*;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.world.level.block.state.properties.DirectionProperty;
+import net.minecraft.world.level.block.state.properties.DoubleBlockHalf;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.Shapes;
@@ -92,6 +93,50 @@ public class GhostDoorPlateBlock
                     14,
                     14
             );
+
+
+    /**
+     * 在门牌附近寻找门。
+     *
+     * 只绑定下半部分。
+     */
+    private static BlockPos findNearbyDoor(
+            Level level,
+            BlockPos platePos
+    ) {
+
+        for (int x = -2; x <= 2; x++) {
+
+            for (int y = -2; y <= 1; y++) {
+
+                for (int z = -2; z <= 2; z++) {
+
+                    BlockPos candidate =
+                            platePos.offset(
+                                    x,
+                                    y,
+                                    z
+                            );
+
+                    BlockState state =
+                            level.getBlockState(candidate);
+
+                    if (!(state.getBlock() instanceof DoorBlock)) {
+                        continue;
+                    }
+
+                    if (state.getValue(DoorBlock.HALF)
+                            != DoubleBlockHalf.LOWER) {
+                        continue;
+                    }
+
+                    return candidate;
+                }
+            }
+        }
+
+        return null;
+    }
 
 
     @Override
@@ -333,5 +378,58 @@ public class GhostDoorPlateBlock
         );
 
         return InteractionResult.SUCCESS;
+    }
+
+    @Override
+    public void setPlacedBy(
+            Level level,
+            BlockPos pos,
+            BlockState state,
+            LivingEntity placer,
+            ItemStack stack
+    ) {
+
+        super.setPlacedBy(
+                level,
+                pos,
+                state,
+                placer,
+                stack
+        );
+
+        if (level.isClientSide()) {
+            return;
+        }
+
+        if (!(level.getBlockEntity(pos)
+                instanceof GhostDoorPlateBlockEntity plate)) {
+            return;
+        }
+
+        BlockPos doorPos =
+                findNearbyDoor(
+                        level,
+                        pos
+                );
+
+        if (doorPos != null) {
+
+            plate.setLinkedDoorPos(
+                    doorPos
+            );
+
+            QisPlan2.LOGGER.info(
+                    "[GhostDoorPlate] 绑定鬼门：{} -> {}",
+                    pos,
+                    doorPos
+            );
+
+        } else {
+
+            QisPlan2.LOGGER.warn(
+                    "[GhostDoorPlate] 门牌附近没有鬼门：{}",
+                    pos
+            );
+        }
     }
 }

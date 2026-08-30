@@ -16,6 +16,14 @@ public class GhostDoorPlateBlockEntity extends BlockEntity {
 
     private int number = DEFAULT_NUMBER;
 
+    /*
+     * ============================================================
+     * 绑定鬼门
+     * ============================================================
+     */
+
+    private BlockPos linkedDoorPos;
+
     public GhostDoorPlateBlockEntity(
             BlockPos pos,
             BlockState state
@@ -45,6 +53,32 @@ public class GhostDoorPlateBlockEntity extends BlockEntity {
                     worldPosition
             );
         }
+
+        if (level != null) {
+
+            level.sendBlockUpdated(
+                    worldPosition,
+                    getBlockState(),
+                    getBlockState(),
+                    3
+            );
+        }
+    }
+
+    public BlockPos getLinkedDoorPos() {
+        return linkedDoorPos;
+    }
+
+    public void setLinkedDoorPos(
+            BlockPos pos
+    ) {
+
+        linkedDoorPos =
+                pos == null
+                        ? null
+                        : pos.immutable();
+
+        setChanged();
 
         if (level != null) {
 
@@ -93,6 +127,13 @@ public class GhostDoorPlateBlockEntity extends BlockEntity {
         super.saveAdditional(tag, provider);
 
         tag.putInt("Number", number);
+
+        if (linkedDoorPos != null) {
+            tag.putLong(
+                    "LinkedDoorPos",
+                    linkedDoorPos.asLong()
+            );
+        }
     }
 
     @Override
@@ -102,10 +143,21 @@ public class GhostDoorPlateBlockEntity extends BlockEntity {
     ) {
         super.loadAdditional(tag, provider);
 
-        if (tag.contains("Number")) {
-            number = tag.getInt("Number");
+        number =
+                tag.contains("Number")
+                        ? tag.getInt("Number")
+                        : DEFAULT_NUMBER;
+
+        if (tag.contains("LinkedDoorPos")) {
+
+            linkedDoorPos =
+                    BlockPos.of(
+                            tag.getLong("LinkedDoorPos")
+                    );
+
         } else {
-            number = DEFAULT_NUMBER;
+
+            linkedDoorPos = null;
         }
     }
 

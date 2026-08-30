@@ -1,14 +1,16 @@
 package com.qidate.qisplan2.ghost.doorplate;
 
 import com.qidate.qisplan2.QisPlan2;
+import com.qidate.qisplan2.block.entity.GhostDoorPlateBlockEntity;
 import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.DoorBlock;
+import net.minecraft.world.level.block.state.BlockState;
 
-import java.util.Collections;
 import java.util.Set;
 
 /**
@@ -27,16 +29,6 @@ import java.util.Set;
  * 3. 执行传送
  *
  * ============================================================
- *
- * 数据属于整个服务器，而不是某一个维度。
- *
- * 因此可以：
- *
- * 主世界门牌 111
- *        ↓
- * 下界门牌 111
- *
- * 直接互相传送。
  */
 public final class GhostDoorPlateRegistry {
 
@@ -271,49 +263,67 @@ public final class GhostDoorPlateRegistry {
             return false;
         }
 
-        BlockPos destinationPos =
-                destination.pos();
+        if (!(destinationLevel.getBlockEntity(destination.pos())
+                instanceof GhostDoorPlateBlockEntity plate)) {
 
-        /*
-         * ========================================================
-         * 目前先传送到目标门牌的位置。
-         *
-         * 后面我们再恢复：
-         *
-         * 门牌 -> 绑定门 -> 检查门 OPEN
-         *
-         * ========================================================
-         */
+            return false;
+        }
 
-        double x =
-                destinationPos.getX()
-                        + 0.5D;
+        BlockPos destinationDoorPos =
+                plate.getLinkedDoorPos();
 
-        double y =
-                destinationPos.getY()
-                        + 0.1D;
+        if (destinationDoorPos == null) {
 
-        double z =
-                destinationPos.getZ()
-                        + 0.5D;
+            QisPlan2.LOGGER.warn(
+                    "[GhostDoorPlate] 门牌没有绑定门：{}",
+                    destination.pos()
+            );
+
+            return false;
+        }
+
+        BlockState doorState =
+                destinationLevel.getBlockState(
+                        destinationDoorPos
+                );
+
+        if (!(doorState.getBlock()
+                instanceof DoorBlock)) {
+
+            QisPlan2.LOGGER.warn(
+                    "[GhostDoorPlate] 绑定门不存在：{}",
+                    destinationDoorPos
+            );
+
+            return false;
+        }
+
+        if (!doorState.getValue(DoorBlock.OPEN)) {
+
+            QisPlan2.LOGGER.info(
+                    "[GhostDoorPlate] 玩家 {} 被关闭门吞入虚空。",
+                    player.getGameProfile().getName()
+            );
+
+            player.teleportTo(
+                    destinationLevel,
+                    0.5,
+                    -1000,
+                    0.5,
+                    player.getYRot(),
+                    player.getXRot()
+            );
+
+            return true;
+        }
 
         player.teleportTo(
                 destinationLevel,
-                x,
-                y,
-                z,
+                destinationDoorPos.getX() + 0.5,
+                destinationDoorPos.getY(),
+                destinationDoorPos.getZ() + 0.5,
                 player.getYRot(),
                 player.getXRot()
-        );
-
-        QisPlan2.LOGGER.info(
-                "[GhostDoorPlate] 玩家 {} 通过门牌 {} 传送：{} {} -> {} {}",
-                player.getGameProfile().getName(),
-                number,
-                currentLevel.dimension().location(),
-                currentPos,
-                destination.dimension().location(),
-                destinationPos
         );
 
         return true;
