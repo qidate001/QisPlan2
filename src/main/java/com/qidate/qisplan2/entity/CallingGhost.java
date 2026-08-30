@@ -1,5 +1,8 @@
 package com.qidate.qisplan2.entity;
 
+import com.qidate.qisplan2.QisPlan2;
+import com.qidate.qisplan2.death.ModDamageTypes;
+import com.qidate.qisplan2.death.SupernaturalDeathHandler;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -36,6 +39,11 @@ public class CallingGhost extends AbstractGhostEntity {
      */
     private static final double FOLLOW_DISTANCE = 2.5D;
 
+    /**
+     * 鬼在玩家身后的高度。
+     */
+    private static final double FOLLOW_HEIGHT = 1.0D;
+
 
     /*
      * ========================================
@@ -44,11 +52,49 @@ public class CallingGhost extends AbstractGhostEntity {
      */
 
     /**
-     * 暂时用于测试。
+     * 两次喊名之间的最小冷却。
      *
-     * 200 ticks = 10 秒。
+     * 这里暂时设置为 10 秒。
      */
-    private int callCooldown = 200;
+    private static final int CALL_COOLDOWN_TICKS = 200;
+
+    /**
+     * 喊名次数上限。
+     */
+    private static final int MAX_CALL_COUNT = 10;
+
+    /**
+     * 当前距离下一次喊名还有多少 tick。
+     */
+    private int callCooldown = CALL_COOLDOWN_TICKS;
+
+    /**
+     * 当前已经喊了多少次。
+     */
+    private int callCount = 0;
+
+
+    /*
+     * ========================================
+     * 回头检测
+     * ========================================
+     */
+
+    /**
+     * 玩家一次 Tick 内至少旋转这么多度，
+     * 才认为玩家进行了回头。
+     */
+    private static final float TURN_THRESHOLD = 135.0F;
+
+    /**
+     * 上一次记录的玩家水平朝向。
+     */
+    private float lastPlayerYRot;
+
+    /**
+     * 是否已经拥有上一 Tick 的朝向。
+     */
+    private boolean hasLastPlayerRotation = false;
 
 
     /*
@@ -62,6 +108,9 @@ public class CallingGhost extends AbstractGhostEntity {
 
     private static final String NBT_CALL_COOLDOWN =
             "QisPlan2CallingGhostCallCooldown";
+
+    private static final String NBT_CALL_COUNT =
+            "QisPlan2CallingGhostCallCount";
 
 
     /*
@@ -90,6 +139,7 @@ public class CallingGhost extends AbstractGhostEntity {
         setNoGravity(true);
     }
 
+
     public static AttributeSupplier.Builder createAttributes() {
 
         return Mob.createMobAttributes()
@@ -103,7 +153,7 @@ public class CallingGhost extends AbstractGhostEntity {
                 )
                 .add(
                         Attributes.FOLLOW_RANGE,
-                        32.0D
+                        64.0D
                 );
     }
 
@@ -120,14 +170,14 @@ public class CallingGhost extends AbstractGhostEntity {
         super.tick();
 
         /*
-         * 只由服务端控制目标和位置。
+         * 只由服务端控制。
          */
         if (level().isClientSide()) {
             return;
         }
 
         /*
-         * 死机以后停止跟随。
+         * 死机以后停止行为。
          */
         if (isSupernaturallyStunned()) {
             return;
@@ -140,46 +190,89 @@ public class CallingGhost extends AbstractGhostEntity {
                 getTargetPlayer();
 
         /*
-         * 没有目标时，
-         * 自动寻找最近玩家。
+         * 没有目标时寻找新的玩家。
          */
         if (player == null) {
 
-            player =
-                    findNearestPlayer();
+            clearTarget();
+
+            player = findNearestPlayer();
 
             if (player != null) {
 
-                setTargetPlayer(
-                        player
-                );
+                setTargetPlayer(player);
+
+                followPlayer(player);
             }
         }
 
         /*
          * 附近没有玩家。
-         *
-         * 暂时什么都不做。
          */
         if (player == null) {
             return;
         }
 
         /*
-         * 玩家已经死亡。
+         * 玩家死亡。
          */
         if (!player.isAlive()) {
+
+            clearTarget();
+
             return;
         }
 
         /*
-         * 跟随玩家。
+         * ========================================
+         * 玩家回头检测
+         * ========================================
          */
-        followPlayer(player);
+
+        if (hasLastPlayerRotation) {
+
+            float currentYRot =
+                    player.getYRot();
+
+            float rotationDelta =
+                    Math.abs(
+                            net.minecraft.util.Mth.wrapDegrees(
+                                    currentYRot - lastPlayerYRot
+                            )
+                    );
+
+            if (rotationDelta >= TURN_THRESHOLD) {
+
+                onPlayerTurnAround(player);
+
+                return;
+            }
+        }
 
         /*
-         * 喊名计时。
+         * 记录本 Tick 玩家朝向。
          */
+        lastPlayerYRot =
+                player.getYRot();
+
+        hasLastPlayerRotation = true;
+
+
+        /*
+         * ========================================
+         * 跟随玩家
+         * ========================================
+         */
+
+        followPlayer(player);
+
+
+        /*
+         * ========================================
+         * 喊名计时
+         * ========================================
+         */
+
         tickCalling(player);
     }
 
@@ -192,7 +285,9 @@ public class CallingGhost extends AbstractGhostEntity {
 
     private ServerPlayer getTargetPlayer() {
 
-        if (!(level() instanceof ServerLevel serverLevel)) {
+        if (!(level()
+                instanceof ServerLevel serverLevel)) {
+
             return null;
         }
 
@@ -206,15 +301,27 @@ public class CallingGhost extends AbstractGhostEntity {
                 );
 
         if (player instanceof ServerPlayer serverPlayer) {
+
+            /*
+             * 如果玩家已经跨维度，
+             * 当前实体不能继续跟随。
+             */
+            if (serverPlayer.level() != level()) {
+                return null;
+            }
+
             return serverPlayer;
         }
 
         return null;
     }
 
+
     private ServerPlayer findNearestPlayer() {
 
-        if (!(level() instanceof ServerLevel serverLevel)) {
+        if (!(level()
+                instanceof ServerLevel serverLevel)) {
+
             return null;
         }
 
@@ -225,6 +332,7 @@ public class CallingGhost extends AbstractGhostEntity {
                 );
 
         if (player instanceof ServerPlayer serverPlayer) {
+
             return serverPlayer;
         }
 
@@ -241,14 +349,50 @@ public class CallingGhost extends AbstractGhostEntity {
     public void setTargetPlayer(
             ServerPlayer player
     ) {
+
         targetPlayerUUID =
                 player.getUUID();
+
+        callCount = 0;
+
+        callCooldown =
+                CALL_COOLDOWN_TICKS;
+
+        /*
+         * 绑定玩家时立即记录当前朝向。
+         *
+         * 防止刚找到玩家的第一 tick
+         * 因为没有历史朝向而误判。
+         */
+        lastPlayerYRot =
+                player.getYRot();
+
+        hasLastPlayerRotation = true;
     }
 
 
     public UUID getTargetPlayerUUID() {
 
         return targetPlayerUUID;
+    }
+
+
+    /*
+     * ========================================
+     * 放弃当前目标
+     * ========================================
+     */
+
+    private void clearTarget() {
+
+        targetPlayerUUID = null;
+
+        callCount = 0;
+
+        callCooldown =
+                CALL_COOLDOWN_TICKS;
+
+        hasLastPlayerRotation = false;
     }
 
 
@@ -270,9 +414,6 @@ public class CallingGhost extends AbstractGhostEntity {
 
         /*
          * 只取水平面。
-         *
-         * 玩家抬头、低头不会导致鬼飞到
-         * 天上或地下。
          */
         Vec3 horizontalLook =
                 new Vec3(
@@ -282,9 +423,11 @@ public class CallingGhost extends AbstractGhostEntity {
                 );
 
         /*
-         * 防止极端情况下 normalize 出问题。
+         * 防止 normalize 出问题。
          */
-        if (horizontalLook.lengthSqr() < 1.0E-6D) {
+        if (horizontalLook.lengthSqr()
+                < 1.0E-6D) {
+
             return;
         }
 
@@ -304,12 +447,12 @@ public class CallingGhost extends AbstractGhostEntity {
          */
         setPos(
                 player.getX() + behind.x,
-                player.getY(),
+                player.getY() + FOLLOW_HEIGHT,
                 player.getZ() + behind.z
         );
 
         /*
-         * 鬼朝向和玩家一致。
+         * 鬼和玩家保持相同朝向。
          */
         setYRot(
                 player.getYRot()
@@ -323,6 +466,43 @@ public class CallingGhost extends AbstractGhostEntity {
 
     /*
      * ========================================
+     * 玩家回头
+     * ========================================
+     */
+
+    private void onPlayerTurnAround(
+            ServerPlayer player
+    ) {
+
+        System.out.println(
+                "[QisPlan2] 喊人鬼检测到 "
+                        + player.getGameProfile().getName()
+                        + " 回头！"
+        );
+
+        /*
+         * ========================================
+         * 30 强度灵异袭击
+         * ========================================
+         */
+
+        SupernaturalDeathHandler.tryKill(
+                player,
+                ModDamageTypes.callingGhost(
+                        this
+                ),
+                30.0D
+        );
+
+        /*
+         * 回头以后放弃当前目标。
+         */
+        clearTarget();
+    }
+
+
+    /*
+     * ========================================
      * 喊名
      * ========================================
      */
@@ -331,6 +511,19 @@ public class CallingGhost extends AbstractGhostEntity {
             ServerPlayer player
     ) {
 
+        if (callCount >= MAX_CALL_COUNT) {
+
+            /*
+             * 已经喊满十次。
+             *
+             * 放弃当前玩家。
+             */
+            clearTarget();
+
+            return;
+        }
+
+
         if (callCooldown > 0) {
 
             callCooldown--;
@@ -338,15 +531,39 @@ public class CallingGhost extends AbstractGhostEntity {
             return;
         }
 
-        /*
-         * 10 秒一次。
-         */
-        callCooldown = 200;
 
         /*
-         * 下一阶段在这里真正播放名字。
+         * ========================================
+         * 喊一次
+         * ========================================
          */
-        callPlayerName(player);
+
+        callPlayerName(
+                player
+        );
+
+        callCount++;
+
+
+        /*
+         * ========================================
+         * 是否已经喊满十次
+         * ========================================
+         */
+
+        if (callCount >= MAX_CALL_COUNT) {
+
+            clearTarget();
+
+            return;
+        }
+
+
+        /*
+         * 下一次喊名。
+         */
+        callCooldown =
+                CALL_COOLDOWN_TICKS;
     }
 
 
@@ -355,11 +572,16 @@ public class CallingGhost extends AbstractGhostEntity {
     ) {
 
         /*
-         * 现在先测试。
+         * 目前先测试。
+         *
+         * 后面这里正式接声音系统。
          */
-        System.out.println(
+        QisPlan2.LOGGER.info(
                 "[QisPlan2] 喊人鬼喊：" +
                         player.getGameProfile().getName()
+                        + "（第 "
+                        + (callCount + 1)
+                        + " 次）"
         );
     }
 
@@ -391,6 +613,11 @@ public class CallingGhost extends AbstractGhostEntity {
                 NBT_CALL_COOLDOWN,
                 callCooldown
         );
+
+        tag.putInt(
+                NBT_CALL_COUNT,
+                callCount
+        );
     }
 
 
@@ -420,6 +647,14 @@ public class CallingGhost extends AbstractGhostEntity {
                                 NBT_CALL_COOLDOWN
                         )
                 );
+
+        callCount =
+                Math.max(
+                        0,
+                        tag.getInt(
+                                NBT_CALL_COUNT
+                        )
+                );
     }
 
 
@@ -427,15 +662,15 @@ public class CallingGhost extends AbstractGhostEntity {
      * ========================================
      * AI
      * ========================================
-     *
-     * 喊人鬼不使用 GhostWanderGoal。
      */
 
     @Override
     protected void registerGoals() {
-        // 故意不注册 GhostWanderGoal。
-        //
-        // 它的位置完全由 followPlayer()
-        // 控制。
+        /*
+         * 喊人鬼不使用任何 AI。
+         *
+         * 它的位置完全由 followPlayer()
+         * 控制。
+         */
     }
 }

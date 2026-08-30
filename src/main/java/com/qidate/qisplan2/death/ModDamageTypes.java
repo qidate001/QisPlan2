@@ -187,7 +187,7 @@ public class ModDamageTypes {
                     Registries.DAMAGE_TYPE,
                     ResourceLocation.fromNamespaceAndPath(
                             QisPlan2.MODID,
-                            "ghost_door_plate"
+                            "calling_ghost"
                     )
             );
 
