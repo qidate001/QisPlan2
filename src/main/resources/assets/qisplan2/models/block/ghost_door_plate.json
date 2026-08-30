@@ -8,16 +8,17 @@
 	},
 	"elements": [
 		{
+			"name": "主板",
 			"from": [2, 7, 0],
 			"to": [14, 14, 1],
 			"rotation": {"angle": 0, "axis": "y", "origin": [1, 7, 0]},
 			"faces": {
-				"north": {"uv": [6.5, 0, 7, 3.5], "texture": "#0"},
-				"east": {"uv": [0, 0, 6, 3.5], "texture": "#0"},
-				"south": {"uv": [6.5, 3.5, 7, 7], "texture": "#0"},
-				"west": {"uv": [0, 3.5, 6, 7], "texture": "#0"},
-				"up": {"uv": [6.5, 6, 6, 0], "texture": "#0"},
-				"down": {"uv": [6.5, 6, 6, 12], "texture": "#0"}
+				"north": {"uv": [0, 0, 6, 3.5], "texture": "#0"},
+				"east": {"uv": [6, 1, 6.5, 4.5], "texture": "#0"},
+				"south": {"uv": [0, 3.5, 6, 7], "texture": "#0"},
+				"west": {"uv": [6, 4.5, 6.5, 8], "texture": "#0"},
+				"up": {"uv": [12, 0.5, 6, 0], "texture": "#0"},
+				"down": {"uv": [12, 0.5, 6, 1], "texture": "#0"}
 			}
 		}
 	]

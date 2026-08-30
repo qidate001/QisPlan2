@@ -130,7 +130,7 @@ public class ModDamageTypes {
             );
 
     /**
-     * 关门湖灵异攻击
+     * 鬼湖灵异攻击
      */
     public static final ResourceKey<DamageType>
             GHOST_LAKE_WATER =
@@ -139,6 +139,18 @@ public class ModDamageTypes {
                     ResourceLocation.fromNamespaceAndPath(
                             QisPlan2.MODID,
                             "ghost_lake_water"
+                    )
+            );
+
+    /**
+     * 鬼门牌撕裂
+     */
+    public static final ResourceKey<DamageType> GHOST_DOOR_PLATE =
+            ResourceKey.create(
+                    Registries.DAMAGE_TYPE,
+                    ResourceLocation.fromNamespaceAndPath(
+                            QisPlan2.MODID,
+                            "ghost_door_plate"
                     )
             );
 
@@ -387,5 +399,24 @@ public class ModDamageTypes {
                 .source(
                         GHOST_LAKE_WATER
                 );
+    }
+
+    /**
+     * 创建鬼门牌撕裂 DamageSource
+     */
+    public static DamageSource ghostDoorPlate(
+            Entity entity
+    ) {
+        return new DamageSource(
+                entity.level()
+                        .registryAccess()
+                        .registryOrThrow(
+                                Registries.DAMAGE_TYPE
+                        )
+                        .getHolderOrThrow(
+                                GHOST_DOOR_PLATE
+                        ),
+                entity
+        );
     }
 }

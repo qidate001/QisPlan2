@@ -1,0 +1,6 @@
+{
+  "parent": "minecraft:item/generated",
+  "textures": {
+    "layer0": "qisplan2:item/ghost_door_plate"
+  }
+}

@@ -2,6 +2,8 @@ package com.qidate.qisplan2.ghost.doorplate;
 
 import com.qidate.qisplan2.QisPlan2;
 import com.qidate.qisplan2.block.entity.GhostDoorPlateBlockEntity;
+import com.qidate.qisplan2.death.ModDamageTypes;
+import com.qidate.qisplan2.death.SupernaturalDeathHandler;
 import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.MinecraftServer;
@@ -236,6 +238,40 @@ public final class GhostDoorPlateRegistry {
         MinecraftServer server =
                 player.server;
 
+        /*
+         * ========================================================
+         * 一对多杀人规律
+         *
+         * 同号门牌超过两个：
+         * 玩家会被“撕成两半”，受到灵异伤害。
+         * ========================================================
+         */
+
+        int plateCount =
+                getLocations(
+                        currentLevel,
+                        number
+                ).size();
+
+        if (plateCount > 2) {
+
+            double attackStrength =
+                    20.0D * (plateCount - 2);
+
+//            QisPlan2.LOGGER.info(
+//                    "[GhostDoorPlate] 门牌 {} 出现一对多：数量={}，灵异强度={}",
+//                    number,
+//                    plateCount,
+//                    attackStrength
+//            );
+
+            SupernaturalDeathHandler.tryKill(
+                    player,
+                    ModDamageTypes.ghostDoorPlate(player),
+                    attackStrength
+            );
+        }
+
         DoorLocation destination =
                 findDestination(
                         server,
@@ -246,10 +282,10 @@ public final class GhostDoorPlateRegistry {
 
         if (destination == null) {
 
-            QisPlan2.LOGGER.warn(
-                    "[GhostDoorPlate] 找不到门牌 {} 的目标",
-                    number
-            );
+//            QisPlan2.LOGGER.warn(
+//                    "[GhostDoorPlate] 找不到门牌 {} 的目标",
+//                    number
+//            );
 
             return false;
         }
@@ -274,10 +310,10 @@ public final class GhostDoorPlateRegistry {
 
         if (destinationDoorPos == null) {
 
-            QisPlan2.LOGGER.warn(
-                    "[GhostDoorPlate] 门牌没有绑定门：{}",
-                    destination.pos()
-            );
+//            QisPlan2.LOGGER.warn(
+//                    "[GhostDoorPlate] 门牌没有绑定门：{}",
+//                    destination.pos()
+//            );
 
             return false;
         }
@@ -290,20 +326,20 @@ public final class GhostDoorPlateRegistry {
         if (!(doorState.getBlock()
                 instanceof DoorBlock)) {
 
-            QisPlan2.LOGGER.warn(
-                    "[GhostDoorPlate] 绑定门不存在：{}",
-                    destinationDoorPos
-            );
+//            QisPlan2.LOGGER.warn(
+//                    "[GhostDoorPlate] 绑定门不存在：{}",
+//                    destinationDoorPos
+//            );
 
             return false;
         }
 
         if (!doorState.getValue(DoorBlock.OPEN)) {
 
-            QisPlan2.LOGGER.info(
-                    "[GhostDoorPlate] 玩家 {} 被关闭门吞入虚空。",
-                    player.getGameProfile().getName()
-            );
+//            QisPlan2.LOGGER.info(
+//                    "[GhostDoorPlate] 玩家 {} 被关闭门吞入虚空。",
+//                    player.getGameProfile().getName()
+//            );
 
             player.teleportTo(
                     destinationLevel,
