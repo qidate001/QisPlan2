@@ -1,5 +1,6 @@
 package com.qidate.qisplan2.client;
 
+import com.qidate.qisplan2.client.screen.GhostBookScreen;
 import net.minecraft.client.Minecraft;
 
 public final class GhostBookClient {

@@ -1,6 +1,7 @@
 package com.qidate.qisplan2.client;
 
 import com.qidate.qisplan2.QisPlan2;
+import com.qidate.qisplan2.client.renderer.GhostUmbrellaRenderer;
 import com.qidate.qisplan2.core.ModItems;
 import net.minecraft.client.renderer.BlockEntityWithoutLevelRenderer;
 import net.minecraft.client.resources.model.ModelResourceLocation;

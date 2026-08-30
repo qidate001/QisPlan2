@@ -1,7 +1,7 @@
 package com.qidate.qisplan2;
 
 import com.qidate.qisplan2.client.BlackRainParticle;
-import com.qidate.qisplan2.client.GhostStoveScreen;
+import com.qidate.qisplan2.client.screen.GhostStoveScreen;
 import com.qidate.qisplan2.client.GhostUmbrellaDomainClient;
 import com.qidate.qisplan2.client.model.NightWandererModel;
 import com.qidate.qisplan2.client.renderer.*;
@@ -27,8 +27,6 @@ import net.neoforged.neoforge.client.extensions.common.RegisterClientExtensionsE
 import net.neoforged.neoforge.client.gui.ConfigurationScreen;
 import net.neoforged.neoforge.client.gui.IConfigScreenFactory;
 import net.neoforged.neoforge.common.NeoForge;
-
-import static com.qidate.qisplan2.core.ModItems.GHOST_UMBRELLA;
 
 @Mod(value = QisPlan2.MODID, dist = Dist.CLIENT)
 public class QisPlan2Client {

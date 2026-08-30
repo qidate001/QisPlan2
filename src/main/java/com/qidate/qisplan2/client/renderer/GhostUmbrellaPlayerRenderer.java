@@ -1,4 +1,4 @@
-package com.qidate.qisplan2.client;
+package com.qidate.qisplan2.client.renderer;
 
 import com.qidate.qisplan2.item.GhostUmbrellaItem;
 import net.minecraft.client.model.HumanoidModel;

@@ -1,4 +1,4 @@
-package com.qidate.qisplan2.client;
+package com.qidate.qisplan2.client.screen;
 
 import com.qidate.qisplan2.menu.GhostStoveMenu;
 import net.minecraft.client.gui.GuiGraphics;

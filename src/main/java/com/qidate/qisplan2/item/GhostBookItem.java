@@ -1,6 +1,6 @@
 package com.qidate.qisplan2.item;
 
-import com.qidate.qisplan2.client.GhostBookScreen;
+import com.qidate.qisplan2.client.screen.GhostBookScreen;
 import com.qidate.qisplan2.core.QisConfig;
 import net.minecraft.client.Minecraft;
 import net.minecraft.world.InteractionHand;

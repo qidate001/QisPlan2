@@ -1,7 +1,7 @@
-package com.qidate.qisplan2.client;
+package com.qidate.qisplan2.client.screen;
 
+import com.qidate.qisplan2.client.GhostPossessionClientState;
 import com.qidate.qisplan2.network.QisNetwork;
-import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;

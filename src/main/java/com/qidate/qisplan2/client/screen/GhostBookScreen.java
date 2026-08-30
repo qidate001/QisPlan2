@@ -1,7 +1,6 @@
-package com.qidate.qisplan2.client;
+package com.qidate.qisplan2.client.screen;
 
 import com.qidate.qisplan2.agent.DeepSeekService;
-import com.mojang.blaze3d.systems.RenderSystem;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.EditBox;

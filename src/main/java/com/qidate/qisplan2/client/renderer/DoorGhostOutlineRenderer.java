@@ -1,13 +1,10 @@
-package com.qidate.qisplan2.client;
+package com.qidate.qisplan2.client.renderer;
 
+import com.qidate.qisplan2.client.DoorGhostMarkClient;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.OutlineBufferSource;
 import net.minecraft.client.renderer.entity.EntityRenderDispatcher;
 import net.minecraft.client.renderer.RenderBuffers;
-import net.minecraft.client.renderer.LevelRenderer;
-import net.minecraft.client.renderer.GameRenderer;
-import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.Camera;
 import net.minecraft.world.entity.Entity;
 import net.neoforged.bus.api.SubscribeEvent;

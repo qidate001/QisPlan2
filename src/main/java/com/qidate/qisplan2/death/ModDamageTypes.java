@@ -94,6 +94,31 @@ public class ModDamageTypes {
             );
 
     /**
+     * 鬼伞灵异攻击
+     */
+    public static final ResourceKey<DamageType>
+            GHOST_UMBRELLA =
+            ResourceKey.create(
+                    Registries.DAMAGE_TYPE,
+                    ResourceLocation.fromNamespaceAndPath(
+                            QisPlan2.MODID,
+                            "ghost_umbrella"
+                    )
+            );
+
+    /**
+     * 鬼钢琴灵异攻击
+     */
+    public static final ResourceKey<DamageType> GHOST_PIANO =
+            ResourceKey.create(
+                    Registries.DAMAGE_TYPE,
+                    ResourceLocation.fromNamespaceAndPath(
+                            QisPlan2.MODID,
+                            "ghost_piano"
+                    )
+            );
+
+    /**
      * 敲门鬼灵异攻击
      */
     public static final ResourceKey<DamageType> KNOCKING_GHOST =
@@ -155,6 +180,18 @@ public class ModDamageTypes {
             );
 
     /**
+     * 喊人鬼撕裂
+     */
+    public static final ResourceKey<DamageType> CALLING_GHOST =
+            ResourceKey.create(
+                    Registries.DAMAGE_TYPE,
+                    ResourceLocation.fromNamespaceAndPath(
+                            QisPlan2.MODID,
+                            "ghost_door_plate"
+                    )
+            );
+
+    /**
      * 创建鬼地毯死亡 DamageSource
      */
     public static DamageSource ghostCarpet(Entity entity) {
@@ -195,28 +232,6 @@ public class ModDamageTypes {
                 entity
         );
     }
-
-    public static final ResourceKey<DamageType>
-            GHOST_UMBRELLA =
-            ResourceKey.create(
-                    Registries.DAMAGE_TYPE,
-                    ResourceLocation.fromNamespaceAndPath(
-                            QisPlan2.MODID,
-                            "ghost_umbrella"
-                    )
-            );
-
-    /**
-     * 鬼钢琴灵异攻击
-     */
-    public static final ResourceKey<DamageType> GHOST_PIANO =
-            ResourceKey.create(
-                    Registries.DAMAGE_TYPE,
-                    ResourceLocation.fromNamespaceAndPath(
-                            QisPlan2.MODID,
-                            "ghost_piano"
-                    )
-            );
 
 
     /**
@@ -415,6 +430,25 @@ public class ModDamageTypes {
                         )
                         .getHolderOrThrow(
                                 GHOST_DOOR_PLATE
+                        ),
+                entity
+        );
+    }
+
+    /**
+     * 创建喊人鬼 DamageSource
+     */
+    public static DamageSource callingGhost(
+            Entity entity
+    ) {
+        return new DamageSource(
+                entity.level()
+                        .registryAccess()
+                        .registryOrThrow(
+                                Registries.DAMAGE_TYPE
+                        )
+                        .getHolderOrThrow(
+                                CALLING_GHOST
                         ),
                 entity
         );

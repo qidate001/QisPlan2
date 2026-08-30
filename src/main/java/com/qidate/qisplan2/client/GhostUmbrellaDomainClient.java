@@ -1,5 +1,6 @@
 package com.qidate.qisplan2.client;
 
+import com.qidate.qisplan2.client.renderer.GhostRainRenderer;
 import com.qidate.qisplan2.item.GhostUmbrellaItem;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;

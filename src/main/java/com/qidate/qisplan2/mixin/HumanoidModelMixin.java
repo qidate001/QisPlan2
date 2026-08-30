@@ -1,6 +1,6 @@
 package com.qidate.qisplan2.mixin;
 
-import com.qidate.qisplan2.client.GhostUmbrellaPlayerRenderer;
+import com.qidate.qisplan2.client.renderer.GhostUmbrellaPlayerRenderer;
 import net.minecraft.client.model.HumanoidModel;
 import net.minecraft.client.player.AbstractClientPlayer;
 import net.minecraft.world.entity.LivingEntity;
