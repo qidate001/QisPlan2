@@ -27,6 +27,25 @@ public class CallingGhost extends AbstractGhostEntity {
 
     private UUID targetPlayerUUID;
 
+    /**
+     * 最近一次被袭击的玩家。
+     *
+     * 短时间内不会再次选择这个玩家。
+     */
+    private UUID recentlyAttackedPlayerUUID;
+
+    /**
+     * 最近一次袭击目标的冷却时间。
+     */
+    private int attackTargetCooldown = 0;
+
+    /**
+     * 同一个玩家被袭击后的目标冷却。
+     *
+     * 这里暂时设置为 30 秒。
+     */
+    private static final int ATTACK_TARGET_COOLDOWN_TICKS = 20 * 30;
+
 
     /*
      * ========================================
@@ -174,6 +193,22 @@ public class CallingGhost extends AbstractGhostEntity {
          */
         if (level().isClientSide()) {
             return;
+        }
+
+        /*
+         * ========================================
+         * 最近袭击目标冷却
+         * ========================================
+         */
+
+        if (attackTargetCooldown > 0) {
+
+            attackTargetCooldown--;
+
+            if (attackTargetCooldown <= 0) {
+
+                recentlyAttackedPlayerUUID = null;
+            }
         }
 
         /*
@@ -325,18 +360,51 @@ public class CallingGhost extends AbstractGhostEntity {
             return null;
         }
 
-        Player player =
-                serverLevel.getNearestPlayer(
-                        this,
-                        64.0D
-                );
+        double maxDistanceSqr =
+                64.0D * 64.0D;
 
-        if (player instanceof ServerPlayer serverPlayer) {
+        ServerPlayer nearestPlayer = null;
 
-            return serverPlayer;
+        double nearestDistanceSqr =
+                Double.MAX_VALUE;
+
+        for (ServerPlayer player
+                : serverLevel.players()) {
+
+            double distanceSqr =
+                    distanceToSqr(player);
+
+            if (distanceSqr > maxDistanceSqr) {
+                continue;
+            }
+
+            if (recentlyAttackedPlayerUUID != null
+                    && player.getUUID().equals(
+                    recentlyAttackedPlayerUUID
+            )) {
+
+                continue;
+            }
+
+            if (distanceSqr < nearestDistanceSqr) {
+
+                nearestDistanceSqr =
+                        distanceSqr;
+
+                nearestPlayer =
+                        player;
+            }
         }
 
-        return null;
+        if (nearestPlayer != null) {
+
+            QisPlan2.LOGGER.info(
+                    "[QisPlan2] 喊人鬼找到新目标：{}",
+                    nearestPlayer.getGameProfile().getName()
+            );
+        }
+
+        return nearestPlayer;
     }
 
 
@@ -393,6 +461,12 @@ public class CallingGhost extends AbstractGhostEntity {
                 CALL_COOLDOWN_TICKS;
 
         hasLastPlayerRotation = false;
+
+        /*
+         * 没有目标以后立即停止移动。
+         */
+        getNavigation().stop();
+        setDeltaMovement(Vec3.ZERO);
     }
 
 
@@ -474,11 +548,22 @@ public class CallingGhost extends AbstractGhostEntity {
             ServerPlayer player
     ) {
 
-        System.out.println(
-                "[QisPlan2] 喊人鬼检测到 "
-                        + player.getGameProfile().getName()
-                        + " 回头！"
+        QisPlan2.LOGGER.info(
+                "[QisPlan2] 喊人鬼检测到 {} 回头！",
+                player.getGameProfile().getName()
         );
+
+        /*
+         * ========================================
+         * 记录最近袭击目标
+         * ========================================
+         */
+
+        recentlyAttackedPlayerUUID =
+                player.getUUID();
+
+        attackTargetCooldown =
+                ATTACK_TARGET_COOLDOWN_TICKS;
 
         /*
          * ========================================
@@ -672,5 +757,9 @@ public class CallingGhost extends AbstractGhostEntity {
          * 它的位置完全由 followPlayer()
          * 控制。
          */
+
+        QisPlan2.LOGGER.info(
+                "[QisPlan2] CallingGhost.registerGoals()"
+        );
     }
 }
