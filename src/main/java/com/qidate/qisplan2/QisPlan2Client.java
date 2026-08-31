@@ -200,6 +200,12 @@ public class QisPlan2Client {
                 CallingGhostRenderer::new
         );
 
+        // 鬼画
+        event.registerEntityRenderer(
+                ModEntities.GHOST_PAINTING.get(),
+                GhostPaintingRenderer::new
+        );
+
         BlockEntityRenderers.register(
                 ModBlocks.GHOST_DOOR_PLATE_BLOCK_ENTITY.get(),
                 GhostDoorPlateBlockEntityRenderer::new

@@ -82,7 +82,7 @@ public class CallingGhost extends AbstractGhostEntity {
     /**
      * 两次喊名之间的最小冷却。
      */
-    private static final int CALL_COOLDOWN_TICKS = 200;
+    private static final int CALL_COOLDOWN_TICKS = 100;
 
     /**
      * 喊名次数上限。
@@ -110,7 +110,7 @@ public class CallingGhost extends AbstractGhostEntity {
      * 玩家一次 Tick 内至少旋转这么多度，
      * 才认为玩家进行了回头。
      */
-    private static final float TURN_THRESHOLD = 30.0F;
+    private static final float TURN_THRESHOLD = 45.0F;
 
     /**
      * 上一次记录的玩家水平朝向。

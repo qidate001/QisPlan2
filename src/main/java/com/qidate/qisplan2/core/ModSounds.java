@@ -113,7 +113,7 @@ public class ModSounds {
                     )
             );
 
-    // 喊人鬼：特殊玩家 5
+    // 喊人鬼：只屑
     public static final DeferredHolder<SoundEvent, SoundEvent> CALLING_GHOST_SPECIAL_UZJHF_836 =
             SOUND_EVENTS.register(
                     "calling_ghost.special_uzjhf_836",

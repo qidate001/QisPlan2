@@ -160,4 +160,26 @@ public class ModEntities {
                                     "qisplan2:calling_ghost"
                             )
             );
+
+    // 鬼画
+    public static final DeferredHolder<
+            EntityType<?>,
+            EntityType<GhostPaintingEntity>
+            > GHOST_PAINTING =
+            ENTITY_TYPES.register(
+                    "ghost_painting",
+                    () -> EntityType.Builder.of(
+                                    GhostPaintingEntity::new,
+                                    MobCategory.MISC
+                            )
+                            .sized(
+                                    GhostPaintingEntity.WIDTH,
+                                    GhostPaintingEntity.HEIGHT
+                            )
+                            .clientTrackingRange(10)
+                            .updateInterval(1)
+                            .build(
+                                    "qisplan2:ghost_painting"
+                            )
+            );
 }
