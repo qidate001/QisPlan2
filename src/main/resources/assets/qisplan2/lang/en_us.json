@@ -38,6 +38,7 @@
   "item.qisplan2.knocking_ghost_spawn_egg": "§4Knocking ghost spawn egg",
   "item.qisplan2.opening_ghost_spawn_egg": "§4Opening ghost spawn egg",
   "item.qisplan2.closing_ghost_spawn_egg": "§4Closing ghost spawn egg",
+  "item.qisplan2.calling_ghost_spawn_egg": "§4Calling ghost spawn egg",
 
   "fluid_type.qisplan2.ghost_lake_water": "§4Ghost Lake Water",
 
@@ -46,12 +47,14 @@
   "entity.qisplan2.knocking_ghost": "§4Knocking Ghost",
   "entity.qisplan2.opening_ghost": "§4Opening Ghost",
   "entity.qisplan2.closing_ghost": "§4Closing Ghost",
+  "entity.qisplan2.calling_ghost": "§4Calling Ghost",
 
   "ghost.qisplan2.night_wanderer": "Night Wanderer",
   "ghost.qisplan2.invisible_ghost": "Invisible Ghost",
   "ghost.qisplan2.knocking_ghost": "Knocking Ghost",
   "ghost.qisplan2.opening_ghost": "Opening Ghost",
   "ghost.qisplan2.closing_ghost": "Closing Ghost",
+  "ghost.qisplan2.calling_ghost": "Calling Ghost",
 
   "screen.qisplan2.ghost_book": "§4Ghost Book",
 

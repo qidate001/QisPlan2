@@ -42,18 +42,21 @@
   "item.qisplan2.knocking_ghost_spawn_egg": "§4敲门鬼刷怪蛋",
   "item.qisplan2.opening_ghost_spawn_egg": "§4开门鬼刷怪蛋",
   "item.qisplan2.closing_ghost_spawn_egg": "§4关门鬼刷怪蛋",
+  "item.qisplan2.calling_ghost_spawn_egg": "§4喊人鬼刷怪蛋",
 
   "entity.qisplan2.night_wanderer": "§4夜游鬼",
   "entity.qisplan2.invisible_ghost": "§4不可视之鬼",
   "entity.qisplan2.knocking_ghost": "§4敲门鬼",
   "entity.qisplan2.opening_ghost": "§4开门鬼",
   "entity.qisplan2.closing_ghost": "§4关门鬼",
+  "entity.qisplan2.calling_ghost": "§4喊人鬼",
 
   "ghost.qisplan2.night_wanderer": "夜游鬼",
   "ghost.qisplan2.invisible_ghost": "不可视之鬼",
   "ghost.qisplan2.knocking_ghost": "敲门鬼",
   "ghost.qisplan2.opening_ghost": "开门鬼",
   "ghost.qisplan2.closing_ghost": "关门鬼",
+  "ghost.qisplan2.calling_ghost": "喊人鬼",
 
   "screen.qisplan2.ghost_book": "§4鬼书",
 

@@ -242,8 +242,6 @@ public class ModItems {
                     )
             );
 
-
-
     // 关门鬼刷怪蛋
     public static final DeferredItem<SpawnEggItem>
             CLOSING_GHOST_SPAWN_EGG =
@@ -251,6 +249,19 @@ public class ModItems {
                     "closing_ghost_spawn_egg",
                     () -> new SpawnEggItem(
                             CLOSING_GHOST.get(),
+                            0x191919,
+                            0xB44AFF,
+                            new Item.Properties()
+                    )
+            );
+
+    // 喊人鬼刷怪蛋
+    public static final DeferredItem<SpawnEggItem>
+            CALLING_GHOST_SPAWN_EGG =
+            ITEMS.register(
+                    "calling_ghost_spawn_egg",
+                    () -> new SpawnEggItem(
+                            CALLING_GHOST.get(),
                             0x191919,
                             0xB44AFF,
                             new Item.Properties()
