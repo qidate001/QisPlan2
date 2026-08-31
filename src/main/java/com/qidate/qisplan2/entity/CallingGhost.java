@@ -3,9 +3,13 @@ package com.qidate.qisplan2.entity;
 import com.qidate.qisplan2.QisPlan2;
 import com.qidate.qisplan2.death.ModDamageTypes;
 import com.qidate.qisplan2.death.SupernaturalDeathHandler;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.sounds.SoundEvent;
+import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.PathfinderMob;
@@ -656,17 +660,27 @@ public class CallingGhost extends AbstractGhostEntity {
             ServerPlayer player
     ) {
 
-        /*
-         * 目前先测试。
-         *
-         * 后面这里正式接声音系统。
-         */
+        SoundEvent sound =
+                CallingGhostSounds.getSound(
+                        player
+                );
+
         QisPlan2.LOGGER.info(
-                "[QisPlan2] 喊人鬼喊：" +
-                        player.getGameProfile().getName()
-                        + "（第 "
-                        + (callCount + 1)
-                        + " 次）"
+                "[QisPlan2] 喊人鬼喊 {}：第 {} 次，音效={}",
+                player.getGameProfile().getName(),
+                callCount + 1,
+                sound.getLocation()
+        );
+
+        player.level().playSound(
+                null,
+                player.getX(),
+                player.getY(),
+                player.getZ(),
+                sound,
+                SoundSource.HOSTILE,
+                1.0F,
+                1.0F
         );
     }
 

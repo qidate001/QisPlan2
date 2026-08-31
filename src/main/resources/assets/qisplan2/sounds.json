@@ -13,5 +13,42 @@
         "name": "qisplan2:ghost_knock"
       }
     ]
+  },
+
+
+  "calling_ghost.player": {
+    "sounds": [
+      "qisplan2:calling_ghost/player"
+    ]
+  },
+
+  "calling_ghost.special_qi": {
+    "sounds": [
+      "qisplan2:calling_ghost/special_qi"
+    ]
+  },
+
+  "calling_ghost.special_south_town": {
+    "sounds": [
+      "qisplan2:calling_ghost/special_south_town"
+    ]
+  },
+
+  "calling_ghost.special_jia_nan": {
+    "sounds": [
+      "qisplan2:calling_ghost/special_jia_nan"
+    ]
+  },
+
+  "calling_ghost.special_m_js": {
+    "sounds": [
+      "qisplan2:calling_ghost/special_m_js"
+    ]
+  },
+
+  "calling_ghost.special_uzjhf_836": {
+    "sounds": [
+      "qisplan2:calling_ghost/special_uzjhf_836"
+    ]
   }
 }

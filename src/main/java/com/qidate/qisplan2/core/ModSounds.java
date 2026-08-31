@@ -50,4 +50,78 @@ public class ModSounds {
                             )
                     )
             );
+
+
+
+    // 喊人鬼：普通玩家
+    public static final DeferredHolder<SoundEvent, SoundEvent> CALLING_GHOST_PLAYER =
+            SOUND_EVENTS.register(
+                    "calling_ghost.player",
+                    () -> SoundEvent.createVariableRangeEvent(
+                            ResourceLocation.fromNamespaceAndPath(
+                                    MODID,
+                                    "calling_ghost.player"
+                            )
+                    )
+            );
+
+    // 喊人鬼：齐先生（QiNB_666）
+    public static final DeferredHolder<SoundEvent, SoundEvent> CALLING_GHOST_SPECIAL_QI =
+            SOUND_EVENTS.register(
+                    "calling_ghost.special_qi",
+                    () -> SoundEvent.createVariableRangeEvent(
+                            ResourceLocation.fromNamespaceAndPath(
+                                    MODID,
+                                    "calling_ghost.special_qi"
+                            )
+                    )
+            );
+
+    // 喊人鬼：南镇（SouthTown_）
+    public static final DeferredHolder<SoundEvent, SoundEvent> CALLING_GHOST_SPECIAL_SOUTH_TOWN =
+            SOUND_EVENTS.register(
+                    "calling_ghost.special_south_town",
+                    () -> SoundEvent.createVariableRangeEvent(
+                            ResourceLocation.fromNamespaceAndPath(
+                                    MODID,
+                                    "calling_ghost.south_town"
+                            )
+                    )
+            );
+
+    // 喊人鬼：佳楠（Jia_nan11）
+    public static final DeferredHolder<SoundEvent, SoundEvent> CALLING_GHOST_SPECIAL_JIA_NAN =
+            SOUND_EVENTS.register(
+                    "calling_ghost.special_jia_nan",
+                    () -> SoundEvent.createVariableRangeEvent(
+                            ResourceLocation.fromNamespaceAndPath(
+                                    MODID,
+                                    "calling_ghost.special_jia_nan"
+                            )
+                    )
+            );
+
+    // 喊人鬼：军师（M_JS）
+    public static final DeferredHolder<SoundEvent, SoundEvent> CALLING_GHOST_SPECIAL_M_JS =
+            SOUND_EVENTS.register(
+                    "calling_ghost.special_m_js",
+                    () -> SoundEvent.createVariableRangeEvent(
+                            ResourceLocation.fromNamespaceAndPath(
+                                    MODID,
+                                    "calling_ghost.special_m_js"
+                            )
+                    )
+            );
+
+    // 喊人鬼：特殊玩家 5
+    public static final DeferredHolder<SoundEvent, SoundEvent> CALLING_GHOST_SPECIAL_UZJHF_836 =
+            SOUND_EVENTS.register(
+                    "calling_ghost.special_uzjhf_836",
+                    () -> SoundEvent.createVariableRangeEvent(
+                            ResourceLocation.fromNamespaceAndPath(
+                                    MODID,
+                                    "calling_ghost.special_uzjhf_836"
+                            )
+                    )
+            );
 }
