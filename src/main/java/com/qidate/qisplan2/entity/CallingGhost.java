@@ -1,8 +1,10 @@
 package com.qidate.qisplan2.entity;
 
 import com.qidate.qisplan2.QisPlan2;
+import com.qidate.qisplan2.core.ModBlocks;
 import com.qidate.qisplan2.death.ModDamageTypes;
 import com.qidate.qisplan2.death.SupernaturalDeathHandler;
+import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.resources.ResourceLocation;
@@ -10,6 +12,7 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundSource;
+import net.minecraft.util.Mth;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.PathfinderMob;
@@ -17,6 +20,8 @@ import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.DoorBlock;
+import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
 
 import java.util.UUID;
@@ -76,15 +81,13 @@ public class CallingGhost extends AbstractGhostEntity {
 
     /**
      * 两次喊名之间的最小冷却。
-     *
-     * 这里暂时设置为 10 秒。
      */
     private static final int CALL_COOLDOWN_TICKS = 200;
 
     /**
      * 喊名次数上限。
      */
-    private static final int MAX_CALL_COUNT = 10;
+    private static final int MAX_CALL_COUNT = 7;
 
     /**
      * 当前距离下一次喊名还有多少 tick。
@@ -107,7 +110,7 @@ public class CallingGhost extends AbstractGhostEntity {
      * 玩家一次 Tick 内至少旋转这么多度，
      * 才认为玩家进行了回头。
      */
-    private static final float TURN_THRESHOLD = 135.0F;
+    private static final float TURN_THRESHOLD = 30.0F;
 
     /**
      * 上一次记录的玩家水平朝向。
@@ -262,6 +265,16 @@ public class CallingGhost extends AbstractGhostEntity {
             return;
         }
 
+        if (!canTrackPlayer(player)) {
+
+            /*
+             * 鬼石砖 / 关闭鬼门隔绝。
+             *
+             * 当前玩家暂时无法被喊人鬼追踪。
+             */
+            return;
+        }
+
         /*
          * ========================================
          * 玩家回头检测
@@ -355,6 +368,54 @@ public class CallingGhost extends AbstractGhostEntity {
         return null;
     }
 
+    private boolean canTargetPlayer(
+            ServerPlayer player
+    ) {
+
+        /*
+         * 创造模式不追踪。
+         */
+        if (player.isCreative()) {
+            return false;
+        }
+
+        /*
+         * 旁观模式不追踪。
+         */
+        if (player.isSpectator()) {
+            return false;
+        }
+
+        /*
+         * 必须存活。
+         */
+        if (!player.isAlive()) {
+            return false;
+        }
+
+        /*
+         * 鬼石砖 / 关闭鬼门
+         * 可以隔绝喊人鬼。
+         */
+        if (!canTrackPlayer(player)) {
+            return false;
+        }
+
+        /*
+         * 最近刚刚袭击过的玩家，
+         * 暂时不能再次成为目标。
+         */
+        if (recentlyAttackedPlayerUUID != null
+                && player.getUUID().equals(
+                recentlyAttackedPlayerUUID
+        )) {
+
+            return false;
+        }
+
+        return true;
+    }
+
 
     private ServerPlayer findNearestPlayer() {
 
@@ -379,6 +440,10 @@ public class CallingGhost extends AbstractGhostEntity {
                     distanceToSqr(player);
 
             if (distanceSqr > maxDistanceSqr) {
+                continue;
+            }
+
+            if (!canTargetPlayer(player)) {
                 continue;
             }
 
@@ -682,6 +747,120 @@ public class CallingGhost extends AbstractGhostEntity {
                 1.0F,
                 1.0F
         );
+    }
+
+
+
+    /*
+     * ========================================
+     * 灵异阻隔
+     * ========================================
+     */
+
+    private boolean canTrackPlayer(
+            ServerPlayer player
+    ) {
+
+        Vec3 start =
+                position().add(
+                        0.0D,
+                        0.8D,
+                        0.0D
+                );
+
+        Vec3 end =
+                player.getEyePosition();
+
+        double distance =
+                start.distanceTo(end);
+
+        int steps =
+                Math.max(
+                        1,
+                        (int) Math.ceil(
+                                distance / 0.5D
+                        )
+                );
+
+        for (int i = 1; i < steps; i++) {
+
+            double t =
+                    (double) i / steps;
+
+            double x =
+                    Mth.lerp(
+                            t,
+                            start.x,
+                            end.x
+                    );
+
+            double y =
+                    Mth.lerp(
+                            t,
+                            start.y,
+                            end.y
+                    );
+
+            double z =
+                    Mth.lerp(
+                            t,
+                            start.z,
+                            end.z
+                    );
+
+            BlockPos checkPos =
+                    BlockPos.containing(
+                            x,
+                            y,
+                            z
+                    );
+
+            BlockState state =
+                    level().getBlockState(
+                            checkPos
+                    );
+
+            if (isCallingGhostBlocker(state)) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+
+    private boolean isCallingGhostBlocker(
+            BlockState state
+    ) {
+
+        /*
+         * 鬼石砖：
+         *
+         * 永久阻挡。
+         */
+        if (state.is(
+                ModBlocks.GHOST_STONE_BRICKS.get()
+        )) {
+
+            return true;
+        }
+
+        /*
+         * 鬼门：
+         *
+         * 关闭 → 阻挡
+         * 打开 → 不阻挡
+         */
+        if (state.is(
+                ModBlocks.GHOST_DOOR.get()
+        )) {
+
+            return !state.getValue(
+                    DoorBlock.OPEN
+            );
+        }
+
+        return false;
     }
 
 
