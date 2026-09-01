@@ -9,6 +9,7 @@ import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.entity.EntityRenderer;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
+import net.minecraft.core.Direction;
 import net.minecraft.resources.ResourceLocation;
 
 public class GhostPaintingRenderer
@@ -53,8 +54,7 @@ public class GhostPaintingRenderer
 
         poseStack.mulPose(
                 Axis.YP.rotationDegrees(
-                        180.0F
-                                - entity.getYRot()
+                        entity.getYRot()
                 )
         );
 
@@ -79,8 +79,13 @@ public class GhostPaintingRenderer
          *
          * 防止 Z-Fighting。
          */
-        float z =
-                -0.01F;
+        float z;
+
+        if (entity.getDirection().getAxis() == Direction.Axis.Z) {
+            z = 0.01F;
+        } else {
+            z = -0.01F;
+        }
 
 
         VertexConsumer consumer =
@@ -97,6 +102,12 @@ public class GhostPaintingRenderer
          * ========================================
          */
 
+        boolean flipU =
+                entity.getDirection().getAxis() == Direction.Axis.X;
+
+        float uLeft  = flipU ? 1.0F : 0.0F;
+        float uRight = flipU ? 0.0F : 1.0F;
+
         consumer.addVertex(
                         poseStack.last().pose(),
                         -halfWidth,
@@ -104,7 +115,7 @@ public class GhostPaintingRenderer
                         z
                 )
                 .setColor(255, 255, 255, 255)
-                .setUv(0.0F, 1.0F)
+                .setUv(uLeft, 1.0F)
                 .setUv1(0, 10)
                 .setLight(packedLight)
                 .setNormal(
@@ -121,7 +132,7 @@ public class GhostPaintingRenderer
                         z
                 )
                 .setColor(255, 255, 255, 255)
-                .setUv(1.0F, 1.0F)
+                .setUv(uRight, 1.0F)
                 .setUv1(0, 10)
                 .setLight(packedLight)
                 .setNormal(
@@ -138,7 +149,7 @@ public class GhostPaintingRenderer
                         z
                 )
                 .setColor(255, 255, 255, 255)
-                .setUv(1.0F, 0.0F)
+                .setUv(uRight, 0.0F)
                 .setUv1(0, 10)
                 .setLight(packedLight)
                 .setNormal(
@@ -155,7 +166,7 @@ public class GhostPaintingRenderer
                         z
                 )
                 .setColor(255, 255, 255, 255)
-                .setUv(0.0F, 0.0F)
+                .setUv(uLeft, 0.0F)
                 .setUv1(0, 10)
                 .setLight(packedLight)
                 .setNormal(

@@ -33,6 +33,7 @@
   "item.qisplan2.ghost_umbrella": "§4Ghost Umbrella",
   "item.qisplan2.coffin_nail": "§4Coffin Nail",
   "item.qisplan2.ghost_lake_water_bucket": "§4Ghost Lake Water Bucket",
+  "item.qisplan2.ghost_painting": "§4Ghost Painting",
   "item.qisplan2.night_wanderer_spawn_egg": "§4Night wanderer spawn egg",
   "item.qisplan2.invisible_ghost_spawn_egg": "§4Invisible ghost spawn egg",
   "item.qisplan2.knocking_ghost_spawn_egg": "§4Knocking ghost spawn egg",
@@ -42,6 +43,7 @@
 
   "fluid_type.qisplan2.ghost_lake_water": "§4Ghost Lake Water",
 
+  "entity.qisplan2.ghost_painting": "§4Ghost Painting",
   "entity.qisplan2.night_wanderer": "§4Night Wanderer",
   "entity.qisplan2.invisible_ghost": "§4Invisible Ghost",
   "entity.qisplan2.knocking_ghost": "§4Knocking Ghost",
@@ -49,6 +51,7 @@
   "entity.qisplan2.closing_ghost": "§4Closing Ghost",
   "entity.qisplan2.calling_ghost": "§4Calling Ghost",
 
+  "ghost.qisplan2.ghost_painting": "Ghost Painting",
   "ghost.qisplan2.night_wanderer": "Night Wanderer",
   "ghost.qisplan2.invisible_ghost": "Invisible Ghost",
   "ghost.qisplan2.knocking_ghost": "Knocking Ghost",
