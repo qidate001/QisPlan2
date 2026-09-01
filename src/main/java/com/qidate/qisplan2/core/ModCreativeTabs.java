@@ -48,6 +48,7 @@ public class ModCreativeTabs {
                         output.accept(GHOST_LEATHER_WALL_ITEM);
                         output.accept(COFFIN_NAIL);
                         output.accept(GHOST_DOOR_PLATE_ITEM);
+                        output.accept(GHOST_PAINTING);
                         output.accept(NIGHT_WANDERER_SPAWN_EGG);
                         output.accept(INVISIBLE_GHOST_SPAWN_EGG);
                         output.accept(KNOCKING_GHOST_SPAWN_EGG);

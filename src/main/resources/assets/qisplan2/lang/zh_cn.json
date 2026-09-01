@@ -37,6 +37,7 @@
   "item.qisplan2.ghost_umbrella": "§4鬼雨伞",
   "item.qisplan2.coffin_nail": "§4棺材钉",
   "item.qisplan2.ghost_lake_water_bucket": "§4鬼湖水桶",
+  "item.qisplan2.ghost_painting": "§4鬼画",
   "item.qisplan2.night_wanderer_spawn_egg": "§4夜游鬼刷怪蛋",
   "item.qisplan2.invisible_ghost_spawn_egg": "§4不可视之鬼刷怪蛋",
   "item.qisplan2.knocking_ghost_spawn_egg": "§4敲门鬼刷怪蛋",
@@ -44,6 +45,7 @@
   "item.qisplan2.closing_ghost_spawn_egg": "§4关门鬼刷怪蛋",
   "item.qisplan2.calling_ghost_spawn_egg": "§4喊人鬼刷怪蛋",
 
+  "entity.qisplan2.ghost_painting": "§4鬼画",
   "entity.qisplan2.night_wanderer": "§4夜游鬼",
   "entity.qisplan2.invisible_ghost": "§4不可视之鬼",
   "entity.qisplan2.knocking_ghost": "§4敲门鬼",
@@ -51,6 +53,7 @@
   "entity.qisplan2.closing_ghost": "§4关门鬼",
   "entity.qisplan2.calling_ghost": "§4喊人鬼",
 
+  "ghost.qisplan2.ghost_painting": "鬼画",
   "ghost.qisplan2.night_wanderer": "夜游鬼",
   "ghost.qisplan2.invisible_ghost": "不可视之鬼",
   "ghost.qisplan2.knocking_ghost": "敲门鬼",

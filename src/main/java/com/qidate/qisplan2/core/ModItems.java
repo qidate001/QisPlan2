@@ -190,6 +190,15 @@ public class ModItems {
                     )
             );
 
+    // 鬼画
+    public static final DeferredItem<Item> GHOST_PAINTING =
+            ITEMS.register(
+                    "ghost_painting",
+                    () -> new GhostPaintingItem(
+                            new Item.Properties()
+                    )
+            );
+
     // 夜游鬼刷怪蛋
     public static final DeferredItem<SpawnEggItem> NIGHT_WANDERER_SPAWN_EGG =
             ITEMS.register(
