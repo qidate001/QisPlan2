@@ -16,23 +16,14 @@ import net.minecraft.resources.ResourceLocation;
 public class GhostPaintingRenderer
         extends EntityRenderer<GhostPaintingEntity> {
 
-    private static final ResourceLocation TEXTURE =
-            ResourceLocation.fromNamespaceAndPath(
-                    QisPlan2.MODID,
-                    "textures/entity/ghost_painting.png"
-            );
-
-
     public GhostPaintingRenderer(
             EntityRendererProvider.Context context
     ) {
 
         super(context);
 
-        shadowRadius =
-                0.0F;
+        shadowRadius = 0.0F;
     }
-
 
     @Override
     public void render(
@@ -46,6 +37,28 @@ public class GhostPaintingRenderer
 
         poseStack.pushPose();
 
+        /*
+         * ========================================
+         * 当前鬼画 Variant
+         * ========================================
+         */
+
+        GhostPaintingVariant variant =
+                entity.getVariant();
+
+        QisPlan2.LOGGER.info(
+                "鬼画渲染: id={}, texture={}, size={}x{}",
+                entity.getPaintingId(),
+                variant.texture(),
+                variant.width(),
+                variant.height()
+        );
+
+        float halfWidth =
+                variant.width() / 2.0F;
+
+        float halfHeight =
+                variant.height() / 2.0F;
 
         /*
          * ========================================
@@ -59,36 +72,31 @@ public class GhostPaintingRenderer
                 )
         );
 
-
         /*
          * ========================================
-         * 画面中心
-         * ========================================
-         */
-
-        GhostPaintingVariant variant =
-                entity.getVariant();
-
-        float halfWidth =
-                variant.width() / 2.0F;
-
-        float halfHeight =
-                variant.height() / 2.0F;
-
-
-        /*
-         * 稍微往墙外移动。
+         * 稍微往墙外移动
          *
-         * 防止 Z-Fighting。
+         * 防止 Z-Fighting
+         * ========================================
          */
+
         float z;
 
-        if (entity.getDirection().getAxis() == Direction.Axis.Z) {
+        if (entity.getDirection().getAxis()
+                == Direction.Axis.Z) {
+
             z = 0.01F;
+
         } else {
+
             z = -0.01F;
         }
 
+        /*
+         * ========================================
+         * 使用当前 Variant 的纹理
+         * ========================================
+         */
 
         VertexConsumer consumer =
                 buffer.getBuffer(
@@ -97,6 +105,21 @@ public class GhostPaintingRenderer
                         )
                 );
 
+        /*
+         * ========================================
+         * 东西方向需要翻转 U
+         * ========================================
+         */
+
+        boolean flipU =
+                entity.getDirection().getAxis()
+                        == Direction.Axis.X;
+
+        float uLeft =
+                flipU ? 1.0F : 0.0F;
+
+        float uRight =
+                flipU ? 0.0F : 1.0F;
 
         /*
          * ========================================
@@ -104,22 +127,29 @@ public class GhostPaintingRenderer
          * ========================================
          */
 
-        boolean flipU =
-                entity.getDirection().getAxis() == Direction.Axis.X;
-
-        float uLeft  = flipU ? 1.0F : 0.0F;
-        float uRight = flipU ? 0.0F : 1.0F;
-
         consumer.addVertex(
                         poseStack.last().pose(),
                         -halfWidth,
                         -halfHeight,
                         z
                 )
-                .setColor(255, 255, 255, 255)
-                .setUv(uLeft, 1.0F)
-                .setUv1(0, 10)
-                .setLight(packedLight)
+                .setColor(
+                        255,
+                        255,
+                        255,
+                        255
+                )
+                .setUv(
+                        uLeft,
+                        1.0F
+                )
+                .setUv1(
+                        0,
+                        10
+                )
+                .setLight(
+                        packedLight
+                )
                 .setNormal(
                         poseStack.last(),
                         0.0F,
@@ -133,10 +163,23 @@ public class GhostPaintingRenderer
                         -halfHeight,
                         z
                 )
-                .setColor(255, 255, 255, 255)
-                .setUv(uRight, 1.0F)
-                .setUv1(0, 10)
-                .setLight(packedLight)
+                .setColor(
+                        255,
+                        255,
+                        255,
+                        255
+                )
+                .setUv(
+                        uRight,
+                        1.0F
+                )
+                .setUv1(
+                        0,
+                        10
+                )
+                .setLight(
+                        packedLight
+                )
                 .setNormal(
                         poseStack.last(),
                         0.0F,
@@ -150,10 +193,23 @@ public class GhostPaintingRenderer
                         halfHeight,
                         z
                 )
-                .setColor(255, 255, 255, 255)
-                .setUv(uRight, 0.0F)
-                .setUv1(0, 10)
-                .setLight(packedLight)
+                .setColor(
+                        255,
+                        255,
+                        255,
+                        255
+                )
+                .setUv(
+                        uRight,
+                        0.0F
+                )
+                .setUv1(
+                        0,
+                        10
+                )
+                .setLight(
+                        packedLight
+                )
                 .setNormal(
                         poseStack.last(),
                         0.0F,
@@ -167,10 +223,23 @@ public class GhostPaintingRenderer
                         halfHeight,
                         z
                 )
-                .setColor(255, 255, 255, 255)
-                .setUv(uLeft, 0.0F)
-                .setUv1(0, 10)
-                .setLight(packedLight)
+                .setColor(
+                        255,
+                        255,
+                        255,
+                        255
+                )
+                .setUv(
+                        uLeft,
+                        0.0F
+                )
+                .setUv1(
+                        0,
+                        10
+                )
+                .setLight(
+                        packedLight
+                )
                 .setNormal(
                         poseStack.last(),
                         0.0F,
@@ -190,12 +259,10 @@ public class GhostPaintingRenderer
         );
     }
 
-
     @Override
     public ResourceLocation getTextureLocation(
             GhostPaintingEntity entity
     ) {
-
-        return TEXTURE;
+        return entity.getVariant().texture();
     }
 }

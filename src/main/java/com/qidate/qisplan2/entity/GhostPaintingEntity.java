@@ -2,6 +2,8 @@ package com.qidate.qisplan2.entity;
 
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.syncher.EntityDataAccessor;
+import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.Entity;
@@ -18,26 +20,34 @@ public class GhostPaintingEntity extends Entity {
      * ========================================
      */
 
-    private ResourceLocation paintingId =
-            GhostPaintingVariants.LANDSCAPE;
+    private static final EntityDataAccessor<String> PAINTING =
+            SynchedEntityData.defineId(
+                    GhostPaintingEntity.class,
+                    EntityDataSerializers.STRING
+            );
 
     public GhostPaintingVariant getVariant() {
 
         return GhostPaintingVariants.get(
-                paintingId
+                getPaintingId()
         );
     }
 
     public ResourceLocation getPaintingId() {
 
-        return paintingId;
+        return ResourceLocation.parse(
+                entityData.get(PAINTING)
+        );
     }
 
     public void setPaintingId(
             ResourceLocation id
     ) {
 
-        paintingId = id;
+        entityData.set(
+                PAINTING,
+                id.toString()
+        );
 
         refreshDimensions();
     }
@@ -189,7 +199,7 @@ public class GhostPaintingEntity extends Entity {
         // 画ID
         tag.putString(
                 NBT_PAINTING,
-                paintingId.toString()
+                getPaintingId().toString()
         );
     }
 
@@ -233,12 +243,13 @@ public class GhostPaintingEntity extends Entity {
         // 画ID
         if (tag.contains(NBT_PAINTING)) {
 
-            paintingId =
+            setPaintingId(
                     ResourceLocation.parse(
                             tag.getString(
                                     NBT_PAINTING
                             )
-                    );
+                    )
+            );
 
             // 刷新尺寸
             refreshDimensions();
@@ -255,5 +266,11 @@ public class GhostPaintingEntity extends Entity {
     @Override
     protected void defineSynchedData(
             SynchedEntityData.Builder builder
-    ) { }
+    ) {
+
+        builder.define(
+                PAINTING,
+                GhostPaintingVariants.LANDSCAPE.toString()
+        );
+    }
 }

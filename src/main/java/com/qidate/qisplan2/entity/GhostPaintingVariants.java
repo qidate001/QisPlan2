@@ -18,15 +18,15 @@ public final class GhostPaintingVariants {
                     "landscape",
                     13,
                     7,
-                    "entity/ghost_painting"
+                    "entity/ghost_painting/landscape"
             );
 
-    public static final ResourceLocation PORTRAIT =
+    public static final ResourceLocation OROKIN =
             register(
-                    "portrait",
+                    "orokin",
                     3,
                     4,
-                    "entity/ghost_painting_portrait"
+                    "entity/ghost_painting/orokin"
             );
 
     private static ResourceLocation register(
@@ -65,5 +65,9 @@ public final class GhostPaintingVariants {
                 id,
                 VARIANTS.get(LANDSCAPE)
         );
+    }
+
+    public static boolean contains(ResourceLocation id) {
+        return VARIANTS.containsKey(id);
     }
 }

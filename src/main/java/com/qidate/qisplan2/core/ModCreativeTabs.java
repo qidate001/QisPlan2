@@ -1,7 +1,12 @@
 package com.qidate.qisplan2.core;
 
+import com.qidate.qisplan2.entity.GhostPaintingVariants;
+import net.minecraft.core.component.DataComponents;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.CreativeModeTab;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.component.CustomData;
 import net.neoforged.neoforge.registries.DeferredHolder;
 
 import static com.qidate.qisplan2.core.ModBlocks.*;
@@ -48,7 +53,28 @@ public class ModCreativeTabs {
                         output.accept(GHOST_LEATHER_WALL_ITEM);
                         output.accept(COFFIN_NAIL);
                         output.accept(GHOST_DOOR_PLATE_ITEM);
+
+                        // 鬼画
                         output.accept(GHOST_PAINTING);
+
+                        ItemStack orokin =
+                                new ItemStack(GHOST_PAINTING.get());
+
+                        CompoundTag tag =
+                                new CompoundTag();
+
+                        tag.putString(
+                                "PaintingVariant",
+                                GhostPaintingVariants.OROKIN.toString()
+                        );
+
+                        orokin.set(
+                                DataComponents.CUSTOM_DATA,
+                                CustomData.of(tag)
+                        );
+
+                        output.accept(orokin);
+
                         output.accept(NIGHT_WANDERER_SPAWN_EGG);
                         output.accept(INVISIBLE_GHOST_SPAWN_EGG);
                         output.accept(KNOCKING_GHOST_SPAWN_EGG);
