@@ -5,6 +5,7 @@ import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.math.Axis;
 import com.qidate.qisplan2.QisPlan2;
 import com.qidate.qisplan2.entity.GhostPaintingEntity;
+import com.qidate.qisplan2.entity.GhostPaintingVariant;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.entity.EntityRenderer;
@@ -65,13 +66,14 @@ public class GhostPaintingRenderer
          * ========================================
          */
 
+        GhostPaintingVariant variant =
+                entity.getVariant();
+
         float halfWidth =
-                GhostPaintingEntity.WIDTH
-                        / 2.0F;
+                variant.width() / 2.0F;
 
         float halfHeight =
-                GhostPaintingEntity.HEIGHT
-                        / 2.0F;
+                variant.height() / 2.0F;
 
 
         /*
@@ -91,7 +93,7 @@ public class GhostPaintingRenderer
         VertexConsumer consumer =
                 buffer.getBuffer(
                         RenderType.entityCutoutNoCull(
-                                TEXTURE
+                                variant.texture()
                         )
                 );
 

@@ -3,8 +3,11 @@ package com.qidate.qisplan2.entity;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.syncher.SynchedEntityData;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EntityDimensions;
 import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.Pose;
 import net.minecraft.world.level.Level;
 
 public class GhostPaintingEntity extends Entity {
@@ -15,9 +18,29 @@ public class GhostPaintingEntity extends Entity {
      * ========================================
      */
 
-    public static final float WIDTH = 13.0F;
+    private ResourceLocation paintingId =
+            GhostPaintingVariants.LANDSCAPE;
 
-    public static final float HEIGHT = 7.0F;
+    public GhostPaintingVariant getVariant() {
+
+        return GhostPaintingVariants.get(
+                paintingId
+        );
+    }
+
+    public ResourceLocation getPaintingId() {
+
+        return paintingId;
+    }
+
+    public void setPaintingId(
+            ResourceLocation id
+    ) {
+
+        paintingId = id;
+
+        refreshDimensions();
+    }
 
 
     /*
@@ -38,6 +61,9 @@ public class GhostPaintingEntity extends Entity {
 
     private static final String NBT_FACING =
             "Facing";
+
+    private static final String NBT_PAINTING =
+            "Painting";
 
 
     /*
@@ -81,6 +107,25 @@ public class GhostPaintingEntity extends Entity {
         /*
          * 第一阶段暂时什么都不做。
          */
+    }
+
+
+    /*
+     * ========================================
+     * 实体尺寸
+     * ========================================
+     */
+
+    @Override
+    public EntityDimensions getDimensions(Pose pose) {
+
+        GhostPaintingVariant variant =
+                getVariant();
+
+        return EntityDimensions.fixed(
+                variant.width(),
+                variant.height()
+        );
     }
 
 
@@ -135,10 +180,16 @@ public class GhostPaintingEntity extends Entity {
     protected void addAdditionalSaveData(
             CompoundTag tag
     ) {
-
+        // 朝向
         tag.putString(
                 NBT_FACING,
                 facing.getName()
+        );
+
+        // 画ID
+        tag.putString(
+                NBT_PAINTING,
+                paintingId.toString()
         );
     }
 
@@ -161,6 +212,7 @@ public class GhostPaintingEntity extends Entity {
             return;
         }
 
+        // 朝向
         try {
 
             setFacing(
@@ -176,6 +228,20 @@ public class GhostPaintingEntity extends Entity {
             setFacing(
                     Direction.NORTH
             );
+        }
+
+        // 画ID
+        if (tag.contains(NBT_PAINTING)) {
+
+            paintingId =
+                    ResourceLocation.parse(
+                            tag.getString(
+                                    NBT_PAINTING
+                            )
+                    );
+
+            // 刷新尺寸
+            refreshDimensions();
         }
     }
 

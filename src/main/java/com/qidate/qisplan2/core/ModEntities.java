@@ -173,8 +173,8 @@ public class ModEntities {
                                     MobCategory.MISC
                             )
                             .sized(
-                                    GhostPaintingEntity.WIDTH,
-                                    GhostPaintingEntity.HEIGHT
+                                    13.0F,
+                                    7.0F
                             )
                             .clientTrackingRange(10)
                             .updateInterval(1)

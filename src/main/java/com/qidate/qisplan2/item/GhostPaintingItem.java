@@ -2,6 +2,8 @@ package com.qidate.qisplan2.item;
 
 import com.qidate.qisplan2.core.ModEntities;
 import com.qidate.qisplan2.entity.GhostPaintingEntity;
+import com.qidate.qisplan2.entity.GhostPaintingVariant;
+import com.qidate.qisplan2.entity.GhostPaintingVariants;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.network.chat.Component;
@@ -15,18 +17,6 @@ import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 
 public class GhostPaintingItem extends Item {
-
-    /*
-     * ========================================
-     * 鬼画尺寸
-     * ========================================
-     */
-
-    private static final int WIDTH = 13;
-    private static final int HEIGHT = 7;
-
-    private static final int HALF_WIDTH = WIDTH / 2;
-    private static final int HALF_HEIGHT = HEIGHT / 2;
 
     /*
      * ========================================
@@ -68,6 +58,17 @@ public class GhostPaintingItem extends Item {
                 context.getClickedFace();
 
         /*
+         * ========================================
+         * 本次放置的鬼画类型
+         * ========================================
+         */
+
+        GhostPaintingVariant variant =
+                GhostPaintingVariants.get(
+                        GhostPaintingVariants.LANDSCAPE
+                );
+
+        /*
          * 必须点击墙面。
          */
         if (face.getAxis() == Direction.Axis.Y) {
@@ -94,7 +95,8 @@ public class GhostPaintingItem extends Item {
                         level,
                         center,
                         face,
-                        context.getPlayer()
+                        context.getPlayer(),
+                        variant
                 );
 
         if (result != PlacementResult.SUCCESS) {
@@ -113,9 +115,11 @@ public class GhostPaintingItem extends Item {
                         level
                 );
 
-        painting.setFacing(
-                face
+        painting.setPaintingId(
+                GhostPaintingVariants.LANDSCAPE
         );
+
+        painting.setFacing(face);
 
         /*
          * 稍微离墙一点。
@@ -157,8 +161,15 @@ public class GhostPaintingItem extends Item {
             ServerLevel level,
             BlockPos center,
             Direction face,
-            Entity placer
+            Entity placer,
+            GhostPaintingVariant variant
     ) {
+
+        int halfWidth =
+                variant.width() / 2;
+
+        int halfHeight =
+                variant.height() / 2;
 
         /*
          * 墙上的水平轴。
@@ -175,9 +186,9 @@ public class GhostPaintingItem extends Item {
         /*
          * 整个 13×7。
          */
-        for (int x = -HALF_WIDTH; x <= HALF_WIDTH; x++) {
+        for (int x = -halfWidth; x <= halfWidth; x++) {
 
-            for (int y = -HALF_HEIGHT; y <= HALF_HEIGHT; y++) {
+            for (int y = -halfHeight; y <= halfHeight; y++) {
 
                 BlockPos paintingPos =
                         center.relative(
@@ -236,8 +247,8 @@ public class GhostPaintingItem extends Item {
          * 实体占位检测
          * ========================================
          */
-        double halfW = HALF_WIDTH + 0.5D;
-        double halfH = HALF_HEIGHT + 0.5D;
+        double halfW = halfWidth + 0.5D;
+        double halfH = halfHeight + 0.5D;
         double thickness = 0.15D;
 
         Vec3 c = Vec3.atCenterOf(center);
