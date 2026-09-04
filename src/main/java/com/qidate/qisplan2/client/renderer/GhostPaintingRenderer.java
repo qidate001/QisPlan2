@@ -46,14 +46,6 @@ public class GhostPaintingRenderer
         GhostPaintingVariant variant =
                 entity.getVariant();
 
-        QisPlan2.LOGGER.info(
-                "鬼画渲染: id={}, texture={}, size={}x{}",
-                entity.getPaintingId(),
-                variant.texture(),
-                variant.width(),
-                variant.height()
-        );
-
         float halfWidth =
                 variant.width() / 2.0F;
 
