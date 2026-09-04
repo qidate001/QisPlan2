@@ -15,11 +15,14 @@ import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.world.item.component.CustomData;
 import net.minecraft.world.item.context.UseOnContext;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
+
+import java.util.List;
 
 public class GhostPaintingItem extends Item {
 
@@ -566,5 +569,21 @@ public class GhostPaintingItem extends Item {
                         message,
                         true
                 );
+    }
+
+    @Override
+    public void appendHoverText(
+            ItemStack stack,
+            Item.TooltipContext context,
+            List<Component> tooltip,
+            TooltipFlag flag
+    ) {
+        ResourceLocation variantId = getPaintingVariant(stack);
+
+        tooltip.add(
+                Component.translatable(
+                        "tooltip.qisplan2.ghost_painting." + variantId.getPath()
+                )
+        );
     }
 }
