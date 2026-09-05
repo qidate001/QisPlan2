@@ -1,8 +1,7 @@
 package com.qidate.qisplan2.core;
 
-import com.qidate.qisplan2.QisPlan2;
-
 import com.qidate.qisplan2.fluid.GhostLakeFluidType;
+
 import net.minecraft.world.item.BucketItem;
 import net.minecraft.world.level.block.LiquidBlock;
 import net.minecraft.world.level.material.Fluid;
@@ -15,14 +14,16 @@ import net.neoforged.neoforge.registries.DeferredItem;
 
 public final class ModFluids {
 
-    private ModFluids() {}
+    private ModFluids() {
+    }
 
     public static void init() {
         /*
          * 故意留空。
          *
-         * 调用这个方法本身，就会强制 JVM
-         * 在正确的时机完成 ModFluids 的静态初始化。
+         * 调用这个方法本身，
+         * 可以确保 JVM 在正确时机完成
+         * ModFluids 的静态初始化。
          */
     }
 
@@ -53,7 +54,6 @@ public final class ModFluids {
                             )
             );
 
-
     /*
      * ============================================================
      * 源流体
@@ -71,7 +71,6 @@ public final class ModFluids {
                                     createFluidProperties()
                             )
             );
-
 
     /*
      * ============================================================
@@ -91,7 +90,6 @@ public final class ModFluids {
                             )
             );
 
-
     /*
      * ============================================================
      * 水桶
@@ -108,7 +106,6 @@ public final class ModFluids {
                                     properties.stacksTo(1)
                             )
             );
-
 
     /*
      * ============================================================
@@ -127,18 +124,10 @@ public final class ModFluids {
                             )
             );
 
-
     /*
      * ============================================================
      * BaseFlowingFluid.Properties
      * ============================================================
-     *
-     * 不再作为 static final 字段。
-     *
-     * 每次 Source / Flowing 真正创建时，
-     * 再构造 Properties。
-     *
-     * 这样彻底避免 Java 静态初始化顺序问题。
      */
 
     private static BaseFlowingFluid.Properties
