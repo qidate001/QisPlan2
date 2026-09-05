@@ -10,6 +10,7 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityDimensions;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.Pose;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 
 public class GhostPaintingEntity extends Entity {
@@ -177,6 +178,42 @@ public class GhostPaintingEntity extends Entity {
 
         yRotO =
                 getYRot();
+    }
+
+
+
+    /*
+     * ========================================
+     * 可被创造破坏
+     * ========================================
+     */
+
+    @Override
+    public boolean skipAttackInteraction(
+            Entity attacker
+    ) {
+
+        if (attacker instanceof Player player
+                && player.isCreative()) {
+
+            if (!level().isClientSide()) {
+                discard();
+            }
+
+            return true;
+        }
+
+        return false;
+    }
+
+    @Override
+    public boolean isPickable() {
+        return true;
+    }
+
+    @Override
+    public float getPickRadius() {
+        return 0.0F;
     }
 
 
