@@ -3,10 +3,14 @@ package com.qidate.qisplan2.entity;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.protocol.Packet;
+import net.minecraft.network.protocol.game.ClientGamePacketListener;
+import net.minecraft.network.protocol.game.ClientboundAddEntityPacket;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ServerEntity;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityDimensions;
 import net.minecraft.world.entity.EntityType;
@@ -87,103 +91,47 @@ public class GhostPaintingEntity extends HangingEntity {
         double width = variant.width();
         double height = variant.height();
 
-        /*
-         * HangingEntity 的挂载点。
-         *
-         * pos 是画的挂载参考位置，
-         * 不是需要再沿横向平移 halfWidth 的中心点。
-         */
         double centerX = pos.getX() + 0.5D;
         double centerY = pos.getY() + 0.5D;
         double centerZ = pos.getZ() + 0.5D;
 
-        /*
-         * 画面的横向方向。
-         */
         Direction horizontal =
                 direction.getClockWise();
 
-        /*
-         * 画面的半尺寸。
-         */
         double halfWidth =
                 width / 2.0D;
 
         double halfHeight =
                 height / 2.0D;
 
-        /*
-         * 贴墙厚度。
-         *
-         * 不需要真的占半格，
-         * 这里只需要一个非常薄的碰撞体。
-         */
         double thickness = 0.0625D;
-
-        /*
-         * ========================================
-         * 横向
-         * ========================================
-         */
 
         double minX;
         double maxX;
-
         double minZ;
         double maxZ;
 
         if (horizontal.getAxis() == Direction.Axis.X) {
 
-            /*
-             * NORTH / SOUTH
-             *
-             * 画面横向 = X
-             */
-            minX =
-                    centerX - halfWidth;
+            minX = centerX - halfWidth;
+            maxX = centerX + halfWidth;
 
-            maxX =
-                    centerX + halfWidth;
-
-            minZ =
-                    centerZ - thickness;
-
-            maxZ =
-                    centerZ + thickness;
+            minZ = centerZ - thickness;
+            maxZ = centerZ + thickness;
 
         } else {
 
-            /*
-             * EAST / WEST
-             *
-             * 画面横向 = Z
-             */
-            minX =
-                    centerX - thickness;
+            minX = centerX - thickness;
+            maxX = centerX + thickness;
 
-            maxX =
-                    centerX + thickness;
-
-            minZ =
-                    centerZ - halfWidth;
-
-            maxZ =
-                    centerZ + halfWidth;
+            minZ = centerZ - halfWidth;
+            maxZ = centerZ + halfWidth;
         }
 
-        /*
-         * ========================================
-         * Y
-         * ========================================
-         */
+        double minY = centerY - halfHeight;
+        double maxY = centerY + halfHeight;
 
-        double minY =
-                centerY - halfHeight;
-
-        double maxY =
-                centerY + halfHeight;
-
-        return new AABB(
+        AABB result = new AABB(
                 minX,
                 minY,
                 minZ,
@@ -191,6 +139,33 @@ public class GhostPaintingEntity extends HangingEntity {
                 maxY,
                 maxZ
         );
+
+        /*
+         * ========================================
+         * DEBUG
+         * ========================================
+         */
+
+        System.out.println(
+                "[GhostPainting DEBUG] calculateBoundingBox"
+                        + " client=" + level().isClientSide()
+                        + " entity=" + getId()
+                        + " direction=" + direction
+                        + " horizontal=" + horizontal
+                        + " pos=" + pos
+                        + " variant=" + variant.width()
+                        + "x" + variant.height()
+                        + " AABB="
+                        + result
+                        + " size="
+                        + result.getXsize()
+                        + " x "
+                        + result.getYsize()
+                        + " x "
+                        + result.getZsize()
+        );
+
+        return result;
     }
 
 
@@ -233,11 +208,57 @@ public class GhostPaintingEntity extends HangingEntity {
     @Override
     public void tick() {
 
+//        System.out.println(
+//                "[GhostPainting DEBUG] BEFORE tick"
+//                        + " client=" + level().isClientSide()
+//                        + " entity=" + getId()
+//                        + " direction=" + getDirection()
+//                        + " BB=" + getBoundingBox()
+//                        + " size="
+//                        + getBoundingBox().getXsize()
+//                        + " x "
+//                        + getBoundingBox().getYsize()
+//                        + " x "
+//                        + getBoundingBox().getZsize()
+//        );
+
         super.tick();
 
-        /*
-         * 第一阶段暂时什么都不做。
-         */
+//        System.out.println(
+//                "[GhostPainting DEBUG] AFTER tick"
+//                        + " client=" + level().isClientSide()
+//                        + " entity=" + getId()
+//                        + " direction=" + getDirection()
+//                        + " BB=" + getBoundingBox()
+//                        + " size="
+//                        + getBoundingBox().getXsize()
+//                        + " x "
+//                        + getBoundingBox().getYsize()
+//                        + " x "
+//                        + getBoundingBox().getZsize()
+//        );
+    }
+
+    @Override
+    public void refreshDimensions() {
+
+        System.out.println(
+                "[GhostPainting DEBUG] refreshDimensions"
+                        + " client=" + level().isClientSide()
+                        + " entity=" + getId()
+                        + " direction=" + getDirection()
+                        + " BEFORE=" + getBoundingBox()
+        );
+
+        super.refreshDimensions();
+
+        System.out.println(
+                "[GhostPainting DEBUG] refreshDimensions AFTER"
+                        + " client=" + level().isClientSide()
+                        + " entity=" + getId()
+                        + " direction=" + getDirection()
+                        + " AFTER=" + getBoundingBox()
+        );
     }
 
 
@@ -258,6 +279,32 @@ public class GhostPaintingEntity extends HangingEntity {
         }
 
         setDirection(direction);
+    }
+
+    @Override
+    public Packet<ClientGamePacketListener> getAddEntityPacket(
+            ServerEntity entity
+    ) {
+        return new ClientboundAddEntityPacket(
+                this,
+                this.getDirection().get3DDataValue(),
+                this.getPos()
+        );
+    }
+
+    @Override
+    public void recreateFromPacket(
+            ClientboundAddEntityPacket packet
+    ) {
+        super.recreateFromPacket(packet);
+
+        setDirection(
+                Direction.from3DDataValue(
+                        packet.getData()
+                )
+        );
+
+        recalculateBoundingBox();
     }
 
 
@@ -370,10 +417,14 @@ public class GhostPaintingEntity extends HangingEntity {
     ) {
         super.onSyncedDataUpdated(key);
 
-        /*
-         * 方向 / Variant 从服务器同步到客户端后，
-         * 重新计算 HangingEntity 的 AABB。
-         */
+        System.out.println(
+                "[GhostPainting DEBUG] onSyncedDataUpdated"
+                        + " client=" + level().isClientSide()
+                        + " entity=" + getId()
+                        + " key=" + key
+                        + " direction=" + getDirection()
+        );
+
         recalculateBoundingBox();
     }
 }
