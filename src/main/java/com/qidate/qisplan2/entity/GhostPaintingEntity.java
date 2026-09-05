@@ -101,18 +101,20 @@ public class GhostPaintingEntity extends HangingEntity {
 
         double centerX =
                 pos.getX()
-                        + 0.49D
+                        + 0.5D
                         - direction.getStepX() * 0.49D;
-
-        double centerY =
-                pos.getY()
-                        + 0.49D
-                        - direction.getStepY() * 0.49D;
 
         double centerZ =
                 pos.getZ()
-                        + 0.49D
+                        + 0.5D
                         - direction.getStepZ() * 0.49D;
+
+        // 奇数高度：保持原来的中心
+        // 偶数高度：向上半格
+        double centerY =
+                pos.getY()
+                        + 0.5D
+                        + (height % 2 == 0 ? 0.5D : 0.0D);
 
         Direction horizontal =
                 direction.getClockWise();
