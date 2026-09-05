@@ -48,7 +48,8 @@ public class GhostStoneBricksHandler {
         boolean killed =
                 SupernaturalDeathHandler.tryKill(
                         player,
-                        ModDamageTypes.ghostStoneBricks(player)
+                        ModDamageTypes.ghostStoneBricks(player),
+                        4.0
                 );
 
         if (killed) {

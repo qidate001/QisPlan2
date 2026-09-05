@@ -41,6 +41,7 @@ public class ModCreativeTabs {
                         output.accept(DEATH_CURSE_SWORD);
                         output.accept(GHOST_CARPET_ITEM);
                         output.accept(GHOST_STONE_BRICKS_ITEM);
+                        output.accept(GHOST_STONE_BRICKS_PRIME_ITEM);
                         output.accept(GHOST_STOVE_ITEM);
                         output.accept(GHOST_DOOR_ITEM);
                         output.accept(GHOST_GRASS_ITEM);

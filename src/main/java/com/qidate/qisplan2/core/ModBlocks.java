@@ -136,6 +136,20 @@ public class ModBlocks {
     public static final DeferredItem<BlockItem> GHOST_STONE_BRICKS_ITEM =
             ITEMS.registerSimpleBlockItem(GHOST_STONE_BRICKS);
 
+    // 鬼石砖 PRIME
+    public static final DeferredBlock<Block> GHOST_STONE_BRICKS_PRIME =
+            BLOCKS.register(
+                    "ghost_stone_bricks_prime",
+                    () -> new Block(
+                            BlockBehaviour.Properties.of()
+                                    .strength(1.5F, 6.0F)
+                                    .requiresCorrectToolForDrops()
+                    )
+            );
+
+    public static final DeferredItem<BlockItem> GHOST_STONE_BRICKS_PRIME_ITEM =
+            ITEMS.registerSimpleBlockItem(GHOST_STONE_BRICKS_PRIME);
+
 
     // 鬼灶台
     public static final DeferredBlock<Block> GHOST_STOVE =
