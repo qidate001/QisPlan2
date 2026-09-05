@@ -168,6 +168,19 @@ public class ModDamageTypes {
             );
 
     /**
+     * 鬼血灵异攻击
+     */
+    public static final ResourceKey<DamageType>
+            GHOST_BLOOD =
+            ResourceKey.create(
+                    Registries.DAMAGE_TYPE,
+                    ResourceLocation.fromNamespaceAndPath(
+                            QisPlan2.MODID,
+                            "ghost_blood"
+                    )
+            );
+
+    /**
      * 鬼门牌撕裂
      */
     public static final ResourceKey<DamageType> GHOST_DOOR_PLATE =
@@ -190,6 +203,14 @@ public class ModDamageTypes {
                             "calling_ghost"
                     )
             );
+
+
+
+
+
+
+
+
 
     /**
      * 创建鬼地毯死亡 DamageSource
@@ -407,13 +428,38 @@ public class ModDamageTypes {
      * 创建鬼湖死亡 DamageSource
      */
     public static DamageSource ghostLakeWater(
-            Entity source
+            Entity entity
     ) {
+        return new DamageSource(
+                entity.level()
+                        .registryAccess()
+                        .registryOrThrow(
+                                Registries.DAMAGE_TYPE
+                        )
+                        .getHolderOrThrow(
+                                GHOST_LAKE_WATER
+                        ),
+                entity
+        );
+    }
 
-        return source.damageSources()
-                .source(
-                        GHOST_LAKE_WATER
-                );
+    /**
+     * 创建鬼血死亡 DamageSource
+     */
+    public static DamageSource ghostBlood(
+            Entity entity
+    ) {
+        return new DamageSource(
+                entity.level()
+                        .registryAccess()
+                        .registryOrThrow(
+                                Registries.DAMAGE_TYPE
+                        )
+                        .getHolderOrThrow(
+                                GHOST_BLOOD
+                        ),
+                entity
+        );
     }
 
     /**

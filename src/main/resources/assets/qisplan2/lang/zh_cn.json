@@ -26,6 +26,7 @@
   "block.qisplan2.partition_exit": "分割维度出口方块",
 
   "fluid_type.qisplan2.ghost_lake_water": "§4鬼湖水",
+  "fluid_type.qisplan2.ghost_blood": "§4鬼血",
 
   "item.qisplan2.death_curse_sword": "§4必死诅咒之剑",
   "item.qisplan2.ghost_coin": "鬼金币",
@@ -37,6 +38,7 @@
   "item.qisplan2.ghost_umbrella": "§4鬼雨伞",
   "item.qisplan2.coffin_nail": "§4棺材钉",
   "item.qisplan2.ghost_lake_water_bucket": "§4鬼湖水桶",
+  "item.qisplan2.ghost_blood_bucket": "§4鬼血桶",
   "item.qisplan2.ghost_painting": "§4鬼画",
   "item.qisplan2.night_wanderer_spawn_egg": "§4夜游鬼刷怪蛋",
   "item.qisplan2.invisible_ghost_spawn_egg": "§4不可视之鬼刷怪蛋",
@@ -81,6 +83,7 @@
   "death.attack.opening_ghost": "%1$s 受到§4开门诅咒§r的影响，被§4开门鬼§r杀死",
   "death.attack.closing_ghost": "%1$s 受到§4关门诅咒§r的影响，被§4关门鬼§r杀死",
   "death.attack.ghost_lake_water": "%1$s 被§4鬼湖水§r吞没了",
+  "death.attack.ghost_blood": "%1$s 被§4鬼血§r融化了",
   "death.attack.ghost_door_plate": "%1$s 被撕成了两半",
   "death.attack.calling_ghost": "%1$s 丧失了灵魂",
 

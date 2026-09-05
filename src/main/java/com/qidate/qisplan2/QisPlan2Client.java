@@ -97,9 +97,9 @@ public class QisPlan2Client {
     private static void registerLayerDefinitions(
             EntityRenderersEvent.RegisterLayerDefinitions event
     ) {
-        QisPlan2.LOGGER.info(
-                "[QisPlan2] 注册 NightWanderer Model Layer"
-        );
+//        QisPlan2.LOGGER.info(
+//                "[QisPlan2] 注册 NightWanderer Model Layer"
+//        );
 
         event.registerLayerDefinition(
                 NightWandererModel.LAYER,
@@ -117,6 +117,12 @@ public class QisPlan2Client {
     private static void registerFluidClientExtensions(
             RegisterClientExtensionsEvent event
     ) {
+
+        /*
+         * ============================================================
+         * 鬼湖水
+         * ============================================================
+         */
 
         event.registerFluidType(
                 new IClientFluidTypeExtensions() {
@@ -145,16 +151,50 @@ public class QisPlan2Client {
 
                     @Override
                     public int getTintColor() {
-                        /*
-                         * 暂时不额外染色。
-                         *
-                         * RGBA / ARGB：
-                         * 0xFFFFFFFF = 完全不染色
-                         */
                         return 0xFFFFFFFF;
                     }
                 },
                 ModFluids.GHOST_LAKE_WATER_TYPE.get()
+        );
+
+
+        /*
+         * ============================================================
+         * 鬼血
+         * ============================================================
+         */
+
+        event.registerFluidType(
+                new IClientFluidTypeExtensions() {
+
+                    private static final ResourceLocation STILL =
+                            ResourceLocation.fromNamespaceAndPath(
+                                    QisPlan2.MODID,
+                                    "block/ghost_blood_still"
+                            );
+
+                    private static final ResourceLocation FLOWING =
+                            ResourceLocation.fromNamespaceAndPath(
+                                    QisPlan2.MODID,
+                                    "block/ghost_blood_flowing"
+                            );
+
+                    @Override
+                    public ResourceLocation getStillTexture() {
+                        return STILL;
+                    }
+
+                    @Override
+                    public ResourceLocation getFlowingTexture() {
+                        return FLOWING;
+                    }
+
+                    @Override
+                    public int getTintColor() {
+                        return 0xFFFFFFFF;
+                    }
+                },
+                ModFluids.GHOST_BLOOD_TYPE.get()
         );
     }
 

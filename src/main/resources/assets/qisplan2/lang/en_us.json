@@ -33,6 +33,7 @@
   "item.qisplan2.ghost_umbrella": "§4Ghost Umbrella",
   "item.qisplan2.coffin_nail": "§4Coffin Nail",
   "item.qisplan2.ghost_lake_water_bucket": "§4Ghost Lake Water Bucket",
+  "item.qisplan2.ghost_blood_bucket": "§4Ghost Blood Bucket",
   "item.qisplan2.ghost_painting": "§4Ghost Painting",
   "item.qisplan2.night_wanderer_spawn_egg": "§4Night wanderer spawn egg",
   "item.qisplan2.invisible_ghost_spawn_egg": "§4Invisible ghost spawn egg",
@@ -79,6 +80,7 @@
   "death.attack.opening_ghost": "%1$s was killed by the §4Opening Ghost§r under the §4Opening Curse§r",
   "death.attack.closing_ghost": "%1$s was killed by the §4Closing Ghost§r under the §4Closing Curse§r",
   "death.attack.ghost_lake_water": "%1$s was engulfed by the §4Ghost Lake§4",
+  "death.attack.ghost_blood": "%1$s was melted by §4Ghost Blood§r",
   "death.attack.ghost_door_plate": "%1$s has been torn in half",
   "death.attack.calling_ghost": "%1$s lost its soul",
 

@@ -23,20 +23,6 @@ import net.neoforged.neoforge.event.tick.EntityTickEvent;
 
 import java.util.Map;
 
-/**
- * 所有灵异液体的统一处理器。
- *
- * 目前支持：
- *
- * - 鬼湖水
- *
- * 以后加入：
- *
- * - 鬼血
- * - 鬼血湖湖水
- *
- * 三者共用这一套逻辑。
- */
 @EventBusSubscriber(
         modid = QisPlan2.MODID
 )
@@ -46,130 +32,127 @@ public final class GhostFluidHandler {
     }
 
     /**
-     * 每秒结算一次。
+     * 灵异攻击间隔：
+     * 20 ticks = 1 秒
      */
-    private static final long DAMAGE_INTERVAL =
-            20L;
+    private static final long DAMAGE_INTERVAL = 20L;
+
 
     /*
      * ============================================================
-     * 灵异液体配置
+     * 鬼湖水
      * ============================================================
-     */
-
-    /**
-     * 鬼湖水。
      *
-     * 使用：
+     * immersion = 深度（格）
      *
-     *     深度
+     * 原来的公式：
      *
-     * 作为 immersion。
+     * depth / 3 * 10
+     *
+     * 等价于：
+     *
+     * depth * (10 / 3)
      */
     private static final GhostFluidConfig GHOST_LAKE =
             new GhostFluidConfig(
                     ModFluids.GHOST_LAKE_WATER_TYPE,
+
+                    // 使用深度
                     true,
 
-                    /*
-                     * 每 3 格深度：
-                     *
-                     * +10 强度
-                     */
-                    10.0D,
+                    // 每 1 格深度 = 10/3 攻击强度
+                    10.0D / 3.0D,
 
-                    /*
-                     * 最大 100 强度。
-                     */
+                    // 最大攻击强度
                     100.0D,
 
-                    /*
-                     * 每格深度：
-                     *
-                     * 每秒减少 5% 复苏值。
-                     */
+                    // 每 1 格深度 = 5% 复苏度削减
                     5.0D,
 
                     ModDamageTypes::ghostLakeWater
             );
 
-    /**
-     * 所有灵异液体。
-     *
-     * 后续鬼血、鬼血湖湖水
-     * 都加入这里。
-     */
-    private static final GhostFluidConfig[] CONFIGS = {
+    private static final GhostFluidConfig GHOST_BLOOD =
+            new GhostFluidConfig(
+                    ModFluids.GHOST_BLOOD_TYPE,
 
-            GHOST_LAKE
+                    // 鬼血不看深度，看包裹程度
+                    false,
 
-    };
+                    // 100% 包裹时攻击 30
+                    30.0D,
+
+                    // 最大攻击 100
+                    100.0D,
+
+                    // 100% 包裹时，每秒压制 10% 复苏度
+                    10.0D,
+
+                    ModDamageTypes::ghostBlood
+            );
 
 
     /*
      * ============================================================
-     * Entity Tick
+     * 所有鬼液体
      * ============================================================
      */
+    private static final GhostFluidConfig[] CONFIGS = {
+            GHOST_LAKE,
+            GHOST_BLOOD
+    };
+
 
     @SubscribeEvent
     public static void onEntityTick(
             EntityTickEvent.Post event
     ) {
-
-        Entity entity =
-                event.getEntity();
+        Entity entity = event.getEntity();
 
         /*
-         * 只在服务端处理。
+         * 鬼液体逻辑全部只在服务端运行。
          */
         if (entity.level().isClientSide()) {
             return;
         }
 
         /*
-         * 只处理 LivingEntity。
+         * 目前只处理生物。
          */
         if (!(entity instanceof LivingEntity living)
                 || !living.isAlive()) {
-
             return;
         }
 
-        /*
-         * ========================================================
-         * 检查所有灵异液体。
-         * ========================================================
-         */
 
+        /*
+         * 检查所有鬼液体。
+         */
         for (GhostFluidConfig config : CONFIGS) {
 
             /*
              * 注意：
              *
-             * 这里才调用 .get()。
+             * 这里才调用 DeferredHolder#get()
              *
-             * 不在静态初始化阶段调用。
+             * 不要在静态初始化阶段调用。
              */
             if (!living.isInFluidType(
                     config.fluidType().get()
             )) {
-
                 continue;
             }
 
+
             /*
-             * ====================================================
-             * 计算 immersion。
+             * 根据液体类型决定 immersion 的计算方式：
              *
              * 鬼湖水：
-             *     使用深度。
+             *   immersion = 深度
              *
              * 鬼血：
-             *     使用包裹程度。
-             * ====================================================
+             *   immersion = 包裹程度
              */
-
             double immersion =
                     config.useDepth()
                             ? calculateFluidDepth(
@@ -183,28 +166,23 @@ public final class GhostFluidHandler {
                             config
                     );
 
-            /*
-             * 没有真正浸入：
-             * 不处理这个液体。
-             */
+
             if (immersion <= 0.0D) {
                 continue;
             }
 
-            /*
-             * ====================================================
-             * 每秒结算一次。
-             * ====================================================
-             */
 
+            /*
+             * 每秒处理一次灵异攻击。
+             */
             if (living.level().getGameTime()
                     % DAMAGE_INTERVAL != 0L) {
-
                 continue;
             }
 
+
             /*
-             * 灵异袭击。
+             * 灵异攻击。
              */
             applyGhostAttack(
                     living,
@@ -212,13 +190,13 @@ public final class GhostFluidHandler {
                     immersion
             );
 
+
             /*
-             * 玩家：
+             * 玩家额外处理：
              *
-             * 同时削减体内厉鬼复苏值。
+             * 液体会压制体内厉鬼的复苏。
              */
             if (living instanceof ServerPlayer player) {
-
                 reducePlayerGhostRevival(
                         player,
                         config,
@@ -226,62 +204,48 @@ public final class GhostFluidHandler {
                 );
             }
 
+
             /*
-             * 一个实体同一时间只处理一种
-             * 灵异液体。
+             * 一个实体同一 tick 只处理一种鬼液体。
              */
             return;
         }
     }
 
 
-    /*
-     * ============================================================
-     * 液体深度
-     * ============================================================
-     */
-
     /**
-     * 计算实体脚部到当前灵异液体液面的距离。
+     * 计算鬼液体的深度。
      *
-     * 主要用于鬼湖水。
+     * 返回值单位：
+     * 格。
+     *
+     * 例如：
+     *
+     * 实体脚下到液面 3 格：
+     * immersion = 3
      */
     private static double calculateFluidDepth(
             Level level,
             LivingEntity entity,
             GhostFluidConfig config
     ) {
+        double feetY = entity.getY();
 
-        double feetY =
-                entity.getY();
+        int blockX = Mth.floor(entity.getX());
+        int blockZ = Mth.floor(entity.getZ());
 
-        int blockX =
-                Mth.floor(entity.getX());
+        double surfaceY = Double.NaN;
 
-        int blockZ =
-                Mth.floor(entity.getZ());
 
-        double surfaceY =
-                Double.NaN;
+        int startY = Mth.floor(feetY);
 
-        int startY =
-                Mth.floor(feetY);
+        int maxSearch = Math.min(
+                level.getMaxBuildHeight() - 1,
+                startY + 64
+        );
 
-        int maxSearch =
-                Math.min(
-                        level.getMaxBuildHeight() - 1,
-                        startY + 64
-                );
 
-        /*
-         * 从实体脚下开始向上寻找
-         * 连续的当前灵异液体。
-         */
-        for (
-                int y = startY;
-                y <= maxSearch;
-                y++
-        ) {
+        for (int y = startY; y <= maxSearch; y++) {
 
             BlockPos pos =
                     new BlockPos(
@@ -293,19 +257,17 @@ public final class GhostFluidHandler {
             var fluidState =
                     level.getFluidState(pos);
 
+
             /*
-             * 遇到空气：
-             *
-             * 液体结束。
+             * 中间断液体，说明液面已经结束。
              */
             if (fluidState.isEmpty()) {
                 break;
             }
 
+
             /*
-             * 不是当前灵异液体：
-             *
-             * 液体结束。
+             * 不是当前鬼液体，也结束搜索。
              */
             if (!fluidState.getFluidType().equals(
                     config.fluidType().get()
@@ -313,8 +275,9 @@ public final class GhostFluidHandler {
                 break;
             }
 
+
             /*
-             * 当前方块顶部就是液面。
+             * 记录液面高度。
              */
             surfaceY =
                     y + fluidState.getHeight(
@@ -323,16 +286,12 @@ public final class GhostFluidHandler {
                     );
         }
 
-        /*
-         * 没找到液面。
-         */
+
         if (Double.isNaN(surfaceY)) {
             return 0.0D;
         }
 
-        /*
-         * 液面高度 - 实体脚部高度。
-         */
+
         return Math.max(
                 0.0D,
                 surfaceY - feetY
@@ -340,69 +299,50 @@ public final class GhostFluidHandler {
     }
 
 
-    /*
-     * ============================================================
-     * 液体包裹程度
-     * ============================================================
-     */
-
     /**
-     * 计算实体被灵异液体包裹的程度。
+     * 计算实体被鬼液体包裹的程度。
      *
-     * 返回：
+     * 返回值：
      *
-     *     0.0 ~ 1.0
+     * 0.0 = 完全没有包裹
+     * 1.0 = 整个实体高度都被包裹
      *
-     * 例如：
-     *
-     *     0.0 = 完全没有
-     *     0.5 = 大约一半身体被包裹
-     *     1.0 = 完全包裹
-     *
-     * 主要用于鬼血。
+     * 这个模式主要给鬼血使用。
      */
     private static double calculateEntityCoverage(
             Level level,
             LivingEntity entity,
             GhostFluidConfig config
     ) {
+        var box = entity.getBoundingBox();
 
-        var box =
-                entity.getBoundingBox();
+        double bottom = box.minY;
+        double top = box.maxY;
 
-        double bottom =
-                box.minY;
+        double height = top - bottom;
 
-        double top =
-                box.maxY;
 
-        double height =
-                top - bottom;
-
-        /*
-         * 防止极端情况下除以 0。
-         */
         if (height <= 0.0D) {
             return 0.0D;
         }
 
-        double highestFluid =
-                bottom;
-
-        int blockX =
-                Mth.floor(entity.getX());
-
-        int blockZ =
-                Mth.floor(entity.getZ());
 
         /*
-         * 从实体脚部扫描到头部。
+         * 默认液面在实体脚部。
          */
-        for (
-                int y = Mth.floor(bottom);
-                y <= Mth.floor(top);
-                y++
-        ) {
+        double highestFluid = bottom;
+
+
+        /*
+         * 当前版本使用实体中心所在的流体柱。
+         */
+        int blockX = Mth.floor(entity.getX());
+        int blockZ = Mth.floor(entity.getZ());
+
+
+        for (int y = Mth.floor(bottom);
+             y <= Mth.floor(top);
+             y++) {
 
             BlockPos pos =
                     new BlockPos(
@@ -414,21 +354,21 @@ public final class GhostFluidHandler {
             var state =
                     level.getFluidState(pos);
 
+
             if (state.isEmpty()) {
                 continue;
             }
 
+
             /*
-             * 只计算当前配置中的液体。
-             *
-             * 普通水、熔岩、其他灵异液体
-             * 都不会影响鬼血的包裹程度。
+             * 只计算当前配置的鬼液体。
              */
             if (!state.getFluidType().equals(
                     config.fluidType().get()
             )) {
                 continue;
             }
+
 
             highestFluid =
                     Math.max(
@@ -440,8 +380,9 @@ public final class GhostFluidHandler {
                     );
         }
 
+
         /*
-         * 液体高度 / 实体高度。
+         * 转换成 0~1 的包裹比例。
          */
         return Mth.clamp(
                 (highestFluid - bottom)
@@ -452,41 +393,29 @@ public final class GhostFluidHandler {
     }
 
 
-    /*
-     * ============================================================
-     * 灵异袭击
-     * ============================================================
-     */
-
     /**
-     * 对实体施加灵异袭击。
+     * 对实体发动鬼液体的灵异攻击。
+     *
+     * 统一公式：
+     *
+     * attack =
+     *      immersion
+     *      × attackPerImmersion
+     *
+     * 然后限制最大值。
      */
     private static void applyGhostAttack(
             LivingEntity entity,
             GhostFluidConfig config,
             double immersion
     ) {
-
-        /*
-         * 当前统一公式：
-         *
-         * immersion / 3 × 每三单位强度
-         *
-         * 对鬼湖水：
-         *
-         * 3 格 = 10
-         *
-         * 6 格 = 20
-         *
-         * 30 格 = 100（被上限限制）
-         */
         double attackStrength =
                 immersion
-                        / 3.0D
-                        * config.attackPerThreeUnits();
+                        * config.attackPerImmersion();
+
 
         /*
-         * 最大值限制。
+         * 限制最大攻击强度。
          */
         attackStrength =
                 Math.min(
@@ -494,13 +423,12 @@ public final class GhostFluidHandler {
                         config.maxAttack()
                 );
 
+
         if (attackStrength <= 0.0D) {
             return;
         }
 
-        /*
-         * 使用该液体自己的 DamageSource。
-         */
+
         SupernaturalDeathHandler.tryKill(
                 entity,
                 config.damageSourceFactory()
@@ -510,33 +438,14 @@ public final class GhostFluidHandler {
     }
 
 
-    /*
-     * ============================================================
-     * 厉鬼复苏值
-     * ============================================================
-     */
-
     /**
-     * 削减玩家体内所有厉鬼的复苏值。
-     *
-     * 鬼湖水：
-     *
-     *     每秒：
-     *
-     *     5 × 深度 %
-     *
-     * 鬼血以后：
-     *
-     *     改为：
-     *
-     *     复苏削减倍率 × 包裹程度
+     * 压制玩家体内厉鬼的复苏。
      */
     private static void reducePlayerGhostRevival(
             ServerPlayer player,
             GhostFluidConfig config,
             double immersion
     ) {
-
         Map<
                 ResourceLocation,
                 PossessedGhostState
@@ -545,29 +454,29 @@ public final class GhostFluidHandler {
                         ModAttachments.POSSESSED_GHOSTS
                 );
 
-        /*
-         * 玩家体内没有鬼。
-         */
+
         if (oldData.isEmpty()) {
             return;
         }
 
+
         /*
-         * 计算本次应该减少多少百分比。
+         * immersion × 每单位压制百分比
          */
         double revivalLossPercent =
                 config.revivalLossPerUnit()
                         * immersion;
 
+
         if (revivalLossPercent <= 0.0D) {
             return;
         }
 
+
         /*
-         * 每一只鬼独立处理。
+         * 遍历玩家体内所有厉鬼。
          */
-        for (var entry :
-                oldData.entrySet()) {
+        for (var entry : oldData.entrySet()) {
 
             ResourceLocation ghost =
                     entry.getKey();
@@ -575,9 +484,18 @@ public final class GhostFluidHandler {
             PossessedGhostState state =
                     entry.getValue();
 
+
             /*
-             * revival 保存的是 0.0 ~ 1.0，
-             * 所以百分比需要除以 100。
+             * revival() 本身是 0~1。
+             *
+             * 例如：
+             *
+             * revival = 0.80
+             * revivalLossPercent = 5
+             *
+             * 新复苏度：
+             *
+             * 0.80 - 0.05
              */
             double newRevival =
                     Math.max(
@@ -587,14 +505,11 @@ public final class GhostFluidHandler {
                                     / 100.0D
                     );
 
-            /*
-             * 没变化就不写 Attachment。
-             */
-            if (newRevival
-                    == state.revival()) {
 
+            if (newRevival == state.revival()) {
                 continue;
             }
+
 
             PossessedGhostState newState =
                     new PossessedGhostState(
@@ -606,9 +521,7 @@ public final class GhostFluidHandler {
                             state.intrinsicStrength()
                     );
 
-            /*
-             * 使用你现有的统一修改方法。
-             */
+
             PossessionHandler.setState(
                     player,
                     ghost,

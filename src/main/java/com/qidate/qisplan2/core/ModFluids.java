@@ -1,5 +1,6 @@
 package com.qidate.qisplan2.core;
 
+import com.qidate.qisplan2.fluid.GhostBloodFluidType;
 import com.qidate.qisplan2.fluid.GhostLakeFluidType;
 
 import net.minecraft.world.item.BucketItem;
@@ -54,6 +55,27 @@ public final class ModFluids {
                             )
             );
 
+    public static final DeferredHolder<
+            FluidType,
+            FluidType
+            > GHOST_BLOOD_TYPE =
+            ModRegistries.FLUID_TYPES.register(
+                    "ghost_blood",
+                    () ->
+                            new GhostBloodFluidType(
+                                    FluidType.Properties.create()
+                                            .descriptionId(
+                                                    "fluid_type.qisplan2.ghost_blood"
+                                            )
+                                            .density(1000)
+                                            .viscosity(1000)
+                                            .temperature(300)
+                                            .canPushEntity(false)
+                                            .canSwim(false)
+                                            .canDrown(false)
+                            )
+            );
+
     /*
      * ============================================================
      * 源流体
@@ -69,6 +91,18 @@ public final class ModFluids {
                     () ->
                             new BaseFlowingFluid.Source(
                                     createFluidProperties()
+                            )
+            );
+
+    public static final DeferredHolder<
+            Fluid,
+            BaseFlowingFluid
+            > GHOST_BLOOD =
+            ModRegistries.FLUIDS.register(
+                    "ghost_blood",
+                    () ->
+                            new BaseFlowingFluid.Source(
+                                    createGhostBloodProperties()
                             )
             );
 
@@ -90,6 +124,18 @@ public final class ModFluids {
                             )
             );
 
+    public static final DeferredHolder<
+            Fluid,
+            BaseFlowingFluid
+            > FLOWING_GHOST_BLOOD =
+            ModRegistries.FLUIDS.register(
+                    "flowing_ghost_blood",
+                    () ->
+                            new BaseFlowingFluid.Flowing(
+                                    createGhostBloodProperties()
+                            )
+            );
+
     /*
      * ============================================================
      * 水桶
@@ -107,6 +153,17 @@ public final class ModFluids {
                             )
             );
 
+    public static final DeferredItem<BucketItem>
+            GHOST_BLOOD_BUCKET =
+            ModRegistries.ITEMS.registerItem(
+                    "ghost_blood_bucket",
+                    properties ->
+                            new BucketItem(
+                                    GHOST_BLOOD.get(),
+                                    properties.stacksTo(1)
+                            )
+            );
+
     /*
      * ============================================================
      * 流体方块
@@ -120,6 +177,17 @@ public final class ModFluids {
                     properties ->
                             new LiquidBlock(
                                     GHOST_LAKE_WATER.get(),
+                                    properties
+                            )
+            );
+
+    public static final DeferredBlock<LiquidBlock>
+            GHOST_BLOOD_BLOCK =
+            ModRegistries.BLOCKS.registerBlock(
+                    "ghost_blood",
+                    properties ->
+                            new LiquidBlock(
+                                    GHOST_BLOOD.get(),
                                     properties
                             )
             );
@@ -145,6 +213,23 @@ public final class ModFluids {
                 .block(
                         () ->
                                 GHOST_LAKE_WATER_BLOCK.get()
+                );
+    }
+
+    private static BaseFlowingFluid.Properties
+    createGhostBloodProperties() {
+        return new BaseFlowingFluid.Properties(
+                GHOST_BLOOD_TYPE,
+                GHOST_BLOOD,
+                FLOWING_GHOST_BLOOD
+        )
+                .bucket(
+                        () ->
+                                GHOST_BLOOD_BUCKET.get()
+                )
+                .block(
+                        () ->
+                                GHOST_BLOOD_BLOCK.get()
                 );
     }
 }
