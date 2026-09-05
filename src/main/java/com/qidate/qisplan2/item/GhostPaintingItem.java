@@ -146,9 +146,6 @@ public class GhostPaintingItem extends Item {
                         center
                 );
 
-        /*
-         * 把物品上的 Variant 传给实体。
-         */
         painting.setPaintingId(variantId);
         painting.setFacing(face);
 

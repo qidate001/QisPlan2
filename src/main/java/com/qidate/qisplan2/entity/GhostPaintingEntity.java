@@ -42,6 +42,14 @@ public class GhostPaintingEntity extends HangingEntity {
             BlockPos pos
     ) {
         super(type, level, pos);
+
+        System.out.println(
+                "[GhostPainting DEBUG] constructor"
+                        + " pos=" + pos
+                        + " entityPos=" + position()
+                        + " blockPosition=" + blockPosition()
+                        + " direction=" + getDirection()
+        );
     }
 
     /*
@@ -91,9 +99,20 @@ public class GhostPaintingEntity extends HangingEntity {
         double width = variant.width();
         double height = variant.height();
 
-        double centerX = pos.getX() + 0.5D;
-        double centerY = pos.getY() + 0.5D;
-        double centerZ = pos.getZ() + 0.5D;
+        double centerX =
+                pos.getX()
+                        + 0.49D
+                        - direction.getStepX() * 0.49D;
+
+        double centerY =
+                pos.getY()
+                        + 0.49D
+                        - direction.getStepY() * 0.49D;
+
+        double centerZ =
+                pos.getZ()
+                        + 0.49D
+                        - direction.getStepZ() * 0.49D;
 
         Direction horizontal =
                 direction.getClockWise();
@@ -146,24 +165,24 @@ public class GhostPaintingEntity extends HangingEntity {
          * ========================================
          */
 
-        System.out.println(
-                "[GhostPainting DEBUG] calculateBoundingBox"
-                        + " client=" + level().isClientSide()
-                        + " entity=" + getId()
-                        + " direction=" + direction
-                        + " horizontal=" + horizontal
-                        + " pos=" + pos
-                        + " variant=" + variant.width()
-                        + "x" + variant.height()
-                        + " AABB="
-                        + result
-                        + " size="
-                        + result.getXsize()
-                        + " x "
-                        + result.getYsize()
-                        + " x "
-                        + result.getZsize()
-        );
+//        System.out.println(
+//                "[GhostPainting DEBUG] calculateBoundingBox"
+//                        + " client=" + level().isClientSide()
+//                        + " entity=" + getId()
+//                        + " direction=" + direction
+//                        + " horizontal=" + horizontal
+//                        + " pos=" + pos
+//                        + " variant=" + variant.width()
+//                        + "x" + variant.height()
+//                        + " AABB="
+//                        + result
+//                        + " size="
+//                        + result.getXsize()
+//                        + " x "
+//                        + result.getYsize()
+//                        + " x "
+//                        + result.getZsize()
+//        );
 
         return result;
     }
@@ -242,23 +261,23 @@ public class GhostPaintingEntity extends HangingEntity {
     @Override
     public void refreshDimensions() {
 
-        System.out.println(
-                "[GhostPainting DEBUG] refreshDimensions"
-                        + " client=" + level().isClientSide()
-                        + " entity=" + getId()
-                        + " direction=" + getDirection()
-                        + " BEFORE=" + getBoundingBox()
-        );
+//        System.out.println(
+//                "[GhostPainting DEBUG] refreshDimensions"
+//                        + " client=" + level().isClientSide()
+//                        + " entity=" + getId()
+//                        + " direction=" + getDirection()
+//                        + " BEFORE=" + getBoundingBox()
+//        );
 
         super.refreshDimensions();
 
-        System.out.println(
-                "[GhostPainting DEBUG] refreshDimensions AFTER"
-                        + " client=" + level().isClientSide()
-                        + " entity=" + getId()
-                        + " direction=" + getDirection()
-                        + " AFTER=" + getBoundingBox()
-        );
+//        System.out.println(
+//                "[GhostPainting DEBUG] refreshDimensions AFTER"
+//                        + " client=" + level().isClientSide()
+//                        + " entity=" + getId()
+//                        + " direction=" + getDirection()
+//                        + " AFTER=" + getBoundingBox()
+//        );
     }
 
 
@@ -279,6 +298,14 @@ public class GhostPaintingEntity extends HangingEntity {
         }
 
         setDirection(direction);
+
+        System.out.println(
+                "[GhostPainting DEBUG] after facing"
+                        + " entityPos=" + position()
+                        + " blockPosition=" + blockPosition()
+                        + " direction=" + getDirection()
+                        + " BB=" + getBoundingBox()
+        );
     }
 
     @Override
@@ -332,6 +359,19 @@ public class GhostPaintingEntity extends HangingEntity {
 
         return false;
     }
+
+
+    /*
+     * ========================================
+     * 强制存活
+     * ========================================
+     */
+
+    @Override
+    public boolean survives() {
+        return true;
+    }
+
 
     /*
      * ========================================
@@ -417,13 +457,13 @@ public class GhostPaintingEntity extends HangingEntity {
     ) {
         super.onSyncedDataUpdated(key);
 
-        System.out.println(
-                "[GhostPainting DEBUG] onSyncedDataUpdated"
-                        + " client=" + level().isClientSide()
-                        + " entity=" + getId()
-                        + " key=" + key
-                        + " direction=" + getDirection()
-        );
+//        System.out.println(
+//                "[GhostPainting DEBUG] onSyncedDataUpdated"
+//                        + " client=" + level().isClientSide()
+//                        + " entity=" + getId()
+//                        + " key=" + key
+//                        + " direction=" + getDirection()
+//        );
 
         recalculateBoundingBox();
     }
