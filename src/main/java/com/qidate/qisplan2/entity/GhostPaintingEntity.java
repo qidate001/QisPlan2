@@ -69,13 +69,12 @@ public class GhostPaintingEntity extends HangingEntity {
     public void setPaintingId(
             ResourceLocation id
     ) {
-
         entityData.set(
                 PAINTING,
                 id.toString()
         );
 
-        refreshDimensions();
+        recalculateBoundingBox();
     }
 
     @Override
@@ -83,57 +82,116 @@ public class GhostPaintingEntity extends HangingEntity {
             BlockPos pos,
             Direction direction
     ) {
-
         GhostPaintingVariant variant = getVariant();
 
-        double halfW = variant.width() / 2.0D;
-        double halfH = variant.height() / 2.0D;
+        double width = variant.width();
+        double height = variant.height();
+
+        /*
+         * HangingEntity 的挂载点。
+         *
+         * pos 是画的挂载参考位置，
+         * 不是需要再沿横向平移 halfWidth 的中心点。
+         */
+        double centerX = pos.getX() + 0.5D;
+        double centerY = pos.getY() + 0.5D;
+        double centerZ = pos.getZ() + 0.5D;
+
+        /*
+         * 画面的横向方向。
+         */
+        Direction horizontal =
+                direction.getClockWise();
+
+        /*
+         * 画面的半尺寸。
+         */
+        double halfWidth =
+                width / 2.0D;
+
+        double halfHeight =
+                height / 2.0D;
+
+        /*
+         * 贴墙厚度。
+         *
+         * 不需要真的占半格，
+         * 这里只需要一个非常薄的碰撞体。
+         */
         double thickness = 0.0625D;
 
-        double x = pos.getX() + 0.5D;
-        double y = pos.getY() + 0.5D;
-        double z = pos.getZ() + 0.5D;
+        /*
+         * ========================================
+         * 横向
+         * ========================================
+         */
 
-        return switch (direction.getAxis()) {
+        double minX;
+        double maxX;
 
-            case Z -> new AABB(
-                    x - halfW,
-                    y - halfH,
-                    z - thickness,
-                    x + halfW,
-                    y + halfH,
-                    z + thickness
-            );
+        double minZ;
+        double maxZ;
 
-            case X -> new AABB(
-                    x - thickness,
-                    y - halfH,
-                    z - halfW,
-                    x + thickness,
-                    y + halfH,
-                    z + halfW
-            );
+        if (horizontal.getAxis() == Direction.Axis.X) {
 
-            default -> new AABB(
-                    x - halfW,
-                    y - halfH,
-                    z - thickness,
-                    x + halfW,
-                    y + halfH,
-                    z + thickness
-            );
-        };
+            /*
+             * NORTH / SOUTH
+             *
+             * 画面横向 = X
+             */
+            minX =
+                    centerX - halfWidth;
+
+            maxX =
+                    centerX + halfWidth;
+
+            minZ =
+                    centerZ - thickness;
+
+            maxZ =
+                    centerZ + thickness;
+
+        } else {
+
+            /*
+             * EAST / WEST
+             *
+             * 画面横向 = Z
+             */
+            minX =
+                    centerX - thickness;
+
+            maxX =
+                    centerX + thickness;
+
+            minZ =
+                    centerZ - halfWidth;
+
+            maxZ =
+                    centerZ + halfWidth;
+        }
+
+        /*
+         * ========================================
+         * Y
+         * ========================================
+         */
+
+        double minY =
+                centerY - halfHeight;
+
+        double maxY =
+                centerY + halfHeight;
+
+        return new AABB(
+                minX,
+                minY,
+                minZ,
+                maxX,
+                maxY,
+                maxZ
+        );
     }
-
-
-    /*
-     * ========================================
-     * 墙面朝向
-     * ========================================
-     */
-
-    private Direction facing =
-            Direction.NORTH;
 
 
     /*
@@ -304,5 +362,18 @@ public class GhostPaintingEntity extends HangingEntity {
                 PAINTING,
                 GhostPaintingVariants.LANDSCAPE.toString()
         );
+    }
+
+    @Override
+    public void onSyncedDataUpdated(
+            EntityDataAccessor<?> key
+    ) {
+        super.onSyncedDataUpdated(key);
+
+        /*
+         * 方向 / Variant 从服务器同步到客户端后，
+         * 重新计算 HangingEntity 的 AABB。
+         */
+        recalculateBoundingBox();
     }
 }

@@ -152,60 +152,6 @@ public class GhostPaintingItem extends Item {
         painting.setPaintingId(variantId);
         painting.setFacing(face);
 
-        /*
-         * ========================================
-         * 计算实体中心
-         * ========================================
-         *
-         * 偶数尺寸的画没有正好位于一个方块中心。
-         *
-         * 例如：
-         *
-         * 13×7：
-         *     不需要偏移
-         *
-         * 3×4：
-         *     高度为偶数
-         *     中心需要向上偏移 0.5
-         */
-
-        double verticalOffset =
-                variant.height() % 2 == 0
-                        ? 0.5D
-                        : 0.0D;
-
-        double horizontalOffset =
-                variant.width() % 2 == 0
-                        ? 0.5D
-                        : 0.0D;
-
-        Direction right =
-                face.getClockWise();
-
-        /*
-         * 稍微离墙一点。
-         */
-        Vec3 spawn =
-                Vec3.atCenterOf(center)
-                        .add(
-                                right.getStepX()
-                                        * horizontalOffset,
-                                verticalOffset,
-                                right.getStepZ()
-                                        * horizontalOffset
-                        )
-                        .subtract(
-                                face.getStepX() * 0.49D,
-                                face.getStepY() * 0.49D,
-                                face.getStepZ() * 0.49D
-                        );
-
-        painting.setPos(
-                spawn.x,
-                spawn.y,
-                spawn.z
-        );
-
         level.addFreshEntity(
                 painting
         );
