@@ -1,5 +1,6 @@
 package com.qidate.qisplan2.entity;
 
+import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.syncher.EntityDataAccessor;
@@ -10,10 +11,34 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityDimensions;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.Pose;
+import net.minecraft.world.entity.decoration.HangingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.phys.AABB;
 
-public class GhostPaintingEntity extends Entity {
+public class GhostPaintingEntity extends HangingEntity {
+
+
+    /*
+     * ========================================
+     * 构造
+     * ========================================
+     */
+
+    public GhostPaintingEntity(
+            EntityType<? extends GhostPaintingEntity> type,
+            Level level
+    ) {
+        super(type, level);
+    }
+
+    public GhostPaintingEntity(
+            EntityType<? extends GhostPaintingEntity> type,
+            Level level,
+            BlockPos pos
+    ) {
+        super(type, level, pos);
+    }
 
     /*
      * ========================================
@@ -53,6 +78,53 @@ public class GhostPaintingEntity extends Entity {
         refreshDimensions();
     }
 
+    @Override
+    protected AABB calculateBoundingBox(
+            BlockPos pos,
+            Direction direction
+    ) {
+
+        GhostPaintingVariant variant = getVariant();
+
+        double halfW = variant.width() / 2.0D;
+        double halfH = variant.height() / 2.0D;
+        double thickness = 0.0625D;
+
+        double x = pos.getX() + 0.5D;
+        double y = pos.getY() + 0.5D;
+        double z = pos.getZ() + 0.5D;
+
+        return switch (direction.getAxis()) {
+
+            case Z -> new AABB(
+                    x - halfW,
+                    y - halfH,
+                    z - thickness,
+                    x + halfW,
+                    y + halfH,
+                    z + thickness
+            );
+
+            case X -> new AABB(
+                    x - thickness,
+                    y - halfH,
+                    z - halfW,
+                    x + thickness,
+                    y + halfH,
+                    z + halfW
+            );
+
+            default -> new AABB(
+                    x - halfW,
+                    y - halfH,
+                    z - thickness,
+                    x + halfW,
+                    y + halfH,
+                    z + thickness
+            );
+        };
+    }
+
 
     /*
      * ========================================
@@ -76,33 +148,23 @@ public class GhostPaintingEntity extends Entity {
     private static final String NBT_PAINTING =
             "Painting";
 
-
-    /*
-     * ========================================
-     * 构造
-     * ========================================
-     */
-
-    public GhostPaintingEntity(
-            EntityType<? extends GhostPaintingEntity> entityType,
-            Level level
-    ) {
-        super(
-                entityType,
-                level
-        );
-
-        /*
-         * 不受重力。
-         */
-        setNoGravity(true);
-
-        /*
-         * 不参与实体物理。
-         */
-        noPhysics = true;
+    public int getWidth() {
+        return getVariant().width() * 16;
     }
 
+    public int getHeight() {
+        return getVariant().height() * 16;
+    }
+
+    @Override
+    public void playPlacementSound() {
+        // 暂时不播放
+    }
+
+    @Override
+    public void dropItem(Entity breaker) {
+        // 暂时什么都不掉
+    }
 
     /*
      * ========================================
@@ -123,61 +185,21 @@ public class GhostPaintingEntity extends Entity {
 
     /*
      * ========================================
-     * 实体尺寸
-     * ========================================
-     */
-
-    @Override
-    public EntityDimensions getDimensions(Pose pose) {
-
-        GhostPaintingVariant variant =
-                getVariant();
-
-        return EntityDimensions.fixed(
-                variant.width(),
-                variant.height()
-        );
-    }
-
-
-    /*
-     * ========================================
      * 朝向
      * ========================================
      */
 
     public Direction getFacing() {
-
-        return facing;
+        return getDirection();
     }
 
+    public void setFacing(Direction direction) {
 
-    public void setFacing(
-            Direction direction
-    ) {
-
-        /*
-         * 不允许上下方向。
-         */
-        if (direction.getAxis()
-                == Direction.Axis.Y) {
-
-            direction =
-                    Direction.NORTH;
+        if (direction.getAxis() == Direction.Axis.Y) {
+            direction = Direction.NORTH;
         }
 
-        facing =
-                direction;
-
-        /*
-         * 同步实体旋转。
-         */
-        setYRot(
-                direction.toYRot()
-        );
-
-        yRotO =
-                getYRot();
+        setDirection(direction);
     }
 
 
@@ -206,17 +228,6 @@ public class GhostPaintingEntity extends Entity {
         return false;
     }
 
-    @Override
-    public boolean isPickable() {
-        return true;
-    }
-
-    @Override
-    public float getPickRadius() {
-        return 0.0F;
-    }
-
-
     /*
      * ========================================
      * NBT 保存
@@ -224,13 +235,13 @@ public class GhostPaintingEntity extends Entity {
      */
 
     @Override
-    protected void addAdditionalSaveData(
+    public void addAdditionalSaveData(
             CompoundTag tag
     ) {
         // 朝向
         tag.putString(
                 NBT_FACING,
-                facing.getName()
+                getDirection().getName()
         );
 
         // 画ID
@@ -248,48 +259,32 @@ public class GhostPaintingEntity extends Entity {
      */
 
     @Override
-    protected void readAdditionalSaveData(
-            CompoundTag tag
-    ) {
+    public void readAdditionalSaveData(CompoundTag tag) {
 
-        if (!tag.contains(
-                NBT_FACING
-        )) {
-
-            return;
+        if (tag.contains(NBT_FACING)) {
+            try {
+                setDirection(
+                        Direction.valueOf(
+                                tag.getString(NBT_FACING).toUpperCase()
+                        )
+                );
+            } catch (IllegalArgumentException ignored) {
+                setDirection(Direction.NORTH);
+            }
         }
 
-        // 朝向
-        try {
-
-            setFacing(
-                    Direction.valueOf(
-                            tag.getString(
-                                    NBT_FACING
-                            ).toUpperCase()
-                    )
-            );
-
-        } catch (IllegalArgumentException ignored) {
-
-            setFacing(
-                    Direction.NORTH
-            );
-        }
-
-        // 画ID
         if (tag.contains(NBT_PAINTING)) {
-
-            setPaintingId(
-                    ResourceLocation.parse(
-                            tag.getString(
-                                    NBT_PAINTING
-                            )
-                    )
-            );
-
-            // 刷新尺寸
-            refreshDimensions();
+            try {
+                setPaintingId(
+                        ResourceLocation.parse(
+                                tag.getString(NBT_PAINTING)
+                        )
+                );
+            } catch (Exception ignored) {
+                setPaintingId(
+                        GhostPaintingVariants.LANDSCAPE
+                );
+            }
         }
     }
 

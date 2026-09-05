@@ -168,13 +168,9 @@ public class ModEntities {
             > GHOST_PAINTING =
             ENTITY_TYPES.register(
                     "ghost_painting",
-                    () -> EntityType.Builder.of(
+                    () -> EntityType.Builder.<GhostPaintingEntity>of(
                                     GhostPaintingEntity::new,
                                     MobCategory.MISC
-                            )
-                            .sized(
-                                    13.0F,
-                                    7.0F
                             )
                             .clientTrackingRange(10)
                             .updateInterval(1)

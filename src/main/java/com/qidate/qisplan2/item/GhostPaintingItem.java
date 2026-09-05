@@ -142,17 +142,14 @@ public class GhostPaintingItem extends Item {
         GhostPaintingEntity painting =
                 new GhostPaintingEntity(
                         ModEntities.GHOST_PAINTING.get(),
-                        level
+                        level,
+                        center
                 );
 
         /*
-         * ★ 关键：
          * 把物品上的 Variant 传给实体。
          */
-        painting.setPaintingId(
-                variantId
-        );
-
+        painting.setPaintingId(variantId);
         painting.setFacing(face);
 
         /*
