@@ -217,8 +217,11 @@ public final class KnockingGhostAbility
 
         PossessedGhostState newState =
                 PossessionHandler.addRevival(
+                        player,
+                        ID,
                         state,
-                        revivalGain
+                        revivalGain,
+                        CorrosionType.HAND
                 );
 
 

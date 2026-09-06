@@ -6,6 +6,7 @@ import com.qidate.qisplan2.death.SupernaturalDeathHandler;
 import com.qidate.qisplan2.ghost.PossessedGhostState;
 import com.qidate.qisplan2.ghost.PossessionHandler;
 
+import com.qidate.qisplan2.ghost.corrosion.CorrosionType;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerLevel;
@@ -291,8 +292,11 @@ public final class DoorGhostAbilityHandler {
 
         PossessedGhostState newState =
                 PossessionHandler.addRevival(
+                        player,
+                        OpeningGhostAbility.ID,
                         state,
-                        revivalGain
+                        revivalGain,
+                        CorrosionType.HAND
                 );
 
 
@@ -367,8 +371,11 @@ public final class DoorGhostAbilityHandler {
 
         PossessedGhostState newState =
                 PossessionHandler.addRevival(
+                        player,
+                        ClosingGhostAbility.ID,
                         state,
-                        revivalGain
+                        revivalGain,
+                        CorrosionType.HAND
                 );
 
 
@@ -668,8 +675,11 @@ public final class DoorGhostAbilityHandler {
                         player,
                         OpeningGhostAbility.ID,
                         PossessionHandler.addRevival(
+                                player,
+                                OpeningGhostAbility.ID,
                                 state,
-                                5.0D
+                                5.0D,
+                                CorrosionType.HAND
                         )
                 );
             }
@@ -734,8 +744,11 @@ public final class DoorGhostAbilityHandler {
                         player,
                         ClosingGhostAbility.ID,
                         PossessionHandler.addRevival(
+                                player,
+                                ClosingGhostAbility.ID,
                                 state,
-                                5.0D
+                                5.0D,
+                                CorrosionType.HAND
                         )
                 );
             }
@@ -801,8 +814,11 @@ public final class DoorGhostAbilityHandler {
                             player,
                             OpeningGhostAbility.ID,
                             PossessionHandler.addRevival(
+                                    player,
+                                    OpeningGhostAbility.ID,
                                     state,
-                                    1.0D
+                                    1.0D,
+                                    CorrosionType.HAND
                             )
                     );
                 }
@@ -857,8 +873,11 @@ public final class DoorGhostAbilityHandler {
                             player,
                             ClosingGhostAbility.ID,
                             PossessionHandler.addRevival(
+                                    player,
+                                    OpeningGhostAbility.ID,
                                     state,
-                                    1.0D
+                                    1.0D,
+                                    CorrosionType.HAND
                             )
                     );
                 }
