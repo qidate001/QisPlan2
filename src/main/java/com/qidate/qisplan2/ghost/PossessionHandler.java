@@ -267,6 +267,78 @@ public final class PossessionHandler {
         );
     }
 
+    /**
+     * 根据某只鬼在指定部位的侵蚀占比，
+     * 计算实际复苏增长后再增加复苏值。
+     *
+     * 例如：
+     *
+     * 基础增长 = 10%
+     * 该鬼占该部位侵蚀 = 50%
+     *
+     * 实际增长 = 10% × 50% = 5%
+     */
+    public static PossessedGhostState addRevival(
+            ServerPlayer player,
+            ResourceLocation ghost,
+            PossessedGhostState state,
+            double revivalPercent,
+            CorrosionType type
+    ) {
+
+        if (state == null) {
+            return null;
+        }
+
+        if (player == null) {
+            return state;
+        }
+
+        if (ghost == null) {
+            return state;
+        }
+
+        if (type == null) {
+            return addRevival(
+                    state,
+                    revivalPercent
+            );
+        }
+
+        if (revivalPercent <= 0.0D) {
+            return state;
+        }
+
+
+        /*
+         * ========================================================
+         * 根据侵蚀占比计算实际复苏增长
+         * ========================================================
+         */
+
+        double ratio =
+                getCorrosionRatio(
+                        player,
+                        ghost,
+                        type
+                );
+
+        double actualRevival =
+                revivalPercent * ratio;
+
+
+        /*
+         * ========================================================
+         * 使用原来的复苏逻辑
+         * ========================================================
+         */
+
+        return addRevival(
+                state,
+                actualRevival
+        );
+    }
+
 
     /*
      * ============================================================
@@ -625,9 +697,6 @@ public final class PossessionHandler {
 
         return own / (double) total;
     }
-
-
-
 
     /**
      * 汇总矩阵

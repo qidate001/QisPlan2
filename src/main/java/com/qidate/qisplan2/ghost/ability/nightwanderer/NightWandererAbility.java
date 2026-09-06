@@ -177,8 +177,11 @@ public final class NightWandererAbility
 
             PossessedGhostState newState =
                     PossessionHandler.addRevival(
+                            player,
+                            ID,
                             state,
-                            NIGHT_REVIVAL_PER_TICK
+                            NIGHT_REVIVAL_PER_TICK,
+                            CorrosionType.GLOBAL
                     );
 
             context.setState(
@@ -258,8 +261,11 @@ public final class NightWandererAbility
          */
         PossessedGhostState newState =
                 PossessionHandler.addRevival(
+                        player,
+                        ID,
                         state,
-                        revivalGain
+                        revivalGain,
+                        CorrosionType.HAND
                 );
 
         /*
