@@ -6,6 +6,7 @@ import com.qidate.qisplan2.core.ModEntityAttributes;
 import com.qidate.qisplan2.core.ModRegistries;
 import com.qidate.qisplan2.core.QisConfig;
 import com.qidate.qisplan2.event.GhostUmbrellaAttackHandler;
+import com.qidate.qisplan2.event.PossessionDamageHandler;
 import com.qidate.qisplan2.ghost.GhostAbilityInteractionHandler;
 import com.qidate.qisplan2.ghost.ability.GhostAbilityRegistry;
 import com.qidate.qisplan2.ghost.doorplate.GhostDoorPlateTeleportHandler;
@@ -42,6 +43,10 @@ public class QisPlan2 {
 
         NeoForge.EVENT_BUS.register(
                 GhostUmbrellaAttackHandler.class
+        );
+
+        NeoForge.EVENT_BUS.register(
+                PossessionDamageHandler.class
         );
 
         // 驭鬼注册表注册

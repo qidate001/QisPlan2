@@ -4,6 +4,7 @@ import com.qidate.qisplan2.entity.AbstractGhostEntity;
 import com.qidate.qisplan2.ghost.GhostAbilityContext;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.EntityType;
 
 public interface PossessedGhostAbility {
@@ -155,6 +156,40 @@ public interface PossessedGhostAbility {
      */
     default void onRelease(
             GhostAbilityContext context
+    ) { }
+
+
+
+    /*
+     * ============================================================
+     * 非灵异伤害减免
+     * ============================================================
+     */
+
+    /**
+     * 修改驭鬼者的非灵异伤害减免。
+     *
+     * 默认不修改。
+     */
+    default double modifyNonSupernaturalDamageReduction(
+            ServerPlayer player,
+            double currentReduction
     ) {
+
+        return currentReduction;
+    }
+
+
+    /**
+     * 修改驭鬼者的非灵异伤害减免上限。
+     *
+     * 默认上限为90%。
+     */
+    default double modifyNonSupernaturalDamageReductionCap(
+            ServerPlayer player,
+            double currentCap
+    ) {
+
+        return currentCap;
     }
 }

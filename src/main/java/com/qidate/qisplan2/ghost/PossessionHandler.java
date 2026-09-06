@@ -1,6 +1,5 @@
 package com.qidate.qisplan2.ghost;
 
-import com.qidate.qisplan2.QisPlan2;
 import com.qidate.qisplan2.core.ModAttachments;
 import com.qidate.qisplan2.event.GhostBreakoutHandler;
 import com.qidate.qisplan2.ghost.ability.GhostAbilityRegistry;
@@ -33,6 +32,127 @@ public final class PossessionHandler {
     @Deprecated
     public static final ResourceLocation NIGHT_WANDERER =
             NightWandererAbility.ID;
+
+    /*
+     * ============================================================
+     * 非灵异伤害减免
+     * ============================================================
+     */
+
+    /**
+     * 获取玩家当前的非灵异伤害减免。
+     *
+     * 基础效果：
+     *
+     * 0只鬼  = 0%
+     * 1只鬼  = 50%
+     * 2只鬼  = 75%
+     * 3只鬼  = 87.5%
+     * 4只鬼  = 90%
+     *
+     * 特殊鬼可以修改减伤数值以及减伤上限。
+     */
+    public static double getNonSupernaturalDamageReduction(
+            ServerPlayer player
+    ) {
+
+        Map<ResourceLocation, PossessedGhostState> ghosts =
+                player.getData(
+                        ModAttachments.POSSESSED_GHOSTS
+                );
+
+
+        int count =
+                ghosts.size();
+
+
+        /*
+         * ========================================================
+         * 基础减伤
+         * ========================================================
+         *
+         * 1 - 1 / 2^n
+         *
+         * 1只 = 50%
+         * 2只 = 75%
+         * 3只 = 87.5%
+         * 4只 = 93.75%
+         *
+         * 但基础上限为90%。
+         */
+        double reduction =
+                count <= 0
+                        ? 0.0D
+                        : 1.0D - Math.pow(
+                        0.5D,
+                        count
+                );
+
+
+        /*
+         * ========================================================
+         * 基础减伤上限
+         * ========================================================
+         */
+        double reductionCap =
+                0.90D;
+
+
+        /*
+         * ========================================================
+         * 允许特殊鬼修改减伤
+         * ========================================================
+         */
+        for (ResourceLocation ghost :
+                ghosts.keySet()) {
+
+            PossessedGhostAbility ability =
+                    GhostAbilityRegistry.get(
+                            ghost
+                    );
+
+
+            if (ability == null) {
+                continue;
+            }
+
+
+            /*
+             * 修改当前减伤。
+             */
+            reduction =
+                    ability.modifyNonSupernaturalDamageReduction(
+                            player,
+                            reduction
+                    );
+
+
+            /*
+             * 修改减伤上限。
+             */
+            reductionCap =
+                    ability.modifyNonSupernaturalDamageReductionCap(
+                            player,
+                            reductionCap
+                    );
+        }
+
+
+        /*
+         * ========================================================
+         * 最终限制
+         * ========================================================
+         *
+         * 防止特殊鬼把减伤弄成：
+         *
+         * < 0%
+         * > 100%
+         */
+        return Math.clamp(
+                reduction,
+                0.0D,
+                reductionCap);
+    }
 
 
     /*
