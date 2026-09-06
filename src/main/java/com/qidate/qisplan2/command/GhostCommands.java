@@ -1,5 +1,6 @@
 package com.qidate.qisplan2.command;
 
+import com.mojang.brigadier.arguments.DoubleArgumentType;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
@@ -10,6 +11,7 @@ import com.qidate.qisplan2.ghost.PossessedGhostState;
 import com.qidate.qisplan2.ghost.PossessionHandler;
 import com.qidate.qisplan2.ghost.ability.GhostAbilityRegistry;
 
+import com.qidate.qisplan2.ghost.corrosion.CorrosionMatrix;
 import com.qidate.qisplan2.ghost.corrosion.CorrosionType;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
@@ -114,6 +116,7 @@ public final class GhostCommands {
         /*
          * ========================================================
          * /qisplan2 corrosion
+         * /qisplan2 corrosion <baseGrowth>
          * ========================================================
          */
 
@@ -121,6 +124,17 @@ public final class GhostCommands {
                 Commands.literal("corrosion")
                         .executes(
                                 GhostCommands::corrosion
+                        )
+                        .then(
+                                Commands.argument(
+                                                "baseGrowth",
+                                                DoubleArgumentType.doubleArg(
+                                                        0.0D
+                                                )
+                                        )
+                                        .executes(
+                                                GhostCommands::corrosion
+                                        )
                         )
         );
 
@@ -392,8 +406,7 @@ public final class GhostCommands {
             PossessedGhostState state =
                     entry.getValue();
 
-            message.append("\n")
-                    .append("§e")
+            message.append("§e")
                     .append(ghost)
                     .append(" §f- 复苏值：")
                     .append(
@@ -555,6 +568,12 @@ public final class GhostCommands {
      * ============================================================
      */
 
+    /*
+     * ============================================================
+     * 查看侵蚀值
+     * ============================================================
+     */
+
     private static int corrosion(
             CommandContext<CommandSourceStack> context
     ) {
@@ -574,44 +593,91 @@ public final class GhostCommands {
             return 0;
         }
 
-        EnumMap<CorrosionType, Integer> values =
-                PossessionHandler.getAllCorrosion(
+        CorrosionMatrix matrix =
+                PossessionHandler.getCorrosionMatrix(
                         player
                 );
 
-        int global =
-                values.getOrDefault(
-                        CorrosionType.GLOBAL,
-                        0
-                );
+        /*
+         * 是否提供了基础增长值。
+         *
+         * 不能使用 context.getNodes().containsKey()
+         * 因为 getNodes() 返回的是 List。
+         */
+        double baseGrowth = 0.0D;
+
+        try {
+
+            baseGrowth =
+                    DoubleArgumentType.getDouble(
+                            context,
+                            "baseGrowth"
+                    );
+
+        } catch (IllegalArgumentException ignored) {
+            /*
+             * 没有提供参数时，
+             * 只是查看侵蚀，不模拟增长。
+             */
+        }
+
 
         StringBuilder message =
                 new StringBuilder();
 
-        message.append("§6========== 侵蚀值 ==========")
-                .append("\n")
-                .append("§e全方位侵蚀：§f")
-                .append(global);
+        message.append(
+                "§6========== 侵蚀系统 =========="
+        );
+
+
+        /*
+         * ========================================================
+         * 每一个侵蚀部位
+         * ========================================================
+         */
 
         for (CorrosionType type :
                 CorrosionType.values()) {
 
-            if (type == CorrosionType.GLOBAL) {
-                continue;
-            }
+            int total =
+                    matrix.total(type);
 
-            int value =
-                    values.getOrDefault(
-                            type,
-                            0
-                    );
+            message.append("\n\n")
+                    .append("§e【")
+                    .append(getCorrosionName(type))
+                    .append("】")
+                    .append("\n")
+                    .append("§f总侵蚀：")
+                    .append(total);
+
+
+            appendGhostContributions(
+                    message,
+                    matrix,
+                    type,
+                    baseGrowth
+            );
+        }
+
+
+        message.append("\n\n")
+                .append(
+                        "§6========== 侵蚀系统结束 =========="
+                );
+
+
+        if (baseGrowth > 0.0D) {
 
             message.append("\n")
-                    .append("§7")
-                    .append(getCorrosionName(type))
-                    .append("：§f")
-                    .append(value);
+                    .append("§7模拟基础增长：§f")
+                    .append(
+                            String.format(
+                                    "%.2f",
+                                    baseGrowth
+                            )
+                    );
         }
+
 
         context.getSource()
                 .sendSuccess(
@@ -622,6 +688,73 @@ public final class GhostCommands {
                 );
 
         return 1;
+    }
+
+    /*
+     * ============================================================
+     * 输出某个部位的鬼贡献
+     * ============================================================
+     */
+
+    private static void appendGhostContributions(
+            StringBuilder message,
+            CorrosionMatrix matrix,
+            CorrosionType target,
+            double baseGrowth
+    ) {
+        int total = matrix.total(target);
+
+        if (total <= 0) {
+            return;
+        }
+
+        Map<ResourceLocation, Integer> ghosts =
+                matrix.contributions(target);
+
+        message.append(" | ");
+
+        boolean first = true;
+
+        for (ResourceLocation ghost : ghosts.keySet()) {
+
+            int contribution =
+                    matrix.contribution(target, ghost);
+
+            double ratio =
+                    contribution / (double) total;
+
+            if (!first) {
+                message.append(" | ");
+            }
+
+            first = false;
+
+            String ghostName =
+                    Component.translatable(
+                            "ghost."
+                                    + ghost.getNamespace()
+                                    + "."
+                                    + ghost.getPath()
+                    ).getString();
+
+            message.append(ghostName)
+                    .append(":")
+                    .append(contribution)
+                    .append("(")
+                    .append(String.format(
+                            "%.0f%%",
+                            ratio * 100.0D
+                    ))
+                    .append(")");
+
+            if (baseGrowth > 0.0D) {
+                message.append("=")
+                        .append(String.format(
+                                "%.2f",
+                                baseGrowth * ratio
+                        ));
+            }
+        }
     }
 
     /*

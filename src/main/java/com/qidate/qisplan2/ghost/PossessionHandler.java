@@ -6,6 +6,7 @@ import com.qidate.qisplan2.ghost.ability.GhostAbilityRegistry;
 import com.qidate.qisplan2.ghost.ability.PossessedGhostAbility;
 import com.qidate.qisplan2.ghost.ability.nightwanderer.NightWandererAbility;
 
+import com.qidate.qisplan2.ghost.corrosion.CorrosionMatrix;
 import com.qidate.qisplan2.ghost.corrosion.CorrosionType;
 import com.qidate.qisplan2.ghost.corrosion.GhostCorrosion;
 import net.minecraft.core.BlockPos;
@@ -572,36 +573,8 @@ public final class PossessionHandler {
             CorrosionType type
     ) {
 
-        int global = 0;
-        int local = 0;
-
-        for (ResourceLocation ghost :
-                player.getData(ModAttachments.POSSESSED_GHOSTS).keySet()) {
-
-            PossessedGhostAbility ability =
-                    GhostAbilityRegistry.get(ghost);
-
-            if (ability == null) {
-                continue;
-            }
-
-            GhostCorrosion corrosion =
-                    ability.corrosion();
-
-            global += corrosion.get(CorrosionType.GLOBAL);
-
-            if (type != CorrosionType.GLOBAL) {
-                local += corrosion.get(type);
-            }
-        }
-
-        /*
-         * 全方位侵蚀只返回自身，
-         * 其他部位 = 全方位 + 部位侵蚀。
-         */
-        return type == CorrosionType.GLOBAL
-                ? global
-                : global + local;
+        return getCorrosionMatrix(player)
+                .total(type);
     }
 
 
@@ -625,6 +598,110 @@ public final class PossessionHandler {
         }
 
         return result;
+    }
+
+
+    public static double getCorrosionRatio(
+            ServerPlayer player,
+            ResourceLocation ghost,
+            CorrosionType type
+    ) {
+
+        CorrosionMatrix matrix =
+                getCorrosionMatrix(player);
+
+        int total =
+                matrix.total(type);
+
+        if (total <= 0) {
+            return 0.0D;
+        }
+
+        int own =
+                matrix.contribution(
+                        type,
+                        ghost
+                );
+
+        return own / (double) total;
+    }
+
+
+
+
+    /**
+     * 汇总矩阵
+     */
+    public static CorrosionMatrix getCorrosionMatrix(
+            ServerPlayer player
+    ) {
+
+        CorrosionMatrix matrix =
+                new CorrosionMatrix();
+
+        Map<ResourceLocation, PossessedGhostState> ghosts =
+                player.getData(
+                        ModAttachments.POSSESSED_GHOSTS
+                );
+
+
+        /*
+         * 每只鬼分别贡献。
+         */
+        for (ResourceLocation ghost :
+                ghosts.keySet()) {
+
+            PossessedGhostAbility ability =
+                    GhostAbilityRegistry.get(
+                            ghost
+                    );
+
+            if (ability == null) {
+                continue;
+            }
+
+            GhostCorrosion corrosion = ability.corrosion();
+
+            for (var entry : corrosion.entries().entrySet()) {
+
+                CorrosionType type = entry.getKey();
+                int amount = entry.getValue();
+
+                if (type == CorrosionType.GLOBAL) {
+
+                    matrix.add(
+                            CorrosionType.GLOBAL,
+                            ghost,
+                            CorrosionType.GLOBAL,
+                            amount
+                    );
+
+                    for (CorrosionType other : CorrosionType.values()) {
+
+                        if (other != CorrosionType.GLOBAL) {
+
+                            matrix.add(
+                                    other,
+                                    ghost,
+                                    CorrosionType.GLOBAL,
+                                    amount
+                            );
+                        }
+                    }
+
+                    continue;
+                }
+
+                matrix.add(
+                        type,
+                        ghost,
+                        type,
+                        amount
+                );
+            }
+        }
+
+        return matrix;
     }
 
 
