@@ -9,6 +9,8 @@ import com.qidate.qisplan2.ghost.GhostAbilityContext;
 import com.qidate.qisplan2.ghost.PossessedGhostState;
 import com.qidate.qisplan2.ghost.PossessionHandler;
 
+import com.qidate.qisplan2.ghost.corrosion.CorrosionType;
+import com.qidate.qisplan2.ghost.corrosion.GhostCorrosion;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
@@ -94,6 +96,14 @@ public final class NightWandererAbility
                     AttributeModifier.Operation.ADD_VALUE
             );
 
+    private static final GhostCorrosion CORROSION =
+            GhostCorrosion.builder()
+                    .add(CorrosionType.GLOBAL, 20)
+                    .add(CorrosionType.HAND, 20)
+                    .add(CorrosionType.EYE, 20)
+                    .add(CorrosionType.FOOT, 10)
+                    .build();
+
     @Override
     public ResourceLocation id() {
         return ID;
@@ -108,6 +118,11 @@ public final class NightWandererAbility
     @Override
     public double initialIntrinsicStrength() {
         return 4.0D;
+    }
+
+    @Override
+    public GhostCorrosion corrosion() {
+        return CORROSION;
     }
 
     /*

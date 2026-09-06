@@ -10,6 +10,7 @@ import com.qidate.qisplan2.ghost.PossessedGhostState;
 import com.qidate.qisplan2.ghost.PossessionHandler;
 import com.qidate.qisplan2.ghost.ability.GhostAbilityRegistry;
 
+import com.qidate.qisplan2.ghost.corrosion.CorrosionType;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.commands.arguments.ResourceLocationArgument;
@@ -17,6 +18,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 
+import java.util.EnumMap;
 import java.util.Map;
 
 public final class GhostCommands {
@@ -106,6 +108,19 @@ public final class GhostCommands {
                 Commands.literal("possessed")
                         .executes(
                                 GhostCommands::possessed
+                        )
+        );
+
+        /*
+         * ========================================================
+         * /qisplan2 corrosion
+         * ========================================================
+         */
+
+        root.then(
+                Commands.literal("corrosion")
+                        .executes(
+                                GhostCommands::corrosion
                         )
         );
 
@@ -532,5 +547,122 @@ public final class GhostCommands {
                 );
 
         return 1;
+    }
+
+    /*
+     * ============================================================
+     * 查看侵蚀值
+     * ============================================================
+     */
+
+    private static int corrosion(
+            CommandContext<CommandSourceStack> context
+    ) {
+
+        ServerPlayer player =
+                context.getSource().getPlayer();
+
+        if (player == null) {
+
+            context.getSource()
+                    .sendFailure(
+                            Component.literal(
+                                    "这个命令必须由玩家执行。"
+                            )
+                    );
+
+            return 0;
+        }
+
+        EnumMap<CorrosionType, Integer> values =
+                PossessionHandler.getAllCorrosion(
+                        player
+                );
+
+        int global =
+                values.getOrDefault(
+                        CorrosionType.GLOBAL,
+                        0
+                );
+
+        StringBuilder message =
+                new StringBuilder();
+
+        message.append("§6========== 侵蚀值 ==========")
+                .append("\n")
+                .append("§e全方位侵蚀：§f")
+                .append(global);
+
+        for (CorrosionType type :
+                CorrosionType.values()) {
+
+            if (type == CorrosionType.GLOBAL) {
+                continue;
+            }
+
+            int value =
+                    values.getOrDefault(
+                            type,
+                            0
+                    );
+
+            message.append("\n")
+                    .append("§7")
+                    .append(getCorrosionName(type))
+                    .append("：§f")
+                    .append(value);
+        }
+
+        context.getSource()
+                .sendSuccess(
+                        () -> Component.literal(
+                                message.toString()
+                        ),
+                        false
+                );
+
+        return 1;
+    }
+
+    /*
+     * ============================================================
+     * 中文名称
+     * ============================================================
+     */
+
+    private static String getCorrosionName(
+            CorrosionType type
+    ) {
+
+        return switch (type) {
+
+            case GLOBAL -> "全方位";
+
+            case BRAIN -> "大脑";
+            case HEART -> "心脏";
+            case LUNG -> "肺";
+            case STOMACH -> "胃";
+            case LIVER -> "肝";
+            case KIDNEY -> "肾";
+            case PANCREAS -> "胰";
+            case GALLBLADDER -> "胆";
+            case SPLEEN -> "脾";
+            case INTESTINE -> "肠";
+
+            case SKIN -> "皮肤";
+            case BLOOD -> "血液";
+            case BONE -> "骨骼";
+            case FLESH -> "血肉";
+
+            case EYE -> "眼";
+            case EAR -> "耳";
+            case NOSE -> "鼻";
+            case MOUTH -> "口";
+
+            case HAND -> "手";
+            case FOOT -> "脚";
+
+            case HAIR -> "发";
+        };
     }
 }

@@ -1,7 +1,6 @@
 package com.qidate.qisplan2.ghost.corrosion;
 
 import java.util.EnumMap;
-import java.util.Map;
 
 public record GhostCorrosion(
         EnumMap<CorrosionType, Integer> values

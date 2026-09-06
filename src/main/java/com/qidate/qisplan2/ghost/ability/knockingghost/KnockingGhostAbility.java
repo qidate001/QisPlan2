@@ -8,6 +8,8 @@ import com.qidate.qisplan2.ghost.PossessedGhostState;
 import com.qidate.qisplan2.ghost.PossessionHandler;
 import com.qidate.qisplan2.ghost.ability.PossessedGhostAbility;
 
+import com.qidate.qisplan2.ghost.corrosion.CorrosionType;
+import com.qidate.qisplan2.ghost.corrosion.GhostCorrosion;
 import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
@@ -53,6 +55,16 @@ public final class KnockingGhostAbility
      */
     private static final double TARGET_REVIVAL_BONUS = 2.0D;
 
+
+    /**
+     * 灵异侵蚀
+     */
+    private static final GhostCorrosion CORROSION =
+            GhostCorrosion.builder()
+                    .add(CorrosionType.GLOBAL, 20)
+                    .add(CorrosionType.HAND, 20)
+                    .build();
+
     @Override
     public ResourceLocation id() {
         return ID;
@@ -60,7 +72,6 @@ public final class KnockingGhostAbility
 
     @Override
     public EntityType<? extends AbstractGhostEntity> entityType() {
-
         return ModEntities.KNOCKING_GHOST.get();
     }
 
@@ -80,6 +91,14 @@ public final class KnockingGhostAbility
             GhostAbilityContext context
     ) {
         return false;
+    }
+
+    /**
+     * 灵异侵蚀
+     */
+    @Override
+    public GhostCorrosion corrosion() {
+        return CORROSION;
     }
 
     /**

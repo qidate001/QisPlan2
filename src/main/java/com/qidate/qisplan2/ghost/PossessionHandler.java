@@ -589,10 +589,19 @@ public final class PossessionHandler {
                     ability.corrosion();
 
             global += corrosion.get(CorrosionType.GLOBAL);
-            local += corrosion.get(type);
+
+            if (type != CorrosionType.GLOBAL) {
+                local += corrosion.get(type);
+            }
         }
 
-        return global + local;
+        /*
+         * 全方位侵蚀只返回自身，
+         * 其他部位 = 全方位 + 部位侵蚀。
+         */
+        return type == CorrosionType.GLOBAL
+                ? global
+                : global + local;
     }
 
 
