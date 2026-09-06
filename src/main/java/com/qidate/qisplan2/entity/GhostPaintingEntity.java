@@ -44,14 +44,6 @@ public class GhostPaintingEntity extends HangingEntity {
             BlockPos pos
     ) {
         super(type, level, pos);
-
-        System.out.println(
-                "[GhostPainting DEBUG] constructor"
-                        + " pos=" + pos
-                        + " entityPos=" + position()
-                        + " blockPosition=" + blockPosition()
-                        + " direction=" + getDirection()
-        );
     }
 
     /*
@@ -193,59 +185,14 @@ public class GhostPaintingEntity extends HangingEntity {
      * ========================================
      */
 
-    private BlockPos lastPos = BlockPos.ZERO;
-
     @Override
     public void tick() {
-
-        BlockPos beforePos = this.pos;
-        double beforeX = getX();
-        double beforeY = getY();
-        double beforeZ = getZ();
-
         super.tick();
-
-        if (!beforePos.equals(this.pos)) {
-            QisPlan2.LOGGER.warn(
-                    """
-                    [GhostPainting POS CHANGED]
-                    entity={}
-                    fieldPos: {} -> {}
-                    worldPos: ({}, {}, {}) -> ({}, {}, {})
-                    """,
-                    getId(),
-                    beforePos,
-                    this.pos,
-                    beforeX,
-                    beforeY,
-                    beforeZ,
-                    getX(),
-                    getY(),
-                    getZ()
-            );
-        }
     }
 
     @Override
     public void refreshDimensions() {
-
-//        System.out.println(
-//                "[GhostPainting DEBUG] refreshDimensions"
-//                        + " client=" + level().isClientSide()
-//                        + " entity=" + getId()
-//                        + " direction=" + getDirection()
-//                        + " BEFORE=" + getBoundingBox()
-//        );
-
         super.refreshDimensions();
-
-//        System.out.println(
-//                "[GhostPainting DEBUG] refreshDimensions AFTER"
-//                        + " client=" + level().isClientSide()
-//                        + " entity=" + getId()
-//                        + " direction=" + getDirection()
-//                        + " AFTER=" + getBoundingBox()
-//        );
     }
 
 
@@ -266,14 +213,6 @@ public class GhostPaintingEntity extends HangingEntity {
         }
 
         setDirection(direction);
-
-        System.out.println(
-                "[GhostPainting DEBUG] after facing"
-                        + " entityPos=" + position()
-                        + " blockPosition=" + blockPosition()
-                        + " direction=" + getDirection()
-                        + " BB=" + getBoundingBox()
-        );
     }
 
     @Override
@@ -461,9 +400,6 @@ public class GhostPaintingEntity extends HangingEntity {
 
     @Override
     protected void checkInsideBlocks() {
-        QisPlan2.LOGGER.info(
-                "[GhostPainting] checkInsideBlocks client={}",
-                level().isClientSide()
-        );
+
     }
 }
