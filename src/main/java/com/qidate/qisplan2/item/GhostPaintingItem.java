@@ -113,6 +113,10 @@ public class GhostPaintingItem extends Item {
                 context.getClickedPos()
                         .relative(face);
 
+//        if (variant.height() % 2 == 0) {
+//            center = center.above();
+//        }
+
         PlacementResult result =
                 canPlacePainting(
                         level,
