@@ -6,11 +6,14 @@ import com.qidate.qisplan2.ghost.ability.GhostAbilityRegistry;
 import com.qidate.qisplan2.ghost.ability.PossessedGhostAbility;
 import com.qidate.qisplan2.ghost.ability.nightwanderer.NightWandererAbility;
 
+import com.qidate.qisplan2.ghost.corrosion.CorrosionType;
+import com.qidate.qisplan2.ghost.corrosion.GhostCorrosion;
 import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.LivingEntity;
 
+import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -557,6 +560,62 @@ public final class PossessionHandler {
                 ModAttachments.POSSESSED_GHOSTS,
                 data
         );
+    }
+
+
+
+    /**
+     * 获取某个部位最终侵蚀值
+     */
+    public static int getCorrosion(
+            ServerPlayer player,
+            CorrosionType type
+    ) {
+
+        int global = 0;
+        int local = 0;
+
+        for (ResourceLocation ghost :
+                player.getData(ModAttachments.POSSESSED_GHOSTS).keySet()) {
+
+            PossessedGhostAbility ability =
+                    GhostAbilityRegistry.get(ghost);
+
+            if (ability == null) {
+                continue;
+            }
+
+            GhostCorrosion corrosion =
+                    ability.corrosion();
+
+            global += corrosion.get(CorrosionType.GLOBAL);
+            local += corrosion.get(type);
+        }
+
+        return global + local;
+    }
+
+
+
+    /**
+     * 获取全部侵蚀值
+     */
+    public static EnumMap<CorrosionType, Integer> getAllCorrosion(
+            ServerPlayer player
+    ) {
+
+        EnumMap<CorrosionType, Integer> result =
+                new EnumMap<>(CorrosionType.class);
+
+        for (CorrosionType type : CorrosionType.values()) {
+
+            result.put(
+                    type,
+                    getCorrosion(player, type)
+            );
+        }
+
+        return result;
     }
 
 

@@ -2,6 +2,8 @@ package com.qidate.qisplan2.ghost.ability;
 
 import com.qidate.qisplan2.entity.AbstractGhostEntity;
 import com.qidate.qisplan2.ghost.GhostAbilityContext;
+import com.qidate.qisplan2.ghost.corrosion.CorrosionType;
+import com.qidate.qisplan2.ghost.corrosion.GhostCorrosion;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
@@ -191,5 +193,14 @@ public interface PossessedGhostAbility {
     ) {
 
         return currentCap;
+    }
+
+    /**
+     * 灵异力量侵蚀值
+     */
+    default GhostCorrosion corrosion() {
+        return GhostCorrosion.builder()
+                .add(CorrosionType.GLOBAL, 10)
+                .build();
     }
 }
