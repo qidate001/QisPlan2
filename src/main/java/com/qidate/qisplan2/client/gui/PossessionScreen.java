@@ -1,5 +1,6 @@
 package com.qidate.qisplan2.client.gui;
 
+import com.qidate.qisplan2.QisPlan2;
 import com.qidate.qisplan2.QisPlan2Client;
 import com.qidate.qisplan2.core.ModAttachments;
 import com.qidate.qisplan2.ghost.PossessedGhostState;
@@ -16,11 +17,29 @@ import java.util.Map;
 
 public class PossessionScreen extends Screen {
 
-    private static final int PANEL_WIDTH = 300;
-    private static final int PANEL_HEIGHT = 220;
+    private static final int PANEL_WIDTH = 600;
+    private static final int PANEL_HEIGHT = 320;
 
     private int panelX;
     private int panelY;
+
+    private static final ResourceLocation HUMAN_BODY =
+            ResourceLocation.fromNamespaceAndPath(
+                    QisPlan2.MODID,
+                    "textures/gui/body/human_body.png"
+            );
+
+    private static final ResourceLocation BRAIN =
+            ResourceLocation.fromNamespaceAndPath(
+                    QisPlan2.MODID,
+                    "textures/gui/body/brain.png"
+            );
+
+    private static final ResourceLocation HEART =
+            ResourceLocation.fromNamespaceAndPath(
+                    QisPlan2.MODID,
+                    "textures/gui/body/heart.png"
+            );
 
     public PossessionScreen() {
 
@@ -98,219 +117,189 @@ public class PossessionScreen extends Screen {
         );
     }
 
-    private void drawContent(
-            GuiGraphics graphics
-    ) {
+    private void drawContent(GuiGraphics graphics) {
+        Minecraft minecraft = Minecraft.getInstance();
+        if (minecraft.player == null) return;
 
-        Minecraft minecraft =
-                Minecraft.getInstance();
+        var player = minecraft.player;
 
-        if (minecraft.player == null) {
-            return;
-        }
-
-        var player =
-                minecraft.player;
-
-        Map<
-                ResourceLocation,
-                PossessedGhostState
-                > ghosts =
-                player.getData(
-                        ModAttachments.POSSESSED_GHOSTS
-                );
-
-        /*
-         * ==============================
-         * 基础数据
-         * ==============================
-         */
+        Map<ResourceLocation, PossessedGhostState> ghosts =
+                player.getData(ModAttachments.POSSESSED_GHOSTS);
 
         double bodyCorrosion =
-                PossessionHandler.getEffectiveBodyCorrosion(
-                        player
-                );
+                PossessionHandler.getEffectiveBodyCorrosion(player);
 
         double damageReduction =
-                1.0D
-                        - Math.pow(
-                        0.5D,
-                        bodyCorrosion / 20.0D
-                );
-
-        damageReduction =
-                Math.clamp(
-                        damageReduction,
-                        0.0D,
-                        0.90D
-                );
+                1.0D - Math.pow(0.5D, bodyCorrosion / 20.0D);
+        damageReduction = Math.clamp(damageReduction, 0.0D, 0.90D);
 
         double maxHealthBonus =
-                40.0D
-                        * (
-                        1.0D
-                                - Math.pow(
-                                0.5D,
-                                bodyCorrosion / 20.0D
-                        )
-                );
+                40.0D * (1.0D - Math.pow(0.5D, bodyCorrosion / 20.0D));
 
+        // =========================
+        // 左侧：基础状态
+        // =========================
 
-        int x =
-                panelX + 14;
-
-        int y =
-                panelY + 36;
-
-
-        /*
-         * ==============================
-         * 身体状态
-         * ==============================
-         */
+        int leftX = panelX + 14;
+        int topY = panelY + 38;
 
         graphics.drawString(
                 this.font,
                 "驾驭鬼数量",
-                x,
-                y,
+                leftX,
+                topY,
                 0xFFAAAAAA
         );
 
         graphics.drawString(
                 this.font,
-                String.valueOf(
-                        ghosts.size()
-                ),
-                x + 150,
-                y,
+                String.valueOf(ghosts.size()),
+                leftX + 110,
+                topY,
                 0xFFFFFFFF
         );
 
-        y += 16;
-
+        topY += 18;
 
         graphics.drawString(
                 this.font,
                 "肉身侵蚀",
-                x,
-                y,
+                leftX,
+                topY,
                 0xFFAAAAAA
         );
 
         graphics.drawString(
                 this.font,
-                String.format(
-                        "%.1f",
-                        bodyCorrosion
-                ),
-                x + 150,
-                y,
+                String.format("%.1f", bodyCorrosion),
+                leftX + 110,
+                topY,
                 0xFFFFFFFF
         );
 
-        y += 16;
-
+        topY += 18;
 
         graphics.drawString(
                 this.font,
                 "非灵异减伤",
-                x,
-                y,
+                leftX,
+                topY,
                 0xFFAAAAAA
         );
 
         graphics.drawString(
                 this.font,
-                String.format(
-                        "%.1f%%",
-                        damageReduction * 100.0D
-                ),
-                x + 150,
-                y,
+                String.format("%.1f%%", damageReduction * 100.0D),
+                leftX + 110,
+                topY,
                 0xFFFFFFFF
         );
 
-        y += 16;
-
+        topY += 18;
 
         graphics.drawString(
                 this.font,
                 "生命上限加成",
-                x,
-                y,
+                leftX,
+                topY,
                 0xFFAAAAAA
         );
 
         graphics.drawString(
                 this.font,
-                String.format(
-                        "+%.1f",
-                        maxHealthBonus
-                ),
-                x + 150,
-                y,
+                String.format("+%.1f", maxHealthBonus),
+                leftX + 110,
+                topY,
                 0xFFFFFFFF
         );
 
 
-        /*
-         * ==============================
-         * 分隔线
-         * ==============================
-         */
+        // =========================
+        // 中央：人体图
+        // =========================
 
-        y += 18;
+        int bodyWidth = 168;
+        int bodyHeight = 278;
 
-        graphics.fill(
-                x,
-                y,
-                panelX + PANEL_WIDTH - 14,
-                y + 1,
-                0xFF404048
+        int bodyX =
+                panelX + (PANEL_WIDTH - bodyWidth) / 2;
+
+        int bodyY =
+                panelY + 26;
+
+        graphics.blit(
+                HUMAN_BODY,
+                bodyX,
+                bodyY,
+                0,
+                0,
+                bodyWidth,
+                bodyHeight,
+                bodyWidth,
+                bodyHeight
         );
 
-        y += 12;
+        // 大脑
+        graphics.setColor(
+                1.0F,
+                0.2F,
+                0.2F,
+                0.75F
+        );
+
+        graphics.blit(
+                BRAIN,
+                bodyX,
+                bodyY,
+                0,
+                0,
+                bodyWidth,
+                bodyHeight,
+                bodyWidth,
+                bodyHeight
+        );
+
+        graphics.setColor(
+                1.0F,
+                1.0F,
+                1.0F,
+                1.0F
+        );
 
 
-        /*
-         * ==============================
-         * 驾驭的鬼
-         * ==============================
-         */
+        // =========================
+        // 右侧：驾驭的鬼
+        // =========================
+
+        int rightX =
+                panelX + PANEL_WIDTH - 145;
+
+        int rightY =
+                panelY + 38;
 
         graphics.drawString(
                 this.font,
                 "驾驭的鬼",
-                x,
-                y,
+                rightX,
+                rightY,
                 0xFFFFFFFF
         );
 
-        y += 16;
+        rightY += 20;
 
+        for (Map.Entry<ResourceLocation, PossessedGhostState> entry
+                : ghosts.entrySet()) {
 
-        for (Map.Entry<
-                ResourceLocation,
-                PossessedGhostState
-                > entry : ghosts.entrySet()) {
+            ResourceLocation ghostId = entry.getKey();
+            PossessedGhostState state = entry.getValue();
 
-            ResourceLocation ghostId =
-                    entry.getKey();
-
-            PossessedGhostState state =
-                    entry.getValue();
-
-            String name =
-                    getGhostName(
-                            ghostId
-                    );
+            String name = getGhostName(ghostId);
 
             graphics.drawString(
                     this.font,
                     name,
-                    x,
-                    y,
+                    rightX,
+                    rightY,
                     0xFFDDDDDD
             );
 
@@ -318,24 +307,16 @@ public class PossessionScreen extends Screen {
                     this.font,
                     String.format(
                             "%.0f%%",
-                            state.revival()
-                                    * 100.0D
+                            state.revival() * 100.0D
                     ),
-                    x + 150,
-                    y,
+                    rightX,
+                    rightY + 12,
                     0xFFFFFFFF
             );
 
-            y += 14;
+            rightY += 32;
 
-            /*
-             * 防止鬼太多超出面板。
-             */
-            if (y >
-                    panelY
-                            + PANEL_HEIGHT
-                            - 12) {
-
+            if (rightY > panelY + PANEL_HEIGHT - 20) {
                 break;
             }
         }
