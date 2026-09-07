@@ -45,15 +45,7 @@ public final class PossessionHandler {
 
     /**
      * 获取玩家当前的非灵异伤害减免。
-     *
-     * 基础效果：
-     *
-     * 0只鬼  = 0%
-     * 1只鬼  = 50%
-     * 2只鬼  = 75%
-     * 3只鬼  = 87.5%
-     * 4只鬼  = 90%
-     *
+     * 默认最高 90%
      * 特殊鬼可以修改减伤数值以及减伤上限。
      */
     public static double getNonSupernaturalDamageReduction(
@@ -65,75 +57,50 @@ public final class PossessionHandler {
                         ModAttachments.POSSESSED_GHOSTS
                 );
 
-
-        int count =
-                ghosts.size();
-
-
         /*
          * ========================================================
          * 基础减伤
          * ========================================================
          *
-         * 1 - 1 / 2^n
+         * 根据肉身侵蚀度计算：
          *
-         * 1只 = 50%
-         * 2只 = 75%
-         * 3只 = 87.5%
-         * 4只 = 93.75%
-         *
-         * 但基础上限为90%。
+         * reduction = 90% × (1 - e^(-E/30))
          */
+        int corrosion =
+                getEffectiveBodyCorrosion(player);
+
         double reduction =
-                count <= 0
-                        ? 0.0D
-                        : 1.0D - Math.pow(
-                        0.5D,
-                        count
-                );
+                0.90D
+                        * (1.0D
+                        - Math.exp(
+                        -corrosion / 30.0D
+                ));
 
-
-        /*
-         * ========================================================
-         * 基础减伤上限
-         * ========================================================
-         */
         double reductionCap =
                 0.90D;
 
-
         /*
          * ========================================================
-         * 允许特殊鬼修改减伤
+         * 允许特殊鬼修改
          * ========================================================
          */
+
         for (ResourceLocation ghost :
                 ghosts.keySet()) {
 
             PossessedGhostAbility ability =
-                    GhostAbilityRegistry.get(
-                            ghost
-                    );
-
+                    GhostAbilityRegistry.get(ghost);
 
             if (ability == null) {
                 continue;
             }
 
-
-            /*
-             * 修改当前减伤。
-             */
             reduction =
                     ability.modifyNonSupernaturalDamageReduction(
                             player,
                             reduction
                     );
 
-
-            /*
-             * 修改减伤上限。
-             */
             reductionCap =
                     ability.modifyNonSupernaturalDamageReductionCap(
                             player,
@@ -141,21 +108,107 @@ public final class PossessionHandler {
                     );
         }
 
-
         /*
          * ========================================================
          * 最终限制
          * ========================================================
-         *
-         * 防止特殊鬼把减伤弄成：
-         *
-         * < 0%
-         * > 100%
          */
-        return Math.clamp(
-                reduction,
+
+        reductionCap =
+                Math.clamp(
+                        reductionCap,
+                        0.0D,
+                        1.0D);
+
+        reduction =
+                Math.clamp(
+                        reduction,
+                        0.0D,
+                        reductionCap);
+
+        return reduction;
+    }
+
+
+    /**
+     * 获取肉身侵蚀度。
+     *
+     * 由：
+     *
+     * 全方位
+     * 皮肤
+     * 血肉
+     * 骨骼
+     *
+     * 四项共同决定肉体强化。
+     */
+    private static int getEffectiveBodyCorrosion(ServerPlayer player) {
+        CorrosionMatrix matrix = getCorrosionMatrix(player);
+
+        return matrix.total(CorrosionType.GLOBAL)
+                + matrix.total(CorrosionType.SKIN)
+                + matrix.total(CorrosionType.FLESH)
+                + matrix.total(CorrosionType.BONE);
+    }
+
+
+    /*
+     * ============================================================
+     * 生命上限加成
+     * ============================================================
+     */
+
+    /**
+     * 获取驭鬼带来的生命上限加成。
+     * 共40点生命上限。
+     */
+    public static double getMaxHealthBonus(
+            ServerPlayer player
+    ) {
+
+        int corrosion =
+                getEffectiveBodyCorrosion(player);
+
+        /*
+         * 第一只≈20
+         * 第二只≈30
+         * 第三只≈35
+         * 第四只≈37.5
+         * 最终趋近40
+         */
+        double health =
+                40.0D
+                        * (1.0D
+                        - Math.exp(
+                        -corrosion / 28.85D
+                ));
+
+        /*
+         * 特殊鬼修改
+         */
+        for (ResourceLocation ghost :
+                player.getData(
+                        ModAttachments.POSSESSED_GHOSTS
+                ).keySet()) {
+
+            PossessedGhostAbility ability =
+                    GhostAbilityRegistry.get(ghost);
+
+            if (ability == null) {
+                continue;
+            }
+
+            health =
+                    ability.modifyMaxHealthBonus(
+                            player,
+                            health
+                    );
+        }
+
+        return Math.max(
                 0.0D,
-                reductionCap);
+                health
+        );
     }
 
 

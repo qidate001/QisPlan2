@@ -196,6 +196,17 @@ public interface PossessedGhostAbility {
     }
 
     /**
+     * 修改驭鬼带来的生命上限加成。
+     */
+    default double modifyMaxHealthBonus(
+            ServerPlayer player,
+            double currentBonus
+    ) {
+
+        return currentBonus;
+    }
+
+    /**
      * 灵异力量侵蚀值
      */
     default GhostCorrosion corrosion() {
