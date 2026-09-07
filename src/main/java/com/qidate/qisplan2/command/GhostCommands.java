@@ -138,6 +138,19 @@ public final class GhostCommands {
                         )
         );
 
+        /*
+         * ========================================================
+         * /qisplan2 defense
+         * ========================================================
+         */
+
+        root.then(
+                Commands.literal("defense")
+                        .executes(
+                                GhostCommands::defense
+                        )
+        );
+
 
         /*
          * ========================================================
@@ -749,6 +762,80 @@ public final class GhostCommands {
                         ));
             }
         }
+    }
+
+    /*
+     * ============================================================
+     * 查看肉身强化
+     * ============================================================
+     */
+
+    private static int defense(
+            CommandContext<CommandSourceStack> context
+    ) {
+
+        ServerPlayer player =
+                context.getSource().getPlayer();
+
+        if (player == null) {
+
+            context.getSource()
+                    .sendFailure(
+                            Component.literal(
+                                    "这个命令必须由玩家执行。"
+                            )
+                    );
+
+            return 0;
+        }
+
+        double bodyCorrosion =
+                PossessionHandler.getEffectiveBodyCorrosion(
+                        player
+                );
+
+        double reduction =
+                PossessionHandler.getNonSupernaturalDamageReduction(
+                        player
+                );
+
+        double healthBonus =
+                PossessionHandler.getMaxHealthBonus(
+                        player
+                );
+
+        String message =
+                "§6========== 肉身强化 ==========\n"
+                        + "§f肉身侵蚀：§e"
+                        + bodyCorrosion
+                        + "\n"
+                        + "§f减伤：§b"
+                        + String.format(
+                        "%.1f%%",
+                        reduction * 100.0D
+                )
+                        + "\n"
+                        + "§f生命加成：§c+"
+                        + String.format(
+                        "%.1f",
+                        healthBonus
+                )
+                        + "\n"
+                        + "§f当前最大生命：§a"
+                        + String.format(
+                        "%.1f",
+                        player.getMaxHealth()
+                )
+                        + "\n"
+                        + "§6========================";
+
+        context.getSource()
+                .sendSuccess(
+                        () -> Component.literal(message),
+                        false
+                );
+
+        return 1;
     }
 
     /*

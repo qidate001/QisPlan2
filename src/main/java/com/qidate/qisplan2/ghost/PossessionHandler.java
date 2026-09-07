@@ -62,29 +62,31 @@ public final class PossessionHandler {
          * 基础减伤
          * ========================================================
          *
-         * 根据肉身侵蚀度计算：
+         * 每20点肉身侵蚀相当于一只普通鬼：
          *
-         * reduction = 90% × (1 - e^(-E/30))
+         * 20 → 50%
+         * 40 → 75%
+         * 60 → 87.5%
+         * 80 → 93.75%（最终封顶90%）
          */
-        int corrosion =
+        double bodyCorrosion =
                 getEffectiveBodyCorrosion(player);
 
         double reduction =
-                0.90D
-                        * (1.0D
-                        - Math.exp(
-                        -corrosion / 30.0D
-                ));
+                1.0D
+                        - Math.pow(
+                        0.5D,
+                        bodyCorrosion / 20.0D
+                );
 
         double reductionCap =
                 0.90D;
 
         /*
          * ========================================================
-         * 允许特殊鬼修改
+         * 特殊鬼修改
          * ========================================================
          */
-
         for (ResourceLocation ghost :
                 ghosts.keySet()) {
 
@@ -107,12 +109,6 @@ public final class PossessionHandler {
                             reductionCap
                     );
         }
-
-        /*
-         * ========================================================
-         * 最终限制
-         * ========================================================
-         */
 
         reductionCap =
                 Math.clamp(
@@ -141,14 +137,23 @@ public final class PossessionHandler {
      * 骨骼
      *
      * 四项共同决定肉体强化。
+     *
+     * GLOBAL 已经扩散到了各部位，因此这里取平均值，
+     * 避免重复计算。
      */
-    private static int getEffectiveBodyCorrosion(ServerPlayer player) {
-        CorrosionMatrix matrix = getCorrosionMatrix(player);
+    public static double getEffectiveBodyCorrosion(
+            ServerPlayer player
+    ) {
 
-        return matrix.total(CorrosionType.GLOBAL)
-                + matrix.total(CorrosionType.SKIN)
-                + matrix.total(CorrosionType.FLESH)
-                + matrix.total(CorrosionType.BONE);
+        CorrosionMatrix matrix =
+                getCorrosionMatrix(player);
+
+        return (
+                matrix.total(CorrosionType.GLOBAL)
+                        + matrix.total(CorrosionType.SKIN)
+                        + matrix.total(CorrosionType.FLESH)
+                        + matrix.total(CorrosionType.BONE)
+        ) / 4.0D;
     }
 
 
@@ -166,25 +171,36 @@ public final class PossessionHandler {
             ServerPlayer player
     ) {
 
-        int corrosion =
+        double bodyCorrosion =
                 getEffectiveBodyCorrosion(player);
 
         /*
-         * 第一只≈20
-         * 第二只≈30
-         * 第三只≈35
-         * 第四只≈37.5
-         * 最终趋近40
+         * ========================================================
+         * 基础生命加成
+         * ========================================================
+         *
+         * 与减伤共用同一曲线：
+         *
+         * 20 → +20
+         * 40 → +30
+         * 60 → +35
+         * 80 → +37.5
+         * 最终趋近 +40
          */
+        double ratio =
+                1.0D
+                        - Math.pow(
+                        0.5D,
+                        bodyCorrosion / 20.0D
+                );
+
         double health =
-                40.0D
-                        * (1.0D
-                        - Math.exp(
-                        -corrosion / 28.85D
-                ));
+                40.0D * ratio;
 
         /*
+         * ========================================================
          * 特殊鬼修改
+         * ========================================================
          */
         for (ResourceLocation ghost :
                 player.getData(
