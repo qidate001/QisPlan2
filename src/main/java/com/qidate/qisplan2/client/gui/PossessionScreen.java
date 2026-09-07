@@ -92,6 +92,39 @@ public class PossessionScreen extends Screen {
             CorrosionType.FOOT
     };
 
+    private record OrganAnchor(
+            CorrosionType type,
+            int x1,
+            int y1,
+            int x2,
+            int y2
+    ) {}
+
+    private static final OrganAnchor[] ORGAN_ANCHORS = {
+            new OrganAnchor(CorrosionType.BRAIN, 60, 19, 118, 19),         // 脑 (正)
+
+            new OrganAnchor(CorrosionType.EYE, 190, 29, 140, 29),          // 眼 (逆)
+            new OrganAnchor(CorrosionType.NOSE, 185, 40, 130, 40),         // 鼻 (逆)
+            new OrganAnchor(CorrosionType.EAR, 70, 30, 112, 30),           // 耳 (正)
+            new OrganAnchor(CorrosionType.MOUTH, 77, 49, 130, 49),         // 嘴 (正)
+
+            new OrganAnchor(CorrosionType.LUNG, 219, 80, 142, 80),         // 肺 (逆)
+            new OrganAnchor(CorrosionType.HEART, 219, 100, 133, 100),      // 心 (逆)
+            new OrganAnchor(CorrosionType.STOMACH, 219, 128, 150, 128),    // 胃 (逆)
+            new OrganAnchor(CorrosionType.SPLEEN, 250, 135, 156, 135),     // 脾 (逆)
+            new OrganAnchor(CorrosionType.LIVER, 43, 127, 112, 127),       // 肝 (正)
+            new OrganAnchor(CorrosionType.GALLBLADDER, 43, 142, 113, 142), // 胆 (正)
+            new OrganAnchor(CorrosionType.KIDNEY, 43, 160, 110, 160),      // 肾 (正)
+            new OrganAnchor(CorrosionType.PANCREAS, 219, 153, 140, 153),   // 胰 (逆)
+            new OrganAnchor(CorrosionType.INTESTINE, 219, 179, 147, 179),  // 肠 (逆)
+
+            new OrganAnchor(CorrosionType.HAND, 33, 207, 53, 207),         // 手 (正)
+            new OrganAnchor(CorrosionType.BONE, 205, 278, 151, 278),       // 骨 (逆)
+            new OrganAnchor(CorrosionType.FOOT, 193, 380, 155, 380),       // 足 (逆)
+    };
+
+
+
     public PossessionScreen() {
 
         super(
@@ -310,6 +343,55 @@ public class PossessionScreen extends Screen {
             );
         }
 
+        /*
+         * =========================
+         * 器官引导线 + 侵蚀值
+         * =========================
+         */
+
+        for (OrganAnchor anchor : ORGAN_ANCHORS) {
+
+            int startX =
+                    scaleBodyX(
+                            anchor.x1(),
+                            bodyX,
+                            bodyWidth
+                    );
+
+            int startY =
+                    scaleBodyY(
+                            anchor.y1(),
+                            bodyY,
+                            bodyHeight
+                    );
+
+            int endX =
+                    scaleBodyX(
+                            anchor.x2(),
+                            bodyX,
+                            bodyWidth
+                    );
+
+            int endY =
+                    scaleBodyY(
+                            anchor.y2(),
+                            bodyY,
+                            bodyHeight
+                    );
+
+            int value =
+                    matrix.total(anchor.type());
+
+            drawLine(
+                    graphics,
+                    startX,
+                    startY,
+                    endX,
+                    endY,
+                    String.valueOf(value)
+            );
+        }
+
 
         // =========================
         // 右侧：驾驭的鬼
@@ -434,6 +516,77 @@ public class PossessionScreen extends Screen {
                 1.0F,
                 1.0F
         );
+    }
+
+    private void drawLine(
+            GuiGraphics graphics,
+            int x1,
+            int y1,
+            int x2,
+            int y2,
+            String text
+    ) {
+        /*
+         * 画横线
+         */
+        graphics.fill(
+                Math.min(x1, x2),
+                y1,
+                Math.max(x1, x2),
+                y1 + 1,
+                0xFFFFFFFF
+        );
+
+        /*
+         * 判断方向
+         *
+         * x1 < x2：
+         * 数字在左，器官在右
+         *
+         * x1 > x2：
+         * 数字在右，器官在左
+         */
+        int textWidth = this.font.width(text);
+
+        int textX;
+
+        if (x1 < x2) {
+            // 数字在左侧
+            textX = x1 - textWidth - 4;
+        } else {
+            // 数字在右侧
+            textX = x1 + 4;
+        }
+
+        /*
+         * 让文字垂直居中在线上
+         */
+        int textY =
+                y1 - this.font.lineHeight / 2;
+
+        graphics.drawString(
+                this.font,
+                text,
+                textX,
+                textY,
+                0xFFFFFFFF
+        );
+    }
+
+    private int scaleBodyX(
+            int originalX,
+            int bodyX,
+            int bodyWidth
+    ) {
+        return bodyX + originalX * bodyWidth / 275;
+    }
+
+    private int scaleBodyY(
+            int originalY,
+            int bodyY,
+            int bodyHeight
+    ) {
+        return bodyY + originalY * bodyHeight / 413;
     }
 
     @Override
