@@ -13,6 +13,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.player.Player;
 
 import java.util.EnumMap;
 import java.util.HashMap;
@@ -142,7 +143,7 @@ public final class PossessionHandler {
      * 避免重复计算。
      */
     public static double getEffectiveBodyCorrosion(
-            ServerPlayer player
+            Player player
     ) {
 
         CorrosionMatrix matrix =
@@ -154,6 +155,69 @@ public final class PossessionHandler {
                         + matrix.total(CorrosionType.FLESH)
                         + matrix.total(CorrosionType.BONE)
         ) / 4.0D;
+    }
+
+    public static CorrosionMatrix getCorrosionMatrix(
+            Player player
+    ) {
+        CorrosionMatrix matrix = new CorrosionMatrix();
+
+        Map<ResourceLocation, PossessedGhostState> ghosts =
+                player.getData(ModAttachments.POSSESSED_GHOSTS);
+
+        for (ResourceLocation ghost : ghosts.keySet()) {
+
+            PossessedGhostAbility ability =
+                    GhostAbilityRegistry.get(ghost);
+
+            if (ability == null) {
+                continue;
+            }
+
+            GhostCorrosion corrosion =
+                    ability.corrosion();
+
+            for (var entry : corrosion.entries().entrySet()) {
+
+                CorrosionType type = entry.getKey();
+                int amount = entry.getValue();
+
+                if (type == CorrosionType.GLOBAL) {
+
+                    matrix.add(
+                            CorrosionType.GLOBAL,
+                            ghost,
+                            CorrosionType.GLOBAL,
+                            amount
+                    );
+
+                    for (CorrosionType other :
+                            CorrosionType.values()) {
+
+                        if (other != CorrosionType.GLOBAL) {
+
+                            matrix.add(
+                                    other,
+                                    ghost,
+                                    CorrosionType.GLOBAL,
+                                    amount
+                            );
+                        }
+                    }
+
+                    continue;
+                }
+
+                matrix.add(
+                        type,
+                        ghost,
+                        type,
+                        amount
+                );
+            }
+        }
+
+        return matrix;
     }
 
 
