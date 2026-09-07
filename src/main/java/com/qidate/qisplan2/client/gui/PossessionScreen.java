@@ -7,6 +7,8 @@ import com.qidate.qisplan2.ghost.PossessedGhostState;
 import com.qidate.qisplan2.ghost.PossessionHandler;
 import com.qidate.qisplan2.ghost.ability.GhostAbilityRegistry;
 import com.qidate.qisplan2.ghost.ability.PossessedGhostAbility;
+import com.qidate.qisplan2.ghost.corrosion.CorrosionMatrix;
+import com.qidate.qisplan2.ghost.corrosion.CorrosionType;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.Screen;
@@ -23,23 +25,72 @@ public class PossessionScreen extends Screen {
     private int panelX;
     private int panelY;
 
-    private static final ResourceLocation HUMAN_BODY =
-            ResourceLocation.fromNamespaceAndPath(
-                    QisPlan2.MODID,
-                    "textures/gui/body/human_body.png"
-            );
+    private static final ResourceLocation HUMAN_BODY = body("human_body");
 
-    private static final ResourceLocation BRAIN =
-            ResourceLocation.fromNamespaceAndPath(
-                    QisPlan2.MODID,
-                    "textures/gui/body/brain.png"
-            );
+    private static final ResourceLocation BRAIN = body("brain");
+    private static final ResourceLocation HEART = body("heart");
+    private static final ResourceLocation LUNG = body("lung");
+    private static final ResourceLocation STOMACH = body("stomach");
+    private static final ResourceLocation LIVER = body("liver");
+    private static final ResourceLocation KIDNEY = body("kidney");
+    private static final ResourceLocation PANCREAS = body("pancreas");
+    private static final ResourceLocation GALLBLADDER = body("gallbladder");
+    private static final ResourceLocation SPLEEN = body("spleen");
+    private static final ResourceLocation INTESTINE = body("intestine");
 
-    private static final ResourceLocation HEART =
-            ResourceLocation.fromNamespaceAndPath(
-                    QisPlan2.MODID,
-                    "textures/gui/body/heart.png"
-            );
+    private static final ResourceLocation EYE = body("eye");
+    private static final ResourceLocation EAR = body("ear");
+    private static final ResourceLocation NOSE = body("nose");
+    private static final ResourceLocation MOUTH = body("mouth");
+    private static final ResourceLocation HAND = body("hand");
+    private static final ResourceLocation FOOT = body("foot");
+
+    private static final ResourceLocation LINE = body("line");
+
+    private static ResourceLocation body(String name) {
+        return ResourceLocation.fromNamespaceAndPath(
+                QisPlan2.MODID,
+                "textures/gui/body/" + name + ".png"
+        );
+    }
+
+    private static final ResourceLocation[] ORGAN_OVERLAYS = {
+            BRAIN,
+            HEART,
+            LUNG,
+            STOMACH,
+            LIVER,
+            KIDNEY,
+            PANCREAS,
+            GALLBLADDER,
+            SPLEEN,
+            INTESTINE,
+            EYE,
+            EAR,
+            NOSE,
+            MOUTH,
+            HAND,
+            FOOT
+    };
+
+    private static final CorrosionType[] ORGAN_TYPES = {
+            CorrosionType.BRAIN,
+            CorrosionType.HEART,
+            CorrosionType.LUNG,
+            CorrosionType.STOMACH,
+            CorrosionType.LIVER,
+            CorrosionType.KIDNEY,
+            CorrosionType.PANCREAS,
+            CorrosionType.GALLBLADDER,
+            CorrosionType.SPLEEN,
+            CorrosionType.INTESTINE,
+            CorrosionType.EYE,
+            CorrosionType.EAR,
+            CorrosionType.NOSE,
+            CorrosionType.MOUTH,
+            CorrosionType.HAND,
+            CorrosionType.FOOT
+    };
 
     public PossessionScreen() {
 
@@ -227,44 +278,37 @@ public class PossessionScreen extends Screen {
         int bodyY =
                 panelY + 26;
 
-        graphics.blit(
+        CorrosionMatrix matrix =
+                PossessionHandler.getCorrosionMatrix(player);
+
+        /*
+         * 底图：受 GLOBAL 侵蚀影响
+         */
+        drawCorrosionLayer(
+                graphics,
                 HUMAN_BODY,
                 bodyX,
                 bodyY,
-                0,
-                0,
                 bodyWidth,
                 bodyHeight,
-                bodyWidth,
-                bodyHeight
+                matrix.total(CorrosionType.GLOBAL)
         );
 
-        // 大脑
-        graphics.setColor(
-                1.0F,
-                0.2F,
-                0.2F,
-                0.75F
-        );
+        /*
+         * 各器官：受自身侵蚀影响
+         */
+        for (int i = 0; i < ORGAN_OVERLAYS.length; i++) {
 
-        graphics.blit(
-                BRAIN,
-                bodyX,
-                bodyY,
-                0,
-                0,
-                bodyWidth,
-                bodyHeight,
-                bodyWidth,
-                bodyHeight
-        );
-
-        graphics.setColor(
-                1.0F,
-                1.0F,
-                1.0F,
-                1.0F
-        );
+            drawCorrosionLayer(
+                    graphics,
+                    ORGAN_OVERLAYS[i],
+                    bodyX,
+                    bodyY,
+                    bodyWidth,
+                    bodyHeight,
+                    matrix.total(ORGAN_TYPES[i])
+            );
+        }
 
 
         // =========================
@@ -339,6 +383,57 @@ public class PossessionScreen extends Screen {
         }
 
         return id.toString();
+    }
+
+    private void drawCorrosionLayer(
+            GuiGraphics graphics,
+            ResourceLocation texture,
+            int x,
+            int y,
+            int width,
+            int height,
+            double corrosion
+    ) {
+
+        double ratio = Math.clamp(
+                corrosion / 100.0D,
+                0.0D,
+                1.0D
+        );
+
+        /*
+         * 侵蚀越高越暗
+         */
+        float brightness = (float) Math.max(
+                0.02D,
+                Math.pow(1.0D - ratio, 2.5D)
+        );
+
+        graphics.setColor(
+                brightness,
+                brightness,
+                brightness,
+                1.0F
+        );
+
+        graphics.blit(
+                texture,
+                x,
+                y,
+                0,
+                0,
+                width,
+                height,
+                width,
+                height
+        );
+
+        graphics.setColor(
+                1.0F,
+                1.0F,
+                1.0F,
+                1.0F
+        );
     }
 
     @Override
