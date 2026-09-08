@@ -3,6 +3,7 @@ package com.qidate.qisplan2.client.gui;
 import com.qidate.qisplan2.QisPlan2;
 import com.qidate.qisplan2.QisPlan2Client;
 import com.qidate.qisplan2.core.ModAttachments;
+import com.qidate.qisplan2.core.QisConfig;
 import com.qidate.qisplan2.ghost.PossessedGhostState;
 import com.qidate.qisplan2.ghost.PossessionHandler;
 import com.qidate.qisplan2.ghost.ability.GhostAbilityRegistry;
@@ -47,15 +48,47 @@ public class PossessionScreen extends Screen {
     private static final ResourceLocation GALLBLADDER = body("gallbladder");
     private static final ResourceLocation SPLEEN = body("spleen");
     private static final ResourceLocation INTESTINE = body("intestine");
-
     private static final ResourceLocation EYE = body("eye");
     private static final ResourceLocation EAR = body("ear");
     private static final ResourceLocation NOSE = body("nose");
     private static final ResourceLocation MOUTH = body("mouth");
     private static final ResourceLocation HAND = body("hand");
     private static final ResourceLocation FOOT = body("foot");
+    private static final ResourceLocation BONE = body("bone");
 
-    private static final ResourceLocation LINE = body("line");
+    private static final ResourceLocation HUMAN_BODY_WHITE = bodyWhite("human_body");
+
+    private static final ResourceLocation BRAIN_WHITE = bodyWhite("brain");
+    private static final ResourceLocation HEART_WHITE = bodyWhite("heart");
+    private static final ResourceLocation LUNG_WHITE = bodyWhite("lung");
+    private static final ResourceLocation STOMACH_WHITE = bodyWhite("stomach");
+    private static final ResourceLocation LIVER_WHITE = bodyWhite("liver");
+    private static final ResourceLocation KIDNEY_WHITE = bodyWhite("kidney");
+    private static final ResourceLocation PANCREAS_WHITE = bodyWhite("pancreas");
+    private static final ResourceLocation GALLBLADDER_WHITE = bodyWhite("gallbladder");
+    private static final ResourceLocation SPLEEN_WHITE = bodyWhite("spleen");
+    private static final ResourceLocation INTESTINE_WHITE = bodyWhite("intestine");
+    private static final ResourceLocation EYE_WHITE = bodyWhite("eye");
+    private static final ResourceLocation EAR_WHITE = bodyWhite("ear");
+    private static final ResourceLocation NOSE_WHITE = bodyWhite("nose");
+    private static final ResourceLocation MOUTH_WHITE = bodyWhite("mouth");
+    private static final ResourceLocation HAND_WHITE = bodyWhite("hand");
+    private static final ResourceLocation FOOT_WHITE = bodyWhite("foot");
+    private static final ResourceLocation BONE_WHITE = bodyWhite("bone");
+
+    private static final ResourceLocation[] ORGAN_OVERLAYS = {
+            BRAIN, HEART, LUNG, STOMACH, LIVER, KIDNEY,
+            PANCREAS, GALLBLADDER, SPLEEN, INTESTINE,
+            EYE, EAR, NOSE, MOUTH, HAND, FOOT, BONE
+    };
+
+    private static final ResourceLocation[] ORGAN_OVERLAYS_WHITE = {
+            BRAIN_WHITE, HEART_WHITE, LUNG_WHITE, STOMACH_WHITE,
+            LIVER_WHITE, KIDNEY_WHITE, PANCREAS_WHITE,
+            GALLBLADDER_WHITE, SPLEEN_WHITE, INTESTINE_WHITE,
+            EYE_WHITE, EAR_WHITE, NOSE_WHITE, MOUTH_WHITE,
+            HAND_WHITE, FOOT_WHITE, BONE_WHITE
+    };
 
     private static ResourceLocation body(String name) {
         return ResourceLocation.fromNamespaceAndPath(
@@ -64,24 +97,12 @@ public class PossessionScreen extends Screen {
         );
     }
 
-    private static final ResourceLocation[] ORGAN_OVERLAYS = {
-            BRAIN,
-            HEART,
-            LUNG,
-            STOMACH,
-            LIVER,
-            KIDNEY,
-            PANCREAS,
-            GALLBLADDER,
-            SPLEEN,
-            INTESTINE,
-            EYE,
-            EAR,
-            NOSE,
-            MOUTH,
-            HAND,
-            FOOT
-    };
+    private static ResourceLocation bodyWhite(String name) {
+        return ResourceLocation.fromNamespaceAndPath(
+                QisPlan2.MODID,
+                "textures/gui/body_white/" + name + ".png"
+        );
+    }
 
     private static final CorrosionType[] ORGAN_TYPES = {
             CorrosionType.BRAIN,
@@ -99,7 +120,8 @@ public class PossessionScreen extends Screen {
             CorrosionType.NOSE,
             CorrosionType.MOUTH,
             CorrosionType.HAND,
-            CorrosionType.FOOT
+            CorrosionType.FOOT,
+            CorrosionType.BONE
     };
 
     private record OrganAnchor(
@@ -324,12 +346,25 @@ public class PossessionScreen extends Screen {
         CorrosionMatrix matrix =
                 PossessionHandler.getCorrosionMatrix(player);
 
+        boolean whiteMode =
+                QisConfig.CLIENT.WHITE_BODY_TEXTURE.get();
+
+        ResourceLocation bodyTexture =
+                whiteMode
+                        ? HUMAN_BODY_WHITE
+                        : HUMAN_BODY;
+
+        ResourceLocation[] organTextures =
+                whiteMode
+                        ? ORGAN_OVERLAYS_WHITE
+                        : ORGAN_OVERLAYS;
+
         /*
          * 底图：受 GLOBAL 侵蚀影响
          */
         drawCorrosionLayer(
                 graphics,
-                HUMAN_BODY,
+                bodyTexture,
                 bodyX,
                 bodyY,
                 bodyWidth,
@@ -340,11 +375,11 @@ public class PossessionScreen extends Screen {
         /*
          * 各器官：受自身侵蚀影响
          */
-        for (int i = 0; i < ORGAN_OVERLAYS.length; i++) {
+        for (int i = 0; i < organTextures.length; i++) {
 
             drawCorrosionLayer(
                     graphics,
-                    ORGAN_OVERLAYS[i],
+                    organTextures[i],
                     bodyX,
                     bodyY,
                     bodyWidth,

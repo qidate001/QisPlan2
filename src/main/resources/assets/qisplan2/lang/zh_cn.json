@@ -3,8 +3,10 @@
   "itemGroup.qisplan2.qis_plan_ghost_items": "齐计划2：灵异材料",
   "itemGroup.qisplan2.qis_plan_else": "齐计划2：其他内容",
 
+  "qisplan2.configuration.client": "客户端配置",
   "qisplan2.configuration.apiKey": "API 密钥",
   "qisplan2.configuration.modelName": "模型名称",
+  "qisplan2.configuration.whiteBodyTexture": "驭鬼者面板使用纯白人体",
 
   "gamerule.isayEnabled": "启用§4许愿鬼",
   "gamerule.ghostCarpetKillTime": "§4鬼地毯§r灵异叠加耗时",

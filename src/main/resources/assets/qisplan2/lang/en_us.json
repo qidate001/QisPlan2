@@ -2,8 +2,10 @@
   "itemGroup.qisplan2.qis_plan_ghost": "Qi's Plan 2: §4Ghost",
   "itemGroup.qisplan2.qis_plan_ghost_items": "Qi's Plan 2: Paranormal Materials",
 
+  "qisplan2.configuration.client": "Client Configuration",
   "qisplan2.configuration.apiKey": "API Key",
   "qisplan2.configuration.modelName": "Model Name",
+  "qisplan2.configuration.whiteBodyTexture": "Use pure white human body for the Ghost Rider panel",
 
   "gamerule.isayEnabled": "Enable §4Wish Ghost",
   "gamerule.ghostCarpetKillTime": "§4Haunted Carpet§r Time-Consuming Overlay",
