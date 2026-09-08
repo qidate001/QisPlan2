@@ -95,6 +95,7 @@ public class ModCreativeTabs {
                         output.accept(GHOST_COIN);
                         output.accept(GHOST_STONE_FINGER);
                         output.accept(INCENSE_ASH);
+                        output.accept(GOLDEN_ROD);
                     })
                     .build()
             );

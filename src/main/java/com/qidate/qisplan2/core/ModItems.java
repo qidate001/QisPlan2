@@ -17,6 +17,7 @@ import net.neoforged.neoforge.registries.DeferredItem;
 
 import java.util.EnumMap;
 import java.util.List;
+import java.util.function.Supplier;
 
 import static com.qidate.qisplan2.QisPlan2.MODID;
 import static com.qidate.qisplan2.core.ModEntities.*;
@@ -56,6 +57,12 @@ public class ModItems {
     public static final DeferredItem<Item> INCENSE_ASH =
             ITEMS.registerSimpleItem(
                     "incense_ash"
+            );
+
+    // 黄金棍
+    public static final DeferredItem<Item> GOLDEN_ROD =
+            ITEMS.registerSimpleItem(
+                    "golden_rod"
             );
 
     // 鬼寿衣
