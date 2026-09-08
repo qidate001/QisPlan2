@@ -2,12 +2,13 @@ package com.qidate.qisplan2.entity;
 
 import com.qidate.qisplan2.death.SupernaturalCombatHandler;
 import com.qidate.qisplan2.entity.ai.GhostWanderGoal;
+import com.qidate.qisplan2.ghost.ability.knockingghost.KnockingGhostAbility;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
-import net.minecraft.world.entity.monster.Monster;
 import net.minecraft.world.level.Level;
 
 public class InvisibleGhost
@@ -43,8 +44,8 @@ public class InvisibleGhost
     private static final double SUPERNATURAL_DEFENSE = 4.0D;
 
     @Override
-    public double getSupernaturalDefense() {
-        return SUPERNATURAL_DEFENSE;
+    public ResourceLocation getGhostId() {
+        return KnockingGhostAbility.ID;
     }
 
     /**

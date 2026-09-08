@@ -137,8 +137,6 @@ public class CallingGhost extends AbstractGhostEntity {
 
     private static final String NBT_CALL_COUNT =
             "QisPlan2CallingGhostCallCount";
-
-
     /*
      * ========================================
      * 构造

@@ -1,11 +1,15 @@
 package com.qidate.qisplan2.entity;
 
+import com.qidate.qisplan2.QisPlan2;
 import com.qidate.qisplan2.core.ModItems;
 import com.qidate.qisplan2.death.SupernaturalCombatHandler;
 import com.qidate.qisplan2.death.SupernaturalEntity;
 import com.qidate.qisplan2.entity.ai.GhostWanderGoal;
 import com.qidate.qisplan2.ghost.GhostPossessionManager;
+import com.qidate.qisplan2.ghost.PossessionHandler;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
@@ -53,6 +57,28 @@ public abstract class AbstractGhostEntity
      * 是否永久死机。
      */
     protected boolean permanentSupernaturalStun = false;
+
+
+    /*
+     * ========================================
+     * 驾驭 ID
+     * ========================================
+     */
+
+    private static final ResourceLocation UNKNOWN_GHOST_ID =
+            ResourceLocation.fromNamespaceAndPath(
+                    QisPlan2.MODID,
+                    "unknown_ghost"
+            );
+
+    /**
+     * 这只鬼对应的驾驭 ID。
+     *
+     * 未实现驾驭的鬼默认返回 unknown_ghost。
+     */
+    public ResourceLocation getGhostId() {
+        return UNKNOWN_GHOST_ID;
+    }
 
 
     /*
@@ -141,13 +167,10 @@ public abstract class AbstractGhostEntity
                         + ticks;
 
         supernaturalStunTicks =
-                (int) Math.min(
-                        Integer.MAX_VALUE,
-                        Math.max(
-                                0L,
-                                result
-                        )
-                );
+                (int) Math.clamp(
+                        result,
+                        0L,
+                        Integer.MAX_VALUE);
     }
 
 
@@ -562,12 +585,28 @@ public abstract class AbstractGhostEntity
 
         /*
          * ========================================================
-         * 服务端真正开始驾驭。
+         * 服务端真正开始驾驭
          * ========================================================
          */
 
         if (!level().isClientSide()
                 && player instanceof ServerPlayer serverPlayer) {
+
+            /*
+             * 已经驾驭了这只鬼。
+             */
+            if (PossessionHandler.hasGhost(
+                    serverPlayer,
+                    getGhostId()
+            )) {
+
+                serverPlayer.displayClientMessage(
+                        Component.literal("已经驾驭了这只鬼。"),
+                        true
+                );
+
+                return InteractionResult.CONSUME;
+            }
 
             boolean started =
                     GhostPossessionManager.start(
@@ -576,7 +615,6 @@ public abstract class AbstractGhostEntity
                     );
 
             if (started) {
-
                 return InteractionResult.CONSUME;
             }
         }

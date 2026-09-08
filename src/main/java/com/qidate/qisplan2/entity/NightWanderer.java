@@ -5,6 +5,8 @@ import com.qidate.qisplan2.death.ModDamageTypes;
 import com.qidate.qisplan2.death.SupernaturalCombatHandler;
 import com.qidate.qisplan2.death.SupernaturalDeathHandler;
 import com.qidate.qisplan2.entity.ai.GhostWanderGoal;
+import com.qidate.qisplan2.ghost.ability.knockingghost.KnockingGhostAbility;
+import com.qidate.qisplan2.ghost.ability.nightwanderer.NightWandererAbility;
 import com.qidate.qisplan2.item.DeathCurseSword;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.nbt.CompoundTag;
@@ -26,6 +28,7 @@ import net.minecraft.world.entity.ai.goal.target.NearestAttackableTargetGoal;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LightLayer;
+import org.checkerframework.checker.units.qual.N;
 
 import java.util.EnumSet;
 
@@ -62,6 +65,11 @@ public class NightWanderer
                     LIGHT_SPEED - NORMAL_SPEED,
                     AttributeModifier.Operation.ADD_VALUE
             );
+
+    @Override
+    public ResourceLocation getGhostId() {
+        return NightWandererAbility.ID;
+    }
 
     /**
      * 灵异攻击后的死机时间。

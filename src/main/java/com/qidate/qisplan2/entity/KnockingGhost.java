@@ -1,10 +1,12 @@
 package com.qidate.qisplan2.entity;
 
 import com.qidate.qisplan2.entity.ai.GhostWanderGoal;
+import com.qidate.qisplan2.ghost.ability.knockingghost.KnockingGhostAbility;
 import com.qidate.qisplan2.ghost.ability.knockingghost.KnockingGhostDoorSystem;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.Mob;
@@ -51,6 +53,12 @@ public class KnockingGhost
      * 两次敲门之间至少等待。
      */
     private static final int KNOCK_COOLDOWN = 10;
+
+    @Override
+    public ResourceLocation getGhostId() {
+        return KnockingGhostAbility.ID;
+    }
+
 
     /*
      * ============================================================
