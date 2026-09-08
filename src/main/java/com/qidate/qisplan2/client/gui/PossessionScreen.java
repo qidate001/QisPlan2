@@ -25,6 +25,16 @@ public class PossessionScreen extends Screen {
     private int panelX;
     private int panelY;
 
+    private static final int CARD_WIDTH = 145;
+    private static final int CARD_HEIGHT = 50;
+
+    private static final int ICON_SIZE = 18;
+
+    private static final int SHALLOW_STUN_COLOR = 0xFF6AA6FF;
+    private static final int STUN_COLOR = 0xFFE5484D;
+    private static final int PERMANENT_STUN_COLOR = 0xFFFFC83D;
+    private static final double MAX_SHALLOW_STUN = 100.0D;
+
     private static final ResourceLocation HUMAN_BODY = body("human_body");
 
     private static final ResourceLocation BRAIN = body("brain");
@@ -397,54 +407,188 @@ public class PossessionScreen extends Screen {
         // 右侧：驾驭的鬼
         // =========================
 
-        int rightX =
-                panelX + PANEL_WIDTH - 145;
+        int rightX = panelX + PANEL_WIDTH - CARD_WIDTH - 12;
+        int rightY = panelY + 36;
 
-        int rightY =
-                panelY + 38;
+        for (var entry : ghosts.entrySet()) {
 
+            drawGhostCard(
+                    graphics,
+                    entry.getKey(),
+                    entry.getValue(),
+                    rightX,
+                    rightY
+            );
+
+            rightY += CARD_HEIGHT + 8;
+
+            if (rightY > panelY + PANEL_HEIGHT - CARD_HEIGHT) {
+                break;
+            }
+        }
+    }
+
+    private void drawGhostCard(
+            GuiGraphics graphics,
+            ResourceLocation ghostId,
+            PossessedGhostState state,
+            int x,
+            int y
+    ) {
+
+        // 背景
+        graphics.fill(
+                x,
+                y,
+                x + CARD_WIDTH,
+                y + CARD_HEIGHT,
+                0xD0181820
+        );
+
+        // 顶部高光
+        graphics.fill(
+                x + 6,
+                y + 1,
+                x + CARD_WIDTH - 6,
+                y + 2,
+                0x40FFFFFF
+        );
+
+        // 图标占位
+        graphics.fill(
+                x + 5,
+                y + 5,
+                x + 5 + ICON_SIZE,
+                y + 5 + ICON_SIZE,
+                0xFF555565
+        );
+
+        // 名称
         graphics.drawString(
                 this.font,
-                "驾驭的鬼",
-                rightX,
-                rightY,
+                getGhostName(ghostId),
+                x + 28,
+                y + 5,
                 0xFFFFFFFF
         );
 
-        rightY += 20;
+        // ===== 复苏 =====
 
-        for (Map.Entry<ResourceLocation, PossessedGhostState> entry
-                : ghosts.entrySet()) {
+        graphics.drawString(
+                this.font,
+                "复苏",
+                x + 28,
+                y + 18,
+                0xFFCCCCCC
+        );
 
-            ResourceLocation ghostId = entry.getKey();
-            PossessedGhostState state = entry.getValue();
+        drawProgressBar(
+                graphics,
+                x + 52,
+                y + 20,
+                58,
+                3,
+                state.revival(),
+                0xFFB44AFF
+        );
 
-            String name = getGhostName(ghostId);
+        graphics.drawString(
+                this.font,
+                String.format("%.0f%%", state.revival() * 100),
+                x + 114,
+                y + 17,
+                0xFFFFFFFF
+        );
 
-            graphics.drawString(
-                    this.font,
-                    name,
-                    rightX,
-                    rightY,
-                    0xFFDDDDDD
+        // ===== 死机 =====
+
+        double progress;
+        int color;
+        String value;
+
+        if (state.isPermanentlyStunned()) {
+
+            progress = 1.0D;
+            color = PERMANENT_STUN_COLOR;
+            value = "∞";
+
+        } else if (state.isStunned()) {
+
+            double sec = state.stunTicks() / 20.0D;
+
+            progress = Math.min(1.0D, sec / 10.0D);
+            color = STUN_COLOR;
+            value = String.format("%.1fs", sec);
+
+        } else {
+
+            progress = Math.min(
+                    1.0D,
+                    state.shallowStun() / MAX_SHALLOW_STUN
             );
 
-            graphics.drawString(
-                    this.font,
-                    String.format(
-                            "%.0f%%",
-                            state.revival() * 100.0D
-                    ),
-                    rightX,
-                    rightY + 12,
-                    0xFFFFFFFF
+            color = SHALLOW_STUN_COLOR;
+            value = String.format("%.0f", state.shallowStun());
+        }
+
+        graphics.drawString(
+                this.font,
+                "死机",
+                x + 28,
+                y + 32,
+                0xFFCCCCCC
+        );
+
+        drawProgressBar(
+                graphics,
+                x + 52,
+                y + 34,
+                58,
+                3,
+                progress,
+                color
+        );
+
+        graphics.drawString(
+                this.font,
+                value,
+                x + 114,
+                y + 31,
+                0xFFFFFFFF
+        );
+    }
+
+    private void drawProgressBar(
+            GuiGraphics graphics,
+            int x,
+            int y,
+            int width,
+            int height,
+            double progress,
+            int fillColor
+    ) {
+
+        progress = Math.clamp(progress, 0.0D, 1.0D);
+
+        graphics.fill(
+                x,
+                y,
+                x + width,
+                y + height,
+                0xFF202027
+        );
+
+        int filled = (int)Math.round(width * progress);
+
+        if (filled > 0) {
+
+            graphics.fill(
+                    x,
+                    y,
+                    x + filled,
+                    y + height,
+                    fillColor
             );
-
-            rightY += 32;
-
-            if (rightY > panelY + PANEL_HEIGHT - 20) {
-                break;
-            }
         }
     }
 
