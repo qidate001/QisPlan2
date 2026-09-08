@@ -1,0 +1,20 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    "  C",
+    " G ",
+    "G  "
+  ],
+  "key": {
+    "C": {
+      "item": "qisplan2:coffin_nail"
+    },
+    "G": {
+      "item": "qisplan2:golden_rod"
+    }
+  },
+  "result": {
+    "id": "qisplan2:coffin_nail_pickaxe",
+    "count": 1
+  }
+}

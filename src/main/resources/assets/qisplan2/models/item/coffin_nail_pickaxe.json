@@ -1,0 +1,6 @@
+{
+  "parent": "minecraft:item/handheld",
+  "textures": {
+    "layer0": "qisplan2:item/coffin_nail_pickaxe"
+  }
+}

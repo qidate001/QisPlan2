@@ -7,11 +7,9 @@ import net.minecraft.core.component.DataComponentType;
 import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.sounds.SoundEvents;
-import net.minecraft.world.item.ArmorItem;
-import net.minecraft.world.item.ArmorMaterial;
-import net.minecraft.world.item.Item;
-import net.minecraft.world.item.SpawnEggItem;
+import net.minecraft.world.item.*;
 import net.minecraft.world.item.crafting.Ingredient;
+import net.neoforged.neoforge.common.SimpleTier;
 import net.neoforged.neoforge.registries.DeferredHolder;
 import net.neoforged.neoforge.registries.DeferredItem;
 
@@ -63,6 +61,44 @@ public class ModItems {
     public static final DeferredItem<Item> GOLDEN_ROD =
             ITEMS.registerSimpleItem(
                     "golden_rod"
+            );
+
+    // 棺材钉镐子 Tier
+    public static final Tier COFFIN_NAIL_TIER = new SimpleTier(
+            ModBlockTags.INCORRECT_FOR_COFFIN_NAIL_TOOL,
+
+            // 耐久
+            200,
+
+            // 挖掘速度
+            10.0F,
+
+            // 攻击伤害加成
+            4.5F,
+
+            // 附魔能力
+            10,
+
+            // 修复材料
+            () -> Ingredient.of(GOLDEN_ROD)
+    );
+
+    // 棺材钉镐子
+    public static final DeferredItem<CoffinNailPickaxeItem> COFFIN_NAIL_PICKAXE =
+            ITEMS.register(
+                    "coffin_nail_pickaxe",
+                    () -> new CoffinNailPickaxeItem(
+                            new Item.Properties()
+                                    .durability(200)
+                                    .attributes(
+                                            PickaxeItem.createAttributes(
+                                                    COFFIN_NAIL_TIER,
+                                                    1,
+                                                    -2.8F
+                                            )
+                                    ),
+                            COFFIN_NAIL_TIER
+                    )
             );
 
     // 鬼寿衣

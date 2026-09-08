@@ -53,6 +53,7 @@ public class ModCreativeTabs {
                         output.accept(GHOST_LEATHER_BOX_ITEM);
                         output.accept(GHOST_LEATHER_WALL_ITEM);
                         output.accept(COFFIN_NAIL);
+                        output.accept(COFFIN_NAIL_PICKAXE);
                         output.accept(GHOST_DOOR_PLATE_ITEM);
 
                         // 鬼画
