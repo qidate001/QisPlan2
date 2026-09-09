@@ -2,6 +2,7 @@ package com.qidate.qisplan2.death;
 
 import com.qidate.qisplan2.QisPlan2;
 import com.qidate.qisplan2.core.ModGameRules;
+import com.qidate.qisplan2.core.ModMobEffects;
 import com.qidate.qisplan2.death.SupernaturalEntity;
 import com.qidate.qisplan2.item.GhostShroudItem;
 import net.minecraft.resources.ResourceLocation;
@@ -104,6 +105,13 @@ public class SupernaturalDeathHandler {
 //                    entity.getName().getString(),
 //                    supernaturalIntensity
 //            );
+            return false;
+        }
+
+        /*
+         * 生签：免疫灵异袭击
+         */
+        if (entity.hasEffect(ModMobEffects.LIFE_SIGN_PROTECTION)) {
             return false;
         }
 

@@ -242,6 +242,16 @@ public class ModItems {
                     )
             );
 
+    // 鬼签
+    public static final DeferredItem<GhostDivinationSlipItem> GHOST_DIVINATION_SLIP =
+            ITEMS.register(
+                    "ghost_divination_slip",
+                    () -> new GhostDivinationSlipItem(
+                            new Item.Properties()
+                                    .stacksTo(1)
+                    )
+            );
+
     // 夜游鬼刷怪蛋
     public static final DeferredItem<SpawnEggItem> NIGHT_WANDERER_SPAWN_EGG =
             ITEMS.register(

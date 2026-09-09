@@ -204,6 +204,18 @@ public class ModDamageTypes {
                     )
             );
 
+    /**
+     * 鬼签袭击
+     */
+    public static final ResourceKey<DamageType> GHOST_DIVINATION_SLIP =
+            ResourceKey.create(
+                    Registries.DAMAGE_TYPE,
+                    ResourceLocation.fromNamespaceAndPath(
+                            QisPlan2.MODID,
+                            "ghost_divination_slip"
+                    )
+            );
+
 
 
 
@@ -495,6 +507,25 @@ public class ModDamageTypes {
                         )
                         .getHolderOrThrow(
                                 CALLING_GHOST
+                        ),
+                entity
+        );
+    }
+
+    /**
+     * 创建鬼签 DamageSource
+     */
+    public static DamageSource ghostDivinationSlip(
+            Entity entity
+    ) {
+        return new DamageSource(
+                entity.level()
+                        .registryAccess()
+                        .registryOrThrow(
+                                Registries.DAMAGE_TYPE
+                        )
+                        .getHolderOrThrow(
+                                GHOST_DIVINATION_SLIP
                         ),
                 entity
         );

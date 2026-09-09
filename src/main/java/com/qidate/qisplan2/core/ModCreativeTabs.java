@@ -44,6 +44,7 @@ public class ModCreativeTabs {
                         output.accept(GHOST_STONE_BRICKS_PRIME_ITEM);
                         output.accept(GHOST_STOVE_ITEM);
                         output.accept(GHOST_DOOR_ITEM);
+                        output.accept(GHOST_DOOR_PLATE_ITEM);
                         output.accept(GHOST_GRASS_ITEM);
                         output.accept(GHOST_SHROUD);
                         output.accept(GHOST_BOOK);
@@ -54,7 +55,7 @@ public class ModCreativeTabs {
                         output.accept(GHOST_LEATHER_WALL_ITEM);
                         output.accept(COFFIN_NAIL);
                         output.accept(COFFIN_NAIL_PICKAXE);
-                        output.accept(GHOST_DOOR_PLATE_ITEM);
+                        output.accept(GHOST_DIVINATION_SLIP);
 
                         // 鬼画
                         output.accept(GHOST_PAINTING);
