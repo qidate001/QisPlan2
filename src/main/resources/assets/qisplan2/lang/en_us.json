@@ -49,6 +49,9 @@
   "item.qisplan2.calling_ghost_spawn_egg": "§4Calling ghost spawn egg",
 
   "fluid_type.qisplan2.ghost_lake_water": "§4Ghost Lake Water",
+  "fluid_type.qisplan2.ghost_blood": "§4Ghost Blood",
+
+  "effect.qisplan2.life_sign_protection": "§4Ghost Sign Guardian",
 
   "entity.qisplan2.ghost_painting": "§4Ghost Painting",
   "entity.qisplan2.night_wanderer": "§4Night Wanderer",

@@ -5,6 +5,7 @@ import net.minecraft.core.particles.ParticleType;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.sounds.SoundEvent;
+import net.minecraft.world.effect.MobEffect;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.inventory.MenuType;
 import net.minecraft.world.item.ArmorMaterial;
@@ -113,6 +114,12 @@ public class ModRegistries {
                     MODID
             );
 
+    public static final DeferredRegister<MobEffect> MOB_EFFECTS =
+            DeferredRegister.create(
+                    BuiltInRegistries.MOB_EFFECT,
+                    MODID
+            );
+
 
 
 
@@ -131,6 +138,7 @@ public class ModRegistries {
         ModDataComponents.init();
         ModDimensions.init();
         ModGameRules.init();
+        ModMobEffects.init();
     }
 
     public static void registerAll(IEventBus bus) {
@@ -149,5 +157,6 @@ public class ModRegistries {
         PARTICLE_TYPES.register(bus);
         FLUID_TYPES.register(bus);
         FLUIDS.register(bus);
+        MOB_EFFECTS.register(bus);
     }
 }
