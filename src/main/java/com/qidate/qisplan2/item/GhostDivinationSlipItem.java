@@ -1,8 +1,9 @@
 package com.qidate.qisplan2.item;
 
 import com.qidate.qisplan2.core.ModMobEffects;
-import com.qidate.qisplan2.death.ModDamageTypes;
 import com.qidate.qisplan2.death.SupernaturalDeathHandler;
+import com.qidate.qisplan2.death.ModDamageTypes;
+import com.qidate.qisplan2.network.QisNetwork;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResultHolder;
 import net.minecraft.world.effect.MobEffectInstance;
@@ -21,7 +22,7 @@ public class GhostDivinationSlipItem extends Item {
     private static final int COOLDOWN_TICKS = 30 * 20;
 
     /**
-     * 每次抽到生签增加：
+     * 生签每次增加：
      *
      * 5 分钟 = 6000 tick
      */
@@ -42,7 +43,9 @@ public class GhostDivinationSlipItem extends Item {
             Player player,
             InteractionHand hand
     ) {
-        ItemStack stack = player.getItemInHand(hand);
+
+        ItemStack stack =
+                player.getItemInHand(hand);
 
         /*
          * ========================================
@@ -50,17 +53,21 @@ public class GhostDivinationSlipItem extends Item {
          * ========================================
          */
         if (player.getCooldowns().isOnCooldown(this)) {
-            return InteractionResultHolder.fail(stack);
+
+            return InteractionResultHolder.fail(
+                    stack
+            );
         }
 
         /*
          * ========================================
-         * 服务端执行抽签
+         * 服务端抽签
          * ========================================
          */
         if (!level.isClientSide) {
 
-            int result = level.random.nextInt(3);
+            int result =
+                    level.random.nextInt(3);
 
             switch (result) {
 
@@ -80,10 +87,12 @@ public class GhostDivinationSlipItem extends Item {
                             LIFE_SIGN_DURATION;
 
                     /*
-                     * 如果已经有生签效果，
-                     * 就在原来的剩余时间上继续增加。
+                     * 已经有生签：
+                     *
+                     * 剩余时间 + 5分钟
                      */
                     if (existing != null) {
+
                         duration =
                                 existing.getDuration()
                                         + LIFE_SIGN_DURATION;
@@ -95,7 +104,7 @@ public class GhostDivinationSlipItem extends Item {
                                     duration,
                                     0,
                                     false,
-                                    true,
+                                    false,
                                     true
                             )
                     );
@@ -110,7 +119,9 @@ public class GhostDivinationSlipItem extends Item {
 
                     SupernaturalDeathHandler.tryKill(
                             player,
-                            ModDamageTypes.ghostDivinationSlip(player),
+                            ModDamageTypes.ghostDivinationSlip(
+                                    player
+                            ),
                             DEATH_SIGN_STRENGTH
                     );
                 }
@@ -128,7 +139,7 @@ public class GhostDivinationSlipItem extends Item {
 
             /*
              * ========================================
-             * 消耗鬼签
+             * 消耗
              * ========================================
              */
             if (!player.getAbilities().instabuild) {
@@ -137,13 +148,26 @@ public class GhostDivinationSlipItem extends Item {
 
             /*
              * ========================================
-             * 添加 30 秒冷却
+             * 30秒冷却
              * ========================================
              */
             player.getCooldowns().addCooldown(
                     this,
                     COOLDOWN_TICKS
             );
+
+            /*
+             * ========================================
+             * 通知客户端播放动画
+             * ========================================
+             */
+            if (player instanceof net.minecraft.server.level.ServerPlayer serverPlayer) {
+
+                QisNetwork.sendGhostDivinationResult(
+                        serverPlayer,
+                        result
+                );
+            }
         }
 
         return InteractionResultHolder.sidedSuccess(

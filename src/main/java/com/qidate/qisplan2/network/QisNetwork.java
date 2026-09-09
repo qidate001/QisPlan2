@@ -9,6 +9,7 @@ import com.qidate.qisplan2.client.domain.ClientGhostDomain;
 import com.qidate.qisplan2.client.domain.ClientGhostDomainManager;
 import com.qidate.qisplan2.client.screen.GhostPossessionScreen;
 import com.qidate.qisplan2.client.screen.GhostDoorPlateScreen;
+import com.qidate.qisplan2.core.ModItems;
 import com.qidate.qisplan2.ghost.GhostPossessionSession;
 import com.qidate.qisplan2.ghost.ability.doorghost.DoorGhostAbilityHandler;
 import com.qidate.qisplan2.ghost.domain.GhostDomain;
@@ -16,6 +17,7 @@ import com.qidate.qisplan2.network.payload.*;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.item.ItemStack;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.network.PacketDistributor;
@@ -277,6 +279,57 @@ public final class QisNetwork {
                     });
                 }
         );
+
+        /*
+         * ========================================================
+         * 鬼签
+         * ========================================================
+         */
+
+        registrar.playToClient(
+                GhostDivinationResultPayload.TYPE,
+                GhostDivinationResultPayload.STREAM_CODEC,
+                (payload, context) -> {
+
+                    context.enqueueWork(() -> {
+
+                        Minecraft minecraft =
+                                Minecraft.getInstance();
+
+                        ItemStack resultStack;
+
+                        switch (payload.result()) {
+
+                            case 0 -> resultStack =
+                                    new ItemStack(
+                                            ModItems.LIFE_SIGN.get()
+                                    );
+
+                            case 1 -> resultStack =
+                                    new ItemStack(
+                                            ModItems.DEATH_SIGN.get()
+                                    );
+
+                            case 2 -> resultStack =
+                                    new ItemStack(
+                                            ModItems.GHOST_SIGN.get()
+                                    );
+
+                            default -> {
+                                return;
+                            }
+                        }
+
+                        /*
+                         * 原版不死图腾触发动画。
+                         */
+                        minecraft.gameRenderer
+                                .displayItemActivation(
+                                        resultStack
+                                );
+                    });
+                }
+        );
     }
 
 
@@ -484,7 +537,7 @@ public final class QisNetwork {
 
     /*
      * ========================================================
-     * S2C：鬼伞
+     * S2C：鬼域
      * ========================================================
      */
     public static void sendGhostDomainAdd(
@@ -529,6 +582,24 @@ public final class QisNetwork {
                         domain.getX(),
                         domain.getY(),
                         domain.getZ()
+                )
+        );
+    }
+
+    /*
+     * ========================================================
+     * S2C：鬼签
+     * ========================================================
+     */
+    public static void sendGhostDivinationResult(
+            ServerPlayer player,
+            int result
+    ) {
+
+        PacketDistributor.sendToPlayer(
+                player,
+                new GhostDivinationResultPayload(
+                        result
                 )
         );
     }

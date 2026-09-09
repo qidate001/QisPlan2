@@ -252,6 +252,36 @@ public class ModItems {
                     )
             );
 
+    // 生签
+    public static final DeferredItem<Item> LIFE_SIGN =
+            ITEMS.register(
+                    "life_sign",
+                    () -> new Item(
+                            new Item.Properties()
+                                    .stacksTo(1)
+                    )
+            );
+
+    // 死签
+    public static final DeferredItem<Item> DEATH_SIGN =
+            ITEMS.register(
+                    "death_sign",
+                    () -> new Item(
+                            new Item.Properties()
+                                    .stacksTo(1)
+                    )
+            );
+
+    // 鬼签
+    public static final DeferredItem<Item> GHOST_SIGN =
+            ITEMS.register(
+                    "ghost_sign",
+                    () -> new Item(
+                            new Item.Properties()
+                                    .stacksTo(1)
+                    )
+            );
+
     // 夜游鬼刷怪蛋
     public static final DeferredItem<SpawnEggItem> NIGHT_WANDERER_SPAWN_EGG =
             ITEMS.register(
