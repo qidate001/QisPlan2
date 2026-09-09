@@ -35,6 +35,7 @@ public abstract class LevelRendererMixin {
         return GhostRainAtmosphereClient.applySkyDarkness(
                 original,
                 cameraPos.x,
+                cameraPos.y,
                 cameraPos.z
         );
     }

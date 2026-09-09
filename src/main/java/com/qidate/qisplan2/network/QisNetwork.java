@@ -206,10 +206,30 @@ public final class QisNetwork {
                 GhostDomainAddPayload.TYPE,
                 GhostDomainAddPayload.STREAM_CODEC,
                 (payload, context) -> {
-                    QisPlan2.LOGGER.info(
-                            "[GhostDomain] CLIENT ADD payload received: {}",
-                            payload.id()
-                    );
+
+                    context.enqueueWork(() -> {
+
+                        ClientGhostDomainManager.add(
+                                payload.id(),
+                                payload.sourceUUID(),
+                                payload.domainType(),
+                                payload.dimension(),
+                                payload.x(),
+                                payload.y(),
+                                payload.z(),
+                                payload.radius()
+                        );
+
+                        QisPlan2.LOGGER.info(
+                                "[GhostDomain] CLIENT ADD: id={} type={} pos=({}, {}, {}) radius={}",
+                                payload.id(),
+                                payload.domainType(),
+                                payload.x(),
+                                payload.y(),
+                                payload.z(),
+                                payload.radius()
+                        );
+                    });
                 }
         );
 
@@ -217,10 +237,18 @@ public final class QisNetwork {
                 GhostDomainRemovePayload.TYPE,
                 GhostDomainRemovePayload.STREAM_CODEC,
                 (payload, context) -> {
-                    QisPlan2.LOGGER.info(
-                            "[GhostDomain] CLIENT REMOVE payload received: {}",
-                            payload.id()
-                    );
+
+                    context.enqueueWork(() -> {
+
+                        ClientGhostDomainManager.remove(
+                                payload.id()
+                        );
+
+                        QisPlan2.LOGGER.info(
+                                "[GhostDomain] CLIENT REMOVE: id={}",
+                                payload.id()
+                        );
+                    });
                 }
         );
     }

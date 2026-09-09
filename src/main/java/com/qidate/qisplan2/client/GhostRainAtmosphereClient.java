@@ -22,6 +22,7 @@ public final class GhostRainAtmosphereClient {
     public static Vec3 applySkyDarkness(
             Vec3 original,
             double cameraX,
+            double cameraY,
             double cameraZ
     ) {
 
@@ -31,6 +32,7 @@ public final class GhostRainAtmosphereClient {
         if (!GhostUmbrellaDomainClient
                 .isPositionInsideDomain(
                         cameraX,
+                        cameraY,
                         cameraZ
                 )) {
 
