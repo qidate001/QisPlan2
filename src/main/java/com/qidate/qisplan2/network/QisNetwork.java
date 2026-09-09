@@ -5,6 +5,7 @@ import com.qidate.qisplan2.block.entity.GhostDoorPlateBlockEntity;
 import com.qidate.qisplan2.client.DoorGhostMarkClient;
 import com.qidate.qisplan2.client.GhostPianoMusicClient;
 import com.qidate.qisplan2.client.GhostPossessionClientState;
+import com.qidate.qisplan2.client.domain.ClientGhostDomain;
 import com.qidate.qisplan2.client.domain.ClientGhostDomainManager;
 import com.qidate.qisplan2.client.screen.GhostPossessionScreen;
 import com.qidate.qisplan2.client.screen.GhostDoorPlateScreen;
@@ -252,6 +253,30 @@ public final class QisNetwork {
                     });
                 }
         );
+
+        registrar.playToClient(
+                GhostDomainUpdatePayload.TYPE,
+                GhostDomainUpdatePayload.STREAM_CODEC,
+                (payload, context) -> {
+                    context.enqueueWork(() -> {
+
+                        ClientGhostDomainManager.updatePosition(
+                                payload.id(),
+                                payload.x(),
+                                payload.y(),
+                                payload.z()
+                        );
+
+                        QisPlan2.LOGGER.info(
+                                "[GhostDomain] CLIENT UPDATE: id={} pos=({}, {}, {})",
+                                payload.id(),
+                                payload.x(),
+                                payload.y(),
+                                payload.z()
+                        );
+                    });
+                }
+        );
     }
 
 
@@ -489,6 +514,21 @@ public final class QisNetwork {
                 level,
                 new GhostDomainRemovePayload(
                         domainId
+                )
+        );
+    }
+
+    public static void sendGhostDomainUpdate(
+            ServerLevel level,
+            GhostDomain domain
+    ) {
+        PacketDistributor.sendToPlayersInDimension(
+                level,
+                new GhostDomainUpdatePayload(
+                        domain.getId(),
+                        domain.getX(),
+                        domain.getY(),
+                        domain.getZ()
                 )
         );
     }

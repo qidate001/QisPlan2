@@ -4,6 +4,7 @@ import com.qidate.qisplan2.QisPlan2;
 import com.qidate.qisplan2.ghost.domain.CylinderDomainShape;
 import com.qidate.qisplan2.ghost.domain.GhostDomain;
 import com.qidate.qisplan2.ghost.domain.GhostDomainManager;
+import com.qidate.qisplan2.ghost.domain.GhostDomainUpdateMode;
 import com.qidate.qisplan2.item.GhostUmbrellaItem;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
@@ -78,7 +79,10 @@ public final class GhostUmbrellaDomain {
                     player.getX(),
                     player.getY(),
                     player.getZ(),
-                    new CylinderDomainShape(DOMAIN_RADIUS)
+                    new CylinderDomainShape(DOMAIN_RADIUS),
+
+                    GhostDomainUpdateMode.DISTANCE,
+                    3.0D
             );
 
             manager.add(domain);
@@ -87,7 +91,8 @@ public final class GhostUmbrellaDomain {
         }
 
         // 鬼域跟随玩家移动
-        domain.setPosition(
+        manager.updatePosition(
+                domain.getId(),
                 player.getX(),
                 player.getY(),
                 player.getZ()

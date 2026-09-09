@@ -104,6 +104,52 @@ public final class GhostDomainManager {
         }
     }
 
+    public void updatePosition(
+            UUID domainId,
+            double x,
+            double y,
+            double z
+    ) {
+        GhostDomain domain = domains.get(domainId);
+
+        if (domain == null) {
+            return;
+        }
+
+        if (domain.getUpdateMode() == GhostDomainUpdateMode.MANUAL) {
+
+            domain.setPosition(x, y, z);
+
+            QisNetwork.sendGhostDomainUpdate(
+                    level,
+                    domain
+            );
+
+            return;
+        }
+
+        double dx = x - domain.getX();
+        double dy = y - domain.getY();
+        double dz = z - domain.getZ();
+
+        double distanceSquared =
+                dx * dx + dy * dy + dz * dz;
+
+        double threshold =
+                domain.getUpdateDistance();
+
+        if (distanceSquared < threshold * threshold) {
+            return;
+        }
+
+        domain.setPosition(x, y, z);
+
+        QisNetwork.sendGhostDomainUpdate(
+                level,
+                domain
+        );
+    }
+
     public GhostDomain get(
             UUID id
     ) {

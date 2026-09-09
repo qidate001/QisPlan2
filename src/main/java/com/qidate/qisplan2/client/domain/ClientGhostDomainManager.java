@@ -120,4 +120,19 @@ public final class ClientGhostDomainManager {
 
         return level.dimension().location();
     }
+
+    public static void updatePosition(
+            UUID id,
+            double x,
+            double y,
+            double z
+    ) {
+        ClientGhostDomain domain = DOMAINS.get(id);
+
+        if (domain == null) {
+            return;
+        }
+
+        domain.setPosition(x, y, z);
+    }
 }

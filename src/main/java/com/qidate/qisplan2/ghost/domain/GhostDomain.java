@@ -21,6 +21,8 @@ public final class GhostDomain {
     private double z;
 
     private final GhostDomainShape shape;
+    private final GhostDomainUpdateMode updateMode;
+    private final double updateDistance;
 
 
     public GhostDomain(
@@ -31,19 +33,20 @@ public final class GhostDomain {
             double x,
             double y,
             double z,
-            GhostDomainShape shape
+            GhostDomainShape shape,
+            GhostDomainUpdateMode updateMode,
+            double updateDistance
     ) {
-
         this.id = id;
         this.sourceUUID = sourceUUID;
         this.type = type;
         this.dimension = dimension;
-
         this.x = x;
         this.y = y;
         this.z = z;
-
         this.shape = shape;
+        this.updateMode = updateMode;
+        this.updateDistance = updateDistance;
     }
 
 
@@ -84,6 +87,14 @@ public final class GhostDomain {
 
     public GhostDomainShape getShape() {
         return shape;
+    }
+
+    public GhostDomainUpdateMode getUpdateMode() {
+        return updateMode;
+    }
+
+    public double getUpdateDistance() {
+        return updateDistance;
     }
 
 
