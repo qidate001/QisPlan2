@@ -3,7 +3,9 @@ package com.qidate.qisplan2.item;
 import com.qidate.qisplan2.QisPlan2;
 import com.qidate.qisplan2.core.ModDataComponents;
 import com.qidate.qisplan2.core.ModItems;
+import com.qidate.qisplan2.ghost.domain.umbrella.GhostUmbrellaDomain;
 import net.minecraft.network.chat.Component;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.InteractionResultHolder;
@@ -135,6 +137,22 @@ public class GhostUmbrellaItem extends Item {
                     ModDataComponents.GHOST_UMBRELLA_OPENED_AT
             );
 
+
+            /*
+             * ============================================================
+             * 删除鬼伞鬼域
+             * ============================================================
+             */
+
+            if (!level.isClientSide()
+                    && player instanceof ServerPlayer serverPlayer) {
+
+                GhostUmbrellaDomain.remove(
+                        serverPlayer
+                );
+            }
+
+
             return InteractionResultHolder.sidedSuccess(
                     stack,
                     level.isClientSide()
@@ -153,16 +171,23 @@ public class GhostUmbrellaItem extends Item {
                 true
         );
 
+
         /*
-         * 记录本次开伞时间。
-         *
-         * 只由服务端记录。
+         * ============================================================
+         * 服务器创建鬼伞鬼域
+         * ============================================================
          */
-        if (!level.isClientSide()) {
+
+        if (!level.isClientSide()
+                && player instanceof ServerPlayer serverPlayer) {
 
             stack.set(
                     ModDataComponents.GHOST_UMBRELLA_OPENED_AT,
                     level.getGameTime()
+            );
+
+            GhostUmbrellaDomain.ensure(
+                    serverPlayer
             );
         }
 

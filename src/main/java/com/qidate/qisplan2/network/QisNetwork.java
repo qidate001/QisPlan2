@@ -5,6 +5,7 @@ import com.qidate.qisplan2.block.entity.GhostDoorPlateBlockEntity;
 import com.qidate.qisplan2.client.DoorGhostMarkClient;
 import com.qidate.qisplan2.client.GhostPianoMusicClient;
 import com.qidate.qisplan2.client.GhostPossessionClientState;
+import com.qidate.qisplan2.client.domain.ClientGhostDomainManager;
 import com.qidate.qisplan2.client.screen.GhostPossessionScreen;
 import com.qidate.qisplan2.client.screen.GhostDoorPlateScreen;
 import com.qidate.qisplan2.ghost.GhostPossessionSession;
@@ -191,6 +192,27 @@ public final class QisNetwork {
                     });
                 }
         );
+
+        /*
+         * ========================================================
+         * 鬼雨伞
+         * ========================================================
+         */
+
+//        registrar.playToClient(
+//                GhostDomainAddPayload.TYPE,
+//                GhostDomainAddPayload.STREAM_CODEC,
+//                (payload, context) -> {
+//
+//                    context.enqueueWork(() -> {
+//
+//                        ClientGhostDomainManager.add(
+//                                payload.toDomain()
+//                        );
+//
+//                    });
+//                }
+//        );
     }
 
 

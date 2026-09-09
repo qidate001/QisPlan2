@@ -1,5 +1,6 @@
 package com.qidate.qisplan2.ghost.domain;
 
+import com.qidate.qisplan2.QisPlan2;
 import net.minecraft.server.level.ServerLevel;
 
 import java.util.*;
@@ -9,167 +10,143 @@ public final class GhostDomainManager {
     private static final Map<ServerLevel, GhostDomainManager>
             MANAGERS = new WeakHashMap<>();
 
-
     private final ServerLevel level;
 
     private final Map<UUID, GhostDomain> domains =
             new LinkedHashMap<>();
 
-
     private GhostDomainManager(
             ServerLevel level
     ) {
-
         this.level = level;
     }
-
-
-    /*
-     * ============================================================
-     * 获取管理器
-     * ============================================================
-     */
 
     public static GhostDomainManager get(
             ServerLevel level
     ) {
-
         return MANAGERS.computeIfAbsent(
                 level,
                 GhostDomainManager::new
         );
     }
 
-
-    /*
-     * ============================================================
-     * 添加鬼域
-     * ============================================================
-     */
-
     public void add(
             GhostDomain domain
     ) {
-
         domains.put(
                 domain.getId(),
                 domain
         );
+
+        QisPlan2.LOGGER.info(
+                "[GhostDomain] ADD id={} type={} source={} pos=({}, {}, {})",
+                domain.getId(),
+                domain.getType(),
+                domain.getSourceUUID(),
+                domain.getX(),
+                domain.getY(),
+                domain.getZ()
+        );
     }
-
-
-    /*
-     * ============================================================
-     * 删除鬼域
-     * ============================================================
-     */
 
     public void remove(
             UUID id
     ) {
+        GhostDomain domain =
+                domains.remove(id);
 
-        domains.remove(id);
+        if (domain != null) {
+
+            QisPlan2.LOGGER.info(
+                    "[GhostDomain] REMOVE id={} type={}",
+                    id,
+                    domain.getType()
+            );
+        }
     }
 
+    public void removeBySource(
+            UUID sourceUUID
+    ) {
 
-    /*
-     * ============================================================
-     * 获取
-     * ============================================================
-     */
+        QisPlan2.LOGGER.info(
+                "[GhostDomain] removeBySource: source={}, 当前鬼域数量={}",
+                sourceUUID,
+                domains.size()
+        );
+
+        List<UUID> remove =
+                new ArrayList<>();
+
+        for (GhostDomain domain : domains.values()) {
+
+            QisPlan2.LOGGER.info(
+                    "[GhostDomain] 检查鬼域: id={}, source={}, type={}",
+                    domain.getId(),
+                    domain.getSourceUUID(),
+                    domain.getType()
+            );
+
+            if (sourceUUID.equals(
+                    domain.getSourceUUID()
+            )) {
+
+                QisPlan2.LOGGER.info(
+                        "[GhostDomain] 找到匹配鬼域: id={}",
+                        domain.getId()
+                );
+
+                remove.add(
+                        domain.getId()
+                );
+            }
+        }
+
+        for (UUID id : remove) {
+
+            GhostDomain domain =
+                    domains.remove(id);
+
+            if (domain != null) {
+
+                QisPlan2.LOGGER.info(
+                        "[GhostDomain] REMOVE id={} type={}",
+                        id,
+                        domain.getType()
+                );
+            }
+        }
+    }
 
     public GhostDomain get(
             UUID id
     ) {
-
         return domains.get(id);
     }
 
+    public GhostDomain getBySource(
+            UUID sourceUUID
+    ) {
 
-    /*
-     * ============================================================
-     * 全部鬼域
-     * ============================================================
-     */
+        for (GhostDomain domain : domains.values()) {
+
+            if (sourceUUID.equals(
+                    domain.getSourceUUID()
+            )) {
+                return domain;
+            }
+        }
+
+        return null;
+    }
 
     public Collection<GhostDomain> getDomains() {
-
         return Collections.unmodifiableCollection(
                 domains.values()
         );
     }
 
-
-    /*
-     * ============================================================
-     * 判断实体是否在鬼域中
-     * ============================================================
-     */
-
-    public boolean isInside(
-            net.minecraft.world.entity.Entity entity
-    ) {
-
-        for (GhostDomain domain : domains.values()) {
-
-            if (domain.contains(
-                    level,
-                    entity
-            )) {
-
-                return true;
-            }
-        }
-
-        return false;
-    }
-
-
-    /*
-     * ============================================================
-     * 获取实体所在的全部鬼域
-     * ============================================================
-     */
-
-    public List<GhostDomain> getDomainsAt(
-            net.minecraft.world.entity.Entity entity
-    ) {
-
-        List<GhostDomain> result =
-                new ArrayList<>();
-
-        for (GhostDomain domain : domains.values()) {
-
-            if (domain.contains(
-                    level,
-                    entity
-            )) {
-
-                result.add(domain);
-            }
-        }
-
-        return result;
-    }
-
-
-    /*
-     * ============================================================
-     * Tick
-     * ============================================================
-     */
-
     public void tick() {
-
-        /*
-         * 现在先留空。
-         *
-         * 后面这里负责：
-         *
-         * 1. 更新移动中的鬼域
-         * 2. 清理失效鬼域
-         * 3. 同步客户端
-         * 4. 触发进入/离开事件
-         */
+        // 暂时没有内容
     }
 }
