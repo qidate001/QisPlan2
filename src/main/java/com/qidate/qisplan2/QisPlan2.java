@@ -9,6 +9,7 @@ import com.qidate.qisplan2.event.GhostUmbrellaAttackHandler;
 import com.qidate.qisplan2.event.PossessionDamageHandler;
 import com.qidate.qisplan2.ghost.GhostAbilityInteractionHandler;
 import com.qidate.qisplan2.ghost.ability.GhostAbilityRegistry;
+import com.qidate.qisplan2.ghost.domain.GhostDomainServerTick;
 import com.qidate.qisplan2.ghost.doorplate.GhostDoorPlateTeleportHandler;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.ModContainer;
@@ -37,16 +38,19 @@ public class QisPlan2 {
                 ModEntityAttributes::register
         );
 
-        modEventBus.register(
-                GhostUmbrellaClient.class
-        );
-
+        // 鬼雨伞伤害事件（待重构）
         NeoForge.EVENT_BUS.register(
                 GhostUmbrellaAttackHandler.class
         );
 
+        // 灵异伤害类型注册
         NeoForge.EVENT_BUS.register(
                 PossessionDamageHandler.class
+        );
+
+        // 鬼域
+        NeoForge.EVENT_BUS.register(
+                GhostDomainServerTick.class
         );
 
         // 驭鬼注册表注册

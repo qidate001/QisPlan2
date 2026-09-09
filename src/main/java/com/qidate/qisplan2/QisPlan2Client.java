@@ -2,6 +2,7 @@ package com.qidate.qisplan2;
 
 import com.mojang.blaze3d.platform.InputConstants;
 import com.qidate.qisplan2.client.BlackRainParticle;
+import com.qidate.qisplan2.client.GhostUmbrellaClient;
 import com.qidate.qisplan2.client.screen.GhostStoveScreen;
 import com.qidate.qisplan2.client.GhostUmbrellaDomainClient;
 import com.qidate.qisplan2.client.model.NightWandererModel;
@@ -80,6 +81,11 @@ public class QisPlan2Client {
         // 鬼湖水
         modEventBus.addListener(
                 QisPlan2Client::registerFluidClientExtensions
+        );
+
+        // 鬼雨伞
+        modEventBus.register(
+                GhostUmbrellaClient.class
         );
 
         // 鬼黑雨

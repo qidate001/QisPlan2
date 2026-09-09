@@ -79,22 +79,9 @@ public final class GhostDomainManager {
                 new ArrayList<>();
 
         for (GhostDomain domain : domains.values()) {
-
-            QisPlan2.LOGGER.info(
-                    "[GhostDomain] 检查鬼域: id={}, source={}, type={}",
-                    domain.getId(),
-                    domain.getSourceUUID(),
-                    domain.getType()
-            );
-
             if (sourceUUID.equals(
                     domain.getSourceUUID()
             )) {
-
-                QisPlan2.LOGGER.info(
-                        "[GhostDomain] 找到匹配鬼域: id={}",
-                        domain.getId()
-                );
 
                 remove.add(
                         domain.getId()
@@ -104,17 +91,7 @@ public final class GhostDomainManager {
 
         for (UUID id : remove) {
 
-            GhostDomain domain =
-                    domains.remove(id);
-
-            if (domain != null) {
-
-                QisPlan2.LOGGER.info(
-                        "[GhostDomain] REMOVE id={} type={}",
-                        id,
-                        domain.getType()
-                );
-            }
+            domains.remove(id);
         }
     }
 
