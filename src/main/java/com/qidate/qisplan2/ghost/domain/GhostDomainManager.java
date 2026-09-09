@@ -1,7 +1,9 @@
 package com.qidate.qisplan2.ghost.domain;
 
 import com.qidate.qisplan2.QisPlan2;
+import com.qidate.qisplan2.network.QisNetwork;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
 
 import java.util.*;
 
@@ -30,13 +32,9 @@ public final class GhostDomainManager {
         );
     }
 
-    public void add(
-            GhostDomain domain
-    ) {
-        domains.put(
-                domain.getId(),
-                domain
-        );
+    public void add(GhostDomain domain) {
+
+        domains.put(domain.getId(), domain);
 
         QisPlan2.LOGGER.info(
                 "[GhostDomain] ADD id={} type={} source={} pos=({}, {}, {})",
@@ -47,51 +45,59 @@ public final class GhostDomainManager {
                 domain.getY(),
                 domain.getZ()
         );
-    }
 
-    public void remove(
-            UUID id
-    ) {
-        GhostDomain domain =
-                domains.remove(id);
+        ServerPlayer player =
+                level.getServer()
+                        .getPlayerList()
+                        .getPlayer(domain.getSourceUUID());
 
-        if (domain != null) {
-
-            QisPlan2.LOGGER.info(
-                    "[GhostDomain] REMOVE id={} type={}",
-                    id,
-                    domain.getType()
+        if (player != null) {
+            QisNetwork.sendGhostDomainAdd(
+                    player,
+                    domain
             );
         }
     }
 
-    public void removeBySource(
-            UUID sourceUUID
-    ) {
+    public void remove(UUID id) {
+
+        GhostDomain domain = domains.remove(id);
+
+        if (domain == null) {
+            return;
+        }
 
         QisPlan2.LOGGER.info(
-                "[GhostDomain] removeBySource: source={}, 当前鬼域数量={}",
-                sourceUUID,
-                domains.size()
+                "[GhostDomain] REMOVE id={} type={}",
+                domain.getId(),
+                domain.getType()
         );
 
-        List<UUID> remove =
-                new ArrayList<>();
+        ServerPlayer player =
+                level.getServer()
+                        .getPlayerList()
+                        .getPlayer(domain.getSourceUUID());
+
+        if (player != null) {
+            QisNetwork.sendGhostDomainRemove(
+                    player,
+                    domain.getId()
+            );
+        }
+    }
+
+    public void removeBySource(UUID sourceUUID) {
+
+        List<UUID> remove = new ArrayList<>();
 
         for (GhostDomain domain : domains.values()) {
-            if (sourceUUID.equals(
-                    domain.getSourceUUID()
-            )) {
-
-                remove.add(
-                        domain.getId()
-                );
+            if (sourceUUID.equals(domain.getSourceUUID())) {
+                remove.add(domain.getId());
             }
         }
 
         for (UUID id : remove) {
-
-            domains.remove(id);
+            remove(id);
         }
     }
 

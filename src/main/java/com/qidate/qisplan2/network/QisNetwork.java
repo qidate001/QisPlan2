@@ -10,6 +10,7 @@ import com.qidate.qisplan2.client.screen.GhostPossessionScreen;
 import com.qidate.qisplan2.client.screen.GhostDoorPlateScreen;
 import com.qidate.qisplan2.ghost.GhostPossessionSession;
 import com.qidate.qisplan2.ghost.ability.doorghost.DoorGhostAbilityHandler;
+import com.qidate.qisplan2.ghost.domain.GhostDomain;
 import com.qidate.qisplan2.network.payload.*;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
@@ -19,6 +20,8 @@ import net.neoforged.neoforge.network.PacketDistributor;
 import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent;
 import net.neoforged.neoforge.network.handling.IPayloadContext;
 import net.minecraft.server.level.ServerPlayer;
+
+import java.util.UUID;
 
 @EventBusSubscriber(
         modid = QisPlan2.MODID
@@ -199,20 +202,27 @@ public final class QisNetwork {
          * ========================================================
          */
 
-//        registrar.playToClient(
-//                GhostDomainAddPayload.TYPE,
-//                GhostDomainAddPayload.STREAM_CODEC,
-//                (payload, context) -> {
-//
-//                    context.enqueueWork(() -> {
-//
-//                        ClientGhostDomainManager.add(
-//                                payload.toDomain()
-//                        );
-//
-//                    });
-//                }
-//        );
+        registrar.playToClient(
+                GhostDomainAddPayload.TYPE,
+                GhostDomainAddPayload.STREAM_CODEC,
+                (payload, context) -> {
+                    QisPlan2.LOGGER.info(
+                            "[GhostDomain] CLIENT ADD payload received: {}",
+                            payload.id()
+                    );
+                }
+        );
+
+        registrar.playToClient(
+                GhostDomainRemovePayload.TYPE,
+                GhostDomainRemovePayload.STREAM_CODEC,
+                (payload, context) -> {
+                    QisPlan2.LOGGER.info(
+                            "[GhostDomain] CLIENT REMOVE payload received: {}",
+                            payload.id()
+                    );
+                }
+        );
     }
 
 
@@ -414,6 +424,33 @@ public final class QisNetwork {
                 new SetGhostDoorPlateNumberPayload(
                         pos,
                         number
+                )
+        );
+    }
+
+    /*
+     * ========================================================
+     * S2C：鬼伞
+     * ========================================================
+     */
+    public static void sendGhostDomainAdd(
+            ServerPlayer player,
+            GhostDomain domain
+    ) {
+        PacketDistributor.sendToPlayer(
+                player,
+                GhostDomainAddPayload.from(domain)
+        );
+    }
+
+    public static void sendGhostDomainRemove(
+            ServerPlayer player,
+            UUID domainId
+    ) {
+        PacketDistributor.sendToPlayer(
+                player,
+                new GhostDomainRemovePayload(
+                        domainId
                 )
         );
     }
