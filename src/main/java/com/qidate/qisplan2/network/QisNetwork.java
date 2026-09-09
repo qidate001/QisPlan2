@@ -14,6 +14,7 @@ import com.qidate.qisplan2.ghost.domain.GhostDomain;
 import com.qidate.qisplan2.network.payload.*;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
+import net.minecraft.server.level.ServerLevel;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.network.PacketDistributor;
@@ -462,6 +463,15 @@ public final class QisNetwork {
      * ========================================================
      */
     public static void sendGhostDomainAdd(
+            ServerLevel level,
+            GhostDomain domain
+    ) {
+        PacketDistributor.sendToPlayersInDimension(
+                level,
+                GhostDomainAddPayload.from(domain)
+        );
+    }
+    public static void sendGhostDomainAdd(
             ServerPlayer player,
             GhostDomain domain
     ) {
@@ -472,11 +482,11 @@ public final class QisNetwork {
     }
 
     public static void sendGhostDomainRemove(
-            ServerPlayer player,
+            ServerLevel level,
             UUID domainId
     ) {
-        PacketDistributor.sendToPlayer(
-                player,
+        PacketDistributor.sendToPlayersInDimension(
+                level,
                 new GhostDomainRemovePayload(
                         domainId
                 )

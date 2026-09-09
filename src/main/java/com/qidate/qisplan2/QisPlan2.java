@@ -9,6 +9,7 @@ import com.qidate.qisplan2.event.GhostUmbrellaAttackHandler;
 import com.qidate.qisplan2.event.PossessionDamageHandler;
 import com.qidate.qisplan2.ghost.GhostAbilityInteractionHandler;
 import com.qidate.qisplan2.ghost.ability.GhostAbilityRegistry;
+import com.qidate.qisplan2.ghost.domain.GhostDomainPlayerSync;
 import com.qidate.qisplan2.ghost.domain.GhostDomainServerTick;
 import com.qidate.qisplan2.ghost.doorplate.GhostDoorPlateTeleportHandler;
 import net.neoforged.bus.api.IEventBus;
@@ -51,6 +52,11 @@ public class QisPlan2 {
         // 鬼域
         NeoForge.EVENT_BUS.register(
                 GhostDomainServerTick.class
+        );
+
+        // 鬼域异步
+        NeoForge.EVENT_BUS.register(
+                GhostDomainPlayerSync.class
         );
 
         // 驭鬼注册表注册

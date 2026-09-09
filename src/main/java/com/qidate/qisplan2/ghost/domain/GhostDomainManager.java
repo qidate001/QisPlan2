@@ -46,17 +46,27 @@ public final class GhostDomainManager {
                 domain.getZ()
         );
 
-        ServerPlayer player =
-                level.getServer()
-                        .getPlayerList()
-                        .getPlayer(domain.getSourceUUID());
+        QisNetwork.sendGhostDomainAdd(
+                level,
+                domain
+        );
+    }
 
-        if (player != null) {
+    public void syncToPlayer(ServerPlayer player) {
+
+        for (GhostDomain domain : domains.values()) {
+
             QisNetwork.sendGhostDomainAdd(
                     player,
                     domain
             );
         }
+
+        QisPlan2.LOGGER.info(
+                "[GhostDomain] SYNC {} domains to player {}",
+                domains.size(),
+                player.getGameProfile().getName()
+        );
     }
 
     public void remove(UUID id) {
@@ -73,17 +83,10 @@ public final class GhostDomainManager {
                 domain.getType()
         );
 
-        ServerPlayer player =
-                level.getServer()
-                        .getPlayerList()
-                        .getPlayer(domain.getSourceUUID());
-
-        if (player != null) {
-            QisNetwork.sendGhostDomainRemove(
-                    player,
-                    domain.getId()
-            );
-        }
+        QisNetwork.sendGhostDomainRemove(
+                level,
+                domain.getId()
+        );
     }
 
     public void removeBySource(UUID sourceUUID) {
