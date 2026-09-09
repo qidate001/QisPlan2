@@ -1,11 +1,9 @@
 package com.qidate.qisplan2;
 
 import com.mojang.logging.LogUtils;
-import com.qidate.qisplan2.client.GhostUmbrellaClient;
 import com.qidate.qisplan2.core.ModEntityAttributes;
 import com.qidate.qisplan2.core.ModRegistries;
 import com.qidate.qisplan2.core.QisConfig;
-import com.qidate.qisplan2.event.GhostUmbrellaAttackHandler;
 import com.qidate.qisplan2.event.PossessionDamageHandler;
 import com.qidate.qisplan2.ghost.GhostAbilityInteractionHandler;
 import com.qidate.qisplan2.ghost.ability.GhostAbilityRegistry;
@@ -37,11 +35,6 @@ public class QisPlan2 {
         // 实体属性注册
         modEventBus.addListener(
                 ModEntityAttributes::register
-        );
-
-        // 鬼雨伞伤害事件（待重构）
-        NeoForge.EVENT_BUS.register(
-                GhostUmbrellaAttackHandler.class
         );
 
         // 灵异伤害类型注册

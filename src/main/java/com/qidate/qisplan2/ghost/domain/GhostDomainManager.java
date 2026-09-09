@@ -36,14 +36,9 @@ public final class GhostDomainManager {
 
         domains.put(domain.getId(), domain);
 
-        QisPlan2.LOGGER.info(
-                "[GhostDomain] ADD id={} type={} source={} pos=({}, {}, {})",
-                domain.getId(),
-                domain.getType(),
-                domain.getSourceUUID(),
-                domain.getX(),
-                domain.getY(),
-                domain.getZ()
+        domain.getBehavior().onCreate(
+                level,
+                domain
         );
 
         QisNetwork.sendGhostDomainAdd(
@@ -77,10 +72,9 @@ public final class GhostDomainManager {
             return;
         }
 
-        QisPlan2.LOGGER.info(
-                "[GhostDomain] REMOVE id={} type={}",
-                domain.getId(),
-                domain.getType()
+        domain.getBehavior().onRemove(
+                level,
+                domain
         );
 
         QisNetwork.sendGhostDomainRemove(
@@ -179,6 +173,13 @@ public final class GhostDomainManager {
     }
 
     public void tick() {
-        // 暂时没有内容
+
+        for (GhostDomain domain : domains.values()) {
+
+            domain.getBehavior().tick(
+                    level,
+                    domain
+            );
+        }
     }
 }

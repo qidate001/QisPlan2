@@ -80,9 +80,9 @@ public final class GhostUmbrellaDomain {
                     player.getY(),
                     player.getZ(),
                     new CylinderDomainShape(DOMAIN_RADIUS),
-
                     GhostDomainUpdateMode.DISTANCE,
-                    3.0D
+                    3.0D,
+                    new GhostUmbrellaBehavior()
             );
 
             manager.add(domain);
