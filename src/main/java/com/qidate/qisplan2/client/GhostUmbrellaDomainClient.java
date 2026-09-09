@@ -44,11 +44,26 @@ public final class GhostUmbrellaDomainClient {
             double z
     ) {
 
+        Minecraft minecraft =
+                Minecraft.getInstance();
+
+        if (minecraft.level == null) {
+            return false;
+        }
+
+        ResourceLocation currentDimension =
+                minecraft.level.dimension().location();
+
         for (ClientGhostDomain domain :
                 ClientGhostDomainManager.getDomains()) {
 
             if (!DOMAIN_TYPE.equals(
                     domain.getDomainType())) {
+                continue;
+            }
+
+            if (!currentDimension.equals(
+                    domain.getDimension())) {
                 continue;
             }
 
@@ -132,6 +147,26 @@ public final class GhostUmbrellaDomainClient {
             return;
         }
 
+        Minecraft minecraft =
+                Minecraft.getInstance();
+
+        if (minecraft.level == null
+                || minecraft.player == null) {
+            return;
+        }
+
+        /*
+         * 维度切换过程中，RAIN_SOURCES 可能还残留
+         * 上一个维度的数据。
+         *
+         * 此时不能继续进行鬼雨渲染。
+         */
+        if (!hasCurrentDimensionDomain(minecraft.level)) {
+            RAIN_SOURCES.clear();
+            insideDomain = false;
+            return;
+        }
+
         if (RAIN_SOURCES.isEmpty()) {
             return;
         }
@@ -144,6 +179,32 @@ public final class GhostUmbrellaDomainClient {
                 event,
                 RAIN_SOURCES
         );
+    }
+
+    private static boolean hasCurrentDimensionDomain(
+            ClientLevel level
+    ) {
+
+        ResourceLocation currentDimension =
+                level.dimension().location();
+
+        for (ClientGhostDomain domain :
+                ClientGhostDomainManager.getDomains()) {
+
+            if (!DOMAIN_TYPE.equals(
+                    domain.getDomainType())) {
+                continue;
+            }
+
+            if (!currentDimension.equals(
+                    domain.getDimension())) {
+                continue;
+            }
+
+            return true;
+        }
+
+        return false;
     }
 
     private static void tickRainSound(
