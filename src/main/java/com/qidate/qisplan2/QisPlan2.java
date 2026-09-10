@@ -7,6 +7,7 @@ import com.qidate.qisplan2.core.QisConfig;
 import com.qidate.qisplan2.event.PossessionDamageHandler;
 import com.qidate.qisplan2.ghost.GhostAbilityInteractionHandler;
 import com.qidate.qisplan2.ghost.ability.GhostAbilityRegistry;
+import com.qidate.qisplan2.ghost.domain.GhostDomainPlayerLogout;
 import com.qidate.qisplan2.ghost.domain.GhostDomainPlayerSync;
 import com.qidate.qisplan2.ghost.domain.GhostDomainServerTick;
 import com.qidate.qisplan2.ghost.doorplate.GhostDoorPlateTeleportHandler;
@@ -50,6 +51,11 @@ public class QisPlan2 {
         // 鬼域异步
         NeoForge.EVENT_BUS.register(
                 GhostDomainPlayerSync.class
+        );
+
+        // 鬼域监听玩家退出
+        NeoForge.EVENT_BUS.register(
+                GhostDomainPlayerLogout.class
         );
 
         // 驭鬼注册表注册
