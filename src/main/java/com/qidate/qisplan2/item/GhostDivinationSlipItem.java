@@ -1,9 +1,12 @@
 package com.qidate.qisplan2.item;
 
+import com.qidate.qisplan2.core.ModDataComponents;
 import com.qidate.qisplan2.core.ModMobEffects;
 import com.qidate.qisplan2.death.SupernaturalDeathHandler;
 import com.qidate.qisplan2.death.ModDamageTypes;
 import com.qidate.qisplan2.network.QisNetwork;
+import net.minecraft.network.chat.Component;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResultHolder;
 import net.minecraft.world.effect.MobEffectInstance;
@@ -33,7 +36,17 @@ public class GhostDivinationSlipItem extends Item {
      */
     private static final double DEATH_SIGN_STRENGTH = 50.0D;
 
-    public GhostDivinationSlipItem(Properties properties) {
+    /**
+     * 鬼签死机时间：
+     *
+     * 5 分钟 = 6000 tick
+     */
+    private static final long CRASH_DURATION =
+            5L * 60L * 20L;
+
+    public GhostDivinationSlipItem(
+            Properties properties
+    ) {
         super(properties);
     }
 
@@ -46,6 +59,68 @@ public class GhostDivinationSlipItem extends Item {
 
         ItemStack stack =
                 player.getItemInHand(hand);
+
+        /*
+         * ========================================
+         * 死机检查
+         * ========================================
+         *
+         * 死机状态属于当前这一个鬼签。
+         */
+        if (stack.has(
+                ModDataComponents.GHOST_DIVINATION_CRASHED_UNTIL
+        )) {
+
+            Long crashedUntil =
+                    stack.get(
+                            ModDataComponents
+                                    .GHOST_DIVINATION_CRASHED_UNTIL
+                    );
+
+            if (crashedUntil != null) {
+
+                long gameTime =
+                        level.getGameTime();
+
+                /*
+                 * 仍然处于死机状态。
+                 */
+                if (gameTime < crashedUntil) {
+
+                    if (!level.isClientSide) {
+
+                        player.displayClientMessage(
+                                Component.literal(
+                                        "鬼签已经死机，暂时无法回应。"
+                                ),
+                                true
+                        );
+                    }
+
+                    /*
+                     * 关键：
+                     * 直接结束这次使用。
+                     *
+                     * 不能继续往下进入抽签逻辑。
+                     */
+                    return InteractionResultHolder.fail(
+                            stack
+                    );
+                }
+
+                /*
+                 * 死机已经结束。
+                 *
+                 * 删除死机组件，
+                 * 这一次使用可以正常继续。
+                 */
+                stack.remove(
+                        ModDataComponents
+                                .GHOST_DIVINATION_CRASHED_UNTIL
+                );
+            }
+        }
+
 
         /*
          * ========================================
@@ -80,7 +155,8 @@ public class GhostDivinationSlipItem extends Item {
 
                     MobEffectInstance existing =
                             player.getEffect(
-                                    ModMobEffects.LIFE_SIGN_PROTECTION
+                                    ModMobEffects
+                                            .LIFE_SIGN_PROTECTION
                             );
 
                     int duration =
@@ -100,7 +176,8 @@ public class GhostDivinationSlipItem extends Item {
 
                     player.addEffect(
                             new MobEffectInstance(
-                                    ModMobEffects.LIFE_SIGN_PROTECTION,
+                                    ModMobEffects
+                                            .LIFE_SIGN_PROTECTION,
                                     duration,
                                     4,      // V级
                                     false,
@@ -117,11 +194,66 @@ public class GhostDivinationSlipItem extends Item {
                  */
                 case 1 -> {
 
+                    /*
+                     * 如果当前正处于生签守护：
+                     *
+                     * 死签不会直接杀死玩家。
+                     *
+                     * 而是导致鬼签死机。
+                     */
+                    if (player.hasEffect(
+                            ModMobEffects
+                                    .LIFE_SIGN_PROTECTION
+                    )) {
+
+                        /*
+                         * 移除生签守护。
+                         */
+                        player.removeEffect(
+                                ModMobEffects
+                                        .LIFE_SIGN_PROTECTION
+                        );
+
+                        /*
+                         * 当前这个鬼签进入死机状态。
+                         */
+                        stack.set(
+                                ModDataComponents.
+                                        GHOST_DIVINATION_CRASHED_UNTIL,
+                                level.getGameTime() + CRASH_DURATION
+                        );
+
+                        player.displayClientMessage(
+                                Component.literal(
+                                        "鬼签死机了。"
+                                ),
+                                true
+                        );
+
+                        /*
+                         * 注意：
+                         *
+                         * 这里直接结束，
+                         * 不执行正常死签袭击。
+                         */
+                        return InteractionResultHolder
+                                .sidedSuccess(
+                                        stack,
+                                        level.isClientSide
+                                );
+                    }
+
+                    /*
+                     * 没有生签守护：
+                     *
+                     * 正常执行死签。
+                     */
                     SupernaturalDeathHandler.tryKill(
                             player,
-                            ModDamageTypes.ghostDivinationSlip(
-                                    player
-                            ),
+                            ModDamageTypes
+                                    .ghostDivinationSlip(
+                                            player
+                                    ),
                             DEATH_SIGN_STRENGTH
                     );
                 }
@@ -139,16 +271,7 @@ public class GhostDivinationSlipItem extends Item {
 
             /*
              * ========================================
-             * 消耗
-             * ========================================
-             */
-            if (!player.getAbilities().instabuild) {
-                stack.shrink(1);
-            }
-
-            /*
-             * ========================================
-             * 30秒冷却
+             * 30 tick 冷却
              * ========================================
              */
             player.getCooldowns().addCooldown(
@@ -161,7 +284,7 @@ public class GhostDivinationSlipItem extends Item {
              * 通知客户端播放动画
              * ========================================
              */
-            if (player instanceof net.minecraft.server.level.ServerPlayer serverPlayer) {
+            if (player instanceof ServerPlayer serverPlayer) {
 
                 QisNetwork.sendGhostDivinationResult(
                         serverPlayer,

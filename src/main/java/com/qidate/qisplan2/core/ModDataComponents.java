@@ -55,4 +55,19 @@ public class ModDataComponents {
                             )
                             .build()
             );
+
+    // 鬼签死机结束时间
+    public static final DeferredHolder<
+            DataComponentType<?>,
+            DataComponentType<Long>
+            > GHOST_DIVINATION_CRASHED_UNTIL =
+            DATA_COMPONENTS.register(
+                    "ghost_divination_crashed_until",
+                    () -> DataComponentType.<Long>builder()
+                            .persistent(Codec.LONG)
+                            .networkSynchronized(
+                                    ByteBufCodecs.VAR_LONG
+                            )
+                            .build()
+            );
 }
