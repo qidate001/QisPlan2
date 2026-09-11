@@ -93,6 +93,14 @@ public class SupernaturalDeathHandler {
         supernaturalIntensity =
                 Math.max(0.0D, supernaturalIntensity);
 
+        // 记录本次袭击
+        double recentIntensity =
+                SupernaturalIntensityTracker
+                        .addAndGetRecentIntensity(
+                                entity,
+                                supernaturalIntensity
+                        );
+
         // 鬼寿衣
         if (tryGhostShroudProtection(
                 entity,
@@ -109,10 +117,19 @@ public class SupernaturalDeathHandler {
         }
 
         /*
-         * 生签：免疫灵异袭击
+         * 生签：
+         *
+         * 最近一秒累计灵异强度
+         * 小于 50 时抵挡。
+         *
+         * 达到或超过 50，
+         * 本次袭击击穿。
          */
         if (entity.hasEffect(ModMobEffects.LIFE_SIGN_PROTECTION)) {
-            return false;
+
+            if (recentIntensity < 50.0D) {
+                return false;
+            }
         }
 
         /*
