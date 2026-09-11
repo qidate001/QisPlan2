@@ -120,14 +120,22 @@ public class SupernaturalDeathHandler {
          * 生签：
          *
          * 最近一秒累计灵异强度
-         * 小于 50 时抵挡。
+         * V级时，小于 50 时抵挡。
          *
          * 达到或超过 50，
          * 本次袭击击穿。
          */
         if (entity.hasEffect(ModMobEffects.LIFE_SIGN_PROTECTION)) {
 
-            if (recentIntensity < 50.0D) {
+            int amplifier =
+                    entity.getEffect(
+                            ModMobEffects.LIFE_SIGN_PROTECTION
+                    ).getAmplifier();
+
+            double protectionPerSecond =
+                    (amplifier + 1) * 10.0D;
+
+            if (recentIntensity < protectionPerSecond) {
                 return false;
             }
         }

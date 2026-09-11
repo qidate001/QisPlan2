@@ -102,7 +102,7 @@ public class GhostDivinationSlipItem extends Item {
                             new MobEffectInstance(
                                     ModMobEffects.LIFE_SIGN_PROTECTION,
                                     duration,
-                                    0,
+                                    4,      // V级
                                     false,
                                     false,
                                     true
