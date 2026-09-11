@@ -53,6 +53,5 @@ public final class ModKeyMappings {
                     CATEGORY
             );
 
-    private ModKeyMappings() {
-    }
+    private ModKeyMappings() {}
 }

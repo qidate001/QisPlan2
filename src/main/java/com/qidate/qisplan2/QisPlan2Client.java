@@ -1,9 +1,8 @@
 package com.qidate.qisplan2;
 
-import com.mojang.blaze3d.platform.InputConstants;
 import com.qidate.qisplan2.client.BlackRainParticle;
 import com.qidate.qisplan2.client.GhostUmbrellaClient;
-import com.qidate.qisplan2.client.key.ModKeyMappings;
+import com.qidate.qisplan2.client.key.ClientKeyHandler;
 import com.qidate.qisplan2.client.screen.GhostStoveScreen;
 import com.qidate.qisplan2.client.GhostUmbrellaDomainClient;
 import com.qidate.qisplan2.client.model.NightWandererModel;
@@ -11,8 +10,6 @@ import com.qidate.qisplan2.client.renderer.*;
 import com.qidate.qisplan2.core.*;
 import com.qidate.qisplan2.event.DeathCurseHudOverlay;
 
-import net.minecraft.client.KeyMapping;
-import net.minecraft.client.Minecraft;
 import net.minecraft.client.model.HumanoidModel;
 import net.minecraft.client.model.geom.builders.CubeDeformation;
 import net.minecraft.client.model.geom.builders.LayerDefinition;
@@ -20,7 +17,6 @@ import net.minecraft.client.model.geom.builders.LayerDefinition;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderers;
 import net.minecraft.resources.ResourceLocation;
 import net.neoforged.bus.api.IEventBus;
-import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.ModContainer;
 import net.neoforged.fml.common.Mod;
 import net.neoforged.api.distmarker.Dist;
@@ -85,17 +81,20 @@ public class QisPlan2Client {
                 QisPlan2Client::registerParticleProviders
         );
 
-        // 注册按键
-        modEventBus.addListener(
-                QisPlan2Client::registerKeyMappings
-        );
-
         // 鬼雨领域客户端逻辑
         NeoForge.EVENT_BUS.register(
                 GhostUmbrellaDomainClient.class
         );
 
-        NeoForge.EVENT_BUS.addListener(QisPlan2Client::clientTick);
+        // 注册按键
+        modEventBus.addListener(
+                ClientKeyHandler::registerKeyMappings
+        );
+
+        // 按键按键监听
+        NeoForge.EVENT_BUS.addListener(
+                ClientKeyHandler::clientTick
+        );
     }
 
     private static void registerParticleProviders(
@@ -104,26 +103,6 @@ public class QisPlan2Client {
         event.registerSpriteSet(
                 ModParticles.BLACK_RAIN.get(),
                 BlackRainParticle.Provider::new
-        );
-    }
-
-    private static void registerKeyMappings(
-            RegisterKeyMappingsEvent event
-    ) {
-        event.register(
-                ModKeyMappings.OPEN_POSSESSION_SCREEN
-        );
-
-        event.register(
-                ModKeyMappings.GHOST_DIVINATION_LIFE
-        );
-
-        event.register(
-                ModKeyMappings.GHOST_DIVINATION_DEATH
-        );
-
-        event.register(
-                ModKeyMappings.GHOST_DIVINATION_GHOST
         );
     }
 
@@ -299,28 +278,5 @@ public class QisPlan2Client {
                 ModMenus.GHOST_STOVE_MENU.get(),
                 GhostStoveScreen::new
         );
-    }
-
-    @SubscribeEvent
-    public static void clientTick(
-            ClientTickEvent.Post event
-    ) {
-
-        Minecraft minecraft =
-                Minecraft.getInstance();
-
-        while (
-                ModKeyMappings
-                        .OPEN_POSSESSION_SCREEN
-                        .consumeClick()
-        ) {
-
-            if (minecraft.screen == null) {
-
-                minecraft.setScreen(
-                        new com.qidate.qisplan2.client.gui.PossessionScreen()
-                );
-            }
-        }
     }
 }
