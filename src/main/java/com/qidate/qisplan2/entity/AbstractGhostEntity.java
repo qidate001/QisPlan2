@@ -513,6 +513,7 @@ public abstract class AbstractGhostEntity
 
             if (isCoffinNailed()) {
 
+
                 /*
                  * 必须服务端修改状态。
                  */
@@ -585,6 +586,17 @@ public abstract class AbstractGhostEntity
                     player,
                     hand
             );
+        }
+
+        /*
+         * ========================================================
+         * 必须处于死机状态才能驾驭
+         * ========================================================
+         */
+
+        if (!isSupernaturallyStunned()) {
+
+            return InteractionResult.PASS;
         }
 
         /*

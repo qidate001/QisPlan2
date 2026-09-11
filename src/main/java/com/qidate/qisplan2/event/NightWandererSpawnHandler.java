@@ -2,6 +2,7 @@ package com.qidate.qisplan2.event;
 
 import com.qidate.qisplan2.QisPlan2;
 import com.qidate.qisplan2.core.ModEntities;
+import com.qidate.qisplan2.data.NightWandererSpawnData;
 import com.qidate.qisplan2.entity.NightWanderer;
 import com.qidate.qisplan2.ghost.PossessionHandler;
 import com.qidate.qisplan2.ghost.ability.nightwanderer.NightWandererAbility;
@@ -12,6 +13,7 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.level.LightLayer;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.levelgen.Heightmap;
+import net.minecraft.world.level.saveddata.SavedData;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.bus.api.SubscribeEvent;
@@ -43,6 +45,14 @@ public class NightWandererSpawnHandler {
      */
     private static final int MAX_ATTEMPTS = 32;
 
+    private static final SavedData.Factory<NightWandererSpawnData>
+            SPAWN_DATA_FACTORY =
+            new SavedData.Factory<>(
+                    NightWandererSpawnData::create,
+                    NightWandererSpawnData::load,
+                    null
+            );
+
 
     @SubscribeEvent
     public static void onServerTick(ServerTickEvent.Post event) {
@@ -69,24 +79,13 @@ public class NightWandererSpawnHandler {
 
         /*
          * ========================================
-         * 全世界最多只能有 1 只夜游鬼
+         * 夜游鬼只会自然生成一次
          * ========================================
          */
-        List<NightWanderer> existing =
-                level.getEntitiesOfClass(
-                        NightWanderer.class,
-                        new AABB(
-                                level.getWorldBorder().getMinX(),
-                                level.getMinBuildHeight(),
-                                level.getWorldBorder().getMinZ(),
-                                level.getWorldBorder().getMaxX(),
-                                level.getMaxBuildHeight(),
-                                level.getWorldBorder().getMaxZ()
-                        ),
-                        entity -> entity.isAlive()
-                );
+        NightWandererSpawnData spawnData =
+                getSpawnData(level);
 
-        if (!existing.isEmpty()) {
+        if (spawnData.hasSpawned()) {
             return;
         }
 
@@ -134,6 +133,8 @@ public class NightWandererSpawnHandler {
                     level,
                     spawnPos
             );
+
+            spawnData.markSpawned();
 
             /*
              * 已经生成唯一的一只，
@@ -290,6 +291,15 @@ public class NightWandererSpawnHandler {
                 pos.getX(),
                 pos.getY(),
                 pos.getZ()
+        );
+    }
+
+    private static NightWandererSpawnData getSpawnData(
+            ServerLevel level
+    ) {
+        return level.getDataStorage().computeIfAbsent(
+                SPAWN_DATA_FACTORY,
+                "qisplan2_night_wanderer_spawn"
         );
     }
 }
