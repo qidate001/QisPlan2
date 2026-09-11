@@ -15,6 +15,9 @@
   "key.categories.qisplan2": "齐计划2",
   "key.qisplan2.possession_screen": "驭鬼者状态",
   "key.qisplan2.door_ghost_ability": "§4开门鬼§r/§4关门鬼§r灵异袭击",
+  "key.qisplan2.ghost_divination_life": "§4鬼签§r激活§4活签§r能力",
+  "key.qisplan2.ghost_divination_death": "§4鬼签§r激活§4死签§r能力",
+  "key.qisplan2.ghost_divination_ghost": "§4鬼签§r激活§4鬼签§r能力",
 
   "block.qisplan2.ghost_carpet": "§4鬼地毯",
   "block.qisplan2.ghost_stone_bricks": "§4鬼石砖",

@@ -3,6 +3,7 @@ package com.qidate.qisplan2;
 import com.mojang.blaze3d.platform.InputConstants;
 import com.qidate.qisplan2.client.BlackRainParticle;
 import com.qidate.qisplan2.client.GhostUmbrellaClient;
+import com.qidate.qisplan2.client.key.ModKeyMappings;
 import com.qidate.qisplan2.client.screen.GhostStoveScreen;
 import com.qidate.qisplan2.client.GhostUmbrellaDomainClient;
 import com.qidate.qisplan2.client.model.NightWandererModel;
@@ -30,18 +31,9 @@ import net.neoforged.neoforge.client.extensions.common.RegisterClientExtensionsE
 import net.neoforged.neoforge.client.gui.ConfigurationScreen;
 import net.neoforged.neoforge.client.gui.IConfigScreenFactory;
 import net.neoforged.neoforge.common.NeoForge;
-import org.lwjgl.glfw.GLFW;
 
 @Mod(value = QisPlan2.MODID, dist = Dist.CLIENT)
 public class QisPlan2Client {
-
-    public static final KeyMapping OPEN_POSSESSION_SCREEN =
-            new KeyMapping(
-                    "key.qisplan2.possession_screen",
-                    InputConstants.Type.KEYSYM,
-                    GLFW.GLFW_KEY_H,
-                    "key.categories.qisplan2"
-            );
 
     public QisPlan2Client(
             IEventBus modEventBus,
@@ -118,7 +110,21 @@ public class QisPlan2Client {
     private static void registerKeyMappings(
             RegisterKeyMappingsEvent event
     ) {
-        event.register(OPEN_POSSESSION_SCREEN);
+        event.register(
+                ModKeyMappings.OPEN_POSSESSION_SCREEN
+        );
+
+        event.register(
+                ModKeyMappings.GHOST_DIVINATION_LIFE
+        );
+
+        event.register(
+                ModKeyMappings.GHOST_DIVINATION_DEATH
+        );
+
+        event.register(
+                ModKeyMappings.GHOST_DIVINATION_GHOST
+        );
     }
 
     /**
@@ -304,7 +310,7 @@ public class QisPlan2Client {
                 Minecraft.getInstance();
 
         while (
-                QisPlan2Client
+                ModKeyMappings
                         .OPEN_POSSESSION_SCREEN
                         .consumeClick()
         ) {

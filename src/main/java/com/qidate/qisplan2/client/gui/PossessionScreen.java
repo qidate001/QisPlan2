@@ -2,6 +2,7 @@ package com.qidate.qisplan2.client.gui;
 
 import com.qidate.qisplan2.QisPlan2;
 import com.qidate.qisplan2.QisPlan2Client;
+import com.qidate.qisplan2.client.key.ModKeyMappings;
 import com.qidate.qisplan2.core.ModAttachments;
 import com.qidate.qisplan2.core.QisConfig;
 import com.qidate.qisplan2.ghost.PossessedGhostState;
@@ -785,7 +786,7 @@ public class PossessionScreen extends Screen {
          * H 再按一次关闭。
          */
         if (keyCode ==
-                QisPlan2Client
+                ModKeyMappings
                         .OPEN_POSSESSION_SCREEN
                         .getKey()
                         .getValue()) {

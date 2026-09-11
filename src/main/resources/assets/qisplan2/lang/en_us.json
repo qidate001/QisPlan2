@@ -14,6 +14,9 @@
   "key.categories.qisplan2": "Qis Plan 2",
   "key.qisplan2.possession_screen": "Ghost Controller Status",
   "key.qisplan2.door_ghost_ability": "§4Opening Ghost§r/§4Closing Ghost§r Spiritual Attack",
+  "key.qisplan2.ghost_divination_life": "§4Ghost Sign§r Activate §4Life Sign§r Ability",
+  "key.qisplan2.ghost_divination_death": "§4Ghost Sign§r Activate §4Death Sign§r Ability",
+  "key.qisplan2.ghost_divination_ghost": "§4Ghost Sign§r Activate §4Ghost Sign§r Ability",
 
   "block.qisplan2.ghost_carpet": "§4Ghost Carpet",
   "block.qisplan2.ghost_stone_bricks": "§4Ghost Stone Bricks",

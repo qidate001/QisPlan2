@@ -25,8 +25,8 @@ public class GhostDivinationSlipItem extends Item {
      *
      * 30 秒 = 600 tick
      */
-//    private static final int COOLDOWN_TICKS = 30 * 20;
-    private static final int COOLDOWN_TICKS = 10;
+    private static final int COOLDOWN_TICKS = 30 * 20;
+//    private static final int COOLDOWN_TICKS = 10;
 
     /**
      * 生签每次增加：
