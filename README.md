@@ -2,6 +2,9 @@
 
 > 一个以“规则即恐怖”为核心的我的世界模组。  
 > 设定大量借鉴小说《神秘复苏》
+> 
+> （我并没有使用Claude写代码，Contributors有是我朋友莫名其妙用Claude写了一个README，然后就有了）\
+> （现在去不掉了，也就算了吧，不管了）
 
 ![Java](https://img.shields.io/badge/Java-21-blue?style=for-the-badge)
 ![Minecraft](https://img.shields.io/badge/Minecraft-1.21.1-green?style=for-the-badge)
