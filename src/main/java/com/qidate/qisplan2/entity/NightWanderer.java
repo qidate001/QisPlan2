@@ -140,6 +140,22 @@ public class NightWanderer
      */
     @Override
     protected void tickGhostAI() {
+
+        if (supernaturalAttackCooldown > 0) {
+            supernaturalAttackCooldown--;
+        }
+
+        /*
+         * 白天停止主动 AI。
+         *
+         * 注意：
+         * 攻击 Goal 仍然可以运行，
+         * 所以近距离目标依然能够受到攻击。
+         */
+        if (level().isDay()) {
+            return;
+        }
+
         /*
          * ========================================
          * 玩家优先
@@ -287,19 +303,6 @@ public class NightWanderer
     }
 
     /**
-     * 夜游鬼白天自动消失
-     */
-    @Override
-    public void tick() {
-        super.tick();
-
-        // 白天自动消失
-        if (!level().isClientSide() && level().isDay()) {
-            discard();
-        }
-    }
-
-    /**
      * 实体属性。
      */
     public static AttributeSupplier.Builder createAttributes() {
@@ -352,6 +355,11 @@ public class NightWanderer
         @Override
         public boolean canUse() {
 
+            // 白天禁止移动
+            if (mob.level().isDay()) {
+                return false;
+            }
+
             LivingEntity target =
                     mob.getTarget();
 
@@ -366,6 +374,11 @@ public class NightWanderer
          */
         @Override
         public boolean canContinueToUse() {
+
+            // 白天禁止移动
+            if (mob.level().isDay()) {
+                return false;
+            }
 
             LivingEntity target =
                     mob.getTarget();
