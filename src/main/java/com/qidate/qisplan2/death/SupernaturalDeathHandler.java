@@ -71,7 +71,7 @@ public class SupernaturalDeathHandler {
      * @param supernaturalIntensity 灵异攻击强度
      *
      * @return true = 死亡成功
-     *         false = 被抵消
+     *         false = 被抵消/抵挡
      */
     public static boolean tryKill(
             LivingEntity entity,

@@ -1,12 +1,11 @@
 package com.qidate.qisplan2.entity;
 
 import com.qidate.qisplan2.death.ModDamageTypes;
-import com.qidate.qisplan2.death.SupernaturalCombatHandler;
 import com.qidate.qisplan2.death.SupernaturalDeathHandler;
 import com.qidate.qisplan2.ghost.ability.nightwanderer.NightWandererAbility;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.InteractionHand;
-import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
@@ -80,14 +79,41 @@ public class NightWanderer
     private int supernaturalAttackCooldown = 0;
 
     /**
-     * 灵异攻击强度
+     * 初始灵异强度。
      */
-    private static final double SUPERNATURAL_ATTACK_STRENGTH = 4.0D;
+    private static final double BASE_SUPERNATURAL_STRENGTH = 4.0D;
+
+    /**
+     * 每击杀一个实体增加的灵异强度。
+     */
+    private static final double SUPERNATURAL_STRENGTH_PER_KILL = 0.1D;
+
+    /**
+     * 击杀数量。
+     */
+    private int killCount = 0;
+
     private static final double SUPERNATURAL_DEFENSE = 6.0D;
+
+    private static final String NBT_KILL_COUNT =
+            "QisPlan2KillCount";
 
     @Override
     public double getSupernaturalDefense() {
         return SUPERNATURAL_DEFENSE;
+    }
+
+    public double getSupernaturalStrength() {
+        return BASE_SUPERNATURAL_STRENGTH
+                + killCount * SUPERNATURAL_STRENGTH_PER_KILL;
+    }
+
+    public int getKillCount() {
+        return killCount;
+    }
+
+    public void onKillEntity() {
+        killCount++;
     }
 
 
@@ -458,11 +484,16 @@ public class NightWanderer
                     InteractionHand.MAIN_HAND
             );
 
-            SupernaturalDeathHandler.tryKill(
-                    target,
-                    ModDamageTypes.ghostNightWanderer(mob),
-                    SUPERNATURAL_ATTACK_STRENGTH
-            );
+            boolean killed =
+                    SupernaturalDeathHandler.tryKill(
+                            target,
+                            ModDamageTypes.ghostNightWanderer(mob),
+                            mob.getSupernaturalStrength()
+                    );
+
+            if (killed) {
+                mob.onKillEntity();
+            }
 
             /*
              * ========================================
@@ -473,5 +504,26 @@ public class NightWanderer
             mob.supernaturalAttackCooldown =
                     SUPERNATURAL_ATTACK_COOLDOWN;
         }
+    }
+
+    @Override
+    public void addAdditionalSaveData(CompoundTag tag) {
+        super.addAdditionalSaveData(tag);
+
+        tag.putInt(
+                NBT_KILL_COUNT,
+                killCount
+        );
+    }
+
+    @Override
+    public void readAdditionalSaveData(CompoundTag tag) {
+        super.readAdditionalSaveData(tag);
+
+        killCount =
+                Math.max(
+                        0,
+                        tag.getInt(NBT_KILL_COUNT)
+                );
     }
 }
