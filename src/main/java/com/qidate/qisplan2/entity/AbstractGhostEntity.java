@@ -304,7 +304,7 @@ public abstract class AbstractGhostEntity
      * 这里处理所有实体鬼共有的死机倒计时。
      */
     @Override
-    public void aiStep() {
+    public final void aiStep() {
 
         super.aiStep();
 
@@ -313,7 +313,6 @@ public abstract class AbstractGhostEntity
          * 永久死机
          * ========================================================
          */
-
         if (permanentSupernaturalStun) {
 
             getNavigation().stop();
@@ -325,41 +324,45 @@ public abstract class AbstractGhostEntity
 
         /*
          * ========================================================
-         * 普通死机自然倒计时
+         * 普通死机倒计时
          * ========================================================
          */
-
         if (supernaturalStunTicks > 0) {
-
             supernaturalStunTicks--;
-
-            getNavigation().stop();
-            setTarget(null);
-            setAggressive(false);
         }
 
         /*
          * ========================================================
          * 棺材钉
          * ========================================================
-         *
-         * 在本 tick 所有普通死机逻辑执行完之后，
-         * 再把普通死机值重新设为 20。
-         *
-         * 所以最终每一个 tick 结束时：
-         *
-         * supernaturalStunTicks = 20
          */
         if (isCoffinNailed()) {
+            supernaturalStunTicks = 20;
+        }
 
-            supernaturalStunTicks =
-                    20;
+        /*
+         * ========================================================
+         * 当前仍然死机
+         * ========================================================
+         */
+        if (supernaturalStunTicks > 0) {
 
             getNavigation().stop();
             setTarget(null);
             setAggressive(false);
+
+            return;
         }
+
+        /*
+         * ========================================================
+         * 子类 AI
+         * ========================================================
+         */
+        tickGhostAI();
     }
+
+    protected void tickGhostAI() {}
 
 
     /*

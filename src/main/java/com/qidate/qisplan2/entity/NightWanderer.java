@@ -139,30 +139,12 @@ public class NightWanderer
      * 夜游鬼每 tick 更新自身状态。
      */
     @Override
-    public void aiStep() {
-
-        super.aiStep();
-
-        /*
-         * ========================================
-         * 死机状态
-         * ========================================
-         *
-         * AbstractGhostEntity 已经处理。
-         *
-         * 如果当前处于死机，
-         * 不继续执行夜游鬼自己的行为。
-         */
-        if (isSupernaturallyStunned()) {
-            return;
-        }
-
+    protected void tickGhostAI() {
         /*
          * ========================================
          * 玩家优先
          * ========================================
          */
-
         if (!level().isClientSide()) {
 
             Player player =
@@ -185,7 +167,6 @@ public class NightWanderer
          * 自身攻击冷却
          * ========================================
          */
-
         if (supernaturalAttackCooldown > 0) {
             supernaturalAttackCooldown--;
         }
@@ -195,9 +176,9 @@ public class NightWanderer
          * 光照移速
          * ========================================
          */
-
         updateMovementSpeed();
     }
+
 
     private void updateMovementSpeed() {
 
