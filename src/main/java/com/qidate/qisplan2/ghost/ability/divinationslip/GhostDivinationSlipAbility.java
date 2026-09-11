@@ -1,6 +1,7 @@
 package com.qidate.qisplan2.ghost.ability.divinationslip;
 
 import com.qidate.qisplan2.QisPlan2;
+import com.qidate.qisplan2.client.key.ModKeyMappings;
 import com.qidate.qisplan2.ghost.GhostAbilityContext;
 import com.qidate.qisplan2.ghost.ability.PossessedGhostAbility;
 import com.qidate.qisplan2.ghost.corrosion.CorrosionType;
@@ -16,12 +17,6 @@ public final class GhostDivinationSlipAbility
                     "ghost_divination_slip"
             );
 
-    /*
-     * 鬼签的灵异侵蚀。
-     *
-     * 这里先给一个基础值，
-     * 后续可以按照正式设定调整。
-     */
     private static final GhostCorrosion CORROSION =
             GhostCorrosion.builder()
                     .add(CorrosionType.GLOBAL, 20)
@@ -32,37 +27,56 @@ public final class GhostDivinationSlipAbility
         return ID;
     }
 
-    /**
-     * 鬼签初始本质强度。
-     */
     @Override
     public double initialIntrinsicStrength() {
         return 20.0D;
     }
 
+    @Override
+    public GhostCorrosion corrosion() {
+        return CORROSION;
+    }
+
     /**
-     * 鬼签当前没有主动能力。
+     * 主动技能：
+     *
+     * 小键盘1/2/3。
      */
     @Override
     public boolean use(
             GhostAbilityContext context
     ) {
-        return false;
-    }
 
-    /**
-     * 鬼签没有方块主动能力。
-     */
-    @Override
-    public boolean useOnBlock(
-            GhostAbilityContext context,
-            net.minecraft.core.BlockPos pos
-    ) {
-        return false;
-    }
+        var player =
+                context.player();
 
-    @Override
-    public GhostCorrosion corrosion() {
-        return CORROSION;
+        if (ModKeyMappings.GHOST_DIVINATION_LIFE.isDown()) {
+
+            GhostDivinationSlipSystem.useLife(
+                    player
+            );
+
+            return true;
+        }
+
+        if (ModKeyMappings.GHOST_DIVINATION_DEATH.isDown()) {
+
+            GhostDivinationSlipSystem.useDeath(
+                    player
+            );
+
+            return true;
+        }
+
+        if (ModKeyMappings.GHOST_DIVINATION_GHOST.isDown()) {
+
+            GhostDivinationSlipSystem.useGhost(
+                    player
+            );
+
+            return true;
+        }
+
+        return false;
     }
 }

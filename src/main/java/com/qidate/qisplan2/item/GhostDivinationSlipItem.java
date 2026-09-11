@@ -7,6 +7,7 @@ import com.qidate.qisplan2.death.ModDamageTypes;
 import com.qidate.qisplan2.ghost.GhostPossessionManager;
 import com.qidate.qisplan2.ghost.ItemGhostPossessionTarget;
 import com.qidate.qisplan2.ghost.ability.divinationslip.GhostDivinationSlipAbility;
+import com.qidate.qisplan2.ghost.ability.divinationslip.GhostDivinationSlipSystem;
 import com.qidate.qisplan2.network.QisNetwork;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
@@ -132,134 +133,29 @@ public class GhostDivinationSlipItem extends Item {
          * 服务端抽签
          * ========================================
          */
-        if (!level.isClientSide) {
+        if (!level.isClientSide
+                && player instanceof ServerPlayer serverPlayer) {
 
             int result =
                     level.random.nextInt(3);
 
             switch (result) {
 
-                /*
-                 * ====================================
-                 * 生签
-                 * ====================================
-                 */
-                case 0 -> {
-
-                    MobEffectInstance existing =
-                            player.getEffect(
-                                    ModMobEffects
-                                            .LIFE_SIGN_PROTECTION
-                            );
-
-                    int duration =
-                            LIFE_SIGN_DURATION;
-
-                    /*
-                     * 已经有生签：
-                     *
-                     * 剩余时间 + 5分钟
-                     */
-                    if (existing != null) {
-
-                        duration =
-                                existing.getDuration()
-                                        + LIFE_SIGN_DURATION;
-                    }
-
-                    player.addEffect(
-                            new MobEffectInstance(
-                                    ModMobEffects
-                                            .LIFE_SIGN_PROTECTION,
-                                    duration,
-                                    4,      // V级
-                                    false,
-                                    false,
-                                    true
-                            )
-                    );
-                }
-
-                /*
-                 * ====================================
-                 * 死签
-                 * ====================================
-                 */
-                case 1 -> {
-
-                    /*
-                     * 如果当前正处于生签守护：
-                     *
-                     * 死签不会直接杀死玩家。
-                     *
-                     * 而是导致鬼签死机。
-                     */
-                    if (player.hasEffect(
-                            ModMobEffects
-                                    .LIFE_SIGN_PROTECTION
-                    )) {
-
-                        /*
-                         * 移除生签守护。
-                         */
-                        player.removeEffect(
-                                ModMobEffects
-                                        .LIFE_SIGN_PROTECTION
+                case 0 ->
+                        GhostDivinationSlipSystem.useLife(
+                                serverPlayer
                         );
 
-                        /*
-                         * 当前这个鬼签进入死机状态。
-                         */
-                        stack.set(
-                                ModDataComponents.
-                                        GHOST_DIVINATION_CRASHED_UNTIL,
-                                level.getGameTime() + CRASH_DURATION
+                case 1 ->
+                        GhostDivinationSlipSystem.useDeathItem(
+                                serverPlayer,
+                                stack
                         );
 
-                        player.displayClientMessage(
-                                Component.literal(
-                                        "鬼签死机了。"
-                                ),
-                                true
+                case 2 ->
+                        GhostDivinationSlipSystem.useGhost(
+                                serverPlayer
                         );
-
-                        /*
-                         * 注意：
-                         *
-                         * 这里直接结束，
-                         * 不执行正常死签袭击。
-                         */
-                        return InteractionResultHolder
-                                .sidedSuccess(
-                                        stack,
-                                        level.isClientSide
-                                );
-                    }
-
-                    /*
-                     * 没有生签守护：
-                     *
-                     * 正常执行死签。
-                     */
-                    SupernaturalDeathHandler.tryKill(
-                            player,
-                            ModDamageTypes
-                                    .ghostDivinationSlip(
-                                            player
-                                    ),
-                            DEATH_SIGN_STRENGTH
-                    );
-                }
-
-                /*
-                 * ====================================
-                 * 鬼签
-                 * ====================================
-                 */
-                case 2 -> {
-
-                    // 暂无效果
-                }
             }
 
             /*
@@ -271,19 +167,6 @@ public class GhostDivinationSlipItem extends Item {
                     this,
                     COOLDOWN_TICKS
             );
-
-            /*
-             * ========================================
-             * 通知客户端播放动画
-             * ========================================
-             */
-            if (player instanceof ServerPlayer serverPlayer) {
-
-                QisNetwork.sendGhostDivinationResult(
-                        serverPlayer,
-                        result
-                );
-            }
         }
 
         return InteractionResultHolder.sidedSuccess(
