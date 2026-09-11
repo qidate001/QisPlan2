@@ -1,6 +1,7 @@
 package com.qidate.qisplan2.client.key;
 
 import com.qidate.qisplan2.client.gui.PossessionScreen;
+import com.qidate.qisplan2.network.QisNetwork;
 import net.minecraft.client.Minecraft;
 import net.neoforged.neoforge.client.event.ClientTickEvent;
 import net.neoforged.neoforge.client.event.RegisterKeyMappingsEvent;
@@ -37,13 +38,35 @@ public final class ClientKeyHandler {
             }
         }
 
-        while (ModKeyMappings.GHOST_DIVINATION_LIFE.consumeClick()) {
+
+        /*
+         * ========================================================
+         * 鬼签
+         * ========================================================
+         */
+
+        // 活签
+        while (
+                ModKeyMappings.GHOST_DIVINATION_LIFE
+                        .consumeClick()
+        ) {
+            QisNetwork.sendGhostDivinationUse(0);
         }
 
-        while (ModKeyMappings.GHOST_DIVINATION_DEATH.consumeClick()) {
+        // 死签
+        while (
+                ModKeyMappings.GHOST_DIVINATION_DEATH
+                        .consumeClick()
+        ) {
+            QisNetwork.sendGhostDivinationUse(1);
         }
 
-        while (ModKeyMappings.GHOST_DIVINATION_GHOST.consumeClick()) {
+        // 鬼签
+        while (
+                ModKeyMappings.GHOST_DIVINATION_GHOST
+                        .consumeClick()
+        ) {
+            QisNetwork.sendGhostDivinationUse(2);
         }
     }
 }

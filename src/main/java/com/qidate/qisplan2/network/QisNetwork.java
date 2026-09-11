@@ -11,6 +11,8 @@ import com.qidate.qisplan2.client.screen.GhostPossessionScreen;
 import com.qidate.qisplan2.client.screen.GhostDoorPlateScreen;
 import com.qidate.qisplan2.core.ModItems;
 import com.qidate.qisplan2.ghost.GhostPossessionSession;
+import com.qidate.qisplan2.ghost.PossessionHandler;
+import com.qidate.qisplan2.ghost.ability.divinationslip.GhostDivinationSlipAbility;
 import com.qidate.qisplan2.ghost.ability.doorghost.DoorGhostAbilityHandler;
 import com.qidate.qisplan2.ghost.domain.GhostDomain;
 import com.qidate.qisplan2.network.payload.*;
@@ -285,6 +287,12 @@ public final class QisNetwork {
          * 鬼签
          * ========================================================
          */
+
+        registrar.playToServer(
+                GhostDivinationUsePayload.TYPE,
+                GhostDivinationUsePayload.STREAM_CODEC,
+                QisNetwork::handleGhostDivinationUse
+        );
 
         registrar.playToClient(
                 GhostDivinationResultPayload.TYPE,
@@ -597,6 +605,53 @@ public final class QisNetwork {
         PacketDistributor.sendToPlayer(
                 player,
                 new GhostDivinationResultPayload(
+                        result
+                )
+        );
+    }
+
+    /*
+     * ========================================================
+     * C2S：鬼签使用
+     * ========================================================
+     */
+    private static void handleGhostDivinationUse(
+            GhostDivinationUsePayload payload,
+            IPayloadContext context
+    ) {
+
+        context.enqueueWork(() -> {
+
+            if (!(context.player()
+                    instanceof ServerPlayer player)) {
+
+                return;
+            }
+
+            /*
+             * 必须真的驾驭了鬼签。
+             */
+            if (!PossessionHandler.hasGhost(
+                    player,
+                    GhostDivinationSlipAbility.ID
+            )) {
+
+                return;
+            }
+
+            GhostDivinationSlipAbility.useResult(
+                    player,
+                    payload.result()
+            );
+        });
+    }
+
+    public static void sendGhostDivinationUse(
+            int result
+    ) {
+
+        PacketDistributor.sendToServer(
+                new GhostDivinationUsePayload(
                         result
                 )
         );
