@@ -150,6 +150,22 @@ public class ModBlocks {
     public static final DeferredItem<BlockItem> GHOST_STONE_BRICKS_PRIME_ITEM =
             ITEMS.registerSimpleBlockItem(GHOST_STONE_BRICKS_PRIME);
 
+    // 鬼坟土
+    public static final DeferredBlock<GhostGraveSoilBlock> GHOST_GRAVE_SOIL =
+            BLOCKS.registerBlock(
+                    "ghost_grave_soil",
+                    GhostGraveSoilBlock::new,
+                    BlockBehaviour.Properties.of()
+                            .mapColor(MapColor.DIRT)
+                            .strength(0.5F)
+                            .sound(SoundType.ROOTED_DIRT)
+            );
+
+    public static final DeferredItem<BlockItem> GHOST_GRAVE_SOIL_ITEM =
+            ITEMS.registerSimpleBlockItem(
+                    GHOST_GRAVE_SOIL
+            );
+
 
     // 鬼灶台
     public static final DeferredBlock<Block> GHOST_STOVE =
