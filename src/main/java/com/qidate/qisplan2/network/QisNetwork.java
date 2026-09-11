@@ -387,7 +387,6 @@ public final class QisNetwork {
         context.enqueueWork(() -> {
 
             GhostPossessionClientState.start(
-                    payload.ghostEntityId(),
                     payload.totalTicks()
             );
 
@@ -396,8 +395,7 @@ public final class QisNetwork {
             );
 
             QisPlan2.LOGGER.info(
-                    "[QisPlan2] 开始驾驭小游戏：鬼实体ID={}，总时间={} tick",
-                    payload.ghostEntityId(),
+                    "[QisPlan2] 开始驾驭小游戏：总时间={} tick",
                     payload.totalTicks()
             );
         });

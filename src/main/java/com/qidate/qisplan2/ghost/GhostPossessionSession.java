@@ -1,8 +1,8 @@
 package com.qidate.qisplan2.ghost;
 
 import net.minecraft.server.level.ServerPlayer;
-import java.util.Random;
 
+import java.util.Random;
 import java.util.UUID;
 
 public final class GhostPossessionSession {
@@ -17,147 +17,68 @@ public final class GhostPossessionSession {
     public static final double SUCCESS_GAIN = 1.2D;
     public static final double FAILURE_LOSS = 0.8D;
 
-    public enum TargetType {
-        ENTITY,
-        GHOST_DIVINATION_SLIP
-    }
-
-    private final TargetType targetType;
-
-    /**
-     * 玩家。
-     */
     private final UUID playerUUID;
 
-    /**
-     * 被驾驭的鬼。
-     */
-    private final UUID ghostUUID;
+    private final GhostPossessionTarget target;
 
-    /**
-     * 被驾驭的鬼实体 ID。
-     */
-    private final int ghostEntityId;
-
-    /**
-     * 玩家输入状态。
-     */
     private boolean leftPressed;
     private boolean rightPressed;
 
-    /**
-     * 当前光标位置：
-     *
-     * 0.0 ~ 1.0
-     */
     private double cursorPosition = 0.5D;
 
     private double targetPosition = 0.5D;
 
-    /**
-     * 当前这一段移动的目标位置。
-     */
     private double targetDestination = 0.5D;
 
-    /**
-     * 当前是否正在移动。
-     */
     private boolean targetMoving = false;
 
-    /**
-     * 当前阶段剩余 tick。
-     *
-     * 移动时：
-     *     表示还允许移动多久。
-     *
-     * 停顿时：
-     *     表示还要停多久。
-     */
     private int targetPhaseTicks = 0;
 
-    /**
-     * 当前移动速度。
-     */
     private double targetVelocity = 0.0D;
 
     private final Random random;
 
-    /**
-     * 当前成功率。
-     */
     private double success = 0.0D;
 
-    /**
-     * 剩余时间。
-     */
     private int remainingTicks = TOTAL_TICKS;
 
-    /**
-     * 随机种子。
-     */
     private final long randomSeed;
 
 
     /*
+     * ========================================================
      * 静态参数
+     * ========================================================
      */
 
-    /**
-     * 最短停顿。
-     */
     private static final int TARGET_PAUSE_MIN = 8;
 
-    /**
-     * 最长停顿。
-     */
     private static final int TARGET_PAUSE_MAX = 28;
 
-    /**
-     * 最短移动时间。
-     */
     private static final int TARGET_MOVE_MIN = 10;
 
-    /**
-     * 最长移动时间。
-     */
     private static final int TARGET_MOVE_MAX = 35;
 
-    /**
-     * 判定点一次移动的最小距离。
-     */
     private static final double TARGET_MOVE_DISTANCE_MIN = 0.08D;
 
-    /**
-     * 判定点一次移动的最大距离。
-     */
     private static final double TARGET_MOVE_DISTANCE_MAX = 0.32D;
 
-    /**
-     * 最低移动速度。
-     */
     private static final double TARGET_SPEED_MIN = 0.004D;
 
-    /**
-     * 最高移动速度。
-     */
     private static final double TARGET_SPEED_MAX = 0.018D;
 
 
-
     public GhostPossessionSession(
             ServerPlayer player,
-            UUID ghostUUID,
-            int ghostEntityId,
+            GhostPossessionTarget target,
             long randomSeed
     ) {
+
         this.playerUUID =
                 player.getUUID();
 
-        this.ghostUUID =
-                ghostUUID;
-
-        this.ghostEntityId =
-                ghostEntityId;
+        this.target =
+                target;
 
         this.randomSeed =
                 randomSeed;
@@ -167,12 +88,6 @@ public final class GhostPossessionSession {
                         randomSeed
                 );
 
-        this.targetType =
-                TargetType.ENTITY;
-
-        /*
-         * 开局先停一会儿。
-         */
         this.targetMoving =
                 false;
 
@@ -180,37 +95,6 @@ public final class GhostPossessionSession {
                 randomPauseTicks();
     }
 
-    public GhostPossessionSession(
-            ServerPlayer player,
-            long randomSeed
-    ) {
-
-        this.playerUUID =
-                player.getUUID();
-
-        this.ghostUUID =
-                null;
-
-        this.ghostEntityId =
-                -1;
-
-        this.randomSeed =
-                randomSeed;
-
-        this.random =
-                new Random(
-                        randomSeed
-                );
-
-        this.targetType =
-                TargetType.GHOST_DIVINATION_SLIP;
-
-        this.targetMoving =
-                false;
-
-        this.targetPhaseTicks =
-                randomPauseTicks();
-    }
 
     private int randomPauseTicks() {
 
@@ -222,6 +106,7 @@ public final class GhostPossessionSession {
         );
     }
 
+
     private int randomMoveTicks() {
 
         return TARGET_MOVE_MIN
@@ -231,6 +116,7 @@ public final class GhostPossessionSession {
                         + 1
         );
     }
+
 
     private double randomRange(
             double min,
@@ -242,42 +128,36 @@ public final class GhostPossessionSession {
                 * (max - min);
     }
 
+
     public UUID playerUUID() {
         return playerUUID;
     }
 
-    public UUID ghostUUID() {
-        return ghostUUID;
+
+    public GhostPossessionTarget target() {
+        return target;
     }
 
-    public int ghostEntityId() {
-        return ghostEntityId;
-    }
 
     public double cursorPosition() {
         return cursorPosition;
     }
 
+
     public double targetPosition() {
         return targetPosition;
     }
+
 
     public double success() {
         return success;
     }
 
+
     public int remainingTicks() {
         return remainingTicks;
     }
 
-    public TargetType targetType() {
-        return targetType;
-    }
-
-    public boolean isGhostDivinationSlip() {
-        return targetType ==
-                TargetType.GHOST_DIVINATION_SLIP;
-    }
 
     public void setLeftPressed(
             boolean pressed
@@ -285,11 +165,13 @@ public final class GhostPossessionSession {
         leftPressed = pressed;
     }
 
+
     public void setRightPressed(
             boolean pressed
     ) {
         rightPressed = pressed;
     }
+
 
     public void tick() {
 
@@ -312,7 +194,8 @@ public final class GhostPossessionSession {
                 Math.clamp(
                         cursorPosition,
                         0.0D,
-                        1.0D);
+                        1.0D
+                );
 
 
         /*
@@ -320,7 +203,9 @@ public final class GhostPossessionSession {
          * 判定点移动
          * ========================================
          */
+
         tickTarget();
+
 
         /*
          * ========================================
@@ -332,14 +217,8 @@ public final class GhostPossessionSession {
     }
 
 
-    /**
-     * 判断光标是否覆盖判定点。
-     */
     public boolean isAligned() {
 
-        /*
-         * 光标块有一定宽度。
-         */
         double cursorWidth =
                 0.08D;
 
@@ -356,9 +235,6 @@ public final class GhostPossessionSession {
     }
 
 
-    /**
-     * 空格 / 下键的一次“用力”。
-     */
     public void attempt() {
 
         if (isAligned()) {
@@ -376,16 +252,13 @@ public final class GhostPossessionSession {
                 Math.clamp(
                         success,
                         MIN_SUCCESS,
-                        MAX_SUCCESS);
+                        MAX_SUCCESS
+                );
     }
+
 
     private void tickTarget() {
 
-        /*
-         * ========================================================
-         * 当前正在停顿
-         * ========================================================
-         */
         if (!targetMoving) {
 
             targetPhaseTicks--;
@@ -399,23 +272,17 @@ public final class GhostPossessionSession {
         }
 
 
-        /*
-         * ========================================================
-         * 当前正在移动
-         * ========================================================
-         */
         targetPosition +=
                 targetVelocity;
 
-        /*
-         * 到达目标位置。
-         */
+
         boolean reached =
                 targetVelocity > 0.0D
                         ? targetPosition
                         >= targetDestination
                         : targetPosition
                         <= targetDestination;
+
 
         if (reached) {
 
@@ -425,37 +292,27 @@ public final class GhostPossessionSession {
             targetMoving =
                     false;
 
-            /*
-             * 到达以后停一会。
-             */
             targetPhaseTicks =
                     randomPauseTicks();
 
-            targetVelocity = 0.0D;
+            targetVelocity =
+                    0.0D;
         }
     }
 
-    private void startTargetMovement() {
 
-        /*
-         * ========================================================
-         * 决定移动方向
-         * ========================================================
-         */
+    private void startTargetMovement() {
 
         boolean moveRight =
                 random.nextBoolean();
 
-        /*
-         * ========================================================
-         * 随机移动距离
-         * ========================================================
-         */
+
         double distance =
                 randomRange(
                         TARGET_MOVE_DISTANCE_MIN,
                         TARGET_MOVE_DISTANCE_MAX
                 );
+
 
         double destination;
 
@@ -472,20 +329,15 @@ public final class GhostPossessionSession {
                             - distance;
         }
 
-        /*
-         * 防止越界。
-         */
+
         destination =
                 Math.clamp(
                         destination,
                         0.0D,
-                        1.0D);
+                        1.0D
+                );
 
-        /*
-         * 如果因为靠近边缘，
-         * 实际上没移动多少，
-         * 就反向尝试一次。
-         */
+
         if (Math.abs(
                 destination
                         - targetPosition
@@ -505,30 +357,24 @@ public final class GhostPossessionSession {
                     );
         }
 
+
         targetDestination =
                 destination;
 
-        /*
-         * ========================================================
-         * 移动时间
-         * ========================================================
-         */
+
         int moveTicks =
                 randomMoveTicks();
 
         targetPhaseTicks =
                 moveTicks;
 
-        /*
-         * ========================================================
-         * 速度
-         * ========================================================
-         */
+
         double totalDistance =
                 Math.abs(
                         targetDestination
                                 - targetPosition
                 );
+
 
         if (totalDistance <= 0.0001D) {
 
@@ -544,6 +390,7 @@ public final class GhostPossessionSession {
             return;
         }
 
+
         targetVelocity =
                 Math.copySign(
                         totalDistance
@@ -552,26 +399,27 @@ public final class GhostPossessionSession {
                                 - targetPosition
                 );
 
-        /*
-         * 限制一下速度范围，
-         * 防止太慢或者突然飞过去。
-         */
+
         double absVelocity =
                 Math.abs(
                         targetVelocity
                 );
 
+
         absVelocity =
                 Math.clamp(
                         absVelocity,
                         TARGET_SPEED_MIN,
-                        TARGET_SPEED_MAX);
+                        TARGET_SPEED_MAX
+                );
+
 
         targetVelocity =
                 Math.copySign(
                         absVelocity,
                         targetVelocity
                 );
+
 
         targetMoving =
                 true;

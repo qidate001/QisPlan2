@@ -5,6 +5,7 @@ import com.qidate.qisplan2.core.ModItems;
 import com.qidate.qisplan2.death.SupernaturalCombatHandler;
 import com.qidate.qisplan2.death.SupernaturalEntity;
 import com.qidate.qisplan2.entity.ai.GhostWanderGoal;
+import com.qidate.qisplan2.ghost.EntityGhostPossessionTarget;
 import com.qidate.qisplan2.ghost.GhostPossessionManager;
 import com.qidate.qisplan2.ghost.PossessionHandler;
 import net.minecraft.nbt.CompoundTag;
@@ -611,7 +612,9 @@ public abstract class AbstractGhostEntity
             boolean started =
                     GhostPossessionManager.start(
                             serverPlayer,
-                            this
+                            new EntityGhostPossessionTarget(
+                                    this
+                            )
                     );
 
             if (started) {

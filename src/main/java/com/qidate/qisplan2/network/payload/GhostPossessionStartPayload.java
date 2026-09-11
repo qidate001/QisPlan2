@@ -9,7 +9,6 @@ import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.resources.ResourceLocation;
 
 public record GhostPossessionStartPayload(
-        int ghostEntityId,
         int totalTicks
 ) implements CustomPacketPayload {
 
@@ -27,9 +26,6 @@ public record GhostPossessionStartPayload(
             > STREAM_CODEC =
             StreamCodec.composite(
                     ByteBufCodecs.VAR_INT,
-                    GhostPossessionStartPayload::ghostEntityId,
-
-                    ByteBufCodecs.VAR_INT,
                     GhostPossessionStartPayload::totalTicks,
 
                     GhostPossessionStartPayload::new
@@ -39,7 +35,6 @@ public record GhostPossessionStartPayload(
             GhostPossessionSession session
     ) {
         return new GhostPossessionStartPayload(
-                session.ghostEntityId(),
                 session.remainingTicks()
         );
     }

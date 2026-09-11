@@ -4,8 +4,6 @@ public final class GhostPossessionClientState {
 
     private static boolean active;
 
-    private static int ghostEntityId;
-
     private static int remainingTicks;
 
     private static double cursorPosition;
@@ -18,13 +16,9 @@ public final class GhostPossessionClientState {
     }
 
     public static void start(
-            int ghostEntityId,
             int totalTicks
     ) {
         active = true;
-
-        GhostPossessionClientState.ghostEntityId =
-                ghostEntityId;
 
         remainingTicks =
                 totalTicks;
@@ -64,10 +58,6 @@ public final class GhostPossessionClientState {
 
     public static boolean isActive() {
         return active;
-    }
-
-    public static int getGhostEntityId() {
-        return ghostEntityId;
     }
 
     public static int getRemainingTicks() {

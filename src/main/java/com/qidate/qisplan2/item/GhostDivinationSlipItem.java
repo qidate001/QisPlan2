@@ -5,6 +5,8 @@ import com.qidate.qisplan2.core.ModMobEffects;
 import com.qidate.qisplan2.death.SupernaturalDeathHandler;
 import com.qidate.qisplan2.death.ModDamageTypes;
 import com.qidate.qisplan2.ghost.GhostPossessionManager;
+import com.qidate.qisplan2.ghost.ItemGhostPossessionTarget;
+import com.qidate.qisplan2.ghost.ability.divinationslip.GhostDivinationSlipAbility;
 import com.qidate.qisplan2.network.QisNetwork;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
@@ -23,7 +25,8 @@ public class GhostDivinationSlipItem extends Item {
      *
      * 30 秒 = 600 tick
      */
-    private static final int COOLDOWN_TICKS = 30 * 20;
+//    private static final int COOLDOWN_TICKS = 30 * 20;
+    private static final int COOLDOWN_TICKS = 10;
 
     /**
      * 生签每次增加：
@@ -79,8 +82,16 @@ public class GhostDivinationSlipItem extends Item {
                         && player instanceof ServerPlayer serverPlayer) {
 
                     boolean started =
-                            GhostPossessionManager.startGhostDivinationSlip(
-                                    serverPlayer
+                            GhostPossessionManager.start(
+                                    serverPlayer,
+                                    new ItemGhostPossessionTarget(
+                                            stack,
+                                            GhostDivinationSlipAbility.ID,
+                                            targetPlayer -> stack.remove(
+                                                    ModDataComponents
+                                                            .GHOST_DIVINATION_CRASHED_UNTIL
+                                            )
+                                    )
                             );
 
                     if (started) {
