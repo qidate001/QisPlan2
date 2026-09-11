@@ -1,19 +1,10 @@
 package com.qidate.qisplan2.entity;
 
-import com.qidate.qisplan2.QisPlan2;
 import com.qidate.qisplan2.death.ModDamageTypes;
 import com.qidate.qisplan2.death.SupernaturalCombatHandler;
 import com.qidate.qisplan2.death.SupernaturalDeathHandler;
-import com.qidate.qisplan2.entity.ai.GhostWanderGoal;
-import com.qidate.qisplan2.ghost.ability.knockingghost.KnockingGhostAbility;
 import com.qidate.qisplan2.ghost.ability.nightwanderer.NightWandererAbility;
-import com.qidate.qisplan2.item.DeathCurseSword;
-import net.minecraft.core.particles.ParticleTypes;
-import net.minecraft.nbt.CompoundTag;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.server.level.ServerLevel;
-import net.minecraft.sounds.SoundEvents;
-import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.EntityType;
@@ -28,7 +19,6 @@ import net.minecraft.world.entity.ai.goal.target.NearestAttackableTargetGoal;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LightLayer;
-import org.checkerframework.checker.units.qual.N;
 
 import java.util.EnumSet;
 
@@ -126,26 +116,10 @@ public class NightWanderer
                         3.0D
                 )
         );
-        /*
-         * ========================================
-         * 玩家优先
-         * ========================================
-         */
-//        this.targetSelector.addGoal(
-//                1,
-//                new NearestAttackableTargetGoal<>(
-//                        this,
-//                        Player.class,
-//                        32,
-//                        true,
-//                        false,
-//                        target -> target instanceof Player
-//                )
-//        );
 
         /*
          * ========================================
-         * 没有玩家时，攻击其他 LivingEntity
+         * 攻击 LivingEntity
          * ========================================
          */
         this.targetSelector.addGoal(
@@ -157,19 +131,6 @@ public class NightWanderer
                         true,
                         false,
                         target -> !(target instanceof Player)
-                )
-        );
-
-        /*
-         * ========================================
-         * 没有目标，四处游荡
-         * ========================================
-         */
-        this.goalSelector.addGoal(
-                8,
-                new GhostWanderGoal(
-                        this,
-                        0.7D
                 )
         );
     }
@@ -342,25 +303,6 @@ public class NightWanderer
         if (attribute.hasModifier(LIGHT_SPEED_MODIFIER_ID)) {
             attribute.removeModifier(LIGHT_SPEED_MODIFIER_ID);
         }
-    }
-
-    /**
-     * 夜游鬼无敌。
-     */
-    @Override
-    public boolean isInvulnerableTo(
-            DamageSource damageSource
-    ) {
-        return SupernaturalCombatHandler.isInvulnerableTo(
-                this,
-                damageSource
-        );
-    }
-
-    @Override
-    public boolean isSupernaturallyStunned() {
-        return permanentSupernaturalStun
-                || supernaturalStunTicks > 0;
     }
 
     /**
