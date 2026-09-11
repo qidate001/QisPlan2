@@ -4,6 +4,7 @@ import com.qidate.qisplan2.core.ModDataComponents;
 import com.qidate.qisplan2.core.ModMobEffects;
 import com.qidate.qisplan2.death.SupernaturalDeathHandler;
 import com.qidate.qisplan2.death.ModDamageTypes;
+import com.qidate.qisplan2.ghost.GhostPossessionManager;
 import com.qidate.qisplan2.network.QisNetwork;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
@@ -67,58 +68,39 @@ public class GhostDivinationSlipItem extends Item {
          *
          * 死机状态属于当前这一个鬼签。
          */
-        if (stack.has(
-                ModDataComponents.GHOST_DIVINATION_CRASHED_UNTIL
-        )) {
+        Long crashedUntil = stack.get(ModDataComponents.GHOST_DIVINATION_CRASHED_UNTIL);
+        boolean crashed = crashedUntil != null
+                && level.getGameTime() < crashedUntil;
 
-            Long crashedUntil =
-                    stack.get(
-                            ModDataComponents
-                                    .GHOST_DIVINATION_CRASHED_UNTIL
-                    );
+        if (crashed) {
+            // 死机状态：只有 Shift+右键才能尝试驾驭
+            if (player.isShiftKeyDown()) {
+                if (!level.isClientSide()
+                        && player instanceof ServerPlayer serverPlayer) {
 
-            if (crashedUntil != null) {
+                    boolean started =
+                            GhostPossessionManager.startGhostDivinationSlip(
+                                    serverPlayer
+                            );
 
-                long gameTime =
-                        level.getGameTime();
-
-                /*
-                 * 仍然处于死机状态。
-                 */
-                if (gameTime < crashedUntil) {
-
-                    if (!level.isClientSide) {
-
-                        player.displayClientMessage(
-                                Component.literal(
-                                        "鬼签已经死机，暂时无法回应。"
-                                ),
-                                true
-                        );
+                    if (started) {
+                        return InteractionResultHolder.consume(stack);
                     }
-
-                    /*
-                     * 关键：
-                     * 直接结束这次使用。
-                     *
-                     * 不能继续往下进入抽签逻辑。
-                     */
-                    return InteractionResultHolder.fail(
-                            stack
-                    );
                 }
 
-                /*
-                 * 死机已经结束。
-                 *
-                 * 删除死机组件，
-                 * 这一次使用可以正常继续。
-                 */
-                stack.remove(
-                        ModDataComponents
-                                .GHOST_DIVINATION_CRASHED_UNTIL
+                return InteractionResultHolder.sidedSuccess(
+                        stack,
+                        level.isClientSide()
                 );
             }
+
+            // 死机状态下普通右键无效
+            return InteractionResultHolder.fail(stack);
+        }
+
+        // 死机时间已经结束，清除状态
+        if (crashedUntil != null) {
+            stack.remove(ModDataComponents.GHOST_DIVINATION_CRASHED_UNTIL);
         }
 
 

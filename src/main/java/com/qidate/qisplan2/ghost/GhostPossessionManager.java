@@ -1,13 +1,16 @@
 package com.qidate.qisplan2.ghost;
 
 import com.qidate.qisplan2.QisPlan2;
+import com.qidate.qisplan2.core.ModDataComponents;
 import com.qidate.qisplan2.core.ModItems;
 import com.qidate.qisplan2.death.SupernaturalEntity;
 import com.qidate.qisplan2.entity.AbstractGhostEntity;
+import com.qidate.qisplan2.ghost.ability.divinationslip.GhostDivinationSlipAbility;
 import com.qidate.qisplan2.network.QisNetwork;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.item.ItemStack;
 
@@ -95,6 +98,41 @@ public final class GhostPossessionManager {
         return true;
     }
 
+    public static boolean startGhostDivinationSlip(
+            ServerPlayer player
+    ) {
+
+        /*
+         * 已经正在驾驭其他鬼。
+         */
+        if (isPossessing(player)) {
+            return false;
+        }
+
+        GhostPossessionSession session =
+                new GhostPossessionSession(
+                        player,
+                        player.serverLevel()
+                                .getRandom()
+                                .nextLong()
+                );
+
+        SESSIONS.put(
+                player.getUUID(),
+                session
+        );
+
+        /*
+         * 打开原来的驾驭小游戏。
+         */
+        QisNetwork.sendPossessionStart(
+                player,
+                session
+        );
+
+        return true;
+    }
+
 
     /**
      * 每 tick。
@@ -137,6 +175,38 @@ public final class GhostPossessionManager {
 
             ServerLevel level =
                     player.serverLevel();
+
+            /*
+             * ========================================================
+             * 鬼签
+             * ========================================================
+             *
+             * 鬼签不是 Entity，
+             * 不需要寻找实体，也不存在实体死亡/消失问题。
+             */
+            if (session.isGhostDivinationSlip()) {
+
+                session.tick();
+
+                if (session.remainingTicks() <= 0) {
+
+                    finishGhostDivinationSlip(
+                            player,
+                            session
+                    );
+
+                    iterator.remove();
+
+                    continue;
+                }
+
+                QisNetwork.sendPossessionUpdate(
+                        player,
+                        session
+                );
+
+                continue;
+            }
 
             Entity ghost =
                     level.getEntity(
@@ -337,6 +407,111 @@ public final class GhostPossessionManager {
 
         /*
          * 最终关闭客户端小游戏。
+         */
+        QisNetwork.sendPossessionEnd(
+                player,
+                won,
+                success
+        );
+    }
+
+    private static void finishGhostDivinationSlip(
+            ServerPlayer player,
+            GhostPossessionSession session
+    ) {
+        double success =
+                session.success();
+
+        boolean won =
+                player.serverLevel()
+                        .getRandom()
+                        .nextDouble()
+                        * 100.0D
+                        < success;
+
+        /*
+         * ========================================
+         * 成功
+         * ========================================
+         */
+        if (won) {
+
+            boolean possessed =
+                    PossessionHandler.possess(
+                            player,
+                            GhostDivinationSlipAbility.ID
+                    );
+
+            if (possessed) {
+
+                /*
+                 * 驾驭成功：
+                 * 消耗鬼签。
+                 */
+                for (InteractionHand hand :
+                        InteractionHand.values()) {
+
+                    ItemStack stack =
+                            player.getItemInHand(hand);
+
+                    if (stack.is(
+                            ModItems.GHOST_DIVINATION_SLIP.get()
+                    )) {
+
+                        stack.shrink(1);
+
+                        break;
+                    }
+                }
+
+            } else {
+
+                /*
+                 * 理论上不会发生。
+                 *
+                 * 例如玩家已经驾驭了鬼签，
+                 * PossessionHandler.possess()
+                 * 会返回 false。
+                 */
+                won = false;
+            }
+        }
+
+        /*
+         * ========================================
+         * 失败
+         * ========================================
+         */
+        if (!won) {
+
+            /*
+             * 驾驭失败：
+             * 鬼签立即结束死机状态。
+             */
+            for (InteractionHand hand :
+                    InteractionHand.values()) {
+
+                ItemStack stack =
+                        player.getItemInHand(hand);
+
+                if (stack.is(
+                        ModItems.GHOST_DIVINATION_SLIP.get()
+                )) {
+
+                    stack.remove(
+                            ModDataComponents
+                                    .GHOST_DIVINATION_CRASHED_UNTIL
+                    );
+
+                    break;
+                }
+            }
+        }
+
+        /*
+         * ========================================
+         * 关闭客户端小游戏
+         * ========================================
          */
         QisNetwork.sendPossessionEnd(
                 player,

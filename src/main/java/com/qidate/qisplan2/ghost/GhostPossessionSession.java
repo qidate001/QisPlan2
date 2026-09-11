@@ -17,6 +17,13 @@ public final class GhostPossessionSession {
     public static final double SUCCESS_GAIN = 1.2D;
     public static final double FAILURE_LOSS = 0.8D;
 
+    public enum TargetType {
+        ENTITY,
+        GHOST_DIVINATION_SLIP
+    }
+
+    private final TargetType targetType;
+
     /**
      * 玩家。
      */
@@ -160,9 +167,44 @@ public final class GhostPossessionSession {
                         randomSeed
                 );
 
+        this.targetType =
+                TargetType.ENTITY;
+
         /*
          * 开局先停一会儿。
          */
+        this.targetMoving =
+                false;
+
+        this.targetPhaseTicks =
+                randomPauseTicks();
+    }
+
+    public GhostPossessionSession(
+            ServerPlayer player,
+            long randomSeed
+    ) {
+
+        this.playerUUID =
+                player.getUUID();
+
+        this.ghostUUID =
+                null;
+
+        this.ghostEntityId =
+                -1;
+
+        this.randomSeed =
+                randomSeed;
+
+        this.random =
+                new Random(
+                        randomSeed
+                );
+
+        this.targetType =
+                TargetType.GHOST_DIVINATION_SLIP;
+
         this.targetMoving =
                 false;
 
@@ -228,6 +270,15 @@ public final class GhostPossessionSession {
         return remainingTicks;
     }
 
+    public TargetType targetType() {
+        return targetType;
+    }
+
+    public boolean isGhostDivinationSlip() {
+        return targetType ==
+                TargetType.GHOST_DIVINATION_SLIP;
+    }
+
     public void setLeftPressed(
             boolean pressed
     ) {
@@ -258,13 +309,10 @@ public final class GhostPossessionSession {
         }
 
         cursorPosition =
-                Math.max(
+                Math.clamp(
+                        cursorPosition,
                         0.0D,
-                        Math.min(
-                                1.0D,
-                                cursorPosition
-                        )
-                );
+                        1.0D);
 
 
         /*
@@ -325,13 +373,10 @@ public final class GhostPossessionSession {
         }
 
         success =
-                Math.max(
+                Math.clamp(
+                        success,
                         MIN_SUCCESS,
-                        Math.min(
-                                MAX_SUCCESS,
-                                success
-                        )
-                );
+                        MAX_SUCCESS);
     }
 
     private void tickTarget() {
@@ -431,13 +476,10 @@ public final class GhostPossessionSession {
          * 防止越界。
          */
         destination =
-                Math.max(
+                Math.clamp(
+                        destination,
                         0.0D,
-                        Math.min(
-                                1.0D,
-                                destination
-                        )
-                );
+                        1.0D);
 
         /*
          * 如果因为靠近边缘，
@@ -520,13 +562,10 @@ public final class GhostPossessionSession {
                 );
 
         absVelocity =
-                Math.max(
+                Math.clamp(
+                        absVelocity,
                         TARGET_SPEED_MIN,
-                        Math.min(
-                                TARGET_SPEED_MAX,
-                                absVelocity
-                        )
-                );
+                        TARGET_SPEED_MAX);
 
         targetVelocity =
                 Math.copySign(

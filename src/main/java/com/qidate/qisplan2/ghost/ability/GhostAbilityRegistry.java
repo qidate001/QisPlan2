@@ -1,5 +1,6 @@
 package com.qidate.qisplan2.ghost.ability;
 
+import com.qidate.qisplan2.ghost.ability.divinationslip.GhostDivinationSlipAbility;
 import com.qidate.qisplan2.ghost.ability.doorghost.ClosingGhostAbility;
 import com.qidate.qisplan2.ghost.ability.doorghost.OpeningGhostAbility;
 import com.qidate.qisplan2.ghost.ability.knockingghost.KnockingGhostAbility;
@@ -76,6 +77,10 @@ public final class GhostAbilityRegistry {
 
         register(
                 new ClosingGhostAbility()
+        );
+
+        register(
+                new GhostDivinationSlipAbility()
         );
     }
 }
