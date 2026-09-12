@@ -19,7 +19,7 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LightLayer;
 
-import java.util.EnumSet;
+import java.util.*;
 
 public class NightWanderer
         extends AbstractGhostEntity
@@ -61,13 +61,6 @@ public class NightWanderer
     }
 
     /**
-     * 灵异攻击后的死机时间。
-     *
-     * 10 秒 = 200 tick
-     */
-    private static final int SUPERNATURAL_STUN_TIME = 100;
-
-    /**
      * 灵异攻击后的休息时间：
      * 10 秒 = 200 tick
      */
@@ -81,7 +74,7 @@ public class NightWanderer
     /**
      * 初始灵异强度。
      */
-    private static final double BASE_SUPERNATURAL_STRENGTH = 4.0D;
+    private static final double BASE_SUPERNATURAL_STRENGTH = 5.0D;
 
     /**
      * 每击杀一个实体增加的灵异强度。
@@ -114,6 +107,15 @@ public class NightWanderer
 
     public void onKillEntity() {
         killCount++;
+    }
+
+    public void addKillCount(int amount) {
+
+        if (amount <= 0) {
+            return;
+        }
+
+        killCount += amount;
     }
 
 
@@ -166,11 +168,6 @@ public class NightWanderer
      */
     @Override
     protected void tickGhostAI() {
-
-        if (supernaturalAttackCooldown > 0) {
-            supernaturalAttackCooldown--;
-        }
-
         /*
          * 白天停止主动 AI。
          *
