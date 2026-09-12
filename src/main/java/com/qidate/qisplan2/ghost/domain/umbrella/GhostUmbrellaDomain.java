@@ -33,7 +33,7 @@ public final class GhostUmbrellaDomain {
      *  - 已有鬼域 -> 更新位置
      *
      * 没有撑着鬼雨伞：
-     *  - 删除鬼域
+     *  - 删除鬼雨伞鬼域
      */
     public static void tick(ServerPlayer player) {
 
@@ -49,7 +49,10 @@ public final class GhostUmbrellaDomain {
         GhostDomainManager manager =
                 GhostDomainManager.get(player.serverLevel());
 
-        if (manager.getBySource(player.getUUID()) != null) {
+        if (manager.getBySourceAndType(
+                player.getUUID(),
+                TYPE
+        ) != null) {
             remove(player);
         }
     }
@@ -67,7 +70,10 @@ public final class GhostUmbrellaDomain {
         UUID playerUUID = player.getUUID();
 
         GhostDomain domain =
-                manager.getBySource(playerUUID);
+                manager.getBySourceAndType(
+                        playerUUID,
+                        TYPE
+                );
 
         if (domain == null) {
 
@@ -105,6 +111,9 @@ public final class GhostUmbrellaDomain {
     public static void remove(ServerPlayer player) {
 
         GhostDomainManager.get(player.serverLevel())
-                .removeBySource(player.getUUID());
+                .removeBySourceAndType(
+                        player.getUUID(),
+                        TYPE
+                );
     }
 }

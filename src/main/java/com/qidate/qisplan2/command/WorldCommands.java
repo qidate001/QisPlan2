@@ -7,6 +7,7 @@ import com.mojang.brigadier.context.CommandContext;
 
 import com.qidate.qisplan2.QisPlan2;
 import com.qidate.qisplan2.death.SupernaturalEntity;
+import com.qidate.qisplan2.ghost.domain.debug.DebugDomain;
 import com.qidate.qisplan2.structure.GhostLakeGenerationManager;
 import com.qidate.qisplan2.structure.GhostManorGenerationManager;
 import com.qidate.qisplan2.structure.StructureSplitter;
@@ -16,6 +17,7 @@ import net.minecraft.commands.Commands;
 import net.minecraft.commands.arguments.ResourceLocationArgument;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.phys.AABB;
 
@@ -58,6 +60,37 @@ public final class WorldCommands {
                                         )
                                         .executes(
                                                 WorldCommands::killWithRadius
+                                        )
+                        )
+        );
+
+        /*
+         * ========================================================
+         * /qisplan2 debug_domain
+         * ========================================================
+         */
+
+        root.then(
+                Commands.literal("debug_domain")
+                        .then(
+                                Commands.literal("create")
+                                        .then(
+                                                Commands.argument(
+                                                                "radius",
+                                                                DoubleArgumentType.doubleArg(
+                                                                        1.0D,
+                                                                        512.0D
+                                                                )
+                                                        )
+                                                        .executes(
+                                                                WorldCommands::createDebugDomain
+                                                        )
+                                        )
+                        )
+                        .then(
+                                Commands.literal("remove")
+                                        .executes(
+                                                WorldCommands::removeDebugDomain
                                         )
                         )
         );
@@ -374,6 +407,84 @@ public final class WorldCommands {
 
         return 1;
     }
+
+    private static int createDebugDomain(
+            CommandContext<CommandSourceStack> context
+    ) {
+
+        CommandSourceStack source =
+                context.getSource();
+
+        if (!(source.getEntity()
+                instanceof ServerPlayer player)) {
+
+            source.sendFailure(
+                    Component.literal(
+                            "这个命令必须由玩家执行。"
+                    )
+            );
+
+            return 0;
+        }
+
+        double radius =
+                DoubleArgumentType.getDouble(
+                        context,
+                        "radius"
+                );
+
+        DebugDomain.create(
+                player,
+                radius
+        );
+
+        source.sendSuccess(
+                () -> Component.literal(
+                        "已创建 Debug 鬼域（半径 "
+                                + radius
+                                + "）。"
+                ),
+                true
+        );
+
+        return 1;
+    }
+
+    private static int removeDebugDomain(
+            CommandContext<CommandSourceStack> context
+    ) {
+
+        CommandSourceStack source =
+                context.getSource();
+
+        if (!(source.getEntity()
+                instanceof ServerPlayer player)) {
+
+            source.sendFailure(
+                    Component.literal(
+                            "这个命令必须由玩家执行。"
+                    )
+            );
+
+            return 0;
+        }
+
+        DebugDomain.remove(
+                player
+        );
+
+        source.sendSuccess(
+                () -> Component.literal(
+                        "已删除 Debug 鬼域。"
+                ),
+                true
+        );
+
+        return 1;
+    }
 }
+
+
+
 
 

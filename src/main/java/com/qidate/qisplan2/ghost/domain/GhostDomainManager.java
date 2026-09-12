@@ -2,6 +2,7 @@ package com.qidate.qisplan2.ghost.domain;
 
 import com.qidate.qisplan2.QisPlan2;
 import com.qidate.qisplan2.network.QisNetwork;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 
@@ -98,6 +99,27 @@ public final class GhostDomainManager {
         }
     }
 
+    public void removeBySourceAndType(
+            UUID sourceUUID,
+            ResourceLocation type
+    ) {
+
+        List<UUID> remove = new ArrayList<>();
+
+        for (GhostDomain domain : domains.values()) {
+
+            if (sourceUUID.equals(domain.getSourceUUID())
+                    && type.equals(domain.getType())) {
+
+                remove.add(domain.getId());
+            }
+        }
+
+        for (UUID id : remove) {
+            remove(id);
+        }
+    }
+
     public void updatePosition(
             UUID domainId,
             double x,
@@ -159,6 +181,23 @@ public final class GhostDomainManager {
             if (sourceUUID.equals(
                     domain.getSourceUUID()
             )) {
+                return domain;
+            }
+        }
+
+        return null;
+    }
+
+    public GhostDomain getBySourceAndType(
+            UUID sourceUUID,
+            ResourceLocation type
+    ) {
+
+        for (GhostDomain domain : domains.values()) {
+
+            if (sourceUUID.equals(domain.getSourceUUID())
+                    && type.equals(domain.getType())) {
+
                 return domain;
             }
         }
