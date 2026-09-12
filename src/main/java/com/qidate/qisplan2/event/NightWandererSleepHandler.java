@@ -26,6 +26,12 @@ public final class NightWandererSleepHandler {
             return;
         }
 
+        /*
+         * 在当前维度的玩家附近寻找夜游鬼。
+         *
+         * 这里使用玩家位置而不是整个世界的 WorldBorder，
+         * 因为睡眠事件本身就是由玩家触发的。
+         */
         List<NightWanderer> ghosts = new ArrayList<>();
 
         for (var player : level.players()) {
@@ -53,6 +59,10 @@ public final class NightWandererSleepHandler {
          */
         long skippedTime = event.getNewTime();
 
+        /*
+         * 每 30 秒睡眠时间，
+         * 相当于夜游鬼额外猎杀一个实体。
+         */
         int kills =
                 (int) (skippedTime / KILL_INTERVAL);
 
@@ -66,9 +76,45 @@ public final class NightWandererSleepHandler {
         }
 
         /*
-         * 目前先按照当前维度找到的第一只夜游鬼处理。
+         * 目前按照当前维度找到的第一只夜游鬼处理。
          */
         NightWanderer ghost = ghosts.getFirst();
+
+        /*
+         * 夜游鬼已经死亡。
+         */
+        if (!ghost.isAlive()) {
+            QisPlan2.LOGGER.info(
+                    "[夜游鬼睡眠] 夜游鬼 {} 已死亡，本次不增加击杀数",
+                    ghost.getUUID()
+            );
+
+            return;
+        }
+
+        /*
+         * 夜游鬼已经被棺材钉钉住。
+         */
+        if (ghost.isCoffinNailed()) {
+            QisPlan2.LOGGER.info(
+                    "[夜游鬼睡眠] 夜游鬼 {} 已被棺材钉钉住，本次不增加击杀数",
+                    ghost.getUUID()
+            );
+
+            return;
+        }
+
+        /*
+         * 夜游鬼已经被灵异压制，无法继续活动。
+         */
+        if (ghost.isSupernaturallyStunned()) {
+            QisPlan2.LOGGER.info(
+                    "[夜游鬼睡眠] 夜游鬼 {} 已被灵异压制，本次不增加击杀数",
+                    ghost.getUUID()
+            );
+
+            return;
+        }
 
         int oldKillCount =
                 ghost.getKillCount();
@@ -76,10 +122,15 @@ public final class NightWandererSleepHandler {
         double oldStrength =
                 ghost.getSupernaturalStrength();
 
+        /*
+         * 根据睡眠时间增加夜游鬼的“猎杀记录”。
+         */
         ghost.addKillCount(kills);
 
         QisPlan2.LOGGER.info(
-                "[夜游鬼睡眠] 睡眠 {} tick，夜游鬼击杀数 {} -> {}，灵异强度 {} -> {}",
+                "[夜游鬼睡眠] 睡眠 {} tick，"
+                        + "夜游鬼击杀数 {} -> {}，"
+                        + "灵异强度 {} -> {}",
                 skippedTime,
                 oldKillCount,
                 ghost.getKillCount(),
