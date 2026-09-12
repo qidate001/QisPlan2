@@ -16,20 +16,35 @@ public final class GhostDomain {
 
     private final ResourceKey<Level> dimension;
 
+    /**
+     * 鬼域强度。
+     */
+    private final double strength;
+
+    /**
+     * 鬼域层数，范围 1～10。
+     */
+    private final int layer;
+
     private double x;
     private double y;
     private double z;
 
     private final GhostDomainShape shape;
+
     private final GhostDomainUpdateMode updateMode;
-    private final GhostDomainBehavior behavior;
+
     private final double updateDistance;
+
+    private final GhostDomainBehavior behavior;
 
 
     public GhostDomain(
             UUID id,
             UUID sourceUUID,
             ResourceLocation type,
+            double strength,
+            int layer,
             ResourceKey<Level> dimension,
             double x,
             double y,
@@ -39,9 +54,23 @@ public final class GhostDomain {
             double updateDistance,
             GhostDomainBehavior behavior
     ) {
+        if (strength < 0.0D) {
+            throw new IllegalArgumentException(
+                    "GhostDomain strength cannot be negative."
+            );
+        }
+
+        if (layer < 1 || layer > 10) {
+            throw new IllegalArgumentException(
+                    "GhostDomain layer must be between 1 and 10."
+            );
+        }
+
         this.id = id;
         this.sourceUUID = sourceUUID;
         this.type = type;
+        this.strength = strength;
+        this.layer = layer;
         this.dimension = dimension;
         this.x = x;
         this.y = y;

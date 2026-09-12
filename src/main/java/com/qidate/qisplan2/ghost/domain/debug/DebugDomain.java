@@ -20,7 +20,9 @@ public final class DebugDomain {
 
     public static void create(
             ServerPlayer player,
-            double radius
+            double radius,
+            int layer,
+            double strength
     ) {
 
         GhostDomainManager manager =
@@ -28,8 +30,9 @@ public final class DebugDomain {
                         player.serverLevel()
                 );
 
-        manager.removeBySource(
-                player.getUUID()
+        manager.removeBySourceAndType(
+                player.getUUID(),
+                TYPE
         );
 
         manager.add(
@@ -37,6 +40,8 @@ public final class DebugDomain {
                         UUID.randomUUID(),
                         player.getUUID(),
                         TYPE,
+                        strength,
+                        layer,
                         player.serverLevel().dimension(),
                         player.getX(),
                         player.getY(),

@@ -79,8 +79,10 @@ public final class GhostUmbrellaDomain {
 
             domain = new GhostDomain(
                     UUID.randomUUID(),
-                    playerUUID,
+                    player.getUUID(),
                     TYPE,
+                    100.0D, // 强度
+                    3,      // 层数
                     level.dimension(),
                     player.getX(),
                     player.getY(),

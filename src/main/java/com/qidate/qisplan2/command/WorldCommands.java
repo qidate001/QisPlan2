@@ -77,13 +77,22 @@ public final class WorldCommands {
                                         .then(
                                                 Commands.argument(
                                                                 "radius",
-                                                                DoubleArgumentType.doubleArg(
-                                                                        1.0D,
-                                                                        512.0D
-                                                                )
+                                                                DoubleArgumentType.doubleArg(1.0D, 512.0D)
                                                         )
-                                                        .executes(
-                                                                WorldCommands::createDebugDomain
+                                                        .executes(WorldCommands::createDebugDomain)
+                                                        .then(
+                                                                Commands.argument(
+                                                                                "layer",
+                                                                                IntegerArgumentType.integer(1, 10)
+                                                                        )
+                                                                        .executes(WorldCommands::createDebugDomain)
+                                                                        .then(
+                                                                                Commands.argument(
+                                                                                                "strength",
+                                                                                                DoubleArgumentType.doubleArg(0.0D)
+                                                                                        )
+                                                                                        .executes(WorldCommands::createDebugDomain)
+                                                                        )
                                                         )
                                         )
                         )
@@ -433,15 +442,46 @@ public final class WorldCommands {
                         "radius"
                 );
 
+        int layer = 1;
+
+        try {
+            layer = IntegerArgumentType.getInteger(
+                    context,
+                    "layer"
+            );
+        } catch (IllegalArgumentException ignored) {
+            // 未提供层数，使用默认值 1
+        }
+
+        double strength = 1.0D;
+
+        try {
+            strength = DoubleArgumentType.getDouble(
+                    context,
+                    "strength"
+            );
+        } catch (IllegalArgumentException ignored) {
+            // 未提供强度，使用默认值 1
+        }
+
         DebugDomain.create(
                 player,
-                radius
+                radius,
+                layer,
+                strength
         );
+
+        final int finalLayer = layer;
+        final double finalStrength = strength;
 
         source.sendSuccess(
                 () -> Component.literal(
                         "已创建 Debug 鬼域（半径 "
                                 + radius
+                                + "，层数 "
+                                + finalLayer
+                                + "，强度 "
+                                + finalStrength
                                 + "）。"
                 ),
                 true
