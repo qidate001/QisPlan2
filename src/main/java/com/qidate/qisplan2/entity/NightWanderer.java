@@ -7,9 +7,7 @@ import com.qidate.qisplan2.ghost.ability.nightwanderer.NightWandererAbility;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.server.level.ServerLevel;
 import net.minecraft.util.Mth;
-import net.minecraft.util.RandomSource;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
@@ -184,6 +182,14 @@ public class NightWanderer
         }
 
         killCount += amount;
+    }
+
+    private int getSupernaturalAttackCooldown() {
+        return Math.max(
+                1,
+                SUPERNATURAL_ATTACK_COOLDOWN
+                        - killCount / 5
+        );
     }
 
     /**
@@ -1133,11 +1139,11 @@ public class NightWanderer
 
             /*
              * ========================================
-             * 攻击结束，进入 10 秒休息
+             * 攻击结束，进入休息时间
              * ========================================
              */
             mob.supernaturalAttackCooldown =
-                    SUPERNATURAL_ATTACK_COOLDOWN;
+                    mob.getSupernaturalAttackCooldown();
         }
     }
 
