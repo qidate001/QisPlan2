@@ -1,6 +1,5 @@
 package com.qidate.qisplan2.client.domain;
 
-import com.qidate.qisplan2.QisPlan2;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.resources.ResourceLocation;
@@ -27,7 +26,9 @@ public final class ClientGhostDomainManager {
             double x,
             double y,
             double z,
-            double radius
+            double radius,
+            double strength,
+            int layer
     ) {
 
         ClientGhostDomain domain =
@@ -39,7 +40,9 @@ public final class ClientGhostDomainManager {
                         x,
                         y,
                         z,
-                        radius
+                        radius,
+                        strength,
+                        layer
                 );
 
         DOMAINS.put(id, domain);

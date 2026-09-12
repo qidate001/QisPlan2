@@ -165,11 +165,6 @@ public class GhostUmbrellaRenderer
          * 第三人称
          * ========================================
          */
-        /*
-         * ========================================
-         * 第三人称
-         * ========================================
-         */
         else if (displayContext == ItemDisplayContext.THIRD_PERSON_RIGHT_HAND
                 || displayContext == ItemDisplayContext.THIRD_PERSON_LEFT_HAND) {
 

@@ -44,35 +44,95 @@ public final class GhostUmbrellaDomainClient {
             double z
     ) {
 
+        ClientGhostDomain effectiveDomain =
+                getEffectiveDomain(
+                        x,
+                        y,
+                        z
+                );
+
+        if (effectiveDomain == null) {
+            return false;
+        }
+
+        return DOMAIN_TYPE.equals(
+                effectiveDomain.getDomainType()
+        );
+    }
+
+    /**
+     * 获取指定位置当前实际生效的客户端鬼域。
+     *
+     * 优先级规则与服务器端 GhostDomainManager 保持一致：
+     *
+     * 1. 层数高的优先
+     * 2. 层数相同，强度高的优先
+     */
+    private static ClientGhostDomain getEffectiveDomain(
+            double x,
+            double y,
+            double z
+    ) {
+
         Minecraft minecraft =
                 Minecraft.getInstance();
 
         if (minecraft.level == null) {
-            return false;
+            return null;
         }
 
         ResourceLocation currentDimension =
                 minecraft.level.dimension().location();
 
+        ClientGhostDomain effectiveDomain = null;
+
         for (ClientGhostDomain domain :
                 ClientGhostDomainManager.getDomains()) {
 
-            if (!DOMAIN_TYPE.equals(
-                    domain.getDomainType())) {
-                continue;
-            }
-
+            /*
+             * 只处理当前维度。
+             */
             if (!currentDimension.equals(
                     domain.getDimension())) {
                 continue;
             }
 
-            if (domain.contains(x, y, z)) {
-                return true;
+            /*
+             * 这个鬼域不包含当前位置。
+             */
+            if (!domain.contains(x, y, z)) {
+                continue;
+            }
+
+            /*
+             * 第一个符合条件的鬼域。
+             */
+            if (effectiveDomain == null) {
+                effectiveDomain = domain;
+                continue;
+            }
+
+            /*
+             * 使用与服务器完全相同的优先级规则。
+             */
+            if (domain.getLayer()
+                    > effectiveDomain.getLayer()) {
+
+                effectiveDomain = domain;
+
+                continue;
+            }
+
+            if (domain.getLayer()
+                    == effectiveDomain.getLayer()
+                    && domain.getStrength()
+                    > effectiveDomain.getStrength()) {
+
+                effectiveDomain = domain;
             }
         }
 
-        return false;
+        return effectiveDomain;
     }
 
     @SubscribeEvent

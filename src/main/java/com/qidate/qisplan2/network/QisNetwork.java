@@ -204,7 +204,7 @@ public final class QisNetwork {
 
         /*
          * ========================================================
-         * 鬼雨伞
+         * 鬼域
          * ========================================================
          */
 
@@ -223,17 +223,21 @@ public final class QisNetwork {
                                 payload.x(),
                                 payload.y(),
                                 payload.z(),
-                                payload.radius()
+                                payload.radius(),
+                                payload.strength(),
+                                payload.layer()
                         );
 
                         QisPlan2.LOGGER.info(
-                                "[GhostDomain] CLIENT ADD: id={} type={} pos=({}, {}, {}) radius={}",
+                                "[GhostDomain] CLIENT ADD: id={} type={} pos=({}, {}, {}) radius={} strength={} layer={}",
                                 payload.id(),
                                 payload.domainType(),
                                 payload.x(),
                                 payload.y(),
                                 payload.z(),
-                                payload.radius()
+                                payload.radius(),
+                                payload.strength(),
+                                payload.layer()
                         );
                     });
                 }

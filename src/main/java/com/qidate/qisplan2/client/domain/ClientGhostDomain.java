@@ -18,6 +18,8 @@ public final class ClientGhostDomain {
     private double z;
 
     private final GhostDomainShape shape;
+    private final double strength;
+    private final int layer;
 
     public ClientGhostDomain(
             UUID id,
@@ -27,7 +29,9 @@ public final class ClientGhostDomain {
             double x,
             double y,
             double z,
-            double radius
+            double radius,
+            double strength,
+            int layer
     ) {
         this.id = id;
         this.sourceUUID = sourceUUID;
@@ -39,6 +43,8 @@ public final class ClientGhostDomain {
         this.z = z;
 
         this.shape = new CylinderDomainShape(radius);
+        this.strength = strength;
+        this.layer = layer;
     }
 
     public UUID getId() {
@@ -96,5 +102,13 @@ public final class ClientGhostDomain {
 
     public GhostDomainShape getShape() {
         return shape;
+    }
+
+    public double getStrength() {
+        return strength;
+    }
+
+    public int getLayer() {
+        return layer;
     }
 }

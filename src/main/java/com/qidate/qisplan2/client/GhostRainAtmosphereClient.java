@@ -1,6 +1,5 @@
 package com.qidate.qisplan2.client;
 
-import net.minecraft.client.Minecraft;
 import net.minecraft.world.phys.Vec3;
 
 public final class GhostRainAtmosphereClient {

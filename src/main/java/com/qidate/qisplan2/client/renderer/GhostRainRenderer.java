@@ -9,6 +9,7 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.Tesselator;
 import com.mojang.blaze3d.vertex.VertexFormat;
 import com.qidate.qisplan2.client.GhostRainSource;
+import com.qidate.qisplan2.client.GhostUmbrellaDomainClient;
 import net.minecraft.client.Camera;
 import net.minecraft.client.DeltaTracker;
 import net.minecraft.client.renderer.GameRenderer;
@@ -361,6 +362,23 @@ public final class GhostRainRenderer {
                 if (domainDistanceSqr
                         > radius * radius) {
 
+                    continue;
+                }
+
+                /*
+                 * ------------------------------------------------
+                 * 检查当前位置实际生效的鬼域
+                 * ------------------------------------------------
+                 *
+                 * 即使雨柱位于鬼雨领域范围内，
+                 * 如果这里被更高优先级鬼域覆盖，
+                 * 也不能继续渲染鬼雨。
+                 */
+                if (!GhostUmbrellaDomainClient.isPositionInsideDomain(
+                        worldX + 0.5D,
+                        cameraY,
+                        worldZ + 0.5D
+                )) {
                     continue;
                 }
 
