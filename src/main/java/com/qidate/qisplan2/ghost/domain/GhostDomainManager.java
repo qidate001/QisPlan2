@@ -5,6 +5,7 @@ import com.qidate.qisplan2.network.QisNetwork;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.entity.Entity;
 
 import java.util.*;
 
@@ -203,6 +204,56 @@ public final class GhostDomainManager {
         }
 
         return null;
+    }
+
+    public GhostDomain getEffectiveDomain(
+            double x,
+            double y,
+            double z
+    ) {
+
+        GhostDomain effectiveDomain = null;
+
+        for (GhostDomain domain : domains.values()) {
+
+            if (!domain.contains(x, y, z)) {
+                continue;
+            }
+
+            if (effectiveDomain == null) {
+                effectiveDomain = domain;
+                continue;
+            }
+
+            if (GhostDomainPriority.canOverride(
+                    domain,
+                    effectiveDomain
+            )) {
+                effectiveDomain = domain;
+            }
+        }
+
+        return effectiveDomain;
+    }
+
+    /**
+     * 获取实体当前所处的最终鬼域。
+     *
+     * <p>实体如果同时处于多个鬼域中，
+     * 会按照 {@link GhostDomainPriority} 的规则
+     * 决定最终生效的鬼域。</p>
+     *
+     * @param entity 要判断的实体
+     * @return 实体当前所处的最终鬼域；如果不在任何鬼域中则返回 null
+     */
+    public GhostDomain getEffectiveDomain(
+            Entity entity
+    ) {
+        return getEffectiveDomain(
+                entity.getX(),
+                entity.getY(),
+                entity.getZ()
+        );
     }
 
     public Collection<GhostDomain> getDomains() {

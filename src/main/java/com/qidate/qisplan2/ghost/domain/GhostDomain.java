@@ -96,6 +96,14 @@ public final class GhostDomain {
         return type;
     }
 
+    public double getStrength() {
+        return strength;
+    }
+
+    public int getLayer() {
+        return layer;
+    }
+
 
     public ResourceKey<Level> getDimension() {
         return dimension;
