@@ -74,6 +74,10 @@ public final class GhostDomainManager {
             return;
         }
 
+        GhostDomainEntityTracker
+                .get(level)
+                .removeDomain(id);
+
         domain.getBehavior().onRemove(
                 level,
                 domain

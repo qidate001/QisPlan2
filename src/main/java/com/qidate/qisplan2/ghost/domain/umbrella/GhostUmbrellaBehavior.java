@@ -4,11 +4,13 @@ import com.qidate.qisplan2.death.ModDamageTypes;
 import com.qidate.qisplan2.death.SupernaturalDeathHandler;
 import com.qidate.qisplan2.ghost.domain.GhostDomain;
 import com.qidate.qisplan2.ghost.domain.GhostDomainBehavior;
+import com.qidate.qisplan2.ghost.domain.GhostDomainEntityTracker;
 import com.qidate.qisplan2.item.GhostUmbrellaItem;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.phys.AABB;
 
@@ -171,6 +173,9 @@ public final class GhostUmbrellaBehavior
 
     /**
      * 攻击鬼域范围内的其他生物。
+     *
+     * <p>实体范围由 GhostDomainEntityTracker 统一维护，
+     * 这里不再自行进行 AABB 搜索和鬼域范围判定。</p>
      */
     private void attackEntitiesInDomain(
             ServerLevel level,
@@ -179,53 +184,25 @@ public final class GhostUmbrellaBehavior
             double strength
     ) {
 
-        /*
-         * ========================================
-         * AABB 粗筛
-         * ========================================
-         *
-         * 这里暂时使用一个足够大的方形范围。
-         * 最终是否在鬼域内，由 domain.contains()
-         * 决定。
-         */
         double radius = 50.0D;
 
-        if (domain.getShape()
-                instanceof com.qidate.qisplan2.ghost.domain.CylinderDomainShape cylinder) {
-
-            radius = cylinder.getRadius();
-        }
-
-        AABB box =
-                new AABB(
-                        domain.getX() - radius,
-                        level.getMinBuildHeight(),
-                        domain.getZ() - radius,
-                        domain.getX() + radius,
-                        level.getMaxBuildHeight(),
-                        domain.getZ() + radius
-                );
+        AABB box = new AABB(
+                domain.getX() - radius,
+                domain.getY() - radius,
+                domain.getZ() - radius,
+                domain.getX() + radius,
+                domain.getY() + radius,
+                domain.getZ() + radius
+        );
 
         for (LivingEntity target :
                 level.getEntitiesOfClass(
                         LivingEntity.class,
                         box,
-                        LivingEntity::isAlive
+                        entity -> entity != source
+                                && entity.isAlive()
                 )) {
 
-            /*
-             * 持伞者自己不会受到“领域攻击”。
-             * 他会单独受到反噬。
-             */
-            if (target == source) {
-                continue;
-            }
-
-            /*
-             * ========================================
-             * 真正的领域判定
-             * ========================================
-             */
             if (!domain.contains(
                     target.getX(),
                     target.getY(),
@@ -234,9 +211,6 @@ public final class GhostUmbrellaBehavior
                 continue;
             }
 
-            /*
-             * 灵异攻击。
-             */
             SupernaturalDeathHandler.tryKill(
                     target,
                     ModDamageTypes.ghostUmbrella(source),
