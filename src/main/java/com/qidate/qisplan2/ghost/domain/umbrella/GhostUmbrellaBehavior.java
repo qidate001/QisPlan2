@@ -12,7 +12,6 @@ import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.phys.AABB;
 
 public final class GhostUmbrellaBehavior
         implements GhostDomainBehavior {
@@ -100,6 +99,8 @@ public final class GhostUmbrellaBehavior
          * 反噬持伞者。
          */
         attackUmbrellaHolder(
+                level,
+                domain,
                 source,
                 strength / SELF_ATTACK_DIVISOR
         );
@@ -156,11 +157,33 @@ public final class GhostUmbrellaBehavior
      * 反噬持伞者。
      */
     private void attackUmbrellaHolder(
+            ServerLevel level,
+            GhostDomain domain,
             ServerPlayer player,
             double strength
     ) {
 
         if (!player.isAlive()) {
+            return;
+        }
+
+        GhostDomainEntityTracker tracker =
+                GhostDomainEntityTracker.get(level);
+
+        GhostDomain effectiveDomain =
+                tracker.getEffectiveDomain(player);
+
+        /*
+         * 只有鬼雨伞鬼域是伞主人的最终生效鬼域时，
+         * 鬼雨伞才会攻击伞主人。
+         */
+        if (effectiveDomain == null) {
+            return;
+        }
+
+        if (!effectiveDomain.getId().equals(
+                domain.getId()
+        )) {
             return;
         }
 
@@ -184,29 +207,37 @@ public final class GhostUmbrellaBehavior
             double strength
     ) {
 
-        double radius = 50.0D;
+        GhostDomainEntityTracker tracker =
+                GhostDomainEntityTracker.get(level);
 
-        AABB box = new AABB(
-                domain.getX() - radius,
-                domain.getY() - radius,
-                domain.getZ() - radius,
-                domain.getX() + radius,
-                domain.getY() + radius,
-                domain.getZ() + radius
-        );
+        for (Entity entity :
+                tracker.getEntities(domain)) {
 
-        for (LivingEntity target :
-                level.getEntitiesOfClass(
-                        LivingEntity.class,
-                        box,
-                        entity -> entity != source
-                                && entity.isAlive()
-                )) {
+            if (entity == source) {
+                continue;
+            }
 
-            if (!domain.contains(
-                    target.getX(),
-                    target.getY(),
-                    target.getZ()
+            if (!(entity instanceof LivingEntity target)) {
+                continue;
+            }
+
+            if (!target.isAlive()) {
+                continue;
+            }
+
+            /*
+             * 只有当前鬼雨伞鬼域是该实体的最终生效鬼域时，
+             * 鬼雨伞才能对其发动灵异袭击。
+             */
+            GhostDomain effectiveDomain =
+                    tracker.getEffectiveDomain(entity);
+
+            if (effectiveDomain == null) {
+                continue;
+            }
+
+            if (!effectiveDomain.getId().equals(
+                    domain.getId()
             )) {
                 continue;
             }

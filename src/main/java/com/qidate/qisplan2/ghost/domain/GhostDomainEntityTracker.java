@@ -1,7 +1,9 @@
 package com.qidate.qisplan2.ghost.domain;
 
+import com.qidate.qisplan2.QisPlan2;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
 
 import java.util.*;
@@ -130,6 +132,14 @@ public final class GhostDomainEntityTracker {
                                 ignored -> new LinkedHashSet<>()
                         )
                         .add(entityUUID);
+
+                if (entity instanceof ServerPlayer) {
+                    QisPlan2.LOGGER.info(
+                            "[GhostDomainTracker] 实体进入鬼域: entity={}, domain={}",
+                            entity.getName().getString(),
+                            domainId
+                    );
+                }
             }
         }
 
