@@ -244,9 +244,11 @@ public final class GhostRainRenderer {
          * ========================================================
          */
 
+        boolean hasRain = false;
+
         for (GhostRainSource source : sources) {
 
-            renderSource(
+            if (renderSource(
                     buffer,
                     poseStack,
                     source,
@@ -256,7 +258,9 @@ public final class GhostRainRenderer {
                     cameraY,
                     cameraZ,
                     animationTime
-            );
+            )) {
+                hasRain = true;
+            }
         }
 
 
@@ -265,6 +269,14 @@ public final class GhostRainRenderer {
          * 提交
          * ========================================================
          */
+
+        if (!hasRain) {
+            RenderSystem.depthMask(true);
+            RenderSystem.enableDepthTest();
+            RenderSystem.enableCull();
+            RenderSystem.disableBlend();
+            return;
+        }
 
         MeshData mesh =
                 buffer.buildOrThrow();
@@ -293,7 +305,7 @@ public final class GhostRainRenderer {
      * ============================================================
      */
 
-    private static void renderSource(
+    private static boolean renderSource(
             BufferBuilder buffer,
             PoseStack poseStack,
             GhostRainSource source,
@@ -304,6 +316,8 @@ public final class GhostRainRenderer {
             double cameraZ,
             double animationTime
     ) {
+
+        boolean hasRain = false;
 
         /*
          * ========================================================
@@ -582,8 +596,12 @@ public final class GhostRainRenderer {
                         bottomZ,
                         RAIN_WIDTH
                 );
+
+                hasRain = true;
             }
         }
+
+        return hasRain;
     }
 
 
