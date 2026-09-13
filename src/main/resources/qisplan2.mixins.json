@@ -5,8 +5,7 @@
   "compatibilityLevel": "JAVA_21",
   "client": [
     "HumanoidModelMixin",
-    "LevelRendererMixin",
-    "FogRendererMixin"
+    "LevelRendererMixin"
   ],
 
   "mixins": [

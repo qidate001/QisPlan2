@@ -1,0 +1,9 @@
+{
+  "vertex": "qisplan2:ghost_eye",
+  "fragment": "qisplan2:ghost_eye",
+  "attributes": [
+    "Position"
+  ],
+  "samplers": [],
+  "uniforms": []
+}

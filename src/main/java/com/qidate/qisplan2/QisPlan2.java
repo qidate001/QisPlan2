@@ -1,6 +1,8 @@
 package com.qidate.qisplan2;
 
+import com.mojang.blaze3d.vertex.DefaultVertexFormat;
 import com.mojang.logging.LogUtils;
+import com.qidate.qisplan2.client.renderer.GhostEyeShader;
 import com.qidate.qisplan2.core.ModEntityAttributes;
 import com.qidate.qisplan2.core.ModRegistries;
 import com.qidate.qisplan2.core.QisConfig;
@@ -11,11 +13,16 @@ import com.qidate.qisplan2.ghost.domain.GhostDomainPlayerLogout;
 import com.qidate.qisplan2.ghost.domain.GhostDomainPlayerSync;
 import com.qidate.qisplan2.ghost.domain.GhostDomainServerTick;
 import com.qidate.qisplan2.ghost.doorplate.GhostDoorPlateTeleportHandler;
+import net.minecraft.client.renderer.ShaderInstance;
+import net.minecraft.resources.ResourceLocation;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.ModContainer;
 import net.neoforged.fml.common.Mod;
+import net.neoforged.neoforge.client.event.RegisterShadersEvent;
 import net.neoforged.neoforge.common.NeoForge;
 import org.slf4j.Logger;
+
+import java.io.IOException;
 
 @Mod(QisPlan2.MODID)
 public class QisPlan2 {
@@ -36,6 +43,10 @@ public class QisPlan2 {
         // 实体属性注册
         modEventBus.addListener(
                 ModEntityAttributes::register
+        );
+
+        modEventBus.addListener(
+                QisPlan2::registerShaders
         );
 
         // 灵异伤害类型注册
@@ -66,5 +77,26 @@ public class QisPlan2 {
 
         // 鬼门牌注册
         GhostDoorPlateTeleportHandler.register();
+    }
+
+    private static void registerShaders(RegisterShadersEvent event) {
+        try {
+            event.registerShader(
+                    new ShaderInstance(
+                            event.getResourceProvider(),
+                            ResourceLocation.fromNamespaceAndPath(
+                                    MODID,
+                                    "ghost_eye"
+                            ),
+                            DefaultVertexFormat.POSITION
+                    ),
+                    GhostEyeShader::setInstance
+            );
+        } catch (IOException e) {
+            throw new RuntimeException(
+                    "Failed to register ghost eye shader",
+                    e
+            );
+        }
     }
 }
