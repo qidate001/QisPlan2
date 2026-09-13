@@ -167,33 +167,15 @@ public final class GhostDomainAtmosphereClient {
             ClientGhostDomain domain
     ) {
 
-        /*
-         * 第一层鬼域：
-         *
-         * 天空开始泛红。
-         */
         if (domain.getLayer() != 1) {
             return original;
         }
 
-        /*
-         * 保留原天空颜色，
-         * 同时向红色偏移。
-         */
-        double red =
-                original.x * 0.85D
-                        + 0.15D;
-
-        double green =
-                original.y * 0.85D;
-
-        double blue =
-                original.z * 0.85D;
-
+        // 测试阶段：直接使用纯红色
         return new Vec3(
-                red,
-                green,
-                blue
+                1.0D,
+                0.0D,
+                0.0D
         );
     }
 }
