@@ -101,10 +101,17 @@ void main() {
     vec3 red =
     vec3(1.0, 0.0, 0.0);
 
-    vec3 finalColor =
+    vec3 ghostColor =
     mix(
             scene.rgb,
             red,
+            0.3
+    );
+
+    vec3 finalColor =
+    mix(
+            scene.rgb,
+            ghostColor,
             inside
     );
 
