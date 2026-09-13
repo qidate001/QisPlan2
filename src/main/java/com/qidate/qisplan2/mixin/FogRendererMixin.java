@@ -1,5 +1,6 @@
 package com.qidate.qisplan2.mixin;
 
+import com.mojang.blaze3d.shaders.FogShape;
 import com.qidate.qisplan2.client.domain.ClientGhostDomain;
 import com.qidate.qisplan2.client.domain.ClientGhostDomainManager;
 import com.qidate.qisplan2.ghost.ability.ghosteye.GhostEyeAbility;
@@ -41,7 +42,6 @@ public abstract class FogRendererMixin {
             float bossColorModifier,
             CallbackInfo ci
     ) {
-
         ClientGhostDomain domain =
                 ClientGhostDomainManager.getEffectiveDomain(
                         camera.getPosition().x,
@@ -53,9 +53,7 @@ public abstract class FogRendererMixin {
             return;
         }
 
-        if (!GhostEyeAbility.ID.equals(
-                domain.getDomainType()
-        )) {
+        if (!GhostEyeAbility.ID.equals(domain.getDomainType())) {
             return;
         }
 
@@ -63,9 +61,44 @@ public abstract class FogRendererMixin {
             return;
         }
 
-        // 测试：鬼眼第一层将远处雾气染成纯红色
-        fogRed = 1.0F;
+        // 测试：把雾颜色 / clearColor 改成纯蓝
+        fogRed = 0.0F;
         fogGreen = 0.0F;
-        fogBlue = 0.0F;
+        fogBlue = 1.0F;
+    }
+
+    @Inject(
+            method = "setupFog",
+            at = @At("TAIL")
+    )
+    private static void qisplan2$testSkyFog(
+            Camera camera,
+            FogRenderer.FogMode fogMode,
+            float farPlaneDistance,
+            boolean shouldCreateFog,
+            float partialTicks,
+            CallbackInfo ci
+    ) {
+        if (fogMode != FogRenderer.FogMode.FOG_SKY) {
+            return;
+        }
+
+        ClientGhostDomain domain =
+                ClientGhostDomainManager.getEffectiveDomain(
+                        camera.getPosition().x,
+                        camera.getPosition().y,
+                        camera.getPosition().z
+                );
+
+        if (domain == null
+                || !GhostEyeAbility.ID.equals(domain.getDomainType())
+                || domain.getLayer() != 1) {
+            return;
+        }
+
+        // 测试：几乎完全取消天空 Fog
+        RenderSystem.setShaderFogStart(10000.0F);
+        RenderSystem.setShaderFogEnd(10001.0F);
+        RenderSystem.setShaderFogShape(FogShape.CYLINDER);
     }
 }
