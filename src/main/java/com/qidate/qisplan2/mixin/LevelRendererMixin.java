@@ -1,39 +1,28 @@
 package com.qidate.qisplan2.mixin;
 
-import net.minecraft.client.multiplayer.ClientLevel;
+import com.qidate.qisplan2.client.renderer.GhostEyeRenderHandler;
 import net.minecraft.client.renderer.LevelRenderer;
-import net.minecraft.world.phys.Vec3;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
-import org.spongepowered.asm.mixin.injection.Redirect;
+import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(LevelRenderer.class)
 public abstract class LevelRendererMixin {
 
-//    @Redirect(
-//            method = "renderSky",
-//            at = @At(
-//                    value = "INVOKE",
-//                    target = "Lnet/minecraft/client/multiplayer/ClientLevel;getSkyColor(Lnet/minecraft/world/phys/Vec3;F)Lnet/minecraft/world/phys/Vec3;"
-//            )
-//    )
-//    private Vec3 qisplan2$modifySkyColor(
-//            ClientLevel level,
-//            Vec3 cameraPos,
-//            float partialTick
-//    ) {
-//
-//        Vec3 original =
-//                level.getSkyColor(
-//                        cameraPos,
-//                        partialTick
-//                );
-//
-//        return GhostDomainAtmosphereClient.applySkyColor(
-//                original,
-//                cameraPos.x,
-//                cameraPos.y,
-//                cameraPos.z
-//        );
-//    }
+    /**
+     * 世界渲染完成后进行鬼眼后处理。
+     *
+     * 当前阶段仅用于测试：
+     * 绘制一个覆盖整个屏幕的纯红色 Shader。
+     */
+    @Inject(
+            method = "renderLevel",
+            at = @At("TAIL")
+    )
+    private void qisplan2$renderGhostEye(
+            CallbackInfo ci
+    ) {
+        GhostEyeRenderHandler.render();
+    }
 }
