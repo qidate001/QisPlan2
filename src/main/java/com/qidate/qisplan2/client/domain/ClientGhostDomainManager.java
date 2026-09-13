@@ -138,4 +138,65 @@ public final class ClientGhostDomainManager {
 
         domain.setPosition(x, y, z);
     }
+
+    public static ClientGhostDomain getEffectiveDomain(
+            double x,
+            double y,
+            double z
+    ) {
+
+        ClientGhostDomain effective = null;
+
+        for (ClientGhostDomain domain : DOMAINS.values()) {
+
+            /*
+             * --------------------------------------------------------
+             * 是否处于这个鬼域
+             * --------------------------------------------------------
+             */
+
+            if (!domain.getShape().contains(
+                    domain.getX(),
+                    domain.getY(),
+                    domain.getZ(),
+                    x,
+                    y,
+                    z
+            )) {
+                continue;
+            }
+
+            /*
+             * --------------------------------------------------------
+             * 第一个符合条件的鬼域
+             * --------------------------------------------------------
+             */
+
+            if (effective == null) {
+                effective = domain;
+                continue;
+            }
+
+            /*
+             * --------------------------------------------------------
+             * 比较鬼域优先级
+             * --------------------------------------------------------
+             */
+
+            // 更高层级优先
+            if (domain.getLayer() > effective.getLayer()) {
+                effective = domain;
+                continue;
+            }
+
+            // 同层级，强度更高优先
+            if (domain.getLayer() == effective.getLayer()
+                    && domain.getStrength() > effective.getStrength()) {
+
+                effective = domain;
+            }
+        }
+
+        return effective;
+    }
 }
