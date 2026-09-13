@@ -14,7 +14,7 @@
   ],
   "uniforms": [
     {
-      "name": "ProjMat",
+      "name": "GhostEyeProjMat",
       "type": "matrix4x4",
       "count": 16,
       "values": [
@@ -25,7 +25,7 @@
       ]
     },
     {
-      "name": "ModelViewMat",
+      "name": "GhostEyeModelViewMat",
       "type": "matrix4x4",
       "count": 16,
       "values": [
@@ -36,7 +36,7 @@
       ]
     },
     {
-      "name": "CameraPos",
+      "name": "GhostEyeCameraPos",
       "type": "float",
       "count": 3,
       "values": [

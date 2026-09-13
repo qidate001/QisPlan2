@@ -3,10 +3,10 @@
 uniform sampler2D DiffuseSampler;
 uniform sampler2D MainDepthSampler;
 
-uniform mat4 ProjMat;
-uniform mat4 ModelViewMat;
+uniform mat4 GhostEyeProjMat;
+uniform mat4 GhostEyeModelViewMat;
 
-uniform vec3 CameraPos;
+uniform vec3 GhostEyeCameraPos;
 uniform vec3 GhostEyeDomainCenter;
 
 uniform float GhostEyeDomainRadius;
@@ -50,7 +50,7 @@ void main() {
     // -----------------------------
 
     vec4 viewPosition =
-        inverse(ProjMat)
+        inverse(GhostEyeProjMat)
         * ndcPosition;
 
     viewPosition /=
@@ -62,7 +62,7 @@ void main() {
     // -----------------------------
 
     vec4 worldPosition =
-        inverse(ModelViewMat)
+        inverse(GhostEyeModelViewMat)
         * viewPosition;
 
     worldPosition /=
@@ -75,7 +75,7 @@ void main() {
 
     vec3 worldPos =
         worldPosition.xyz
-        + CameraPos;
+        + GhostEyeCameraPos;
 
 
     // -----------------------------

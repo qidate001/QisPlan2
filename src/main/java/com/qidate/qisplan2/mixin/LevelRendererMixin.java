@@ -21,7 +21,7 @@ public abstract class LevelRendererMixin {
             method = "renderLevel",
             at = @At("HEAD")
     )
-    private void qisplan2$captureModelViewMatrix(
+    private void qisplan2$captureMatrices(
             DeltaTracker deltaTracker,
             boolean renderBlockOutline,
             Camera camera,
@@ -33,6 +33,10 @@ public abstract class LevelRendererMixin {
     ) {
         GhostEyeRenderHandler.captureModelViewMatrix(
                 new Matrix4f(frustumMatrix)
+        );
+
+        GhostEyeRenderHandler.captureProjectionMatrix(
+                new Matrix4f(projectionMatrix)
         );
     }
 

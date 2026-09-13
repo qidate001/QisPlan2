@@ -29,6 +29,19 @@ public final class GhostEyeRenderHandler {
         return capturedModelViewMatrix;
     }
 
+    private static Matrix4f capturedProjectionMatrix =
+            new Matrix4f();
+
+    public static void captureProjectionMatrix(
+            Matrix4f matrix
+    ) {
+        capturedProjectionMatrix.set(matrix);
+    }
+
+    public static Matrix4f getCapturedProjectionMatrix() {
+        return capturedProjectionMatrix;
+    }
+
     private static int debugLogTicks = 0;
 
     private static void debugLog() {
@@ -144,18 +157,18 @@ public final class GhostEyeRenderHandler {
                 depthTexture
         );
 
-        shader.getUniform("ProjMat").set(
+        shader.getUniform("GhostEyeProjMat").set(
                 RenderSystem.getProjectionMatrix()
         );
 
-        shader.getUniform("ModelViewMat").set(
+        shader.getUniform("GhostEyeModelViewMat").set(
                 GhostEyeRenderHandler.getCapturedModelViewMatrix()
         );
 
         Camera camera =
                 minecraft.gameRenderer.getMainCamera();
 
-        shader.getUniform("CameraPos").set(
+        shader.getUniform("GhostEyeCameraPos").set(
                 (float) camera.getPosition().x,
                 (float) camera.getPosition().y,
                 (float) camera.getPosition().z
