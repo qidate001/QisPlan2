@@ -213,4 +213,31 @@ public final class ClientGhostDomainManager {
 
         return effective;
     }
+
+    public static ClientGhostDomain getFirstDomainByType(
+            ResourceLocation domainType
+    ) {
+
+        ResourceLocation currentDimension =
+                getCurrentDimension();
+
+        if (currentDimension == null) {
+            return null;
+        }
+
+        for (ClientGhostDomain domain : DOMAINS.values()) {
+
+            if (!domain.getDimension().equals(currentDimension)) {
+                continue;
+            }
+
+            if (!domainType.equals(domain.getDomainType())) {
+                continue;
+            }
+
+            return domain;
+        }
+
+        return null;
+    }
 }

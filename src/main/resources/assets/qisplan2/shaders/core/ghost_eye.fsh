@@ -11,6 +11,7 @@ uniform vec3 GhostEyeDomainCenter;
 
 uniform float GhostEyeDomainRadius;
 uniform float GhostEyeDomainActive;
+uniform float GhostEyeDomainLayer;
 
 in vec2 texCoord;
 
@@ -99,21 +100,31 @@ void main() {
     texture(DiffuseSampler, texCoord);
 
     vec3 red =
-    vec3(1.0, 0.0, 0.0);
+        vec3(1.0, 0.0, 0.0);
+
+    float redStrength =
+        0.15 + (GhostEyeDomainLayer - 1.0) * 0.10;
+
+    redStrength =
+        clamp(
+                redStrength,
+                0.15,
+                0.65
+        );
 
     vec3 ghostColor =
-    mix(
+        mix(
             scene.rgb,
             red,
-            0.3
-    );
+            redStrength
+        );
 
     vec3 finalColor =
-    mix(
-            scene.rgb,
-            ghostColor,
-            inside
-    );
+        mix(
+                scene.rgb,
+                ghostColor,
+                inside
+        );
 
     fragColor = vec4(
             finalColor,

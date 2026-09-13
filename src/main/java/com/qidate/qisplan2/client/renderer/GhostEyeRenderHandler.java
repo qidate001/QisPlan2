@@ -2,16 +2,98 @@ package com.qidate.qisplan2.client.renderer;
 
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.*;
+import com.qidate.qisplan2.QisPlan2;
 import com.qidate.qisplan2.client.domain.ClientGhostDomain;
 import com.qidate.qisplan2.client.domain.ClientGhostDomainManager;
 import com.qidate.qisplan2.ghost.ability.ghosteye.GhostEyeAbility;
 import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.ShaderInstance;
+import org.joml.Matrix4f;
 
 public final class GhostEyeRenderHandler {
 
     private GhostEyeRenderHandler() {
+    }
+
+    private static Matrix4f capturedModelViewMatrix =
+            new Matrix4f();
+
+    public static void captureModelViewMatrix(
+            Matrix4f matrix
+    ) {
+        capturedModelViewMatrix.set(matrix);
+    }
+
+    public static Matrix4f getCapturedModelViewMatrix() {
+        return capturedModelViewMatrix;
+    }
+
+    private static int debugLogTicks = 0;
+
+    private static void debugLog() {
+
+        Minecraft minecraft = Minecraft.getInstance();
+
+        if (minecraft.level == null) {
+            return;
+        }
+
+        Camera camera =
+                minecraft.gameRenderer.getMainCamera();
+
+        ClientGhostDomain domain =
+                getCurrentGhostEyeDomain(minecraft);
+
+        if (domain == null) {
+            QisPlan2.LOGGER.info(
+                    "[GhostEye DEBUG] domain=null camera=({}, {}, {})",
+                    camera.getPosition().x,
+                    camera.getPosition().y,
+                    camera.getPosition().z
+            );
+            return;
+        }
+
+        double dx =
+                domain.getX() - camera.getPosition().x;
+
+        double dy =
+                domain.getY() - camera.getPosition().y;
+
+        double dz =
+                domain.getZ() - camera.getPosition().z;
+
+        QisPlan2.LOGGER.info(
+                "[GhostEye DEBUG] " +
+                        "camera=({}, {}, {}) " +
+                        "domain=({}, {}, {}) " +
+                        "delta=({}, {}, {}) " +
+                        "radius={} layer={}",
+
+                camera.getPosition().x,
+                camera.getPosition().y,
+                camera.getPosition().z,
+
+                domain.getX(),
+                domain.getY(),
+                domain.getZ(),
+
+                dx,
+                dy,
+                dz,
+
+                domain.getRadius(),
+                domain.getLayer()
+        );
+
+        Matrix4f matrix =
+                getCapturedModelViewMatrix();
+
+        QisPlan2.LOGGER.info(
+                "[GhostEye DEBUG] ModelViewMatrix={}",
+                matrix
+        );
     }
 
     /**
@@ -21,6 +103,14 @@ public final class GhostEyeRenderHandler {
      * Shader 本身会将它渲染成纯红色。
      */
     public static void render() {
+
+        debugLogTicks++;
+
+        if (debugLogTicks >= 20) {
+            debugLogTicks = 0;
+
+            debugLog();
+        }
 
         if (!GhostEyeShader.isReady()) {
             return;
@@ -59,7 +149,7 @@ public final class GhostEyeRenderHandler {
         );
 
         shader.getUniform("ModelViewMat").set(
-                RenderSystem.getModelViewMatrix()
+                GhostEyeRenderHandler.getCapturedModelViewMatrix()
         );
 
         Camera camera =
@@ -94,6 +184,12 @@ public final class GhostEyeRenderHandler {
                     "GhostEyeDomainActive"
             ).set(1.0F);
 
+            shader.getUniform(
+                    "GhostEyeDomainLayer"
+            ).set(
+                    (float) ghostEyeDomain.getLayer()
+            );
+
         } else {
 
             shader.getUniform(
@@ -111,6 +207,10 @@ public final class GhostEyeRenderHandler {
             shader.getUniform(
                     "GhostEyeDomainActive"
             ).set(0.0F);
+
+            shader.getUniform(
+                    "GhostEyeDomainLayer"
+            ).set(1.0F);
         }
 
         RenderSystem.disableDepthTest();
@@ -145,24 +245,8 @@ public final class GhostEyeRenderHandler {
             return null;
         }
 
-        Camera camera =
-                minecraft.gameRenderer.getMainCamera();
-
-        ClientGhostDomain domain =
-                ClientGhostDomainManager.getEffectiveDomain(
-                        camera.getPosition().x,
-                        camera.getPosition().y,
-                        camera.getPosition().z
-                );
-
-        if (domain == null) {
-            return null;
-        }
-
-        if (!GhostEyeAbility.ID.equals(domain.getDomainType())) {
-            return null;
-        }
-
-        return domain;
+        return ClientGhostDomainManager.getFirstDomainByType(
+                GhostEyeAbility.ID
+        );
     }
 }
