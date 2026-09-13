@@ -40,9 +40,9 @@ public final class ClientGhostDomainManager {
             double x,
             double y,
             double z,
-            double radius,
             double strength,
-            int layer
+            int layer,
+            double radius
     ) {
 
         ClientGhostDomain domain =
@@ -54,9 +54,9 @@ public final class ClientGhostDomainManager {
                         x,
                         y,
                         z,
-                        radius,
                         strength,
-                        layer
+                        layer,
+                        radius
                 );
 
         DOMAINS.put(id, domain);
@@ -151,6 +151,28 @@ public final class ClientGhostDomainManager {
         }
 
         domain.setPosition(x, y, z);
+    }
+
+    public static void update(
+            UUID id,
+            double x,
+            double y,
+            double z,
+            double strength,
+            int layer,
+            double radius
+    ) {
+        ClientGhostDomain domain = DOMAINS.get(id);
+
+        if (domain == null) {
+            return;
+        }
+
+        domain.setPosition(x, y, z);
+
+        domain.setStrength(strength);
+        domain.setLayer(layer);
+        domain.setRadius(radius);
     }
 
     public static ClientGhostDomain getEffectiveDomain(

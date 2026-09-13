@@ -25,8 +25,9 @@ public final class ClientGhostDomain {
     private double targetZ;
 
     private final GhostDomainShape shape;
-    private final double strength;
-    private final int layer;
+    private double strength;
+    private int layer;
+    private double radius;
 
     public ClientGhostDomain(
             UUID id,
@@ -36,9 +37,9 @@ public final class ClientGhostDomain {
             double x,
             double y,
             double z,
-            double radius,
             double strength,
-            int layer
+            int layer,
+            double radius
     ) {
         this.id = id;
         this.sourceUUID = sourceUUID;
@@ -54,9 +55,10 @@ public final class ClientGhostDomain {
         this.targetY = y;
         this.targetZ = z;
 
-        this.shape = new CylinderDomainShape(radius);
         this.strength = strength;
         this.layer = layer;
+        this.shape = new CylinderDomainShape(radius);
+        this.radius = radius;
     }
 
     public UUID getId() {
@@ -85,6 +87,39 @@ public final class ClientGhostDomain {
 
     public double getZ() {
         return z;
+    }
+
+    public GhostDomainShape getShape() {
+        return shape;
+    }
+
+    public double getStrength() {
+        return strength;
+    }
+
+    public int getLayer() {
+        return layer;
+    }
+
+    public double getRadius() {
+        return radius;
+    }
+
+    public void setStrength(double strength) {
+        this.strength = strength;
+    }
+
+    public void setLayer(int layer) {
+        this.layer = layer;
+    }
+
+    public void setRadius(double radius) {
+
+        this.radius = radius;
+
+        if (shape instanceof CylinderDomainShape cylinder) {
+            cylinder.setRadius(radius);
+        }
     }
 
     /**
@@ -148,21 +183,5 @@ public final class ClientGhostDomain {
                 y,
                 z
         );
-    }
-
-    public GhostDomainShape getShape() {
-        return shape;
-    }
-
-    public double getRadius() {
-        return ((CylinderDomainShape) shape).getRadius();
-    }
-
-    public double getStrength() {
-        return strength;
-    }
-
-    public int getLayer() {
-        return layer;
     }
 }

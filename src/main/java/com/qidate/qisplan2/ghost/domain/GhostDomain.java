@@ -19,12 +19,17 @@ public final class GhostDomain {
     /**
      * 鬼域强度。
      */
-    private final double strength;
+    private double strength;
 
     /**
      * 鬼域层数，范围 1～10。
      */
-    private final int layer;
+    private int layer;
+
+    /**
+     * 鬼域范围
+     */
+    private double radius;
 
     private double x;
     private double y;
@@ -45,6 +50,7 @@ public final class GhostDomain {
             ResourceLocation type,
             double strength,
             int layer,
+            double radius,
             ResourceKey<Level> dimension,
             double x,
             double y,
@@ -71,6 +77,7 @@ public final class GhostDomain {
         this.type = type;
         this.strength = strength;
         this.layer = layer;
+        this.radius = radius;
         this.dimension = dimension;
         this.x = x;
         this.y = y;
@@ -102,6 +109,47 @@ public final class GhostDomain {
 
     public int getLayer() {
         return layer;
+    }
+
+    public double getRadius() {
+        return radius;
+    }
+
+    public void setStrength(double strength) {
+
+        if (strength < 0.0D) {
+            throw new IllegalArgumentException(
+                    "GhostDomain strength cannot be negative."
+            );
+        }
+
+        this.strength = strength;
+    }
+
+    public void setLayer(int layer) {
+
+        if (layer < 1 || layer > 10) {
+            throw new IllegalArgumentException(
+                    "GhostDomain layer must be between 1 and 10."
+            );
+        }
+
+        this.layer = layer;
+    }
+
+    public void setRadius(double radius) {
+
+        if (radius < 0.0D) {
+            throw new IllegalArgumentException(
+                    "GhostDomain radius cannot be negative."
+            );
+        }
+
+        this.radius = radius;
+
+        if (shape instanceof CylinderDomainShape cylinder) {
+            cylinder.setRadius(radius);
+        }
     }
 
 

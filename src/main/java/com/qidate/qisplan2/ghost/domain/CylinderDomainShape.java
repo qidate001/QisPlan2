@@ -3,7 +3,7 @@ package com.qidate.qisplan2.ghost.domain;
 public final class CylinderDomainShape
         implements GhostDomainShape {
 
-    private final double radius;
+    private double radius;
 
     public CylinderDomainShape(
             double radius
@@ -31,5 +31,9 @@ public final class CylinderDomainShape
 
     public double getRadius() {
         return radius;
+    }
+
+    public void setRadius(double radius) {
+        this.radius = radius;
     }
 }

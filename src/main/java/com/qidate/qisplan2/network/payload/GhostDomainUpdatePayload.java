@@ -12,7 +12,10 @@ public record GhostDomainUpdatePayload(
         UUID id,
         double x,
         double y,
-        double z
+        double z,
+        double strength,
+        int layer,
+        double radius
 ) implements CustomPacketPayload {
 
     public static final Type<GhostDomainUpdatePayload> TYPE =
@@ -30,15 +33,25 @@ public record GhostDomainUpdatePayload(
 
             (buf, payload) -> {
                 buf.writeUUID(payload.id());
+
                 buf.writeDouble(payload.x());
                 buf.writeDouble(payload.y());
                 buf.writeDouble(payload.z());
+
+                buf.writeDouble(payload.strength());
+                buf.writeInt(payload.layer());
+                buf.writeDouble(payload.radius());
             },
 
             buf -> new GhostDomainUpdatePayload(
                     buf.readUUID(),
+
                     buf.readDouble(),
                     buf.readDouble(),
+                    buf.readDouble(),
+
+                    buf.readDouble(),
+                    buf.readInt(),
                     buf.readDouble()
             )
     );

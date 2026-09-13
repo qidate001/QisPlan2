@@ -223,9 +223,9 @@ public final class QisNetwork {
                                 payload.x(),
                                 payload.y(),
                                 payload.z(),
-                                payload.radius(),
                                 payload.strength(),
-                                payload.layer()
+                                payload.layer(),
+                                payload.radius()
                         );
 
 //                        QisPlan2.LOGGER.info(
@@ -254,10 +254,10 @@ public final class QisNetwork {
                                 payload.id()
                         );
 
-                        QisPlan2.LOGGER.info(
-                                "[GhostDomain] CLIENT REMOVE: id={}",
-                                payload.id()
-                        );
+//                        QisPlan2.LOGGER.info(
+//                                "[GhostDomain] CLIENT REMOVE: id={}",
+//                                payload.id()
+//                        );
                     });
                 }
         );
@@ -268,20 +268,26 @@ public final class QisNetwork {
                 (payload, context) -> {
                     context.enqueueWork(() -> {
 
-                        ClientGhostDomainManager.updatePosition(
+                        ClientGhostDomainManager.update(
                                 payload.id(),
                                 payload.x(),
                                 payload.y(),
-                                payload.z()
+                                payload.z(),
+                                payload.strength(),
+                                payload.layer(),
+                                payload.radius()
                         );
 
-                        QisPlan2.LOGGER.info(
-                                "[GhostDomain] CLIENT UPDATE: id={} pos=({}, {}, {})",
-                                payload.id(),
-                                payload.x(),
-                                payload.y(),
-                                payload.z()
-                        );
+//                QisPlan2.LOGGER.info(
+//                        "[GhostDomain] CLIENT UPDATE: id={} pos=({}, {}, {}) strength={} layer={} radius={}",
+//                        payload.id(),
+//                        payload.x(),
+//                        payload.y(),
+//                        payload.z(),
+//                        payload.strength(),
+//                        payload.layer(),
+//                        payload.radius()
+//                );
                     });
                 }
         );
@@ -589,9 +595,14 @@ public final class QisNetwork {
                 level,
                 new GhostDomainUpdatePayload(
                         domain.getId(),
+
                         domain.getX(),
                         domain.getY(),
-                        domain.getZ()
+                        domain.getZ(),
+
+                        domain.getStrength(),
+                        domain.getLayer(),
+                        domain.getRadius()
                 )
         );
     }

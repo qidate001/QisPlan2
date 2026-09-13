@@ -42,6 +42,7 @@ public final class DebugDomain {
                         TYPE,
                         strength,
                         layer,
+                        radius,
                         player.serverLevel().dimension(),
                         player.getX(),
                         player.getY(),

@@ -123,6 +123,7 @@ public final class GhostEyeSystem {
                         DOMAIN_TYPE,
                         strength,
                         1,
+                        DOMAIN_RADIUS,
                         level.dimension(),
                         player.getX(),
                         player.getY(),
