@@ -16,9 +16,13 @@ public final class ClientKeyHandler {
     ) {
 
         event.register(ModKeyMappings.OPEN_POSSESSION_SCREEN);
+
         event.register(ModKeyMappings.GHOST_DIVINATION_LIFE);
         event.register(ModKeyMappings.GHOST_DIVINATION_DEATH);
         event.register(ModKeyMappings.GHOST_DIVINATION_GHOST);
+
+        event.register(ModKeyMappings.GHOST_EYE_LAYER_UP);
+        event.register(ModKeyMappings.GHOST_EYE_LAYER_DOWN);
     }
 
     public static void clientTick(
@@ -68,5 +72,21 @@ public final class ClientKeyHandler {
         ) {
             QisNetwork.sendGhostDivinationUse(2);
         }
+
+        /*
+         * ========================================================
+         * 鬼眼
+         * ========================================================
+         */
+
+        // 提高鬼域层数
+//        while (ModKeyMappings.GHOST_EYE_LAYER_UP.consumeClick()) {
+//            QisNetwork.sendGhostEyeLayerChange(1);
+//        }
+//
+//        // 降低鬼域层数
+//        while (ModKeyMappings.GHOST_EYE_LAYER_DOWN.consumeClick()) {
+//            QisNetwork.sendGhostEyeLayerChange(-1);
+//        }
     }
 }

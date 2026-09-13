@@ -53,5 +53,27 @@ public final class ModKeyMappings {
                     CATEGORY
             );
 
+    /*
+     * ========================================================
+     * 鬼眼
+     * ========================================================
+     */
+
+    public static final KeyMapping GHOST_EYE_LAYER_UP =
+            new KeyMapping(
+                    "key.qisplan2.ghost_eye_layer_up",
+                    InputConstants.Type.KEYSYM,
+                    GLFW.GLFW_KEY_KP_ADD,
+                    CATEGORY
+            );
+
+    public static final KeyMapping GHOST_EYE_LAYER_DOWN =
+            new KeyMapping(
+                    "key.qisplan2.ghost_eye_layer_down",
+                    InputConstants.Type.KEYSYM,
+                    GLFW.GLFW_KEY_KP_SUBTRACT,
+                    CATEGORY
+            );
+
     private ModKeyMappings() {}
 }
