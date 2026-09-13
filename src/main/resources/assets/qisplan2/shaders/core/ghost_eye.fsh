@@ -87,19 +87,29 @@ void main() {
     float distance =
         length(delta);
 
-    float edge =
-        abs(distance - GhostEyeDomainRadius);
+    float inside =
+    step(
+            distance,
+            GhostEyeDomainRadius
+    );
 
-    // 越接近鬼域边界越亮
-    float value =
-        1.0 - clamp(edge / 5.0, 0.0, 1.0);
+    inside *= GhostEyeDomainActive;
 
-    value *= GhostEyeDomainActive;
+    vec4 scene =
+    texture(DiffuseSampler, texCoord);
+
+    vec3 red =
+    vec3(1.0, 0.0, 0.0);
+
+    vec3 finalColor =
+    mix(
+            scene.rgb,
+            red,
+            inside
+    );
 
     fragColor = vec4(
-            value,
-            value,
-            value,
-            1.0
+            finalColor,
+            scene.a
     );
 }
