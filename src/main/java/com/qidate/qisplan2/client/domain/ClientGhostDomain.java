@@ -1,5 +1,6 @@
 package com.qidate.qisplan2.client.domain;
 
+import com.qidate.qisplan2.QisPlan2;
 import com.qidate.qisplan2.ghost.domain.CylinderDomainShape;
 import com.qidate.qisplan2.ghost.domain.GhostDomainShape;
 import net.minecraft.resources.ResourceLocation;
@@ -13,9 +14,15 @@ public final class ClientGhostDomain {
     private final ResourceLocation domainType;
     private final ResourceLocation dimension;
 
+    // 当前客户端实际使用的位置
     private double x;
     private double y;
     private double z;
+
+    // 服务端同步过来的目标位置
+    private double targetX;
+    private double targetY;
+    private double targetZ;
 
     private final GhostDomainShape shape;
     private final double strength;
@@ -38,9 +45,14 @@ public final class ClientGhostDomain {
         this.domainType = domainType;
         this.dimension = dimension;
 
+        // 初始位置直接使用服务器位置
         this.x = x;
         this.y = y;
         this.z = z;
+
+        this.targetX = x;
+        this.targetY = y;
+        this.targetZ = z;
 
         this.shape = new CylinderDomainShape(radius);
         this.strength = strength;
@@ -75,14 +87,52 @@ public final class ClientGhostDomain {
         return z;
     }
 
+    /**
+     * 设置服务端同步过来的目标位置。
+     *
+     * 不直接修改当前渲染位置，
+     * 当前渲染位置会在 tick() 中逐渐追上目标位置。
+     */
     public void setPosition(
             double x,
             double y,
             double z
     ) {
-        this.x = x;
-        this.y = y;
-        this.z = z;
+        this.targetX = x;
+        this.targetY = y;
+        this.targetZ = z;
+    }
+
+    /**
+     * 客户端平滑更新鬼域位置。
+     */
+    public void tick() {
+
+        moveAxis();
+    }
+
+    private void moveAxis() {
+
+        double speed = 0.9D; // 每tick最多移动0.9格
+
+        x = moveTowards(x, targetX, speed);
+        y = moveTowards(y, targetY, speed);
+        z = moveTowards(z, targetZ, speed);
+    }
+
+    private static double moveTowards(
+            double current,
+            double target,
+            double maxStep
+    ) {
+
+        double delta = target - current;
+
+        if (Math.abs(delta) <= maxStep) {
+            return target;
+        }
+
+        return current + Math.copySign(maxStep, delta);
     }
 
     public boolean contains(
@@ -102,6 +152,10 @@ public final class ClientGhostDomain {
 
     public GhostDomainShape getShape() {
         return shape;
+    }
+
+    public double getRadius() {
+        return ((CylinderDomainShape) shape).getRadius();
     }
 
     public double getStrength() {

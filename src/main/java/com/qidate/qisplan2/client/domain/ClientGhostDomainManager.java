@@ -3,6 +3,7 @@ package com.qidate.qisplan2.client.domain;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.resources.ResourceLocation;
+import net.neoforged.neoforge.client.event.ClientTickEvent;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -16,6 +17,19 @@ public final class ClientGhostDomainManager {
             new LinkedHashMap<>();
 
     private ClientGhostDomainManager() {
+    }
+
+    public static void tick(
+            ClientTickEvent.Post event
+    ) {
+
+        if (Minecraft.getInstance().level == null) {
+            return;
+        }
+
+        for (ClientGhostDomain domain : DOMAINS.values()) {
+            domain.tick();
+        }
     }
 
     public static void add(
