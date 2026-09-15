@@ -19,7 +19,6 @@ public final class GhostEyeAbility
     private static final GhostCorrosion CORROSION =
             GhostCorrosion.builder()
                     .add(CorrosionType.EYE, 100)
-                    .add(CorrosionType.BRAIN, 80)
                     .add(CorrosionType.GLOBAL, 40)
                     .build();
 

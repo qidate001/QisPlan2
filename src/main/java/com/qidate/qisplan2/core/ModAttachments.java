@@ -2,6 +2,7 @@ package com.qidate.qisplan2.core;
 
 import com.mojang.serialization.Codec;
 import com.qidate.qisplan2.ghost.PossessedGhostState;
+import com.qidate.qisplan2.ghost.layer.GhostLayerData;
 import com.qidate.qisplan2.ghost.partition.PartitionReturnData;
 import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.resources.ResourceLocation;
@@ -96,6 +97,26 @@ public class ModAttachments {
                                     .serialize(
                                             PartitionReturnData.CODEC
                                     )
+                                    .build()
+            );
+
+    // 实体鬼域所在层数
+    public static final DeferredHolder<
+            AttachmentType<?>,
+            AttachmentType<GhostLayerData>
+            > GHOST_LAYER =
+            ATTACHMENT_TYPES.register(
+                    "ghost_layer",
+                    () ->
+                            AttachmentType
+                                    .builder(
+                                            () ->
+                                                    GhostLayerData.DEFAULT
+                                    )
+                                    .serialize(
+                                            GhostLayerData.CODEC
+                                    )
+                                    .copyOnDeath()
                                     .build()
             );
 }

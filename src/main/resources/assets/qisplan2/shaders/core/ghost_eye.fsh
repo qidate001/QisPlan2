@@ -24,7 +24,7 @@ void main() {
     // -----------------------------
 
     float depth =
-    texture(MainDepthSampler, texCoord).r;
+        texture(MainDepthSampler, texCoord).r;
 
 
     // -----------------------------
@@ -32,17 +32,17 @@ void main() {
     // -----------------------------
 
     vec2 ndcXY =
-    texCoord * 2.0 - 1.0;
+        texCoord * 2.0 - 1.0;
 
     float ndcZ =
-    depth * 2.0 - 1.0;
+        depth * 2.0 - 1.0;
 
     vec4 ndcPosition =
-    vec4(
-            ndcXY,
-            ndcZ,
-            1.0
-    );
+        vec4(
+                ndcXY,
+                ndcZ,
+                1.0
+        );
 
 
     // -----------------------------
@@ -51,10 +51,10 @@ void main() {
 
     vec4 viewPosition =
         inverse(GhostEyeProjMat)
-        * ndcPosition;
+            * ndcPosition;
 
     viewPosition /=
-    viewPosition.w;
+        viewPosition.w;
 
 
     // -----------------------------
@@ -63,10 +63,10 @@ void main() {
 
     vec4 worldPosition =
         inverse(GhostEyeModelViewMat)
-        * viewPosition;
+            * viewPosition;
 
     worldPosition /=
-    worldPosition.w;
+        worldPosition.w;
 
 
     // -----------------------------
@@ -75,7 +75,7 @@ void main() {
 
     vec3 worldPos =
         worldPosition.xyz
-        + GhostEyeCameraPos;
+            + GhostEyeCameraPos;
 
 
     // -----------------------------
@@ -89,15 +89,15 @@ void main() {
         length(delta);
 
     float inside =
-    step(
-            distance,
-            GhostEyeDomainRadius
-    );
+        step(
+                distance,
+                GhostEyeDomainRadius
+        );
 
     inside *= GhostEyeDomainActive;
 
     vec4 scene =
-    texture(DiffuseSampler, texCoord);
+        texture(DiffuseSampler, texCoord);
 
     vec3 red =
         vec3(1.0, 0.0, 0.0);
@@ -121,9 +121,9 @@ void main() {
 
     vec3 finalColor =
         mix(
-                scene.rgb,
-                ghostColor,
-                inside
+            scene.rgb,
+            ghostColor,
+            inside
         );
 
     fragColor = vec4(
