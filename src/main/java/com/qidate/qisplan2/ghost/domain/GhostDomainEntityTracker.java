@@ -527,14 +527,22 @@ public final class GhostDomainEntityTracker {
             Entity entity,
             GhostDomain domain
     ) {
-        // 下一步实现
+        domain.getBehavior().onEntityEnter(
+                level,
+                domain,
+                entity
+        );
     }
 
     private void onLeave(
             Entity entity,
             GhostDomain domain
     ) {
-        // 下一步实现
+        domain.getBehavior().onEntityLeave(
+                level,
+                domain,
+                entity
+        );
     }
 
     private void onSwitch(
@@ -542,6 +550,11 @@ public final class GhostDomainEntityTracker {
             GhostDomain oldDomain,
             GhostDomain newDomain
     ) {
-        // 下一步实现
+        newDomain.getBehavior().onEntitySwitch(
+                level,
+                oldDomain,
+                newDomain,
+                entity
+        );
     }
 }

@@ -1,6 +1,7 @@
 package com.qidate.qisplan2.ghost.domain;
 
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.entity.Entity;
 
 public interface GhostDomainBehavior {
 
@@ -28,6 +29,37 @@ public interface GhostDomainBehavior {
     default void onRemove(
             ServerLevel level,
             GhostDomain domain
+    ) {
+    }
+
+    /**
+     * 实体进入鬼域时调用。
+     */
+    default void onEntityEnter(
+            ServerLevel level,
+            GhostDomain domain,
+            Entity entity
+    ) {
+    }
+
+    /**
+     * 实体离开鬼域时调用。
+     */
+    default void onEntityLeave(
+            ServerLevel level,
+            GhostDomain domain,
+            Entity entity
+    ) {
+    }
+
+    /**
+     * 实体从一个鬼域切换到另一个鬼域时调用。
+     */
+    default void onEntitySwitch(
+            ServerLevel level,
+            GhostDomain oldDomain,
+            GhostDomain newDomain,
+            Entity entity
     ) {
     }
 }
