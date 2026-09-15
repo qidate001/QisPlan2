@@ -4,6 +4,7 @@ import com.qidate.qisplan2.QisPlan2;
 import com.qidate.qisplan2.core.ModGameRules;
 import com.qidate.qisplan2.core.ModMobEffects;
 import com.qidate.qisplan2.death.SupernaturalEntity;
+import com.qidate.qisplan2.ghost.layer.GhostLayerHandler;
 import com.qidate.qisplan2.item.GhostShroudItem;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
@@ -86,6 +87,23 @@ public class SupernaturalDeathHandler {
 
 
         if (!entity.isAlive()) {
+            return false;
+        }
+
+        /*
+         * ========================================
+         * 鬼层隔离
+         * ========================================
+         *
+         * 不同灵异层之间无法互相攻击。
+         * 现实层（0）与任何层级之间都可以攻击。
+         */
+        if (damageSource.getEntity() != null
+                && !GhostLayerHandler.canSee(
+                damageSource.getEntity(),
+                entity
+        )) {
+
             return false;
         }
 

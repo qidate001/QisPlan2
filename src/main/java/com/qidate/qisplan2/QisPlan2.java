@@ -6,6 +6,7 @@ import com.qidate.qisplan2.client.renderer.GhostEyeShader;
 import com.qidate.qisplan2.core.ModEntityAttributes;
 import com.qidate.qisplan2.core.ModRegistries;
 import com.qidate.qisplan2.core.QisConfig;
+import com.qidate.qisplan2.event.GhostLayerCombatHandler;
 import com.qidate.qisplan2.event.PossessionDamageHandler;
 import com.qidate.qisplan2.ghost.GhostAbilityInteractionHandler;
 import com.qidate.qisplan2.ghost.ability.GhostAbilityRegistry;
@@ -52,6 +53,11 @@ public class QisPlan2 {
         // 灵异伤害类型注册
         NeoForge.EVENT_BUS.register(
                 PossessionDamageHandler.class
+        );
+
+        // 普通伤害处理
+        NeoForge.EVENT_BUS.register(
+                GhostLayerCombatHandler.class
         );
 
         // 鬼域
