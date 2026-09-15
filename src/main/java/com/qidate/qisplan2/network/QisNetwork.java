@@ -14,11 +14,14 @@ import com.qidate.qisplan2.ghost.GhostPossessionSession;
 import com.qidate.qisplan2.ghost.PossessionHandler;
 import com.qidate.qisplan2.ghost.ability.divinationslip.GhostDivinationSlipAbility;
 import com.qidate.qisplan2.ghost.ability.doorghost.DoorGhostAbilityHandler;
+import com.qidate.qisplan2.ghost.ability.ghosteye.GhostEyeAbility;
 import com.qidate.qisplan2.ghost.domain.GhostDomain;
+import com.qidate.qisplan2.ghost.domain.GhostDomainManager;
 import com.qidate.qisplan2.network.payload.*;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.util.Mth;
 import net.minecraft.world.item.ItemStack;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
@@ -348,6 +351,60 @@ public final class QisNetwork {
                     });
                 }
         );
+
+        /*
+         * ========================================================
+         * 鬼眼
+         * ========================================================
+         */
+
+        /*
+         * ========================================================
+         * 鬼眼
+         * ========================================================
+         */
+
+        registrar.playToServer(
+                GhostEyeLayerChangePayload.TYPE,
+                GhostEyeLayerChangePayload.STREAM_CODEC,
+                (payload, context) -> {
+                    context.enqueueWork(() -> {
+
+                        if (!(context.player()
+                                instanceof ServerPlayer player)) {
+                            return;
+                        }
+
+                        GhostDomainManager manager =
+                                GhostDomainManager.get(
+                                        player.serverLevel()
+                                );
+
+                        GhostDomain domain =
+                                manager.getBySourceAndType(
+                                        player.getUUID(),
+                                        GhostEyeAbility.ID
+                                );
+
+                        if (domain == null) {
+                            return;
+                        }
+
+                        int newLayer =
+                                Mth.clamp(
+                                        domain.getLayer()
+                                                + payload.delta(),
+                                        1,
+                                        6
+                                );
+
+                        manager.updateLayer(
+                                domain.getId(),
+                                newLayer
+                        );
+                    });
+                }
+        );
     }
 
 
@@ -668,6 +725,21 @@ public final class QisNetwork {
         PacketDistributor.sendToServer(
                 new GhostDivinationUsePayload(
                         result
+                )
+        );
+    }
+
+    /*
+     * ========================================================
+     * C2S：鬼眼层数
+     * ========================================================
+     */
+    public static void sendGhostEyeLayerChange(
+            int delta
+    ) {
+        PacketDistributor.sendToServer(
+                new GhostEyeLayerChangePayload(
+                        delta
                 )
         );
     }

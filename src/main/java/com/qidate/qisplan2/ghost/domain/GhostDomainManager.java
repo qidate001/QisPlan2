@@ -171,6 +171,24 @@ public final class GhostDomainManager {
         );
     }
 
+    public void updateLayer(
+            UUID domainId,
+            int layer
+    ) {
+        GhostDomain domain = domains.get(domainId);
+
+        if (domain == null) {
+            return;
+        }
+
+        domain.setLayer(layer);
+
+        QisNetwork.sendGhostDomainUpdate(
+                level,
+                domain
+        );
+    }
+
     public GhostDomain get(
             UUID id
     ) {

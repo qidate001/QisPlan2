@@ -80,13 +80,13 @@ public final class ClientKeyHandler {
          */
 
         // 提高鬼域层数
-//        while (ModKeyMappings.GHOST_EYE_LAYER_UP.consumeClick()) {
-//            QisNetwork.sendGhostEyeLayerChange(1);
-//        }
-//
-//        // 降低鬼域层数
-//        while (ModKeyMappings.GHOST_EYE_LAYER_DOWN.consumeClick()) {
-//            QisNetwork.sendGhostEyeLayerChange(-1);
-//        }
+        while (ModKeyMappings.GHOST_EYE_LAYER_UP.consumeClick()) {
+            QisNetwork.sendGhostEyeLayerChange(1);
+        }
+
+        // 降低鬼域层数
+        while (ModKeyMappings.GHOST_EYE_LAYER_DOWN.consumeClick()) {
+            QisNetwork.sendGhostEyeLayerChange(-1);
+        }
     }
 }

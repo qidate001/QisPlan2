@@ -42,72 +42,6 @@ public final class GhostEyeRenderHandler {
         return capturedProjectionMatrix;
     }
 
-    private static int debugLogTicks = 0;
-
-    private static void debugLog() {
-
-        Minecraft minecraft = Minecraft.getInstance();
-
-        if (minecraft.level == null) {
-            return;
-        }
-
-        Camera camera =
-                minecraft.gameRenderer.getMainCamera();
-
-        ClientGhostDomain domain =
-                getCurrentGhostEyeDomain(minecraft);
-
-        if (domain == null) {
-            QisPlan2.LOGGER.info(
-                    "[GhostEye DEBUG] domain=null camera=({}, {}, {})",
-                    camera.getPosition().x,
-                    camera.getPosition().y,
-                    camera.getPosition().z
-            );
-            return;
-        }
-
-        double dx =
-                domain.getX() - camera.getPosition().x;
-
-        double dy =
-                domain.getY() - camera.getPosition().y;
-
-        double dz =
-                domain.getZ() - camera.getPosition().z;
-
-        QisPlan2.LOGGER.info(
-                "[GhostEye DEBUG] " +
-                        "camera=({}, {}, {}) " +
-                        "domain=({}, {}, {}) " +
-                        "delta=({}, {}, {}) " +
-                        "radius={} layer={}",
-
-                camera.getPosition().x,
-                camera.getPosition().y,
-                camera.getPosition().z,
-
-                domain.getX(),
-                domain.getY(),
-                domain.getZ(),
-
-                dx,
-                dy,
-                dz,
-
-                domain.getRadius(),
-                domain.getLayer()
-        );
-
-        Matrix4f matrix =
-                getCapturedModelViewMatrix();
-
-        QisPlan2.LOGGER.info(
-                "[GhostEye DEBUG] ModelViewMatrix={}",
-                matrix
-        );
-    }
 
     /**
      * 当前阶段仅用于测试：
@@ -116,14 +50,6 @@ public final class GhostEyeRenderHandler {
      * Shader 本身会将它渲染成纯红色。
      */
     public static void render() {
-
-        debugLogTicks++;
-
-        if (debugLogTicks >= 20) {
-            debugLogTicks = 0;
-
-            debugLog();
-        }
 
         if (!GhostEyeShader.isReady()) {
             return;
