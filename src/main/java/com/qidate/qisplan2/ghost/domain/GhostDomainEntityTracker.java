@@ -1,6 +1,7 @@
 package com.qidate.qisplan2.ghost.domain;
 
 import com.qidate.qisplan2.QisPlan2;
+import com.qidate.qisplan2.ghost.layer.GhostLayerHandler;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;

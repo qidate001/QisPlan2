@@ -37,14 +37,21 @@ public final class GhostLayerHandler {
                 == getLayer(b);
     }
 
-    public static boolean canSee(
-            Entity viewer,
-            Entity target
-    ) {
-        return sameLayer(
-                viewer,
-                target
-        );
+    public static boolean canSee(Entity viewer, Entity target) {
+        if (viewer == target) {
+            return true;
+        }
+
+        int viewerLayer = getLayer(viewer);
+        int targetLayer = getLayer(target);
+
+        // 现实层永远可以看见
+        if (viewerLayer == 0 || targetLayer == 0) {
+            return true;
+        }
+
+        // 灵异层之间只能看见同层实体
+        return viewerLayer == targetLayer;
     }
 
     public static boolean canInteract(

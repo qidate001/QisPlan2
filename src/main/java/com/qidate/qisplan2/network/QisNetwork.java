@@ -17,6 +17,7 @@ import com.qidate.qisplan2.ghost.ability.doorghost.DoorGhostAbilityHandler;
 import com.qidate.qisplan2.ghost.ability.ghosteye.GhostEyeAbility;
 import com.qidate.qisplan2.ghost.domain.GhostDomain;
 import com.qidate.qisplan2.ghost.domain.GhostDomainManager;
+import com.qidate.qisplan2.ghost.layer.GhostLayerHandler;
 import com.qidate.qisplan2.network.payload.*;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
@@ -358,12 +359,6 @@ public final class QisNetwork {
          * ========================================================
          */
 
-        /*
-         * ========================================================
-         * 鬼眼
-         * ========================================================
-         */
-
         registrar.playToServer(
                 GhostEyeLayerChangePayload.TYPE,
                 GhostEyeLayerChangePayload.STREAM_CODEC,
@@ -400,6 +395,11 @@ public final class QisNetwork {
 
                         manager.updateLayer(
                                 domain.getId(),
+                                newLayer
+                        );
+
+                        GhostLayerHandler.setLayer(
+                                player,
                                 newLayer
                         );
                     });
@@ -666,6 +666,21 @@ public final class QisNetwork {
 
     /*
      * ========================================================
+     * C2S：鬼眼层数
+     * ========================================================
+     */
+    public static void sendGhostEyeLayerChange(
+            int delta
+    ) {
+        PacketDistributor.sendToServer(
+                new GhostEyeLayerChangePayload(
+                        delta
+                )
+        );
+    }
+
+    /*
+     * ========================================================
      * S2C：鬼签
      * ========================================================
      */
@@ -725,21 +740,6 @@ public final class QisNetwork {
         PacketDistributor.sendToServer(
                 new GhostDivinationUsePayload(
                         result
-                )
-        );
-    }
-
-    /*
-     * ========================================================
-     * C2S：鬼眼层数
-     * ========================================================
-     */
-    public static void sendGhostEyeLayerChange(
-            int delta
-    ) {
-        PacketDistributor.sendToServer(
-                new GhostEyeLayerChangePayload(
-                        delta
                 )
         );
     }
