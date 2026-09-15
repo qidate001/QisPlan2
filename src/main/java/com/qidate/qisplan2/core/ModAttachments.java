@@ -116,6 +116,9 @@ public class ModAttachments {
                                     .serialize(
                                             GhostLayerData.CODEC
                                     )
+                                    .sync(
+                                            GhostLayerData.STREAM_CODEC
+                                    )
                                     .copyOnDeath()
                                     .build()
             );

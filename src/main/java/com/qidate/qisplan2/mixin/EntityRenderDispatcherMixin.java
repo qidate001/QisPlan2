@@ -16,41 +16,32 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 @Mixin(EntityRenderDispatcher.class)
 public abstract class EntityRenderDispatcherMixin {
 
-//    @Inject(
-//            method = "render",
-//            at = @At("HEAD")
-//    )
-//    private <E extends Entity> void qisplan2$checkGhostLayer(
-//            E entity,
-//            double x,
-//            double y,
-//            double z,
-//            float rotationYaw,
-//            float partialTicks,
-//            PoseStack poseStack,
-//            MultiBufferSource buffer,
-//            int packedLight,
-//            CallbackInfo ci
-//    ) {
-//
-//        Minecraft minecraft =
-//                Minecraft.getInstance();
-//
-//        LocalPlayer viewer =
-//                minecraft.player;
-//
-//        if (viewer == null) {
-//            return;
-//        }
-//
-//        if (entity == viewer) {
-//
-//            QisPlan2.LOGGER.info(
-//                    "[鬼域渲染测试] 本地玩家层数 = {}",
-//                    GhostLayerHandler.getLayer(viewer)
-//            );
-//
-//            return;
-//        }
-//    }
+    @Inject(
+            method = "render",
+            at = @At("HEAD"),
+            cancellable = true
+    )
+    private <E extends Entity> void qisplan2$checkGhostLayer(
+            E entity,
+            double x,
+            double y,
+            double z,
+            float rotationYaw,
+            float partialTicks,
+            PoseStack poseStack,
+            MultiBufferSource buffer,
+            int packedLight,
+            CallbackInfo ci
+    ) {
+        Minecraft minecraft = Minecraft.getInstance();
+        LocalPlayer viewer = minecraft.player;
+
+        if (viewer == null) {
+            return;
+        }
+
+        if (!GhostLayerHandler.canSee(viewer, entity)) {
+            ci.cancel();
+        }
+    }
 }
