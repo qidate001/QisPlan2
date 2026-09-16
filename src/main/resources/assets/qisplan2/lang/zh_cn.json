@@ -18,6 +18,11 @@
   "key.qisplan2.ghost_divination_life": "§4鬼签§r激活§4活签§r能力",
   "key.qisplan2.ghost_divination_death": "§4鬼签§r激活§4死签§r能力",
   "key.qisplan2.ghost_divination_ghost": "§4鬼签§r激活§4鬼签§r能力",
+  "key.qisplan2.ghost_eye_layer_up": "§4鬼眼§r增加总鬼域层数",
+  "key.qisplan2.ghost_eye_layer_down": "§4鬼眼§r减少总鬼域层数",
+  "key.qisplan2.ghost_eye_self_layer_up": "§4鬼眼§r提升自己所在的鬼域层数",
+  "key.qisplan2.ghost_eye_self_layer_down": "§4鬼眼§r下降自己所在的鬼域层数",
+  "key.qisplan2.ghost_eye_toggle": "§4鬼眼§r开启/关闭鬼域",
 
   "block.qisplan2.ghost_carpet": "§4鬼地毯",
   "block.qisplan2.ghost_stone_bricks": "§4鬼石砖",
@@ -76,6 +81,7 @@
   "ghost.qisplan2.closing_ghost": "关门鬼",
   "ghost.qisplan2.calling_ghost": "喊人鬼",
   "ghost.qisplan2.ghost_divination_slip": "鬼签",
+  "ghost.qisplan2.ghost_eye": "鬼眼",
 
   "screen.qisplan2.ghost_book": "§4鬼书",
 

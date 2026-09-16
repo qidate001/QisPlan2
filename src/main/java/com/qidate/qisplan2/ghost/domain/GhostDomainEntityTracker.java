@@ -644,8 +644,8 @@ public final class GhostDomainEntityTracker {
                     );
 
             /*
-             * 只有这个 Domain 当前真正生效，
-             * 才需要处理实体。
+             * 只有这个鬼域当前真正生效，
+             * 才处理实体。
              */
             if (!domain.getId().equals(
                     effectiveDomainId
@@ -665,9 +665,7 @@ public final class GhostDomainEntityTracker {
              * 总层数增加
              * ========================================================
              *
-             * 默认不提升实体层数。
-             *
-             * 以后由具体 Domain Behavior 决定。
+             * 默认不提升实体所在层数。
              */
             if (domain.getLayer() > oldLayer) {
 
@@ -694,11 +692,19 @@ public final class GhostDomainEntityTracker {
              * 总层数降低
              * ========================================================
              *
-             * 这个以后统一处理：
-             * 如果实体当前层数超过新的总层数，
-             * 必须进行修正。
+             * 只有实体当前层数超过新的总层数，
+             * 才需要进行修正。
              */
             if (domain.getLayer() < oldLayer) {
+
+                int entityLayer =
+                        GhostLayerHandler.getLayer(
+                                entity
+                        );
+
+                if (entityLayer <= domain.getLayer()) {
+                    continue;
+                }
 
                 domain.getBehavior()
                         .onEntityLayerChange(
