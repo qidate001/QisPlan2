@@ -61,6 +61,21 @@ public final class GhostEyeRenderHandler {
             return;
         }
 
+        var mainTarget = minecraft.getMainRenderTarget();
+
+        var depthTarget = GhostEyeDepthTarget.get();
+
+        depthTarget.copyDepthFrom(mainTarget);
+
+        mainTarget.bindWrite(false);
+
+        RenderSystem.viewport(
+                0,
+                0,
+                mainTarget.width,
+                mainTarget.height
+        );
+
         ShaderInstance shader = GhostEyeShader.getInstance();
 
         RenderSystem.setShader(() -> shader);
@@ -74,13 +89,9 @@ public final class GhostEyeRenderHandler {
                 colorTexture
         );
 
-        int depthTexture =
-                minecraft.getMainRenderTarget()
-                        .getDepthTextureId();
-
         shader.setSampler(
                 "MainDepthSampler",
-                depthTexture
+                depthTarget.getDepthTextureId()
         );
 
         shader.getUniform("GhostEyeProjMat").set(
@@ -175,6 +186,7 @@ public final class GhostEyeRenderHandler {
 
         RenderSystem.depthMask(true);
         RenderSystem.enableDepthTest();
+        RenderSystem.setShaderColor(1F, 1F, 1F, 1F);
     }
 
     private static ClientGhostDomain getCurrentGhostEyeDomain(
