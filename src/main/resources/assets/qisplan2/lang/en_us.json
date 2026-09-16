@@ -17,6 +17,11 @@
   "key.qisplan2.ghost_divination_life": "§4Ghost Sign§r Activate §4Life Sign§r Ability",
   "key.qisplan2.ghost_divination_death": "§4Ghost Sign§r Activate §4Death Sign§r Ability",
   "key.qisplan2.ghost_divination_ghost": "§4Ghost Sign§r Activate §4Ghost Sign§r Ability",
+  "key.qisplan2.ghost_eye_layer_up": "§4Ghost Eye§r increases the total number of Ghost Domain layers",
+  "key.qisplan2.ghost_eye_layer_down": "§4Ghost Eye§r decreases the total number of Ghost Domain layers",
+  "key.qisplan2.ghost_eye_self_layer_up": "§4Ghost Eye§r raises the Ghost Domain layer you are in",
+  "key.qisplan2.ghost_eye_self_layer_down": "§4Ghost Eye§r lowers the Ghost Domain layer you are in",
+  "key.qisplan2.ghost_eye_toggle": "§4Ghost Eye§r turns the Ghost Domain on/off",
 
   "block.qisplan2.ghost_carpet": "§4Ghost Carpet",
   "block.qisplan2.ghost_stone_bricks": "§4Ghost Stone Bricks",
@@ -74,6 +79,7 @@
   "ghost.qisplan2.closing_ghost": "Closing Ghost",
   "ghost.qisplan2.calling_ghost": "Calling Ghost",
   "ghost.qisplan2.ghost_divination_slip": "Ghost Divination Slip",
+  "ghost.qisplan2.ghost_eye": "§4Calling Ghost",
 
   "screen.qisplan2.ghost_book": "§4Ghost Book",
 
