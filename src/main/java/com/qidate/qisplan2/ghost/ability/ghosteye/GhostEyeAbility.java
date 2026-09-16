@@ -55,7 +55,7 @@ public final class GhostEyeAbility
             GhostAbilityContext context
     ) {
 
-        GhostEyeSystem.removeDomain(
+        GhostEyeSystem.close(
                 context.player()
         );
     }

@@ -23,6 +23,7 @@ public final class ClientKeyHandler {
 
         event.register(ModKeyMappings.GHOST_EYE_LAYER_UP);
         event.register(ModKeyMappings.GHOST_EYE_LAYER_DOWN);
+        event.register(ModKeyMappings.GHOST_EYE_TOGGLE);
     }
 
     public static void clientTick(
@@ -88,5 +89,11 @@ public final class ClientKeyHandler {
         while (ModKeyMappings.GHOST_EYE_LAYER_DOWN.consumeClick()) {
             QisNetwork.sendGhostEyeLayerChange(-1);
         }
+
+        // 开关鬼眼
+        while (ModKeyMappings.GHOST_EYE_TOGGLE.consumeClick()) {
+            QisNetwork.sendGhostEyeToggle();
+        }
+
     }
 }

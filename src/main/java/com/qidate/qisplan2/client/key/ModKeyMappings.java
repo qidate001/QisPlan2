@@ -75,5 +75,13 @@ public final class ModKeyMappings {
                     CATEGORY
             );
 
+    public static final KeyMapping GHOST_EYE_TOGGLE =
+            new KeyMapping(
+                    "key.qisplan2.ghost_eye_toggle",
+                    InputConstants.Type.KEYSYM,
+                    GLFW.GLFW_KEY_J,
+                    CATEGORY
+            );
+
     private ModKeyMappings() {}
 }

@@ -15,6 +15,7 @@ import com.qidate.qisplan2.ghost.PossessionHandler;
 import com.qidate.qisplan2.ghost.ability.divinationslip.GhostDivinationSlipAbility;
 import com.qidate.qisplan2.ghost.ability.doorghost.DoorGhostAbilityHandler;
 import com.qidate.qisplan2.ghost.ability.ghosteye.GhostEyeAbility;
+import com.qidate.qisplan2.ghost.ability.ghosteye.GhostEyeSystem;
 import com.qidate.qisplan2.ghost.domain.GhostDomain;
 import com.qidate.qisplan2.ghost.domain.GhostDomainManager;
 import com.qidate.qisplan2.ghost.layer.GhostLayerHandler;
@@ -405,6 +406,31 @@ public final class QisNetwork {
                     });
                 }
         );
+
+        registrar.playToServer(
+                GhostEyeTogglePayload.TYPE,
+                GhostEyeTogglePayload.STREAM_CODEC,
+                (payload, context) -> {
+
+                    context.enqueueWork(() -> {
+
+                        if (!(context.player()
+                                instanceof ServerPlayer player)) {
+
+                            return;
+                        }
+
+                        if (GhostEyeSystem.isOpen(player)) {
+
+                            GhostEyeSystem.close(player);
+
+                        } else {
+
+                            GhostEyeSystem.open(player);
+                        }
+                    });
+                }
+        );
     }
 
 
@@ -741,6 +767,12 @@ public final class QisNetwork {
                 new GhostDivinationUsePayload(
                         result
                 )
+        );
+    }
+
+    public static void sendGhostEyeToggle() {
+        PacketDistributor.sendToServer(
+                new GhostEyeTogglePayload()
         );
     }
 }

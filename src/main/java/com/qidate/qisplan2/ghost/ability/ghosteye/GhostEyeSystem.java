@@ -11,6 +11,8 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 
+import java.util.HashSet;
+import java.util.Set;
 import java.util.UUID;
 
 public final class GhostEyeSystem {
@@ -22,6 +24,12 @@ public final class GhostEyeSystem {
             );
 
     private static final double DOMAIN_RADIUS = 50.0D;
+
+    /**
+     * 当前主动开启鬼眼的玩家。
+     */
+    private static final Set<UUID> OPEN_EYES =
+            new HashSet<>();
 
     private GhostEyeSystem() {
     }
@@ -44,7 +52,7 @@ public final class GhostEyeSystem {
 
         /*
          * ========================================================
-         * 当前鬼眼是否仍然存在
+         * 已经失去鬼眼
          * ========================================================
          */
 
@@ -53,7 +61,17 @@ public final class GhostEyeSystem {
                 GhostEyeAbility.ID
         )) {
 
-            removeDomain(player);
+            close(player);
+            return;
+        }
+
+        /*
+         * ========================================================
+         * 鬼眼当前没有开启
+         * ========================================================
+         */
+
+        if (!OPEN_EYES.contains(player.getUUID())) {
             return;
         }
 
@@ -74,7 +92,7 @@ public final class GhostEyeSystem {
 
         /*
          * ========================================================
-         * 第一次开启
+         * 鬼眼已经开启，但鬼域不存在
          * ========================================================
          */
 
@@ -103,12 +121,98 @@ public final class GhostEyeSystem {
     }
 
     /**
+     * 开启鬼眼。
+     */
+    public static void open(
+            ServerPlayer player
+    ) {
+
+        if (!PossessionHandler.hasGhost(
+                player,
+                GhostEyeAbility.ID
+        )) {
+            return;
+        }
+
+        UUID uuid = player.getUUID();
+
+        /*
+         * 已经开启
+         */
+        if (!OPEN_EYES.add(uuid)) {
+            return;
+        }
+
+        if (player.level()
+                instanceof ServerLevel level) {
+
+            createDomain(
+                    level,
+                    player
+            );
+        }
+
+        QisPlan2.LOGGER.info(
+                "[鬼眼] 玩家 {} 睁开了鬼眼",
+                player.getGameProfile().getName()
+        );
+    }
+
+    /**
+     * 关闭鬼眼。
+     */
+    public static void close(
+            ServerPlayer player
+    ) {
+
+        boolean wasOpen =
+                OPEN_EYES.remove(
+                        player.getUUID()
+                );
+
+        removeDomain(player);
+
+        if (wasOpen) {
+
+            QisPlan2.LOGGER.info(
+                    "[鬼眼] 玩家 {} 闭合了鬼眼",
+                    player.getGameProfile().getName()
+            );
+        }
+    }
+
+    /**
+     * 当前鬼眼是否开启。
+     */
+    public static boolean isOpen(
+            ServerPlayer player
+    ) {
+
+        return OPEN_EYES.contains(
+                player.getUUID()
+        );
+    }
+
+    /**
      * 创建第 1 层鬼眼鬼域。
      */
     private static void createDomain(
             ServerLevel level,
             ServerPlayer player
     ) {
+
+        /*
+         * 防止重复创建。
+         */
+        GhostDomainManager manager =
+                GhostDomainManager.get(level);
+
+        if (manager.getBySourceAndType(
+                player.getUUID(),
+                DOMAIN_TYPE
+        ) != null) {
+            return;
+        }
 
         double strength =
                 PossessionHandler.getEffectiveStrength(
@@ -136,8 +240,7 @@ public final class GhostEyeSystem {
                         new GhostEyeDomainBehavior()
                 );
 
-        GhostDomainManager.get(level)
-                .add(domain);
+        manager.add(domain);
 
         QisPlan2.LOGGER.info(
                 "[鬼眼] 玩家 {} 开启了第1层鬼域，强度={}，半径={}",
