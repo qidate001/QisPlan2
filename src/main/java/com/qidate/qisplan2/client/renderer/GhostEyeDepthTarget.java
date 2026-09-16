@@ -10,6 +10,15 @@ public final class GhostEyeDepthTarget {
     private GhostEyeDepthTarget() {
     }
 
+    /**
+     * 鬼眼专用深度缓冲。
+     *
+     * <p>这里保存的是 MainRenderTarget 的深度副本。</p>
+     *
+     * <p>不能直接采样 MainRenderTarget 的 Depth Attachment，
+     * 否则会触发 Framebuffer Feedback，
+     * 导致鬼域撕裂、小窗口斜边闪烁等问题。</p>
+     */
     public static TextureTarget get() {
 
         Minecraft mc = Minecraft.getInstance();

@@ -2,7 +2,6 @@ package com.qidate.qisplan2.client.renderer;
 
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.*;
-import com.qidate.qisplan2.QisPlan2;
 import com.qidate.qisplan2.client.domain.ClientGhostDomain;
 import com.qidate.qisplan2.client.domain.ClientGhostDomainManager;
 import com.qidate.qisplan2.ghost.ability.ghosteye.GhostEyeAbility;
@@ -42,30 +41,103 @@ public final class GhostEyeRenderHandler {
         return capturedProjectionMatrix;
     }
 
-
     /**
-     * 当前阶段仅用于测试：
+     * 鬼眼屏幕后处理。
      *
-     * 世界渲染完成后绘制一个覆盖整个屏幕的 Quad。
-     * Shader 本身会将它渲染成纯红色。
+     * <p>该渲染发生在世界渲染完成后。</p>
+     *
+     * <p>这里会重建世界坐标，再根据鬼域范围决定是否应用鬼眼效果。</p>
      */
     public static void render() {
+
+        /*
+         * ========================================================
+         * 基础检查
+         * ========================================================
+         */
 
         if (!GhostEyeShader.isReady()) {
             return;
         }
 
-        Minecraft minecraft = Minecraft.getInstance();
+        Minecraft minecraft =
+                Minecraft.getInstance();
 
         if (minecraft.level == null) {
             return;
         }
 
-        var mainTarget = minecraft.getMainRenderTarget();
+        /*
+         * ========================================================
+         * 当前鬼眼鬼域
+         * ========================================================
+         */
 
-        var depthTarget = GhostEyeDepthTarget.get();
+        ClientGhostDomain ghostEyeDomain =
+                getCurrentGhostEyeDomain(
+                        minecraft
+                );
 
-        depthTarget.copyDepthFrom(mainTarget);
+        /*
+         * 没有鬼眼开启时，不需要复制深度，
+         * 也不需要执行任何后处理。
+         */
+        if (ghostEyeDomain == null) {
+            return;
+        }
+
+        /*
+         * ========================================================
+         * 准备 RenderTarget
+         * ========================================================
+         */
+
+        var mainTarget =
+                minecraft.getMainRenderTarget();
+
+        var depthTarget =
+                GhostEyeDepthTarget.get();
+
+        /*
+         * ========================================================
+         * 复制深度缓冲
+         * ========================================================
+         *
+         * 千万不要直接采样 MainRenderTarget 的 Depth Attachment。
+         *
+         * 这里有一个非常隐蔽的坑：
+         *
+         * - 小窗口
+         * - 飞行
+         * - 特定视角
+         *
+         * 会出现：
+         *
+         * - 左上到右下斜边撕裂
+         * - 顶部原版残块
+         * - 鬼域区域闪烁
+         *
+         * 根因是：
+         *
+         * 当前 Framebuffer 一边写 Color，
+         * 一边采样自己的 Depth，
+         * 触发了 Framebuffer Feedback。
+         *
+         * 解决办法：
+         *
+         * 先复制深度到独立 TextureTarget，
+         * 再从这个独立深度纹理采样。
+         *
+         * 注意：
+         *
+         * copyDepthFrom() 会修改当前 FBO，
+         * 所以复制完成后必须重新绑定 MainRenderTarget，
+         * 同时恢复 viewport。
+         */
+
+        depthTarget.copyDepthFrom(
+                mainTarget
+        );
 
         mainTarget.bindWrite(false);
 
@@ -76,17 +148,22 @@ public final class GhostEyeRenderHandler {
                 mainTarget.height
         );
 
-        ShaderInstance shader = GhostEyeShader.getInstance();
+        /*
+         * ========================================================
+         * 配置 Shader
+         * ========================================================
+         */
 
-        RenderSystem.setShader(() -> shader);
+        ShaderInstance shader =
+                GhostEyeShader.getInstance();
 
-        int colorTexture =
-                minecraft.getMainRenderTarget()
-                        .getColorTextureId();
+        RenderSystem.setShader(
+                () -> shader
+        );
 
         shader.setSampler(
                 "DiffuseSampler",
-                colorTexture
+                mainTarget.getColorTextureId()
         );
 
         shader.setSampler(
@@ -94,74 +171,59 @@ public final class GhostEyeRenderHandler {
                 depthTarget.getDepthTextureId()
         );
 
-        shader.getUniform("GhostEyeProjMat").set(
+        shader.getUniform(
+                "GhostEyeProjMat"
+        ).set(
                 RenderSystem.getProjectionMatrix()
         );
 
-        shader.getUniform("GhostEyeModelViewMat").set(
-                GhostEyeRenderHandler.getCapturedModelViewMatrix()
+        shader.getUniform(
+                "GhostEyeModelViewMat"
+        ).set(
+                getCapturedModelViewMatrix()
         );
 
         Camera camera =
-                minecraft.gameRenderer.getMainCamera();
+                minecraft.gameRenderer
+                        .getMainCamera();
 
-        shader.getUniform("GhostEyeCameraPos").set(
+        shader.getUniform(
+                "GhostEyeCameraPos"
+        ).set(
                 (float) camera.getPosition().x,
                 (float) camera.getPosition().y,
                 (float) camera.getPosition().z
         );
 
-        ClientGhostDomain ghostEyeDomain =
-                getCurrentGhostEyeDomain(minecraft);
+        shader.getUniform(
+                "GhostEyeDomainCenter"
+        ).set(
+                (float) ghostEyeDomain.getX(),
+                (float) ghostEyeDomain.getY(),
+                (float) ghostEyeDomain.getZ()
+        );
 
-        if (ghostEyeDomain != null) {
+        shader.getUniform(
+                "GhostEyeDomainRadius"
+        ).set(
+                (float) ghostEyeDomain.getRadius()
+        );
 
-            shader.getUniform(
-                    "GhostEyeDomainCenter"
-            ).set(
-                    (float) ghostEyeDomain.getX(),
-                    (float) ghostEyeDomain.getY(),
-                    (float) ghostEyeDomain.getZ()
-            );
+        shader.getUniform(
+                "GhostEyeDomainActive"
+        ).set(1.0F);
 
-            shader.getUniform(
-                    "GhostEyeDomainRadius"
-            ).set(
-                    (float) ghostEyeDomain.getRadius()
-            );
+        shader.getUniform(
+                "GhostEyeDomainLayer"
+        ).set(
+                (float) ghostEyeDomain.getLayer()
+        );
 
-            shader.getUniform(
-                    "GhostEyeDomainActive"
-            ).set(1.0F);
-
-            shader.getUniform(
-                    "GhostEyeDomainLayer"
-            ).set(
-                    (float) ghostEyeDomain.getLayer()
-            );
-
-        } else {
-
-            shader.getUniform(
-                    "GhostEyeDomainCenter"
-            ).set(
-                    0.0F,
-                    0.0F,
-                    0.0F
-            );
-
-            shader.getUniform(
-                    "GhostEyeDomainRadius"
-            ).set(0.0F);
-
-            shader.getUniform(
-                    "GhostEyeDomainActive"
-            ).set(0.0F);
-
-            shader.getUniform(
-                    "GhostEyeDomainLayer"
-            ).set(1.0F);
-        }
+        /*
+         * ========================================================
+         * 绘制全屏 Quad
+         * ========================================================
+         */
 
         RenderSystem.disableDepthTest();
         RenderSystem.depthMask(false);
@@ -175,23 +237,57 @@ public final class GhostEyeRenderHandler {
                         DefaultVertexFormat.POSITION
                 );
 
-        buffer.addVertex(-1.0F,  1.0F, 0.0F);
-        buffer.addVertex(-1.0F, -1.0F, 0.0F);
-        buffer.addVertex( 1.0F, -1.0F, 0.0F);
-        buffer.addVertex( 1.0F,  1.0F, 0.0F);
+        buffer.addVertex(
+                -1.0F,
+                1.0F,
+                0.0F
+        );
+
+        buffer.addVertex(
+                -1.0F,
+                -1.0F,
+                0.0F
+        );
+
+        buffer.addVertex(
+                1.0F,
+                -1.0F,
+                0.0F
+        );
+
+        buffer.addVertex(
+                1.0F,
+                1.0F,
+                0.0F
+        );
 
         BufferUploader.drawWithShader(
                 buffer.buildOrThrow()
         );
 
+        /*
+         * ========================================================
+         * 恢复渲染状态
+         * ========================================================
+         *
+         * 后面还有第一人称手、GUI 等渲染，
+         * 不恢复状态容易留下连锁 Bug。
+         */
+
         RenderSystem.depthMask(true);
         RenderSystem.enableDepthTest();
-        RenderSystem.setShaderColor(1F, 1F, 1F, 1F);
+        RenderSystem.setShaderColor(
+                1.0F,
+                1.0F,
+                1.0F,
+                1.0F
+        );
     }
 
     private static ClientGhostDomain getCurrentGhostEyeDomain(
             Minecraft minecraft
     ) {
+
         if (minecraft.level == null) {
             return null;
         }
