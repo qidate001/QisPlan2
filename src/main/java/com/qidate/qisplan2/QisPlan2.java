@@ -14,6 +14,7 @@ import com.qidate.qisplan2.ghost.domain.GhostDomainPlayerLogout;
 import com.qidate.qisplan2.ghost.domain.GhostDomainPlayerSync;
 import com.qidate.qisplan2.ghost.domain.GhostDomainServerTick;
 import com.qidate.qisplan2.ghost.doorplate.GhostDoorPlateTeleportHandler;
+import com.qidate.qisplan2.ghost.layer.GhostLayerInteractionHandler;
 import net.minecraft.client.renderer.ShaderInstance;
 import net.minecraft.resources.ResourceLocation;
 import net.neoforged.bus.api.IEventBus;
@@ -73,6 +74,11 @@ public class QisPlan2 {
         // 鬼域监听玩家退出
         NeoForge.EVENT_BUS.register(
                 GhostDomainPlayerLogout.class
+        );
+
+        // 鬼域互动隔离
+        NeoForge.EVENT_BUS.register(
+                GhostLayerInteractionHandler.class
         );
 
         // 驭鬼注册表注册
