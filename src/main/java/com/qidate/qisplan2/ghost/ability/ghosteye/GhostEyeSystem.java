@@ -120,6 +120,29 @@ public final class GhostEyeSystem {
         );
     }
 
+    public static int getEyeLayer(
+            ServerPlayer player
+    ) {
+
+        if (!isOpen(player)) {
+            return 0;
+        }
+
+        GhostDomain domain =
+                GhostDomainManager.get(
+                        player.serverLevel()
+                ).getBySourceAndType(
+                        player.getUUID(),
+                        DOMAIN_TYPE
+                );
+
+        if (domain == null) {
+            return 0;
+        }
+
+        return domain.getLayer();
+    }
+
     /**
      * 开启鬼眼。
      */

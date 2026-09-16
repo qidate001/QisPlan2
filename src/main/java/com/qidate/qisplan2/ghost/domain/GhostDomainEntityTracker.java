@@ -265,11 +265,19 @@ public final class GhostDomainEntityTracker {
     /**
      * 当鬼域被删除时，清理该鬼域对应的实体追踪数据。
      *
-     * @param domainId 被删除的鬼域 UUID
+     * <p>注意：此时该鬼域已经从
+     * {@link GhostDomainManager} 中删除，
+     * 因此这里必须直接接收被删除的鬼域对象，
+     * 以便正确触发生命周期回调。</p>
+     *
+     * @param removedDomain 被删除的鬼域
      */
     public void removeDomain(
-            UUID domainId
+            GhostDomain removedDomain
     ) {
+
+        UUID domainId =
+                removedDomain.getId();
 
         Set<UUID> entityUUIDs =
                 domainEntities.remove(domainId);
@@ -279,22 +287,75 @@ public final class GhostDomainEntityTracker {
             return;
         }
 
-        GhostDomainManager manager =
-                GhostDomainManager.get(level);
+        /*
+         * 复制一份，避免后续修改内部集合时
+         * 产生 ConcurrentModificationException。
+         */
+        Set<UUID> affectedEntities =
+                new LinkedHashSet<>(entityUUIDs);
 
-        for (UUID entityUUID : entityUUIDs) {
+        for (UUID entityUUID : affectedEntities) {
 
+            Entity entity =
+                    level.getEntity(entityUUID);
+
+            /*
+             * 获取实体之前的最终生效鬼域。
+             */
+            UUID previousEffectiveId =
+                    effectiveDomains.get(entityUUID);
+
+            boolean wasEffective =
+                    domainId.equals(
+                            previousEffectiveId
+                    );
+
+            /*
+             * 获取实体当前覆盖的所有鬼域。
+             */
             Set<UUID> domains =
                     overlappingDomains.get(
                             entityUUID
                     );
 
+            /*
+             * 理论上一定存在，但为了防止追踪数据异常，
+             * 这里安全处理。
+             */
             if (domains == null) {
+
+                if (wasEffective) {
+
+                    effectiveDomains.remove(
+                            entityUUID
+                    );
+
+                    if (entity != null) {
+
+                        removedDomain
+                                .getBehavior()
+                                .onEntityLeave(
+                                        level,
+                                        removedDomain,
+                                        entity
+                                );
+                    }
+                }
+
                 continue;
             }
 
+            /*
+             * 移除已经不存在的鬼域。
+             */
             domains.remove(domainId);
 
+            /*
+             * ========================================================
+             * 情况一：
+             * 实体已经不处于任何鬼域
+             * ========================================================
+             */
             if (domains.isEmpty()) {
 
                 overlappingDomains.remove(
@@ -305,28 +366,92 @@ public final class GhostDomainEntityTracker {
                         entityUUID
                 );
 
+                /*
+                 * 只有被删除的鬼域原本是最终生效鬼域，
+                 * 才需要触发离开事件。
+                 */
+                if (wasEffective
+                        && entity != null) {
+
+                    removedDomain
+                            .getBehavior()
+                            .onEntityLeave(
+                                    level,
+                                    removedDomain,
+                                    entity
+                            );
+                }
+
                 continue;
             }
 
             /*
-             * 被删除的鬼域可能原本是最终生效鬼域，
-             * 所以重新计算一次。
+             * ========================================================
+             * 情况二：
+             * 仍然处于其它鬼域
+             * ========================================================
              */
+
             GhostDomain newEffective =
                     getEffectiveDomain(domains);
 
+            /*
+             * 被删除的鬼域不是最终生效鬼域。
+             *
+             * 那么实体的最终鬼域没有变化，
+             * 不需要触发生命周期事件。
+             */
+            if (!wasEffective) {
+                continue;
+            }
+
+            /*
+             * 被删除的鬼域原本是最终生效鬼域，
+             * 因此现在必须切换到新的最终鬼域。
+             */
             if (newEffective == null) {
 
                 effectiveDomains.remove(
                         entityUUID
                 );
 
-            } else {
+                if (entity != null) {
 
-                effectiveDomains.put(
-                        entityUUID,
-                        newEffective.getId()
-                );
+                    removedDomain
+                            .getBehavior()
+                            .onEntityLeave(
+                                    level,
+                                    removedDomain,
+                                    entity
+                            );
+                }
+
+                continue;
+            }
+
+            /*
+             * 更新最终生效鬼域。
+             */
+            effectiveDomains.put(
+                    entityUUID,
+                    newEffective.getId()
+            );
+
+            /*
+             * 通知新鬼域：
+             *
+             * 旧鬼域 → 新鬼域
+             */
+            if (entity != null) {
+
+                newEffective
+                        .getBehavior()
+                        .onEntitySwitch(
+                                level,
+                                removedDomain,
+                                newEffective,
+                                entity
+                        );
             }
         }
     }
@@ -482,6 +607,66 @@ public final class GhostDomainEntityTracker {
         }
 
         return false;
+    }
+
+    /**
+     * 当鬼域层数发生变化时，
+     * 刷新当前处于该鬼域中的实体层数。
+     *
+     * <p>只有当前最终生效鬼域就是该鬼域的实体，
+     * 才会受到影响。</p>
+     *
+     * @param domain 层数发生变化的鬼域
+     */
+    public void refreshDomainLayer(
+            GhostDomain domain
+    ) {
+
+        Set<UUID> entityUUIDs =
+                domainEntities.get(
+                        domain.getId()
+                );
+
+        if (entityUUIDs == null
+                || entityUUIDs.isEmpty()) {
+
+            return;
+        }
+
+        for (UUID entityUUID : entityUUIDs) {
+
+            Entity entity =
+                    level.getEntity(
+                            entityUUID
+                    );
+
+            if (entity == null) {
+                continue;
+            }
+
+            /*
+             * 只有当前最终生效鬼域就是这个 Domain，
+             * 才允许它修改实体当前层数。
+             */
+            UUID effectiveDomainId =
+                    effectiveDomains.get(
+                            entityUUID
+                    );
+
+            if (!domain.getId().equals(
+                    effectiveDomainId
+            )) {
+
+                continue;
+            }
+
+            domain.getBehavior()
+                    .onEntityLayerChange(
+                            level,
+                            domain,
+                            entity
+                    );
+        }
     }
 
     /**

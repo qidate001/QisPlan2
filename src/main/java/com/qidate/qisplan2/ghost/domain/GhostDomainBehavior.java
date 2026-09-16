@@ -62,4 +62,14 @@ public interface GhostDomainBehavior {
             Entity entity
     ) {
     }
+
+    /**
+     * 实体鬼域层数发生改变时调用。
+     */
+    default void onEntityLayerChange(
+            ServerLevel level,
+            GhostDomain domain,
+            Entity entity
+    ) {
+    }
 }

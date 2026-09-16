@@ -394,6 +394,10 @@ public final class QisNetwork {
                                         6
                                 );
 
+                        if (newLayer == domain.getLayer()) {
+                            return;
+                        }
+
                         manager.updateLayer(
                                 domain.getId(),
                                 newLayer

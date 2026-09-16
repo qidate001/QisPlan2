@@ -76,7 +76,7 @@ public final class GhostDomainManager {
 
         GhostDomainEntityTracker
                 .get(level)
-                .removeDomain(id);
+                .removeDomain(domain);
 
         domain.getBehavior().onRemove(
                 level,
@@ -175,13 +175,19 @@ public final class GhostDomainManager {
             UUID domainId,
             int layer
     ) {
-        GhostDomain domain = domains.get(domainId);
+
+        GhostDomain domain =
+                domains.get(domainId);
 
         if (domain == null) {
             return;
         }
 
         domain.setLayer(layer);
+
+        GhostDomainEntityTracker
+                .get(level)
+                .refreshDomainLayer(domain);
 
         QisNetwork.sendGhostDomainUpdate(
                 level,

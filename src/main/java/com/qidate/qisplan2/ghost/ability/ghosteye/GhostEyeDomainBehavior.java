@@ -99,4 +99,25 @@ public final class GhostEyeDomainBehavior
             );
         }
     }
+
+    @Override
+    public void onEntityLayerChange(
+            ServerLevel level,
+            GhostDomain domain,
+            Entity entity
+    ) {
+
+        GhostLayerHandler.setLayer(
+                entity,
+                domain.getLayer()
+        );
+
+        if (entity instanceof ServerPlayer player) {
+            QisPlan2.LOGGER.info(
+                    "[鬼眼] 玩家 {} 所处鬼域层数变更为：{}",
+                    player.getName().getString(),
+                    domain.getLayer()
+            );
+        }
+    }
 }
