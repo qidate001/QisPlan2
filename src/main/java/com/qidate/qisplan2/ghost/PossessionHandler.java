@@ -1,6 +1,7 @@
 package com.qidate.qisplan2.ghost;
 
 import com.qidate.qisplan2.core.ModAttachments;
+import com.qidate.qisplan2.death.QisDeathHandler;
 import com.qidate.qisplan2.event.GhostBreakoutHandler;
 import com.qidate.qisplan2.ghost.ability.GhostAbilityRegistry;
 import com.qidate.qisplan2.ghost.ability.PossessedGhostAbility;
@@ -1384,8 +1385,8 @@ public final class PossessionHandler {
                 /*
                  * 然后再真正让玩家死亡。
                  */
-                player.setHealth(
-                        0.0F
+                QisDeathHandler.forceKillAndCleanup(
+                        player
                 );
 
                 return;

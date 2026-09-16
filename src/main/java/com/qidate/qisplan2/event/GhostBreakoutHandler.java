@@ -2,6 +2,7 @@ package com.qidate.qisplan2.event;
 
 import com.qidate.qisplan2.QisPlan2;
 import com.qidate.qisplan2.core.ModEntities;
+import com.qidate.qisplan2.death.QisDeathHandler;
 import com.qidate.qisplan2.entity.AbstractGhostEntity;
 import com.qidate.qisplan2.ghost.PossessedGhostState;
 import com.qidate.qisplan2.ghost.PossessionHandler;
@@ -53,9 +54,11 @@ public final class GhostBreakoutHandler {
             return;
         }
 
-        breakout(
-                player
-        );
+        // 死亡相关的 QisPlan2 清理
+        QisDeathHandler.cleanup(player);
+
+        // 驭鬼者厉鬼破体
+        breakout(player);
     }
 
     /**

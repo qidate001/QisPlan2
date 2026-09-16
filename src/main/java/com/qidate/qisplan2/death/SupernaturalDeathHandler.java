@@ -214,7 +214,9 @@ public class SupernaturalDeathHandler {
         }
 
         if (instantlyKill) {
-            entity.setHealth(0.0F);
+
+            // 强制死亡
+            QisDeathHandler.forceKillAndCleanup(entity);
             return true;
         }
 
