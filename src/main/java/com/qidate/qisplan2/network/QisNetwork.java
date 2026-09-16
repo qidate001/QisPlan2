@@ -435,6 +435,60 @@ public final class QisNetwork {
                     });
                 }
         );
+
+        registrar.playToServer(
+                GhostEyeSelfLayerChangePayload.TYPE,
+                GhostEyeSelfLayerChangePayload.STREAM_CODEC,
+                (payload, context) -> {
+                    context.enqueueWork(() -> {
+
+                        if (!(context.player()
+                                instanceof ServerPlayer player)) {
+                            return;
+                        }
+
+                        if (!PossessionHandler.hasGhost(
+                                player,
+                                GhostEyeAbility.ID
+                        )) {
+                            return;
+                        }
+
+                        GhostDomain domain =
+                                GhostDomainManager.get(
+                                        player.serverLevel()
+                                ).getBySourceAndType(
+                                        player.getUUID(),
+                                        GhostEyeSystem.DOMAIN_TYPE
+                                );
+
+                        if (domain == null) {
+                            return;
+                        }
+
+                        int currentLayer =
+                                GhostLayerHandler.getLayer(
+                                        player
+                                );
+
+                        int newLayer =
+                                Mth.clamp(
+                                        currentLayer + payload.delta(),
+                                        1,
+                                        domain.getLayer()
+                                );
+
+                        if (newLayer == currentLayer) {
+                            return;
+                        }
+
+                        GhostLayerHandler.setLayer(
+                                player,
+                                newLayer
+                        );
+                    });
+                }
+        );
     }
 
 
@@ -777,6 +831,17 @@ public final class QisNetwork {
     public static void sendGhostEyeToggle() {
         PacketDistributor.sendToServer(
                 new GhostEyeTogglePayload()
+        );
+    }
+
+    public static void sendGhostEyeSelfLayerChange(
+            int delta
+    ) {
+
+        PacketDistributor.sendToServer(
+                new GhostEyeSelfLayerChangePayload(
+                        delta
+                )
         );
     }
 }

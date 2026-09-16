@@ -75,6 +75,22 @@ public final class ModKeyMappings {
                     CATEGORY
             );
 
+    public static final KeyMapping GHOST_EYE_SELF_LAYER_UP =
+            new KeyMapping(
+                    "key.qisplan2.ghost_eye_self_layer_up",
+                    InputConstants.Type.KEYSYM,
+                    GLFW.GLFW_KEY_UP,
+                    CATEGORY
+            );
+
+    public static final KeyMapping GHOST_EYE_SELF_LAYER_DOWN =
+            new KeyMapping(
+                    "key.qisplan2.ghost_eye_self_layer_down",
+                    InputConstants.Type.KEYSYM,
+                    GLFW.GLFW_KEY_DOWN,
+                    CATEGORY
+            );
+
     public static final KeyMapping GHOST_EYE_TOGGLE =
             new KeyMapping(
                     "key.qisplan2.ghost_eye_toggle",
