@@ -10,6 +10,8 @@
   ],
 
   "mixins": [
-    "DoorBlockMixin"
+    "DoorBlockMixin",
+    "EntityCollisionMixin",
+    "EntityPushMixin"
   ]
 }
