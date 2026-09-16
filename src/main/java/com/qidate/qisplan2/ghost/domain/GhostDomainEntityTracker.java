@@ -619,7 +619,8 @@ public final class GhostDomainEntityTracker {
      * @param domain 层数发生变化的鬼域
      */
     public void refreshDomainLayer(
-            GhostDomain domain
+            GhostDomain domain,
+            int oldLayer
     ) {
 
         Set<UUID> entityUUIDs =
@@ -629,43 +630,83 @@ public final class GhostDomainEntityTracker {
 
         if (entityUUIDs == null
                 || entityUUIDs.isEmpty()) {
-
             return;
         }
 
-        for (UUID entityUUID : entityUUIDs) {
+        Set<UUID> affectedEntities =
+                new LinkedHashSet<>(entityUUIDs);
 
-            Entity entity =
-                    level.getEntity(
+        for (UUID entityUUID : affectedEntities) {
+
+            UUID effectiveDomainId =
+                    effectiveDomains.get(
                             entityUUID
                     );
+
+            /*
+             * 只有这个 Domain 当前真正生效，
+             * 才需要处理实体。
+             */
+            if (!domain.getId().equals(
+                    effectiveDomainId
+            )) {
+                continue;
+            }
+
+            Entity entity =
+                    level.getEntity(entityUUID);
 
             if (entity == null) {
                 continue;
             }
 
             /*
-             * 只有当前最终生效鬼域就是这个 Domain，
-             * 才允许它修改实体当前层数。
+             * ========================================================
+             * 总层数增加
+             * ========================================================
+             *
+             * 默认不提升实体层数。
+             *
+             * 以后由具体 Domain Behavior 决定。
              */
-            UUID effectiveDomainId =
-                    effectiveDomains.get(
-                            entityUUID
-                    );
+            if (domain.getLayer() > oldLayer) {
 
-            if (!domain.getId().equals(
-                    effectiveDomainId
-            )) {
+                if (domain.getBehavior()
+                        .shouldRaiseEntityLayer(
+                                level,
+                                domain,
+                                entity
+                        )) {
+
+                    domain.getBehavior()
+                            .onEntityLayerChange(
+                                    level,
+                                    domain,
+                                    entity
+                            );
+                }
 
                 continue;
             }
 
-            domain.getBehavior()
-                    .onEntityLayerChange(
-                            level,
-                            domain,
-                            entity
-                    );
+            /*
+             * ========================================================
+             * 总层数降低
+             * ========================================================
+             *
+             * 这个以后统一处理：
+             * 如果实体当前层数超过新的总层数，
+             * 必须进行修正。
+             */
+            if (domain.getLayer() < oldLayer) {
+
+                domain.getBehavior()
+                        .onEntityLayerChange(
+                                level,
+                                domain,
+                                entity
+                        );
+            }
         }
     }
 

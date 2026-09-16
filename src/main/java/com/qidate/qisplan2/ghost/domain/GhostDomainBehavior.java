@@ -72,4 +72,18 @@ public interface GhostDomainBehavior {
             Entity entity
     ) {
     }
+
+    /**
+     * 判断当鬼域总层数增加时，
+     * 实体是否应该提升到新的层数。
+     *
+     * <p>默认不提升。</p>
+     */
+    default boolean shouldRaiseEntityLayer(
+            ServerLevel level,
+            GhostDomain domain,
+            Entity entity
+    ) {
+        return false;
+    }
 }

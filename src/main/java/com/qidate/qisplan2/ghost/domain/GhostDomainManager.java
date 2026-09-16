@@ -183,11 +183,21 @@ public final class GhostDomainManager {
             return;
         }
 
+        int oldLayer =
+                domain.getLayer();
+
+        if (oldLayer == layer) {
+            return;
+        }
+
         domain.setLayer(layer);
 
         GhostDomainEntityTracker
                 .get(level)
-                .refreshDomainLayer(domain);
+                .refreshDomainLayer(
+                        domain,
+                        oldLayer
+                );
 
         QisNetwork.sendGhostDomainUpdate(
                 level,
