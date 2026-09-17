@@ -68,61 +68,7 @@ public final class GhostEyeRenderHandler {
          * ========================================================
          */
 
-        var mainTarget =
-                minecraft.getMainRenderTarget();
-
-        var depthTarget =
-                GhostDomainDepthTarget.get();
-
-        /*
-         * ========================================================
-         * 复制深度缓冲
-         * ========================================================
-         *
-         * 千万不要直接采样 MainRenderTarget 的 Depth Attachment。
-         *
-         * 这里有一个非常隐蔽的坑：
-         *
-         * - 小窗口
-         * - 飞行
-         * - 特定视角
-         *
-         * 会出现：
-         *
-         * - 左上到右下斜边撕裂
-         * - 顶部原版残块
-         * - 鬼域区域闪烁
-         *
-         * 根因是：
-         *
-         * 当前 Framebuffer 一边写 Color，
-         * 一边采样自己的 Depth，
-         * 触发了 Framebuffer Feedback。
-         *
-         * 解决办法：
-         *
-         * 先复制深度到独立 TextureTarget，
-         * 再从这个独立深度纹理采样。
-         *
-         * 注意：
-         *
-         * copyDepthFrom() 会修改当前 FBO，
-         * 所以复制完成后必须重新绑定 MainRenderTarget，
-         * 同时恢复 viewport。
-         */
-
-        depthTarget.copyDepthFrom(
-                mainTarget
-        );
-
-        mainTarget.bindWrite(false);
-
-        RenderSystem.viewport(
-                0,
-                0,
-                mainTarget.width,
-                mainTarget.height
-        );
+        GhostDomainRenderPipeline.prepareDepth();
 
         /*
          * ========================================================
@@ -141,12 +87,14 @@ public final class GhostEyeRenderHandler {
 
         shader.setSampler(
                 "DiffuseSampler",
-                mainTarget.getColorTextureId()
+                minecraft.getMainRenderTarget()
+                        .getColorTextureId()
         );
 
         shader.setSampler(
                 "MainDepthSampler",
-                depthTarget.getDepthTextureId()
+                GhostDomainDepthTarget.get()
+                        .getDepthTextureId()
         );
 
         shader.getUniform(
@@ -203,63 +151,7 @@ public final class GhostEyeRenderHandler {
          * ========================================================
          */
 
-        RenderSystem.disableDepthTest();
-        RenderSystem.depthMask(false);
-
-        Tesselator tesselator =
-                Tesselator.getInstance();
-
-        BufferBuilder buffer =
-                tesselator.begin(
-                        VertexFormat.Mode.QUADS,
-                        DefaultVertexFormat.POSITION
-                );
-
-        buffer.addVertex(
-                -1.0F,
-                1.0F,
-                0.0F
-        );
-
-        buffer.addVertex(
-                -1.0F,
-                -1.0F,
-                0.0F
-        );
-
-        buffer.addVertex(
-                1.0F,
-                -1.0F,
-                0.0F
-        );
-
-        buffer.addVertex(
-                1.0F,
-                1.0F,
-                0.0F
-        );
-
-        BufferUploader.drawWithShader(
-                buffer.buildOrThrow()
-        );
-
-        /*
-         * ========================================================
-         * 恢复渲染状态
-         * ========================================================
-         *
-         * 后面还有第一人称手、GUI 等渲染，
-         * 不恢复状态容易留下连锁 Bug。
-         */
-
-        RenderSystem.depthMask(true);
-        RenderSystem.enableDepthTest();
-        RenderSystem.setShaderColor(
-                1.0F,
-                1.0F,
-                1.0F,
-                1.0F
-        );
+        GhostDomainRenderPipeline.drawFullscreenQuad();
     }
 
     private static ClientGhostDomain getCurrentGhostEyeDomain(
