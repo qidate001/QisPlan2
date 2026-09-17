@@ -116,16 +116,16 @@ public final class GhostUmbrellaDomainBehavior
         /*
          * 失明。
          */
-        player.addEffect(
-                new MobEffectInstance(
-                        MobEffects.BLINDNESS,
-                        40,
-                        0,
-                        false,
-                        false,
-                        true
-                )
-        );
+//        player.addEffect(
+//                new MobEffectInstance(
+//                        MobEffects.BLINDNESS,
+//                        40,
+//                        0,
+//                        false,
+//                        false,
+//                        true
+//                )
+//        );
 
         /*
          * 极强缓慢。

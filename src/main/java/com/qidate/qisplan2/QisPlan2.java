@@ -92,8 +92,17 @@ public class QisPlan2 {
         GhostDoorPlateTeleportHandler.register();
     }
 
-    private static void registerShaders(RegisterShadersEvent event) {
+    private static void registerShaders(
+            RegisterShadersEvent event
+    ) {
+
         try {
+
+            /*
+             * ========================================================
+             * 鬼眼 Shader
+             * ========================================================
+             */
 
             ResourceLocation ghostEyeId =
                     ResourceLocation.fromNamespaceAndPath(
@@ -113,10 +122,35 @@ public class QisPlan2 {
                     )
             );
 
+
+            /*
+             * ========================================================
+             * 鬼伞 Shader
+             * ========================================================
+             */
+
+            ResourceLocation ghostUmbrellaId =
+                    ResourceLocation.fromNamespaceAndPath(
+                            MODID,
+                            "ghost_umbrella"
+                    );
+
+            event.registerShader(
+                    new ShaderInstance(
+                            event.getResourceProvider(),
+                            ghostUmbrellaId,
+                            DefaultVertexFormat.POSITION
+                    ),
+                    shader -> GhostDomainShaderRegistry.register(
+                            ghostUmbrellaId,
+                            shader
+                    )
+            );
+
         } catch (IOException e) {
 
             throw new RuntimeException(
-                    "Failed to register ghost eye shader",
+                    "Failed to register ghost domain shader",
                     e
             );
         }
