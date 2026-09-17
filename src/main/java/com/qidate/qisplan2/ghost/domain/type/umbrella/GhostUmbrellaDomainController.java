@@ -98,14 +98,6 @@ public final class GhostUmbrellaDomainController {
 
             return;
         }
-
-        // 鬼域跟随玩家移动
-        manager.updatePosition(
-                domain.getId(),
-                player.getX(),
-                player.getY(),
-                player.getZ()
-        );
     }
 
     /**

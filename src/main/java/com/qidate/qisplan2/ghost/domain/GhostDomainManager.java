@@ -304,6 +304,39 @@ public final class GhostDomainManager {
 
         for (GhostDomain domain : domains.values()) {
 
+            /*
+             * ========================================================
+             * 自动更新鬼域位置
+             * ========================================================
+             *
+             * DISTANCE：
+             *   鬼域自动跟随自己的来源实体。
+             *
+             * MANUAL：
+             *   不自动移动，由外部主动调用 updatePosition()。
+             */
+            if (domain.getUpdateMode()
+                    == GhostDomainUpdateMode.DISTANCE) {
+
+                Entity source =
+                        level.getEntity(
+                                domain.getSourceUUID()
+                        );
+
+                if (source != null) {
+
+                    updatePosition(
+                            domain.getId(),
+                            source.getX(),
+                            source.getY(),
+                            source.getZ()
+                    );
+                }
+            }
+
+            /*
+             * 鬼域自身行为
+             */
             domain.getBehavior().tick(
                     level,
                     domain

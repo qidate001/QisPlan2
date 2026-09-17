@@ -112,19 +112,6 @@ public final class GhostEyeDomainController {
 
             return;
         }
-
-        /*
-         * ========================================================
-         * 更新鬼域位置
-         * ========================================================
-         */
-
-        manager.updatePosition(
-                domain.getId(),
-                player.getX(),
-                player.getY(),
-                player.getZ()
-        );
     }
 
     public static int getEyeLayer(
