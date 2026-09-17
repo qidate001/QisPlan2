@@ -1,4 +1,4 @@
-package com.qidate.qisplan2.ghost.domain.umbrella;
+package com.qidate.qisplan2.ghost.domain.type.umbrella;
 
 import com.qidate.qisplan2.death.ModDamageTypes;
 import com.qidate.qisplan2.death.SupernaturalDeathHandler;
@@ -13,7 +13,7 @@ import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 
-public final class GhostUmbrellaBehavior
+public final class GhostUmbrellaDomainBehavior
         implements GhostDomainBehavior {
 
     /**

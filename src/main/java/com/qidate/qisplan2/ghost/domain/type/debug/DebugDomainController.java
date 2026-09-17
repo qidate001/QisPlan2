@@ -1,4 +1,4 @@
-package com.qidate.qisplan2.ghost.domain.debug;
+package com.qidate.qisplan2.ghost.domain.type.debug;
 
 import com.qidate.qisplan2.QisPlan2;
 import com.qidate.qisplan2.ghost.domain.*;
@@ -7,15 +7,15 @@ import net.minecraft.server.level.ServerPlayer;
 
 import java.util.UUID;
 
-public final class DebugDomain {
+public final class DebugDomainController {
 
-    public static final ResourceLocation TYPE =
+    public static final ResourceLocation DOMAIN_TYPE =
             ResourceLocation.fromNamespaceAndPath(
                     QisPlan2.MODID,
                     "debug_domain"
             );
 
-    private DebugDomain() {
+    private DebugDomainController() {
     }
 
     public static void create(
@@ -32,14 +32,14 @@ public final class DebugDomain {
 
         manager.removeBySourceAndType(
                 player.getUUID(),
-                TYPE
+                DOMAIN_TYPE
         );
 
         manager.add(
                 new GhostDomain(
                         UUID.randomUUID(),
                         player.getUUID(),
-                        TYPE,
+                        DOMAIN_TYPE,
                         strength,
                         layer,
                         radius,

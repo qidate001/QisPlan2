@@ -5,8 +5,7 @@ import com.qidate.qisplan2.block.entity.GhostDoorPlateBlockEntity;
 import com.qidate.qisplan2.client.DoorGhostMarkClient;
 import com.qidate.qisplan2.client.GhostPianoMusicClient;
 import com.qidate.qisplan2.client.GhostPossessionClientState;
-import com.qidate.qisplan2.client.domain.ClientGhostDomain;
-import com.qidate.qisplan2.client.domain.ClientGhostDomainManager;
+import com.qidate.qisplan2.ghost.domain.client.ClientGhostDomainManager;
 import com.qidate.qisplan2.client.screen.GhostPossessionScreen;
 import com.qidate.qisplan2.client.screen.GhostDoorPlateScreen;
 import com.qidate.qisplan2.core.ModItems;
@@ -15,7 +14,7 @@ import com.qidate.qisplan2.ghost.PossessionHandler;
 import com.qidate.qisplan2.ghost.ability.divinationslip.GhostDivinationSlipAbility;
 import com.qidate.qisplan2.ghost.ability.doorghost.DoorGhostAbilityHandler;
 import com.qidate.qisplan2.ghost.ability.ghosteye.GhostEyeAbility;
-import com.qidate.qisplan2.ghost.ability.ghosteye.GhostEyeSystem;
+import com.qidate.qisplan2.ghost.domain.type.eye.GhostEyeDomainController;
 import com.qidate.qisplan2.ghost.domain.GhostDomain;
 import com.qidate.qisplan2.ghost.domain.GhostDomainManager;
 import com.qidate.qisplan2.ghost.layer.GhostLayerHandler;
@@ -424,13 +423,13 @@ public final class QisNetwork {
                             return;
                         }
 
-                        if (GhostEyeSystem.isOpen(player)) {
+                        if (GhostEyeDomainController.isOpen(player)) {
 
-                            GhostEyeSystem.close(player);
+                            GhostEyeDomainController.close(player);
 
                         } else {
 
-                            GhostEyeSystem.open(player);
+                            GhostEyeDomainController.open(player);
                         }
                     });
                 }
@@ -459,7 +458,7 @@ public final class QisNetwork {
                                         player.serverLevel()
                                 ).getBySourceAndType(
                                         player.getUUID(),
-                                        GhostEyeSystem.DOMAIN_TYPE
+                                        GhostEyeDomainController.DOMAIN_TYPE
                                 );
 
                         if (domain == null) {

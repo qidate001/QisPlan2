@@ -2,8 +2,8 @@ package com.qidate.qisplan2.client.renderer;
 
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.*;
-import com.qidate.qisplan2.client.domain.ClientGhostDomain;
-import com.qidate.qisplan2.client.domain.ClientGhostDomainManager;
+import com.qidate.qisplan2.ghost.domain.client.ClientGhostDomain;
+import com.qidate.qisplan2.ghost.domain.client.ClientGhostDomainManager;
 import com.qidate.qisplan2.ghost.ability.ghosteye.GhostEyeAbility;
 import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;

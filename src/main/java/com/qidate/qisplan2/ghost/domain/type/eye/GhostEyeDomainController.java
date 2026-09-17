@@ -1,8 +1,9 @@
-package com.qidate.qisplan2.ghost.ability.ghosteye;
+package com.qidate.qisplan2.ghost.domain.type.eye;
 
 import com.qidate.qisplan2.QisPlan2;
 import com.qidate.qisplan2.ghost.GhostAbilityContext;
 import com.qidate.qisplan2.ghost.PossessionHandler;
+import com.qidate.qisplan2.ghost.ability.ghosteye.GhostEyeAbility;
 import com.qidate.qisplan2.ghost.domain.CylinderDomainShape;
 import com.qidate.qisplan2.ghost.domain.GhostDomain;
 import com.qidate.qisplan2.ghost.domain.GhostDomainManager;
@@ -15,7 +16,16 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
 
-public final class GhostEyeSystem {
+/**
+ * 鬼眼鬼域控制器。
+ *
+ * 负责：
+ *  - 创建鬼域
+ *  - 删除鬼域
+ *  - 维护鬼域位置
+ *  - 开关鬼眼鬼域
+ */
+public final class GhostEyeDomainController {
 
     public static final ResourceLocation DOMAIN_TYPE =
             ResourceLocation.fromNamespaceAndPath(
@@ -31,7 +41,7 @@ public final class GhostEyeSystem {
     private static final Set<UUID> OPEN_EYES =
             new HashSet<>();
 
-    private GhostEyeSystem() {
+    private GhostEyeDomainController() {
     }
 
     /**

@@ -1,6 +1,5 @@
-package com.qidate.qisplan2.client.domain;
+package com.qidate.qisplan2.ghost.domain.client;
 
-import com.qidate.qisplan2.QisPlan2;
 import com.qidate.qisplan2.ghost.domain.CylinderDomainShape;
 import com.qidate.qisplan2.ghost.domain.GhostDomainShape;
 import net.minecraft.resources.ResourceLocation;

@@ -7,7 +7,7 @@ import com.mojang.brigadier.context.CommandContext;
 
 import com.qidate.qisplan2.QisPlan2;
 import com.qidate.qisplan2.death.SupernaturalEntity;
-import com.qidate.qisplan2.ghost.domain.debug.DebugDomain;
+import com.qidate.qisplan2.ghost.domain.type.debug.DebugDomainController;
 import com.qidate.qisplan2.structure.GhostLakeGenerationManager;
 import com.qidate.qisplan2.structure.GhostManorGenerationManager;
 import com.qidate.qisplan2.structure.StructureSplitter;
@@ -464,7 +464,7 @@ public final class WorldCommands {
             // 未提供强度，使用默认值 1
         }
 
-        DebugDomain.create(
+        DebugDomainController.create(
                 player,
                 radius,
                 layer,
@@ -509,7 +509,7 @@ public final class WorldCommands {
             return 0;
         }
 
-        DebugDomain.remove(
+        DebugDomainController.remove(
                 player
         );
 

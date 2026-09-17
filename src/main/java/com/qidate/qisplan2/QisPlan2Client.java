@@ -2,8 +2,8 @@ package com.qidate.qisplan2;
 
 import com.qidate.qisplan2.client.BlackRainParticle;
 import com.qidate.qisplan2.client.GhostUmbrellaClient;
-import com.qidate.qisplan2.client.domain.ClientGhostDomainEvents;
-import com.qidate.qisplan2.client.domain.ClientGhostDomainManager;
+import com.qidate.qisplan2.ghost.domain.client.ClientGhostDomainEvents;
+import com.qidate.qisplan2.ghost.domain.client.ClientGhostDomainManager;
 import com.qidate.qisplan2.client.key.ClientKeyHandler;
 import com.qidate.qisplan2.client.screen.GhostStoveScreen;
 import com.qidate.qisplan2.client.GhostUmbrellaDomainClient;

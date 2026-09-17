@@ -1,4 +1,4 @@
-package com.qidate.qisplan2.ghost.domain.debug;
+package com.qidate.qisplan2.ghost.domain.type.debug;
 
 import com.qidate.qisplan2.ghost.domain.GhostDomain;
 import com.qidate.qisplan2.ghost.domain.GhostDomainBehavior;

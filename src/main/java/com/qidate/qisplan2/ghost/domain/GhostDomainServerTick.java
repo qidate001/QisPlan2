@@ -1,6 +1,6 @@
 package com.qidate.qisplan2.ghost.domain;
 
-import com.qidate.qisplan2.ghost.domain.umbrella.GhostUmbrellaDomain;
+import com.qidate.qisplan2.ghost.domain.type.umbrella.GhostUmbrellaDomainController;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -29,7 +29,7 @@ public final class GhostDomainServerTick {
             for (ServerPlayer player :
                     level.players()) {
 
-                GhostUmbrellaDomain.tick(player);
+                GhostUmbrellaDomainController.tick(player);
             }
 
             /*

@@ -5,6 +5,7 @@ import com.qidate.qisplan2.ghost.GhostAbilityContext;
 import com.qidate.qisplan2.ghost.ability.PossessedGhostAbility;
 import com.qidate.qisplan2.ghost.corrosion.CorrosionType;
 import com.qidate.qisplan2.ghost.corrosion.GhostCorrosion;
+import com.qidate.qisplan2.ghost.domain.type.eye.GhostEyeDomainController;
 import net.minecraft.resources.ResourceLocation;
 
 public final class GhostEyeAbility
@@ -47,7 +48,7 @@ public final class GhostEyeAbility
             GhostAbilityContext context
     ) {
 
-        GhostEyeSystem.tick(context);
+        GhostEyeDomainController.tick(context);
     }
 
     @Override
@@ -55,8 +56,6 @@ public final class GhostEyeAbility
             GhostAbilityContext context
     ) {
 
-        GhostEyeSystem.close(
-                context.player()
-        );
+        GhostEyeDomainController.close(context.player());
     }
 }

@@ -1,4 +1,4 @@
-package com.qidate.qisplan2.client.domain;
+package com.qidate.qisplan2.ghost.domain.client;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;

@@ -1,4 +1,4 @@
-package com.qidate.qisplan2.client.domain;
+package com.qidate.qisplan2.ghost.domain.client;
 
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.neoforge.client.event.ClientPlayerNetworkEvent;

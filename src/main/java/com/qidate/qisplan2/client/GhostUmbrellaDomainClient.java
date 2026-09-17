@@ -1,7 +1,7 @@
 package com.qidate.qisplan2.client;
 
-import com.qidate.qisplan2.client.domain.ClientGhostDomain;
-import com.qidate.qisplan2.client.domain.ClientGhostDomainManager;
+import com.qidate.qisplan2.ghost.domain.client.ClientGhostDomain;
+import com.qidate.qisplan2.ghost.domain.client.ClientGhostDomainManager;
 import com.qidate.qisplan2.client.renderer.GhostRainRenderer;
 import com.qidate.qisplan2.QisPlan2;
 import net.minecraft.client.Minecraft;

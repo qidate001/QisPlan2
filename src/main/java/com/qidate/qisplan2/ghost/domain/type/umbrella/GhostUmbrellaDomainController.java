@@ -1,4 +1,4 @@
-package com.qidate.qisplan2.ghost.domain.umbrella;
+package com.qidate.qisplan2.ghost.domain.type.umbrella;
 
 import com.qidate.qisplan2.QisPlan2;
 import com.qidate.qisplan2.ghost.domain.CylinderDomainShape;
@@ -12,17 +12,17 @@ import net.minecraft.server.level.ServerPlayer;
 
 import java.util.UUID;
 
-public final class GhostUmbrellaDomain {
+public final class GhostUmbrellaDomainController {
 
     public static final double DOMAIN_RADIUS = 50.0D;
 
-    public static final ResourceLocation TYPE =
+    public static final ResourceLocation DOMAIN_TYPE =
             ResourceLocation.fromNamespaceAndPath(
                     QisPlan2.MODID,
                     "ghost_umbrella"
             );
 
-    private GhostUmbrellaDomain() {
+    private GhostUmbrellaDomainController() {
     }
 
     /**
@@ -51,7 +51,7 @@ public final class GhostUmbrellaDomain {
 
         if (manager.getBySourceAndType(
                 player.getUUID(),
-                TYPE
+                DOMAIN_TYPE
         ) != null) {
             remove(player);
         }
@@ -72,7 +72,7 @@ public final class GhostUmbrellaDomain {
         GhostDomain domain =
                 manager.getBySourceAndType(
                         playerUUID,
-                        TYPE
+                        DOMAIN_TYPE
                 );
 
         if (domain == null) {
@@ -80,7 +80,7 @@ public final class GhostUmbrellaDomain {
             domain = new GhostDomain(
                     UUID.randomUUID(),
                     player.getUUID(),
-                    TYPE,
+                    DOMAIN_TYPE,
                     100.0D,
                     3,
                     DOMAIN_RADIUS,
@@ -91,7 +91,7 @@ public final class GhostUmbrellaDomain {
                     new CylinderDomainShape(DOMAIN_RADIUS),
                     GhostDomainUpdateMode.DISTANCE,
                     3.0D,
-                    new GhostUmbrellaBehavior()
+                    new GhostUmbrellaDomainBehavior()
             );
 
             manager.add(domain);
@@ -116,7 +116,7 @@ public final class GhostUmbrellaDomain {
         GhostDomainManager.get(player.serverLevel())
                 .removeBySourceAndType(
                         player.getUUID(),
-                        TYPE
+                        DOMAIN_TYPE
                 );
     }
 }

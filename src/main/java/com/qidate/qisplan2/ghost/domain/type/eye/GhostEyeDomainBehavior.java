@@ -1,4 +1,4 @@
-package com.qidate.qisplan2.ghost.ability.ghosteye;
+package com.qidate.qisplan2.ghost.domain.type.eye;
 
 import com.qidate.qisplan2.QisPlan2;
 import com.qidate.qisplan2.ghost.domain.GhostDomain;

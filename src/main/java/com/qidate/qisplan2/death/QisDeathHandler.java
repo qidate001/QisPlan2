@@ -1,6 +1,6 @@
 package com.qidate.qisplan2.death;
 
-import com.qidate.qisplan2.ghost.ability.ghosteye.GhostEyeSystem;
+import com.qidate.qisplan2.ghost.domain.type.eye.GhostEyeDomainController;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.LivingEntity;
 
@@ -60,7 +60,7 @@ public final class QisDeathHandler {
          */
         if (entity instanceof ServerPlayer player) {
 
-            GhostEyeSystem.close(player);
+            GhostEyeDomainController.close(player);
         }
     }
 }

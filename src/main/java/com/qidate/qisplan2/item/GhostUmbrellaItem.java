@@ -1,13 +1,11 @@
 package com.qidate.qisplan2.item;
 
-import com.qidate.qisplan2.QisPlan2;
 import com.qidate.qisplan2.core.ModDataComponents;
 import com.qidate.qisplan2.core.ModItems;
-import com.qidate.qisplan2.ghost.domain.umbrella.GhostUmbrellaDomain;
+import com.qidate.qisplan2.ghost.domain.type.umbrella.GhostUmbrellaDomainController;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionHand;
-import net.minecraft.world.InteractionResult;
 import net.minecraft.world.InteractionResultHolder;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
@@ -147,7 +145,7 @@ public class GhostUmbrellaItem extends Item {
             if (!level.isClientSide()
                     && player instanceof ServerPlayer serverPlayer) {
 
-                GhostUmbrellaDomain.remove(
+                GhostUmbrellaDomainController.remove(
                         serverPlayer
                 );
             }
@@ -186,7 +184,7 @@ public class GhostUmbrellaItem extends Item {
                     level.getGameTime()
             );
 
-            GhostUmbrellaDomain.ensure(
+            GhostUmbrellaDomainController.ensure(
                     serverPlayer
             );
         }
