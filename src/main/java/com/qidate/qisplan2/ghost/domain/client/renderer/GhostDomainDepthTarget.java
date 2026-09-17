@@ -1,13 +1,13 @@
-package com.qidate.qisplan2.client.renderer;
+package com.qidate.qisplan2.ghost.domain.client.renderer;
 
 import com.mojang.blaze3d.pipeline.TextureTarget;
 import net.minecraft.client.Minecraft;
 
-public final class GhostEyeDepthTarget {
+public final class GhostDomainDepthTarget {
 
     private static TextureTarget TARGET;
 
-    private GhostEyeDepthTarget() {
+    private GhostDomainDepthTarget() {
     }
 
     /**

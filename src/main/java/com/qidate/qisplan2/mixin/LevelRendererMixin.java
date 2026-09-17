@@ -1,7 +1,6 @@
 package com.qidate.qisplan2.mixin;
 
-import com.qidate.qisplan2.QisPlan2;
-import com.qidate.qisplan2.client.renderer.GhostEyeRenderHandler;
+import com.qidate.qisplan2.ghost.domain.client.renderer.GhostDomainMatrices;
 import org.joml.Matrix4f;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
@@ -31,11 +30,11 @@ public abstract class LevelRendererMixin {
             Matrix4f projectionMatrix,
             CallbackInfo ci
     ) {
-        GhostEyeRenderHandler.captureModelViewMatrix(
+        GhostDomainMatrices.captureModelViewMatrix(
                 new Matrix4f(frustumMatrix)
         );
 
-        GhostEyeRenderHandler.captureProjectionMatrix(
+        GhostDomainMatrices.captureProjectionMatrix(
                 new Matrix4f(projectionMatrix)
         );
     }
@@ -54,6 +53,6 @@ public abstract class LevelRendererMixin {
             Matrix4f projectionMatrix,
             CallbackInfo ci
     ) {
-        GhostEyeRenderHandler.render();
+        GhostDomainMatrices.render();
     }
 }

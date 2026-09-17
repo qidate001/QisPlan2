@@ -2,7 +2,7 @@ package com.qidate.qisplan2;
 
 import com.mojang.blaze3d.vertex.DefaultVertexFormat;
 import com.mojang.logging.LogUtils;
-import com.qidate.qisplan2.client.renderer.GhostEyeShader;
+import com.qidate.qisplan2.ghost.domain.client.renderer.GhostDomainShaderRegistry;
 import com.qidate.qisplan2.core.ModEntityAttributes;
 import com.qidate.qisplan2.core.ModRegistries;
 import com.qidate.qisplan2.core.QisConfig;
@@ -102,7 +102,7 @@ public class QisPlan2 {
                             ),
                             DefaultVertexFormat.POSITION
                     ),
-                    GhostEyeShader::setInstance
+                    GhostDomainShaderRegistry::setInstance
             );
         } catch (IOException e) {
             throw new RuntimeException(

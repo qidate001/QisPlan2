@@ -1,4 +1,4 @@
-package com.qidate.qisplan2.client.renderer;
+package com.qidate.qisplan2.ghost.domain.client.renderer;
 
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.*;
@@ -10,9 +10,9 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.ShaderInstance;
 import org.joml.Matrix4f;
 
-public final class GhostEyeRenderHandler {
+public final class GhostDomainMatrices {
 
-    private GhostEyeRenderHandler() {
+    private GhostDomainMatrices() {
     }
 
     private static Matrix4f capturedModelViewMatrix =
@@ -56,7 +56,7 @@ public final class GhostEyeRenderHandler {
          * ========================================================
          */
 
-        if (!GhostEyeShader.isReady()) {
+        if (!GhostDomainShaderRegistry.isReady()) {
             return;
         }
 
@@ -96,7 +96,7 @@ public final class GhostEyeRenderHandler {
                 minecraft.getMainRenderTarget();
 
         var depthTarget =
-                GhostEyeDepthTarget.get();
+                GhostDomainDepthTarget.get();
 
         /*
          * ========================================================
@@ -155,7 +155,7 @@ public final class GhostEyeRenderHandler {
          */
 
         ShaderInstance shader =
-                GhostEyeShader.getInstance();
+                GhostDomainShaderRegistry.getInstance();
 
         RenderSystem.setShader(
                 () -> shader

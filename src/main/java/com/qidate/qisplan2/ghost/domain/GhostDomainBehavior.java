@@ -1,5 +1,6 @@
 package com.qidate.qisplan2.ghost.domain;
 
+import com.qidate.qisplan2.ghost.layer.GhostLayerHandler;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.Entity;
 
@@ -40,6 +41,10 @@ public interface GhostDomainBehavior {
             GhostDomain domain,
             Entity entity
     ) {
+        GhostLayerHandler.setLayer(
+                entity,
+                domain.getLayer()
+        );
     }
 
     /**
@@ -50,6 +55,10 @@ public interface GhostDomainBehavior {
             GhostDomain domain,
             Entity entity
     ) {
+        GhostLayerHandler.setLayer(
+                entity,
+                0
+        );
     }
 
     /**
@@ -61,6 +70,10 @@ public interface GhostDomainBehavior {
             GhostDomain newDomain,
             Entity entity
     ) {
+        GhostLayerHandler.setLayer(
+                entity,
+                newDomain.getLayer()
+        );
     }
 
     /**
@@ -71,6 +84,10 @@ public interface GhostDomainBehavior {
             GhostDomain domain,
             Entity entity
     ) {
+        GhostLayerHandler.setLayer(
+                entity,
+                domain.getLayer()
+        );
     }
 
     /**

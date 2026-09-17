@@ -1,13 +1,13 @@
-package com.qidate.qisplan2.client.renderer;
+package com.qidate.qisplan2.ghost.domain.client.renderer;
 
 import com.qidate.qisplan2.QisPlan2;
 import net.minecraft.client.renderer.ShaderInstance;
 
-public final class GhostEyeShader {
+public final class GhostDomainShaderRegistry {
 
     private static ShaderInstance INSTANCE;
 
-    private GhostEyeShader() {
+    private GhostDomainShaderRegistry() {
     }
 
     public static void setInstance(ShaderInstance shader) {
