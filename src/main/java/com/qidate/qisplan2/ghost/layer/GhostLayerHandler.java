@@ -45,12 +45,26 @@ public final class GhostLayerHandler {
         int viewerLayer = getLayer(viewer);
         int targetLayer = getLayer(target);
 
-        // 现实层永远可以看见
-        if (viewerLayer == 0 || targetLayer == 0) {
+        /*
+         * 现实层：
+         * 只能看见现实层实体。
+         */
+        if (viewerLayer == 0) {
+            return targetLayer == 0;
+        }
+
+        /*
+         * 灵异层：
+         * 可以看见现实层实体，
+         * 以及与自己处于同一灵异层的实体。
+         */
+        if (targetLayer == 0) {
             return true;
         }
 
-        // 灵异层之间只能看见同层实体
+        /*
+         * 灵异层之间只能看见同层实体。
+         */
         return viewerLayer == targetLayer;
     }
 
