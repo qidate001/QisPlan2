@@ -15,6 +15,95 @@ public final class GhostDomainRenderPipeline {
     }
 
     /**
+     * 执行一个完整的鬼域后处理效果。
+     *
+     * <p>
+     * Pipeline 负责通用渲染流程，
+     * RenderEffect 负责具体鬼域的判断、Shader 和 Uniform。
+     * </p>
+     */
+    public static void render(
+            GhostDomainRenderEffect effect
+    ) {
+
+        Minecraft minecraft =
+                Minecraft.getInstance();
+
+        if (minecraft.level == null) {
+            return;
+        }
+
+        /*
+         * ========================================================
+         * 判断当前效果是否需要渲染
+         * ========================================================
+         */
+
+        if (!effect.shouldRender(
+                minecraft
+        )) {
+            return;
+        }
+
+        /*
+         * ========================================================
+         * 获取 Shader
+         * ========================================================
+         */
+
+        var shaderId =
+                effect.shaderId();
+
+        if (!GhostDomainShaderRegistry.isRegistered(
+                shaderId
+        )) {
+            return;
+        }
+
+        ShaderInstance shader =
+                GhostDomainShaderRegistry.get(
+                        shaderId
+                );
+
+        /*
+         * ========================================================
+         * 准备深度
+         * ========================================================
+         */
+
+        prepareDepth();
+
+        /*
+         * ========================================================
+         * 配置 Shader
+         * ========================================================
+         */
+
+        setupShader(
+                shader
+        );
+
+        /*
+         * ========================================================
+         * 设置鬼域专属 Uniform
+         * ========================================================
+         */
+
+        effect.setupUniforms(
+                shader,
+                minecraft
+        );
+
+        /*
+         * ========================================================
+         * 绘制全屏 Quad
+         * ========================================================
+         */
+
+        drawFullscreenQuad();
+    }
+
+    /**
      * 绘制一个覆盖整个屏幕的 Quad。
      */
     public static void drawFullscreenQuad() {

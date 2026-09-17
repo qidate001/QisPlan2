@@ -12,6 +12,7 @@ import com.qidate.qisplan2.client.renderer.*;
 import com.qidate.qisplan2.core.*;
 import com.qidate.qisplan2.event.DeathCurseHudOverlay;
 
+import com.qidate.qisplan2.ghost.domain.client.renderer.GhostEyeRenderEffect;
 import net.minecraft.client.model.HumanoidModel;
 import net.minecraft.client.model.geom.builders.CubeDeformation;
 import net.minecraft.client.model.geom.builders.LayerDefinition;
@@ -107,6 +108,9 @@ public class QisPlan2Client {
         NeoForge.EVENT_BUS.register(
                 ClientGhostDomainEvents.class
         );
+
+        // 鬼域效果注册
+        GhostEyeRenderEffect.register();
     }
 
     private static void registerParticleProviders(

@@ -18,6 +18,13 @@ public final class GhostEyeRenderEffect
     private GhostEyeRenderEffect() {
     }
 
+    public static void register() {
+
+        GhostDomainRenderEffectRegistry.register(
+                INSTANCE
+        );
+    }
+
     public static GhostEyeRenderEffect getInstance() {
         return INSTANCE;
     }
