@@ -12,7 +12,7 @@ import com.qidate.qisplan2.client.renderer.*;
 import com.qidate.qisplan2.core.*;
 import com.qidate.qisplan2.event.DeathCurseHudOverlay;
 
-import com.qidate.qisplan2.ghost.domain.client.renderer.GhostEyeRenderEffect;
+import com.qidate.qisplan2.ghost.domain.client.renderer.effect.GhostEyeRenderEffect;
 import net.minecraft.client.model.HumanoidModel;
 import net.minecraft.client.model.geom.builders.CubeDeformation;
 import net.minecraft.client.model.geom.builders.LayerDefinition;

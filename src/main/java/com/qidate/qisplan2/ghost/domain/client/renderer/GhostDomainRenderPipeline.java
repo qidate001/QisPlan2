@@ -18,8 +18,8 @@ public final class GhostDomainRenderPipeline {
      * 执行一个完整的鬼域后处理效果。
      *
      * <p>
-     * Pipeline 负责通用渲染流程，
-     * RenderEffect 负责具体鬼域的判断、Shader 和 Uniform。
+     * 该方法包含完整流程：
+     * 判断 → Shader → 深度准备 → Shader 配置 → 绘制。
      * </p>
      */
     public static void render(
@@ -32,6 +32,55 @@ public final class GhostDomainRenderPipeline {
         if (minecraft.level == null) {
             return;
         }
+
+        /*
+         * ========================================================
+         * 判断当前效果是否需要渲染
+         * ========================================================
+         */
+
+        if (!effect.shouldRender(
+                minecraft
+        )) {
+            return;
+        }
+
+        /*
+         * ========================================================
+         * 准备深度
+         * ========================================================
+         */
+
+        prepareDepth();
+
+        /*
+         * ========================================================
+         * 执行已经准备好深度的后处理
+         * ========================================================
+         */
+
+        renderPrepared(
+                effect,
+                minecraft
+        );
+    }
+
+    /**
+     * 执行一个已经完成深度准备的鬼域后处理效果。
+     *
+     * <p>
+     * 调用此方法之前，调用者必须已经执行：
+     * {@link #prepareDepth()}
+     * </p>
+     *
+     * <p>
+     * 该方法不会再次复制深度。
+     * </p>
+     */
+    public static void renderPrepared(
+            GhostDomainRenderEffect effect,
+            Minecraft minecraft
+    ) {
 
         /*
          * ========================================================
@@ -64,14 +113,6 @@ public final class GhostDomainRenderPipeline {
                 GhostDomainShaderRegistry.get(
                         shaderId
                 );
-
-        /*
-         * ========================================================
-         * 准备深度
-         * ========================================================
-         */
-
-        prepareDepth();
 
         /*
          * ========================================================
