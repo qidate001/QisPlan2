@@ -229,6 +229,7 @@ public final class QisNetwork {
                                 payload.z(),
                                 payload.strength(),
                                 payload.layer(),
+                                payload.shapeType(),
                                 payload.radius()
                         );
 

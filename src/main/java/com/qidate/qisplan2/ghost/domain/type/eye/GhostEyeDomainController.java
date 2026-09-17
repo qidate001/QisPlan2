@@ -4,10 +4,7 @@ import com.qidate.qisplan2.QisPlan2;
 import com.qidate.qisplan2.ghost.GhostAbilityContext;
 import com.qidate.qisplan2.ghost.PossessionHandler;
 import com.qidate.qisplan2.ghost.ability.ghosteye.GhostEyeAbility;
-import com.qidate.qisplan2.ghost.domain.CylinderDomainShape;
-import com.qidate.qisplan2.ghost.domain.GhostDomain;
-import com.qidate.qisplan2.ghost.domain.GhostDomainManager;
-import com.qidate.qisplan2.ghost.domain.GhostDomainUpdateMode;
+import com.qidate.qisplan2.ghost.domain.*;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -33,7 +30,7 @@ public final class GhostEyeDomainController {
                     "ghost_eye"
             );
 
-    private static final double DOMAIN_RADIUS = 50.0D;
+    private static final double DOMAIN_RADIUS = 80.0D;
 
     /**
      * 当前主动开启鬼眼的玩家。
@@ -265,7 +262,7 @@ public final class GhostEyeDomainController {
                         player.getX(),
                         player.getY(),
                         player.getZ(),
-                        new CylinderDomainShape(
+                        new SphereDomainShape(
                                 DOMAIN_RADIUS
                         ),
                         GhostDomainUpdateMode.DISTANCE,

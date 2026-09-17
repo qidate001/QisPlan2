@@ -42,6 +42,7 @@ public final class ClientGhostDomainManager {
             double z,
             double strength,
             int layer,
+            int shapeType,
             double radius
     ) {
 
@@ -56,6 +57,7 @@ public final class ClientGhostDomainManager {
                         z,
                         strength,
                         layer,
+                        shapeType,
                         radius
                 );
 

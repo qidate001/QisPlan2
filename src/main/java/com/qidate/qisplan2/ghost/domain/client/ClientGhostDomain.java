@@ -2,6 +2,7 @@ package com.qidate.qisplan2.ghost.domain.client;
 
 import com.qidate.qisplan2.ghost.domain.CylinderDomainShape;
 import com.qidate.qisplan2.ghost.domain.GhostDomainShape;
+import com.qidate.qisplan2.ghost.domain.SphereDomainShape;
 import net.minecraft.resources.ResourceLocation;
 
 import java.util.UUID;
@@ -38,6 +39,7 @@ public final class ClientGhostDomain {
             double z,
             double strength,
             int layer,
+            int shapeType,
             double radius
     ) {
         this.id = id;
@@ -56,7 +58,13 @@ public final class ClientGhostDomain {
 
         this.strength = strength;
         this.layer = layer;
-        this.shape = new CylinderDomainShape(radius);
+
+        if (shapeType == 1) {
+            this.shape = new SphereDomainShape(radius);
+        } else {
+            this.shape = new CylinderDomainShape(radius);
+        }
+
         this.radius = radius;
     }
 

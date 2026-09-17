@@ -3,6 +3,7 @@ package com.qidate.qisplan2.network.payload;
 import com.qidate.qisplan2.QisPlan2;
 import com.qidate.qisplan2.ghost.domain.CylinderDomainShape;
 import com.qidate.qisplan2.ghost.domain.GhostDomain;
+import com.qidate.qisplan2.ghost.domain.SphereDomainShape;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
@@ -20,8 +21,16 @@ public record GhostDomainAddPayload(
         double z,
         double strength,
         int layer,
+        int shapeType,
         double radius
 ) implements CustomPacketPayload {
+
+    /**
+     * 0 = 圆柱
+     * 1 = 球体
+     */
+    public static final int SHAPE_CYLINDER = 0;
+    public static final int SHAPE_SPHERE = 1;
 
     public static final Type<GhostDomainAddPayload> TYPE =
             new Type<>(
@@ -41,8 +50,13 @@ public record GhostDomainAddPayload(
                 buf.writeUUID(payload.id());
                 buf.writeUUID(payload.sourceUUID());
 
-                buf.writeResourceLocation(payload.domainType());
-                buf.writeResourceLocation(payload.dimension());
+                buf.writeResourceLocation(
+                        payload.domainType()
+                );
+
+                buf.writeResourceLocation(
+                        payload.dimension()
+                );
 
                 buf.writeDouble(payload.x());
                 buf.writeDouble(payload.y());
@@ -50,6 +64,9 @@ public record GhostDomainAddPayload(
 
                 buf.writeDouble(payload.strength());
                 buf.writeInt(payload.layer());
+
+                buf.writeInt(payload.shapeType());
+
                 buf.writeDouble(payload.radius());
             },
 
@@ -67,15 +84,30 @@ public record GhostDomainAddPayload(
 
                     buf.readDouble(),
                     buf.readInt(),
+
+                    buf.readInt(),
+
                     buf.readDouble()
             )
     );
 
-    public static GhostDomainAddPayload from(GhostDomain domain) {
+    public static GhostDomainAddPayload from(
+            GhostDomain domain
+    ) {
 
+        int shapeType = SHAPE_CYLINDER;
         double radius = 0.0D;
 
-        if (domain.getShape() instanceof CylinderDomainShape cylinder) {
+        if (domain.getShape()
+                instanceof SphereDomainShape sphere) {
+
+            shapeType = SHAPE_SPHERE;
+            radius = sphere.getRadius();
+
+        } else if (domain.getShape()
+                instanceof CylinderDomainShape cylinder) {
+
+            shapeType = SHAPE_CYLINDER;
             radius = cylinder.getRadius();
         }
 
@@ -89,6 +121,7 @@ public record GhostDomainAddPayload(
                 domain.getZ(),
                 domain.getStrength(),
                 domain.getLayer(),
+                shapeType,
                 radius
         );
     }
