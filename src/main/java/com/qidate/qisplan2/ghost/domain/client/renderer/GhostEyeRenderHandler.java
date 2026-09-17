@@ -1,14 +1,9 @@
 package com.qidate.qisplan2.ghost.domain.client.renderer;
 
-import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.*;
-import com.qidate.qisplan2.ghost.domain.client.ClientGhostDomain;
-import com.qidate.qisplan2.ghost.domain.client.ClientGhostDomainManager;
-import com.qidate.qisplan2.ghost.ability.ghosteye.GhostEyeAbility;
-import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.ShaderInstance;
-import org.joml.Matrix4f;
+import net.minecraft.resources.ResourceLocation;
 
 public final class GhostEyeRenderHandler {
 
@@ -30,12 +25,6 @@ public final class GhostEyeRenderHandler {
          * ========================================================
          */
 
-        if (!GhostDomainShaderRegistry.isRegistered(
-                GhostEyeAbility.ID
-        )) {
-            return;
-        }
-
         Minecraft minecraft =
                 Minecraft.getInstance();
 
@@ -43,22 +32,21 @@ public final class GhostEyeRenderHandler {
             return;
         }
 
-        /*
-         * ========================================================
-         * 当前鬼眼鬼域
-         * ========================================================
-         */
+        GhostEyeRenderEffect effect =
+                GhostEyeRenderEffect.getInstance();
 
-        ClientGhostDomain ghostEyeDomain =
-                getCurrentGhostEyeDomain(
-                        minecraft
-                );
+        if (!effect.shouldRender(
+                minecraft
+        )) {
+            return;
+        }
 
-        /*
-         * 没有鬼眼开启时，不需要复制深度，
-         * 也不需要执行任何后处理。
-         */
-        if (ghostEyeDomain == null) {
+        ResourceLocation shaderId =
+                effect.shaderId();
+
+        if (!GhostDomainShaderRegistry.isRegistered(
+                shaderId
+        )) {
             return;
         }
 
@@ -78,71 +66,16 @@ public final class GhostEyeRenderHandler {
 
         ShaderInstance shader =
                 GhostDomainShaderRegistry.get(
-                        GhostEyeAbility.ID
+                        shaderId
                 );
 
-        RenderSystem.setShader(
-                () -> shader
+        GhostDomainRenderPipeline.setupShader(
+                shader
         );
 
-        shader.setSampler(
-                "DiffuseSampler",
-                minecraft.getMainRenderTarget()
-                        .getColorTextureId()
-        );
-
-        shader.setSampler(
-                "MainDepthSampler",
-                GhostDomainDepthTarget.get()
-                        .getDepthTextureId()
-        );
-
-        shader.getUniform(
-                "GhostEyeProjMat"
-        ).set(
-                RenderSystem.getProjectionMatrix()
-        );
-
-        shader.getUniform(
-                "GhostEyeModelViewMat"
-        ).set(
-                GhostDomainMatrices.getModelViewMatrix()
-        );
-
-        Camera camera =
-                minecraft.gameRenderer
-                        .getMainCamera();
-
-        shader.getUniform(
-                "GhostEyeCameraPos"
-        ).set(
-                (float) camera.getPosition().x,
-                (float) camera.getPosition().y,
-                (float) camera.getPosition().z
-        );
-
-        shader.getUniform(
-                "GhostEyeDomainCenter"
-        ).set(
-                (float) ghostEyeDomain.getX(),
-                (float) ghostEyeDomain.getY(),
-                (float) ghostEyeDomain.getZ()
-        );
-
-        shader.getUniform(
-                "GhostEyeDomainRadius"
-        ).set(
-                (float) ghostEyeDomain.getRadius()
-        );
-
-        shader.getUniform(
-                "GhostEyeDomainActive"
-        ).set(1.0F);
-
-        shader.getUniform(
-                "GhostEyeDomainLayer"
-        ).set(
-                (float) ghostEyeDomain.getLayer()
+        effect.setupUniforms(
+                shader,
+                minecraft
         );
 
         /*
@@ -152,18 +85,5 @@ public final class GhostEyeRenderHandler {
          */
 
         GhostDomainRenderPipeline.drawFullscreenQuad();
-    }
-
-    private static ClientGhostDomain getCurrentGhostEyeDomain(
-            Minecraft minecraft
-    ) {
-
-        if (minecraft.level == null) {
-            return null;
-        }
-
-        return ClientGhostDomainManager.getFirstDomainByType(
-                GhostEyeAbility.ID
-        );
     }
 }

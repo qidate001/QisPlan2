@@ -7,6 +7,7 @@ import com.mojang.blaze3d.vertex.DefaultVertexFormat;
 import com.mojang.blaze3d.vertex.Tesselator;
 import com.mojang.blaze3d.vertex.VertexFormat;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.renderer.ShaderInstance;
 
 public final class GhostDomainRenderPipeline {
 
@@ -169,6 +170,54 @@ public final class GhostDomainRenderPipeline {
                 0,
                 mainTarget.width,
                 mainTarget.height
+        );
+    }
+
+
+
+    /**
+     * 准备指定 Shader 的后处理输入。
+     *
+     * <p>
+     * DiffuseSampler 使用 MainRenderTarget 当前颜色纹理。
+     * MainDepthSampler 使用独立复制出来的鬼域深度纹理。
+     * </p>
+     */
+    public static void setupShader(
+            ShaderInstance shader
+    ) {
+
+        Minecraft minecraft =
+                Minecraft.getInstance();
+
+        var mainTarget =
+                minecraft.getMainRenderTarget();
+
+        /*
+         * 设置当前后处理 Shader。
+         */
+        RenderSystem.setShader(
+                () -> shader
+        );
+
+        /*
+         * Minecraft 当前帧的颜色结果。
+         */
+        shader.setSampler(
+                "DiffuseSampler",
+                mainTarget.getColorTextureId()
+        );
+
+        /*
+         * 安全的深度副本。
+         *
+         * 绝对不能直接使用 mainTarget 的 Depth Attachment，
+         * 否则会再次触发 Framebuffer Feedback。
+         */
+        shader.setSampler(
+                "MainDepthSampler",
+                GhostDomainDepthTarget.get()
+                        .getDepthTextureId()
         );
     }
 }
