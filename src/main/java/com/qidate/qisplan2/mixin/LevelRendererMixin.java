@@ -1,6 +1,7 @@
 package com.qidate.qisplan2.mixin;
 
 import com.qidate.qisplan2.ghost.domain.client.renderer.GhostDomainMatrices;
+import com.qidate.qisplan2.ghost.domain.client.renderer.GhostEyeRenderHandler;
 import org.joml.Matrix4f;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
@@ -53,6 +54,6 @@ public abstract class LevelRendererMixin {
             Matrix4f projectionMatrix,
             CallbackInfo ci
     ) {
-        GhostDomainMatrices.render();
+        GhostEyeRenderHandler.render();
     }
 }

@@ -134,13 +134,13 @@ public final class GhostDomainEntityTracker {
                         )
                         .add(entityUUID);
 
-                if (entity instanceof ServerPlayer) {
-                    QisPlan2.LOGGER.info(
-                            "[GhostDomainTracker] 实体进入鬼域: entity={}, domain={}",
-                            entity.getName().getString(),
-                            domainId
-                    );
-                }
+//                if (entity instanceof ServerPlayer) {
+//                    QisPlan2.LOGGER.info(
+//                            "[GhostDomainTracker] 实体进入鬼域: entity={}, domain={}",
+//                            entity.getName().getString(),
+//                            domainId
+//                    );
+//                }
             }
         }
 

@@ -93,18 +93,27 @@ public class QisPlan2 {
 
     private static void registerShaders(RegisterShadersEvent event) {
         try {
+
+            ResourceLocation ghostEyeId =
+                    ResourceLocation.fromNamespaceAndPath(
+                            MODID,
+                            "ghost_eye"
+                    );
+
             event.registerShader(
                     new ShaderInstance(
                             event.getResourceProvider(),
-                            ResourceLocation.fromNamespaceAndPath(
-                                    MODID,
-                                    "ghost_eye"
-                            ),
+                            ghostEyeId,
                             DefaultVertexFormat.POSITION
                     ),
-                    GhostDomainShaderRegistry::setInstance
+                    shader -> GhostDomainShaderRegistry.register(
+                            ghostEyeId,
+                            shader
+                    )
             );
+
         } catch (IOException e) {
+
             throw new RuntimeException(
                     "Failed to register ghost eye shader",
                     e
