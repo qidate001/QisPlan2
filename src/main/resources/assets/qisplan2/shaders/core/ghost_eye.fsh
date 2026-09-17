@@ -25,16 +25,16 @@ void main() {
     // =========================================================
 
     vec4 scene =
-    texture(
+        texture(
             DiffuseSampler,
             texCoord
-    );
+        );
 
     float depth =
-    texture(
+        texture(
             MainDepthSampler,
             texCoord
-    ).r;
+        ).r;
 
 
     // =========================================================
@@ -42,7 +42,7 @@ void main() {
     // =========================================================
 
     vec2 ndcXY =
-    texCoord * 2.0 - 1.0;
+        texCoord * 2.0 - 1.0;
 
 
     // =========================================================
@@ -50,33 +50,31 @@ void main() {
     // =========================================================
 
     vec4 nearNDC =
-    vec4(
+        vec4(
             ndcXY,
             -1.0,
             1.0
-    );
+        );
 
     vec4 farNDC =
-    vec4(
+        vec4(
             ndcXY,
             1.0,
             1.0
-    );
+        );
 
 
     vec4 nearView =
-    inverse(GhostEyeProjMat)
-    * nearNDC;
+        inverse(GhostEyeProjMat)
+        * nearNDC;
 
     vec4 farView =
-    inverse(GhostEyeProjMat)
-    * farNDC;
+        inverse(GhostEyeProjMat)
+        * farNDC;
 
-    nearView /=
-    nearView.w;
+    nearView /= nearView.w;
 
-    farView /=
-    farView.w;
+    farView /= farView.w;
 
 
     // =========================================================
@@ -84,56 +82,52 @@ void main() {
     // =========================================================
 
     vec4 nearWorld =
-    inverse(GhostEyeModelViewMat)
-    * nearView;
+        inverse(GhostEyeModelViewMat)
+        * nearView;
 
     vec4 farWorld =
-    inverse(GhostEyeModelViewMat)
-    * farView;
+        inverse(GhostEyeModelViewMat)
+        * farView;
 
-    nearWorld /=
-    nearWorld.w;
+    nearWorld /= nearWorld.w;
 
-    farWorld /=
-    farWorld.w;
+    farWorld /= farWorld.w;
 
 
     vec3 rayStart =
-    nearWorld.xyz
-    + GhostEyeCameraPos;
+        nearWorld.xyz
+        + GhostEyeCameraPos;
 
     vec3 rayEnd =
-    farWorld.xyz
-    + GhostEyeCameraPos;
+        farWorld.xyz
+        + GhostEyeCameraPos;
 
     // =========================================================
     // 当前像素对应的场景世界坐标
     // =========================================================
 
     vec4 sceneNDC =
-    vec4(
+        vec4(
             ndcXY,
             depth * 2.0 - 1.0,
             1.0
-    );
+        );
 
     vec4 sceneView =
-    inverse(GhostEyeProjMat)
-    * sceneNDC;
+        inverse(GhostEyeProjMat)
+        * sceneNDC;
 
-    sceneView /=
-    sceneView.w;
+    sceneView /= sceneView.w;
 
     vec4 sceneWorld =
-    inverse(GhostEyeModelViewMat)
-    * sceneView;
+        inverse(GhostEyeModelViewMat)
+        * sceneView;
 
-    sceneWorld /=
-    sceneWorld.w;
+    sceneWorld /= sceneWorld.w;
 
     vec3 sceneWorldPos =
-    sceneWorld.xyz
-    + GhostEyeCameraPos;
+        sceneWorld.xyz
+        + GhostEyeCameraPos;
 
 
     // =========================================================
@@ -141,19 +135,19 @@ void main() {
     // =========================================================
 
     vec3 rayDirection =
-    normalize(
+        normalize(
             rayEnd - rayStart
-    );
+        );
 
     // =========================================================
     // 计算场景表面位于射线上的距离
     // =========================================================
 
     float sceneDistance =
-    dot(
+        dot(
             sceneWorldPos - rayStart,
             rayDirection
-    );
+        );
 
 
     // =========================================================
@@ -161,8 +155,8 @@ void main() {
     // =========================================================
 
     vec3 sphereOffset =
-    rayStart
-    - GhostEyeDomainCenter;
+        rayStart
+        - GhostEyeDomainCenter;
 
 
     // =========================================================
@@ -170,23 +164,23 @@ void main() {
     // =========================================================
 
     float b =
-    dot(
+        dot(
             sphereOffset,
             rayDirection
-    );
+        );
 
     float c =
-    dot(
+        dot(
             sphereOffset,
             sphereOffset
-    )
-    -
-    GhostEyeDomainRadius
-    *
-    GhostEyeDomainRadius;
+        )
+        -
+        GhostEyeDomainRadius
+        *
+        GhostEyeDomainRadius;
 
     float discriminant =
-    b * b - c;
+        b * b - c;
 
 
     // =========================================================
@@ -194,7 +188,7 @@ void main() {
     // =========================================================
 
     float inside =
-    0.0;
+        0.0;
 
 
     if (
@@ -271,19 +265,19 @@ void main() {
     // =========================================================
 
     float redStrength =
-    0.15
-    +
-    (
-    GhostEyeDomainLayer - 1.0
-    )
-    * 0.10;
+        0.25
+        +
+        (
+            GhostEyeDomainLayer - 1.0
+        )
+        * 0.10;
 
     redStrength =
-    clamp(
-            redStrength,
-            0.15,
-            0.65
-    );
+        clamp(
+                redStrength,
+                0.15,
+                0.65
+        );
 
 
     // =========================================================
@@ -291,30 +285,37 @@ void main() {
     // =========================================================
 
     vec3 red =
-    vec3(
-            1.0,
-            0.0,
-            0.0
-    );
+        vec3(
+                1.0,
+                0.0,
+                0.0
+        );
 
     vec3 ghostColor =
-    mix(
-            scene.rgb,
-            red,
-            redStrength
-    );
+        mix(
+                scene.rgb,
+                red,
+                redStrength
+        );
 
 
     // =========================================================
     // 根据空气厚度进行混合
     // =========================================================
 
+    float ghostStrength =
+        clamp(
+                inside * 1.6,
+                0.0,
+                1.0
+        );
+
     vec3 finalColor =
-    mix(
-            scene.rgb,
-            ghostColor,
-            inside
-    );
+        mix(
+                scene.rgb,
+                ghostColor,
+                ghostStrength
+        );
 
 
     // =========================================================
@@ -322,8 +323,8 @@ void main() {
     // =========================================================
 
     fragColor =
-    vec4(
-            finalColor,
-            scene.a
-    );
+        vec4(
+                finalColor,
+                scene.a
+        );
 }
