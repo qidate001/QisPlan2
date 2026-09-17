@@ -47,6 +47,7 @@ public class QisPlan2 {
                 ModEntityAttributes::register
         );
 
+        // 注册 Shaders
         modEventBus.addListener(
                 QisPlan2::registerShaders
         );
