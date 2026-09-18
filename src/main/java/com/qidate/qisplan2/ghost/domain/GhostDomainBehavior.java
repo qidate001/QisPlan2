@@ -2,6 +2,7 @@ package com.qidate.qisplan2.ghost.domain;
 
 import com.qidate.qisplan2.ghost.layer.GhostLayerHandler;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
 
 public interface GhostDomainBehavior {
@@ -102,5 +103,45 @@ public interface GhostDomainBehavior {
             Entity entity
     ) {
         return false;
+    }
+
+    /**
+     * 是否允许使用鬼域传送。
+     *
+     * <p>默认允许。</p>
+     */
+    default boolean canTeleport(
+            ServerLevel level,
+            GhostDomain domain,
+            ServerPlayer player
+    ) {
+        return true;
+    }
+
+    /**
+     * 执行鬼域传送。
+     *
+     * 默认实现：
+     * 传送到目标位置。
+     */
+    default boolean teleport(
+            ServerLevel level,
+            GhostDomain domain,
+            ServerPlayer player,
+            double x,
+            double y,
+            double z
+    ) {
+
+        player.teleportTo(
+                level,
+                x,
+                y,
+                z,
+                player.getYRot(),
+                player.getXRot()
+        );
+
+        return true;
     }
 }

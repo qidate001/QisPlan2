@@ -27,6 +27,8 @@ public final class ClientKeyHandler {
         event.register(ModKeyMappings.GHOST_EYE_SELF_LAYER_UP);
         event.register(ModKeyMappings.GHOST_EYE_SELF_LAYER_DOWN);
         event.register(ModKeyMappings.GHOST_EYE_TOGGLE);
+
+        event.register(ModKeyMappings.GHOST_DOMAIN_TELEPORT);
     }
 
     public static void clientTick(
@@ -108,5 +110,15 @@ public final class ClientKeyHandler {
             QisNetwork.sendGhostEyeToggle();
         }
 
+        /*
+         * ========================================================
+         * 鬼域
+         * ========================================================
+         */
+
+        if (ModKeyMappings.GHOST_DOMAIN_TELEPORT.consumeClick()) {
+
+            QisNetwork.sendGhostDomainTeleport();
+        }
     }
 }

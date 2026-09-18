@@ -343,4 +343,43 @@ public final class GhostDomainManager {
             );
         }
     }
+
+
+    public GhostDomain getOwnEffectiveDomain(
+            ServerPlayer player
+    ) {
+
+        GhostDomain effectiveDomain = null;
+
+        for (GhostDomain domain : domains.values()) {
+
+            if (!player.getUUID().equals(
+                    domain.getSourceUUID()
+            )) {
+                continue;
+            }
+
+            if (!domain.contains(
+                    player.getX(),
+                    player.getY(),
+                    player.getZ()
+            )) {
+                continue;
+            }
+
+            if (effectiveDomain == null) {
+                effectiveDomain = domain;
+                continue;
+            }
+
+            if (GhostDomainPriority.canOverride(
+                    domain,
+                    effectiveDomain
+            )) {
+                effectiveDomain = domain;
+            }
+        }
+
+        return effectiveDomain;
+    }
 }

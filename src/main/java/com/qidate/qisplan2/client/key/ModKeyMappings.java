@@ -99,5 +99,12 @@ public final class ModKeyMappings {
                     CATEGORY
             );
 
+    public static final KeyMapping GHOST_DOMAIN_TELEPORT =
+            new KeyMapping(
+                    "key.qisplan2.ghost_domain_teleport",
+                    GLFW.GLFW_KEY_R,
+                    "key.categories.qisplan2"
+            );
+
     private ModKeyMappings() {}
 }

@@ -280,4 +280,16 @@ public final class GhostUmbrellaDomainBehavior
     ) {
         return INITIAL_ATTACK_STRENGTH;
     }
+
+    /**
+     * 禁用化虹
+     */
+    @Override
+    public boolean canTeleport(
+            ServerLevel level,
+            GhostDomain domain,
+            ServerPlayer player
+    ) {
+        return false;
+    }
 }

@@ -5,6 +5,7 @@ import com.qidate.qisplan2.block.entity.GhostDoorPlateBlockEntity;
 import com.qidate.qisplan2.client.DoorGhostMarkClient;
 import com.qidate.qisplan2.client.GhostPianoMusicClient;
 import com.qidate.qisplan2.client.GhostPossessionClientState;
+import com.qidate.qisplan2.ghost.domain.GhostDomainTeleportHandler;
 import com.qidate.qisplan2.ghost.domain.client.ClientGhostDomainManager;
 import com.qidate.qisplan2.client.screen.GhostPossessionScreen;
 import com.qidate.qisplan2.client.screen.GhostDoorPlateScreen;
@@ -295,6 +296,12 @@ public final class QisNetwork {
 //                );
                     });
                 }
+        );
+
+        registrar.playToServer(
+                GhostDomainTeleportPayload.TYPE,
+                GhostDomainTeleportPayload.STREAM_CODEC,
+                QisNetwork::handleGhostDomainTeleport
         );
 
         /*
@@ -745,6 +752,32 @@ public final class QisNetwork {
                         domain.getLayer(),
                         domain.getRadius()
                 )
+        );
+    }
+
+    private static void handleGhostDomainTeleport(
+            GhostDomainTeleportPayload payload,
+            IPayloadContext context
+    ) {
+
+        context.enqueueWork(() -> {
+
+            if (!(context.player()
+                    instanceof ServerPlayer player)) {
+
+                return;
+            }
+
+            GhostDomainTeleportHandler.teleport(
+                    player
+            );
+        });
+    }
+
+    public static void sendGhostDomainTeleport() {
+
+        PacketDistributor.sendToServer(
+                new GhostDomainTeleportPayload()
         );
     }
 
