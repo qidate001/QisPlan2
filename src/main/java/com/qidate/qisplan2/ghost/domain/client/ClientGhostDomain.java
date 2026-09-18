@@ -146,6 +146,26 @@ public final class ClientGhostDomain {
     }
 
     /**
+     * 立即设置鬼域位置。
+     *
+     * <p>用于玩家传送等需要瞬间同步的情况，
+     * 不经过客户端平滑移动。</p>
+     */
+    public void setPositionImmediate(
+            double x,
+            double y,
+            double z
+    ) {
+        this.x = x;
+        this.y = y;
+        this.z = z;
+
+        this.targetX = x;
+        this.targetY = y;
+        this.targetZ = z;
+    }
+
+    /**
      * 客户端平滑更新鬼域位置。
      */
     public void tick() {

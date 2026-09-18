@@ -143,7 +143,8 @@ public final class GhostDomainManager {
 
             QisNetwork.sendGhostDomainUpdate(
                     level,
-                    domain
+                    domain,
+                    false
             );
 
             return;
@@ -167,7 +168,39 @@ public final class GhostDomainManager {
 
         QisNetwork.sendGhostDomainUpdate(
                 level,
-                domain
+                domain,
+                false
+        );
+    }
+
+    /**
+     * 立即更新鬼域位置。
+     *
+     * <p>用于玩家传送等需要瞬间同步的情况。
+     * 客户端不会经过平滑移动，直接跳转到新位置。</p>
+     */
+    public void updatePositionImmediate(
+            UUID domainId,
+            double x,
+            double y,
+            double z
+    ) {
+        GhostDomain domain = domains.get(domainId);
+
+        if (domain == null) {
+            return;
+        }
+
+        domain.setPosition(
+                x,
+                y,
+                z
+        );
+
+        QisNetwork.sendGhostDomainUpdate(
+                level,
+                domain,
+                true
         );
     }
 
@@ -201,7 +234,8 @@ public final class GhostDomainManager {
 
         QisNetwork.sendGhostDomainUpdate(
                 level,
-                domain
+                domain,
+                false
         );
     }
 

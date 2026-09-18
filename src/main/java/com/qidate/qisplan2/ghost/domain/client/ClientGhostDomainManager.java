@@ -1,5 +1,6 @@
 package com.qidate.qisplan2.ghost.domain.client;
 
+import com.qidate.qisplan2.QisPlan2;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.resources.ResourceLocation;
@@ -16,6 +17,8 @@ public final class ClientGhostDomainManager {
     private static final Map<UUID, ClientGhostDomain> DOMAINS =
             new LinkedHashMap<>();
 
+    private static ResourceLocation LAST_DIMENSION;
+
     private ClientGhostDomainManager() {
     }
 
@@ -23,8 +26,40 @@ public final class ClientGhostDomainManager {
             ClientTickEvent.Post event
     ) {
 
-        if (Minecraft.getInstance().level == null) {
+        Minecraft minecraft =
+                Minecraft.getInstance();
+
+        if (minecraft.level == null) {
             return;
+        }
+
+        ResourceLocation currentDimension =
+                minecraft.level
+                        .dimension()
+                        .location();
+
+        /*
+         * ========================================================
+         * 检测客户端是否切换了维度
+         * ========================================================
+         */
+        if (!currentDimension.equals(LAST_DIMENSION)) {
+
+            LAST_DIMENSION = currentDimension;
+
+            /*
+             * 客户端之前保存的 GhostDomain
+             * 属于旧维度。
+             *
+             * 这些域不会收到旧维度广播的 REMOVE，
+             * 因此这里必须主动清理。
+             */
+            clear();
+
+            QisPlan2.LOGGER.info(
+                    "[GhostDomain] CLIENT 维度切换，清理旧鬼域: {}",
+                    currentDimension
+            );
         }
 
         for (ClientGhostDomain domain : DOMAINS.values()) {
@@ -162,7 +197,8 @@ public final class ClientGhostDomainManager {
             double z,
             double strength,
             int layer,
-            double radius
+            double radius,
+            boolean immediate
     ) {
         ClientGhostDomain domain = DOMAINS.get(id);
 
@@ -170,7 +206,19 @@ public final class ClientGhostDomainManager {
             return;
         }
 
-        domain.setPosition(x, y, z);
+        if (immediate) {
+            domain.setPositionImmediate(
+                    x,
+                    y,
+                    z
+            );
+        } else {
+            domain.setPosition(
+                    x,
+                    y,
+                    z
+            );
+        }
 
         domain.setStrength(strength);
         domain.setLayer(layer);

@@ -15,7 +15,8 @@ public record GhostDomainUpdatePayload(
         double z,
         double strength,
         int layer,
-        double radius
+        double radius,
+        boolean immediate
 ) implements CustomPacketPayload {
 
     public static final Type<GhostDomainUpdatePayload> TYPE =
@@ -41,6 +42,8 @@ public record GhostDomainUpdatePayload(
                 buf.writeDouble(payload.strength());
                 buf.writeInt(payload.layer());
                 buf.writeDouble(payload.radius());
+
+                buf.writeBoolean(payload.immediate());
             },
 
             buf -> new GhostDomainUpdatePayload(
@@ -52,7 +55,9 @@ public record GhostDomainUpdatePayload(
 
                     buf.readDouble(),
                     buf.readInt(),
-                    buf.readDouble()
+                    buf.readDouble(),
+
+                    buf.readBoolean()
             )
     );
 

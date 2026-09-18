@@ -281,7 +281,8 @@ public final class QisNetwork {
                                 payload.z(),
                                 payload.strength(),
                                 payload.layer(),
-                                payload.radius()
+                                payload.radius(),
+                                payload.immediate()
                         );
 
 //                QisPlan2.LOGGER.info(
@@ -737,7 +738,8 @@ public final class QisNetwork {
 
     public static void sendGhostDomainUpdate(
             ServerLevel level,
-            GhostDomain domain
+            GhostDomain domain,
+            boolean immediate
     ) {
         PacketDistributor.sendToPlayersInDimension(
                 level,
@@ -750,7 +752,9 @@ public final class QisNetwork {
 
                         domain.getStrength(),
                         domain.getLayer(),
-                        domain.getRadius()
+                        domain.getRadius(),
+
+                        immediate
                 )
         );
     }

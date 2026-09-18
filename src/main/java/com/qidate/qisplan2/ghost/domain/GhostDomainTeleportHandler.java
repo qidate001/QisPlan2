@@ -54,14 +54,28 @@ public final class GhostDomainTeleportHandler {
             return false;
         }
 
-        return domain.getBehavior().teleport(
-                level,
-                domain,
-                player,
-                target.x,
-                target.y,
-                target.z
+        boolean success =
+                domain.getBehavior().teleport(
+                        level,
+                        domain,
+                        player,
+                        target.x,
+                        target.y,
+                        target.z
+                );
+
+        if (!success) {
+            return false;
+        }
+
+        manager.updatePositionImmediate(
+                domain.getId(),
+                player.getX(),
+                player.getY(),
+                player.getZ()
         );
+
+        return true;
     }
 
     private static Vec3 findTargetPosition(
