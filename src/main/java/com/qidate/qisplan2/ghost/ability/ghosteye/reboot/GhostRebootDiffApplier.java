@@ -1,7 +1,9 @@
 package com.qidate.qisplan2.ghost.ability.ghosteye.reboot;
 
 import com.qidate.qisplan2.core.ModGameRules;
+import net.minecraft.network.protocol.game.ClientboundSetExperiencePacket;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.item.ItemStack;
 
@@ -90,6 +92,51 @@ public final class GhostRebootDiffApplier {
                     player.getFoodData().getFoodLevel()
                             - diff.food
             );
+        }
+
+        if (diff.saturation != null) {
+
+            player.getFoodData().setSaturation(
+                    player.getFoodData().getSaturationLevel()
+                            - diff.saturation
+            );
+        }
+
+        // 经验值
+        if (diff.previousExperienceLevel != null) {
+
+            player.experienceLevel =
+                    diff.previousExperienceLevel;
+
+            player.experienceProgress =
+                    diff.previousExperienceProgress;
+
+            player.totalExperience =
+                    diff.previousTotalExperience;
+
+            player.onUpdateAbilities();
+
+            player.connection.send(
+                    new ClientboundSetExperiencePacket(
+                            player.experienceProgress,
+                            player.totalExperience,
+                            player.experienceLevel
+                    )
+            );
+        }
+
+        // 药水效果
+        if (diff.previousEffects != null) {
+
+            player.removeAllEffects();
+
+            for (MobEffectInstance effect :
+                    diff.previousEffects) {
+
+                player.addEffect(
+                        new MobEffectInstance(effect)
+                );
+            }
         }
 
         // 背包

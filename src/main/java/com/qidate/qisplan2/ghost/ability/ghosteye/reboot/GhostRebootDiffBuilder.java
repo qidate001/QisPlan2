@@ -2,9 +2,12 @@ package com.qidate.qisplan2.ghost.ability.ghosteye.reboot;
 
 import com.qidate.qisplan2.ghost.PossessedGhostState;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.item.ItemStack;
 
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 public final class GhostRebootDiffBuilder {
@@ -58,11 +61,49 @@ public final class GhostRebootDiffBuilder {
         }
 
         // 饥饿值变化
-
         if (previous.food != current.food) {
 
             diff.food =
                     current.food - previous.food;
+        }
+
+        if (previous.saturation != current.saturation) {
+
+            diff.saturation =
+                    current.saturation - previous.saturation;
+        }
+
+        // 经验值
+        if (previous.experienceLevel != current.experienceLevel
+                || previous.experienceProgress != current.experienceProgress
+                || previous.totalExperience != current.totalExperience) {
+
+            diff.previousExperienceLevel =
+                    previous.experienceLevel;
+
+            diff.previousExperienceProgress =
+                    previous.experienceProgress;
+
+            diff.previousTotalExperience =
+                    previous.totalExperience;
+        }
+
+        // 药水效果
+        if (!effectsEqual(
+                previous.effects,
+                current.effects
+        )) {
+
+            diff.previousEffects =
+                    new ArrayList<>();
+
+            for (MobEffectInstance effect :
+                    previous.effects) {
+
+                diff.previousEffects.add(
+                        new MobEffectInstance(effect)
+                );
+            }
         }
 
         // 物品栏变化
@@ -130,5 +171,35 @@ public final class GhostRebootDiffBuilder {
         }
 
         return diff;
+    }
+
+    private static boolean effectsEqual(
+            List<MobEffectInstance> previous,
+            List<MobEffectInstance> current
+    ) {
+
+        if (previous.size() != current.size()) {
+            return false;
+        }
+
+        for (MobEffectInstance previousEffect : previous) {
+
+            boolean found = false;
+
+            for (MobEffectInstance currentEffect : current) {
+
+                if (previousEffect.equals(currentEffect)) {
+
+                    found = true;
+                    break;
+                }
+            }
+
+            if (!found) {
+                return false;
+            }
+        }
+
+        return true;
     }
 }

@@ -1,7 +1,9 @@
 package com.qidate.qisplan2.ghost.ability.ghosteye.reboot;
 
 import com.qidate.qisplan2.core.ModGameRules;
+import net.minecraft.network.protocol.game.ClientboundSetExperiencePacket;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.item.ItemStack;
 
@@ -29,6 +31,7 @@ public final class GhostRebootApplier {
                                 ModGameRules.GHOST_REBOOT_RESTORE_INVENTORY
                         );
 
+        // 位置 & 视角
         if (restorePosition) {
 
             player.teleportTo(
@@ -41,14 +44,51 @@ public final class GhostRebootApplier {
             );
         }
 
+        // 生命值
         player.setHealth(
                 snapshot.health
         );
 
+        // 饥饿值
         player.getFoodData().setFoodLevel(
                 snapshot.food
         );
 
+        // 饱和值
+        player.getFoodData().setSaturation(
+                snapshot.saturation
+        );
+
+        // 经验值
+        player.experienceLevel =
+                snapshot.experienceLevel;
+
+        player.experienceProgress =
+                snapshot.experienceProgress;
+
+        player.totalExperience =
+                snapshot.totalExperience;
+
+        player.connection.send(
+                new ClientboundSetExperiencePacket(
+                        player.experienceProgress,
+                        player.totalExperience,
+                        player.experienceLevel
+                )
+        );
+
+        // 药水效果
+        player.removeAllEffects();
+
+        for (MobEffectInstance effect :
+                snapshot.effects) {
+
+            player.addEffect(
+                    new MobEffectInstance(effect)
+            );
+        }
+
+        // 物品栏
         if (restoreInventory) {
 
             restoreInventory(

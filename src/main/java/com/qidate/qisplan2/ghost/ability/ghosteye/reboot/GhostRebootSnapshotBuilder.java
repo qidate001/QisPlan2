@@ -4,6 +4,7 @@ import com.qidate.qisplan2.ghost.PossessedGhostState;
 import com.qidate.qisplan2.ghost.PossessionHandler;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.item.ItemStack;
 
@@ -41,6 +42,26 @@ public final class GhostRebootSnapshotBuilder {
 
         snapshot.food =
                 player.getFoodData().getFoodLevel();
+
+        snapshot.saturation =
+                player.getFoodData().getSaturationLevel();
+
+        snapshot.experienceLevel =
+                player.experienceLevel;
+
+        snapshot.experienceProgress =
+                player.experienceProgress;
+
+        snapshot.totalExperience =
+                player.totalExperience;
+
+        for (MobEffectInstance effect :
+                player.getActiveEffects()) {
+
+            snapshot.effects.add(
+                    new MobEffectInstance(effect)
+            );
+        }
 
         Inventory inventory =
                 player.getInventory();
