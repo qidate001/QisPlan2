@@ -3,6 +3,7 @@ package com.qidate.qisplan2.ghost.ability.ghosteye;
 import com.qidate.qisplan2.QisPlan2;
 import com.qidate.qisplan2.ghost.GhostAbilityContext;
 import com.qidate.qisplan2.ghost.ability.PossessedGhostAbility;
+import com.qidate.qisplan2.ghost.ability.ghosteye.reboot.GhostRebootSystem;
 import com.qidate.qisplan2.ghost.corrosion.CorrosionType;
 import com.qidate.qisplan2.ghost.corrosion.GhostCorrosion;
 import com.qidate.qisplan2.ghost.domain.type.eye.GhostEyeDomainController;
@@ -49,6 +50,8 @@ public final class GhostEyeAbility
     ) {
 
         GhostEyeDomainController.tick(context);
+
+        GhostRebootSystem.tick(context.player());
     }
 
     @Override
