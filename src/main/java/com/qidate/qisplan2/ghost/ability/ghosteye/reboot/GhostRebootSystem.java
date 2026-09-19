@@ -426,7 +426,9 @@ public final class GhostRebootSystem {
 
         if (diff.dx != null
                 || diff.dy != null
-                || diff.dz != null) {
+                || diff.dz != null
+                || diff.dyaw != null
+                || diff.dpitch != null) {
 
             result.append("位置");
 
@@ -453,6 +455,24 @@ public final class GhostRebootSystem {
                         String.format(
                                 " Δz=%.2f",
                                 diff.dz
+                        )
+                );
+            }
+
+            if (diff.dyaw != null) {
+                result.append(
+                        String.format(
+                                " Δyaw=%.1f",
+                                diff.dyaw
+                        )
+                );
+            }
+
+            if (diff.dpitch != null) {
+                result.append(
+                        String.format(
+                                " Δpitch=%.1f",
+                                diff.dpitch
                         )
                 );
             }

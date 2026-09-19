@@ -4,7 +4,6 @@ import com.qidate.qisplan2.ghost.PossessedGhostState;
 import net.minecraft.resources.ResourceLocation;
 
 import java.util.HashSet;
-import java.util.Map;
 import java.util.Set;
 
 public final class GhostRebootDiffBuilder {
@@ -34,6 +33,19 @@ public final class GhostRebootDiffBuilder {
         if (previous.z != current.z) {
             diff.dz =
                     current.z - previous.z;
+        }
+
+        // 视野变化
+        if (previous.yaw != current.yaw) {
+
+            diff.dyaw =
+                    current.yaw - previous.yaw;
+        }
+
+        if (previous.pitch != current.pitch) {
+
+            diff.dpitch =
+                    current.pitch - previous.pitch;
         }
 
         // 生命值变化

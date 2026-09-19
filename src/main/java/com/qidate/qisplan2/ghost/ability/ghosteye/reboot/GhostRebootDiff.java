@@ -12,6 +12,9 @@ public final class GhostRebootDiff {
     public Double dy;
     public Double dz;
 
+    public Float dyaw;
+    public Float dpitch;
+
     public Float health;
 
     public Integer food;
@@ -24,6 +27,8 @@ public final class GhostRebootDiff {
         return dx == null
                 && dy == null
                 && dz == null
+                && dyaw == null
+                && dpitch == null
                 && health == null
                 && food == null
                 && ghostChanges.isEmpty();

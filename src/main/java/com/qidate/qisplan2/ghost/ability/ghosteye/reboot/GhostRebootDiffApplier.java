@@ -28,14 +28,33 @@ public final class GhostRebootDiffApplier {
             z -= diff.dz;
         }
 
+        float yaw =
+                player.getYRot();
+
+        float pitch =
+                player.getXRot();
+
+        if (diff.dyaw != null) {
+            yaw -= diff.dyaw;
+        }
+
+        if (diff.dpitch != null) {
+            pitch -= diff.dpitch;
+        }
+
         if (diff.dx != null
                 || diff.dy != null
-                || diff.dz != null) {
+                || diff.dz != null
+                || diff.dyaw != null
+                || diff.dpitch != null) {
 
             player.teleportTo(
+                    player.serverLevel(),
                     x,
                     y,
-                    z
+                    z,
+                    yaw,
+                    pitch
             );
         }
 
