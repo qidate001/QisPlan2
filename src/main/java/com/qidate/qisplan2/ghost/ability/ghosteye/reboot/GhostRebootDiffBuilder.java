@@ -38,14 +38,17 @@ public final class GhostRebootDiffBuilder {
 
         // 生命值变化
         if (previous.health != current.health) {
+
             diff.health =
-                    current.health;
+                    current.health - previous.health;
         }
 
         // 饥饿值变化
+
         if (previous.food != current.food) {
+
             diff.food =
-                    current.food;
+                    current.food - previous.food;
         }
 
         // 驭鬼状态变化

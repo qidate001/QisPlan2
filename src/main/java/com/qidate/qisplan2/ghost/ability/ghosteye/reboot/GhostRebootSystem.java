@@ -14,7 +14,21 @@ public final class GhostRebootSystem {
 
     private static final int MAX_COMMITS = 18;
 
+    /**
+     * 每隔多少 tick 倒退一个 Commit
+     */
+    private static final int REBOOT_STEP_INTERVAL = 10;
+
+    /**
+     * 玩家 → 历史时间线
+     */
     private static final Map<UUID, GhostRebootTimeline> TIMELINES =
+            new HashMap<>();
+
+    /**
+     * 玩家 → 当前是否正在倒流
+     */
+    private static final Map<UUID, GhostRebootState> REBOOTING =
             new HashMap<>();
 
     private GhostRebootSystem() {
@@ -27,6 +41,22 @@ public final class GhostRebootSystem {
 //        if (GhostEyeDomainController.getEyeLayer(player) < 6) {
 //            return;
 //        }
+
+        UUID playerId =
+                player.getUUID();
+
+        /*
+         * 正在重启：
+         * 不记录新的 Commit，只推进时间倒流。
+         */
+        if (REBOOTING.containsKey(playerId)) {
+
+            tickReboot(
+                    player
+            );
+
+            return;
+        }
 
         GhostRebootTimeline timeline =
                 get(player);
@@ -41,6 +71,190 @@ public final class GhostRebootSystem {
         record(
                 player,
                 timeline
+        );
+    }
+
+    private static void tickReboot(
+            ServerPlayer player
+    ) {
+
+        UUID playerId =
+                player.getUUID();
+
+        GhostRebootState state =
+                REBOOTING.get(playerId);
+
+        if (state == null) {
+            return;
+        }
+
+        /*
+         * 倒流期间不让玩家继续移动。
+         *
+         * 这里暂时只清除速度，
+         * 不做更复杂的控制。
+         */
+        player.setDeltaMovement(
+                0.0D,
+                0.0D,
+                0.0D
+        );
+
+        /*
+         * 距离下一次倒流还有时间。
+         */
+        if (state.getTickCounter() > 0) {
+
+            state.tickCounterDown();
+
+            return;
+        }
+
+        GhostRebootTimeline timeline =
+                get(player);
+
+        int currentIndex =
+                state.getCurrentIndex();
+
+        int targetIndex =
+                state.getTargetIndex();
+
+        /*
+         * 已经到达目标。
+         */
+        if (currentIndex <= targetIndex) {
+
+            finishReboot(
+                    player,
+                    timeline,
+                    state
+            );
+
+            return;
+        }
+
+        /*
+         * currentIndex 对应：
+         *
+         * #6
+         *
+         * 它的 diff 描述的是：
+         *
+         * #5 → #6
+         *
+         * 所以逆向应用这个 Diff，
+         * 就可以：
+         *
+         * #6 → #5
+         */
+        GhostRebootCommit current =
+                timeline.get(
+                        currentIndex
+                );
+
+        if (current == null) {
+
+            QisPlan2.LOGGER.warn(
+                    "[GhostReboot] 倒流失败：Commit #{} 不存在",
+                    currentIndex + 1
+            );
+
+            REBOOTING.remove(
+                    playerId
+            );
+
+            return;
+        }
+
+        QisPlan2.LOGGER.info(
+                "[GhostReboot] 时间倒流：Commit #{} → Commit #{}",
+                currentIndex + 1,
+                currentIndex
+        );
+
+        GhostRebootDiffApplier.applyReverse(
+                player,
+                current.diff()
+        );
+
+        /*
+         * 当前已经退回上一 Commit。
+         */
+        currentIndex--;
+
+        state.setCurrentIndex(
+                currentIndex
+        );
+
+        /*
+         * 下一次倒流等待。
+         */
+        state.setTickCounter(
+                REBOOT_STEP_INTERVAL
+        );
+
+        /*
+         * 这一步已经抵达目标。
+         */
+        if (currentIndex <= targetIndex) {
+
+            finishReboot(
+                    player,
+                    timeline,
+                    state
+            );
+        }
+    }
+
+    private static void finishReboot(
+            ServerPlayer player,
+            GhostRebootTimeline timeline,
+            GhostRebootState state
+    ) {
+
+        UUID playerId =
+                player.getUUID();
+
+        int targetIndex =
+                state.getTargetIndex();
+
+        /*
+         * 最后再用一次 Snapshot 校准。
+         *
+         * 这样可以保证：
+         * 即使中途有细微的浮点误差，
+         * 最终状态也一定精确落在目标 Commit。
+         */
+        GhostRebootCommit target =
+                timeline.get(
+                        targetIndex
+                );
+
+        if (target != null) {
+
+            GhostRebootApplier.apply(
+                    player,
+                    target.snapshot()
+            );
+        }
+
+        /*
+         * 舍弃未来。
+         */
+        timeline.truncateAfter(
+                targetIndex
+        );
+
+        REBOOTING.remove(
+                playerId
+        );
+
+        QisPlan2.LOGGER.info(
+                "[GhostReboot] 重启完成：玩家 {} 已回到 Commit #{}，" +
+                        "时间线剩余 {} 个 Commit",
+                player.getGameProfile().getName(),
+                targetIndex + 1,
+                timeline.size()
         );
     }
 
@@ -91,6 +305,10 @@ public final class GhostRebootSystem {
                 timeline,
                 commit
         );
+
+        if (timeline.size() > 3){
+            GhostRebootSystem.reboot(player, 1);
+        }
     }
 
     private static void logCommit(
@@ -119,10 +337,6 @@ public final class GhostRebootSystem {
                 snapshot.food,
                 describeDiff(diff)
         );
-
-        if (timeline.size() > 3){
-            GhostRebootSystem.reboot(player, 1);
-        }
     }
 
     public static void reboot(
@@ -130,29 +344,72 @@ public final class GhostRebootSystem {
             int commitIndex
     ) {
 
+        UUID playerId =
+                player.getUUID();
+
         GhostRebootTimeline timeline =
                 get(player);
 
-        GhostRebootCommit commit =
-                timeline.get(commitIndex);
+        /*
+         * 已经在重启，不允许重复启动。
+         */
+        if (REBOOTING.containsKey(playerId)) {
 
-        if (commit == null) {
-            QisPlan2.LOGGER.warn(
-                    "[GhostReboot] 无法重启：Commit #{} 不存在",
-                    commitIndex
+            QisPlan2.LOGGER.info(
+                    "[GhostReboot] 玩家 {} 已经处于重启过程中",
+                    player.getGameProfile().getName()
             );
+
             return;
         }
 
-        QisPlan2.LOGGER.info(
-                "[GhostReboot] 开始重启玩家 {} → Commit #{}",
-                player.getGameProfile().getName(),
-                commitIndex + 1
+        GhostRebootCommit target =
+                timeline.get(
+                        commitIndex
+                );
+
+        if (target == null) {
+
+            QisPlan2.LOGGER.warn(
+                    "[GhostReboot] 无法重启：Commit #{} 不存在",
+                    commitIndex + 1
+            );
+
+            return;
+        }
+
+        int currentIndex =
+                timeline.size() - 1;
+
+        /*
+         * 不能往未来重启。
+         */
+        if (commitIndex >= currentIndex) {
+
+            QisPlan2.LOGGER.info(
+                    "[GhostReboot] 无法重启：目标 Commit #{} 已经是当前时间或未来",
+                    commitIndex + 1
+            );
+
+            return;
+        }
+
+        GhostRebootState state =
+                new GhostRebootState(
+                        commitIndex,
+                        currentIndex
+                );
+
+        REBOOTING.put(
+                playerId,
+                state
         );
 
-        GhostRebootApplier.apply(
-                player,
-                commit.snapshot()
+        QisPlan2.LOGGER.info(
+                "[GhostReboot] 开始时间倒流：玩家 {} | Commit #{} → Commit #{}",
+                player.getGameProfile().getName(),
+                currentIndex + 1,
+                commitIndex + 1
         );
     }
 
@@ -207,7 +464,7 @@ public final class GhostRebootSystem {
 
             result.append(
                     String.format(
-                            "生命→%.1f; ",
+                            "生命 Δ%.1f; ",
                             diff.health
                     )
             );
@@ -216,7 +473,7 @@ public final class GhostRebootSystem {
         if (diff.food != null) {
 
             result.append(
-                    "饥饿→"
+                    "饥饿 Δ"
                             + diff.food
                             + "; "
             );

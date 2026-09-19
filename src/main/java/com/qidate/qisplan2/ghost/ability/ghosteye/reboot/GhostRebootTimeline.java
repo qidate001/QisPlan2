@@ -60,6 +60,15 @@ public final class GhostRebootTimeline {
         }
     }
 
+    public void truncateAfter(
+            int index
+    ) {
+
+        while (commits.size() > index + 1) {
+            commits.removeLast();
+        }
+    }
+
     public Deque<GhostRebootCommit> commits() {
         return commits;
     }
