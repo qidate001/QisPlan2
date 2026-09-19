@@ -2,8 +2,11 @@ package com.qidate.qisplan2.ghost.ability.ghosteye.reboot;
 
 import com.qidate.qisplan2.ghost.PossessedGhostState;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.item.ItemStack;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public final class GhostRebootSnapshot {
@@ -17,6 +20,9 @@ public final class GhostRebootSnapshot {
 
     public float health;
     public int food;
+
+    public final List<ItemStack> inventory =
+            new ArrayList<>();
 
     public final Map<ResourceLocation, PossessedGhostState> ghosts =
             new HashMap<>();

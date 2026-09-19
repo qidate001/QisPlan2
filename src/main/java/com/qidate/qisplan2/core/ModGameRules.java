@@ -32,4 +32,30 @@ public class ModGameRules {
      */
     public static final GameRules.Key<GameRules.IntegerValue> GHOST_CARPET_KILL_TIME =
             GameRules.register("ghostCarpetKillTime", GameRules.Category.MISC, GameRules.IntegerValue.create(300));
+
+    /**
+     * 重启是否回档玩家的位置和视角
+     *
+     * 包括：
+     * X / Y / Z
+     * Yaw / Pitch
+     */
+    public static final GameRules.Key<GameRules.BooleanValue> GHOST_REBOOT_RESTORE_POSITION =
+            GameRules.register(
+                    "ghostRebootRestorePosition",
+                    GameRules.Category.MISC,
+                    GameRules.BooleanValue.create(true)
+            );
+
+    /**
+     * 重启是否回档玩家背包
+     *
+     * 默认关闭，避免通过时间回溯复制物品。
+     */
+    public static final GameRules.Key<GameRules.BooleanValue> GHOST_REBOOT_RESTORE_INVENTORY =
+            GameRules.register(
+                    "ghostRebootRestoreInventory",
+                    GameRules.Category.MISC,
+                    GameRules.BooleanValue.create(false)
+            );
 }

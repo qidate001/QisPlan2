@@ -1,6 +1,7 @@
 package com.qidate.qisplan2.ghost.ability.ghosteye.reboot;
 
 import com.qidate.qisplan2.QisPlan2;
+import com.qidate.qisplan2.core.ModGameRules;
 import com.qidate.qisplan2.ghost.domain.type.eye.GhostEyeDomainController;
 import net.minecraft.server.level.ServerPlayer;
 
@@ -280,10 +281,18 @@ public final class GhostRebootSystem {
 
         } else {
 
+            boolean restoreInventory =
+                    player.level()
+                            .getGameRules()
+                            .getBoolean(
+                                    ModGameRules.GHOST_REBOOT_RESTORE_INVENTORY
+                            );
+
             diff =
                     GhostRebootDiffBuilder.build(
                             previous.snapshot(),
-                            snapshot
+                            snapshot,
+                            restoreInventory
                     );
         }
 
@@ -505,6 +514,15 @@ public final class GhostRebootSystem {
                     "驭鬼变化="
                             + diff.ghostChanges.size()
                             + "; "
+            );
+        }
+
+        if (!diff.inventoryChanges.isEmpty()) {
+
+            result.append(
+                    "背包变化="
+                            + diff.inventoryChanges.size()
+                            + "格; "
             );
         }
 

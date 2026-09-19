@@ -2,6 +2,7 @@ package com.qidate.qisplan2.ghost.ability.ghosteye.reboot;
 
 import com.qidate.qisplan2.ghost.PossessedGhostState;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.item.ItemStack;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -13,7 +14,8 @@ public final class GhostRebootDiffBuilder {
 
     public static GhostRebootDiff build(
             GhostRebootSnapshot previous,
-            GhostRebootSnapshot current
+            GhostRebootSnapshot current,
+            boolean restoreInventory
     ) {
 
         GhostRebootDiff diff =
@@ -61,6 +63,36 @@ public final class GhostRebootDiffBuilder {
 
             diff.food =
                     current.food - previous.food;
+        }
+
+        // 物品栏变化
+        if (restoreInventory) {
+
+            int inventorySize =
+                    Math.min(
+                            previous.inventory.size(),
+                            current.inventory.size()
+                    );
+
+            for (int i = 0; i < inventorySize; i++) {
+
+                ItemStack previousStack =
+                        previous.inventory.get(i);
+
+                ItemStack currentStack =
+                        current.inventory.get(i);
+
+                if (!ItemStack.matches(
+                        previousStack,
+                        currentStack
+                )) {
+
+                    diff.inventoryChanges.put(
+                            i,
+                            previousStack.copy()
+                    );
+                }
+            }
         }
 
         // 驭鬼状态变化

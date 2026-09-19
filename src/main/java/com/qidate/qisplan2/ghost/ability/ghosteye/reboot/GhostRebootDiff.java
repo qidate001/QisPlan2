@@ -2,6 +2,7 @@ package com.qidate.qisplan2.ghost.ability.ghosteye.reboot;
 
 import com.qidate.qisplan2.ghost.PossessedGhostState;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.item.ItemStack;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -19,6 +20,9 @@ public final class GhostRebootDiff {
 
     public Integer food;
 
+    public final Map<Integer, ItemStack> inventoryChanges =
+            new HashMap<>();
+
     public final Map<ResourceLocation, PossessedGhostState> ghostChanges =
             new HashMap<>();
 
@@ -31,6 +35,7 @@ public final class GhostRebootDiff {
                 && dpitch == null
                 && health == null
                 && food == null
+                && inventoryChanges.isEmpty()
                 && ghostChanges.isEmpty();
     }
 }
