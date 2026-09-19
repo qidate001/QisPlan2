@@ -1,6 +1,5 @@
 package com.qidate.qisplan2.client.key;
 
-import com.qidate.qisplan2.QisPlan2;
 import com.qidate.qisplan2.client.gui.PossessionScreen;
 import com.qidate.qisplan2.network.QisNetwork;
 import net.minecraft.client.Minecraft;
@@ -29,6 +28,7 @@ public final class ClientKeyHandler {
         event.register(ModKeyMappings.GHOST_EYE_TOGGLE);
 
         event.register(ModKeyMappings.GHOST_DOMAIN_TELEPORT);
+        event.register(ModKeyMappings.GHOST_EYE_REBOOT);
     }
 
     public static void clientTick(
@@ -110,14 +110,19 @@ public final class ClientKeyHandler {
             QisNetwork.sendGhostEyeToggle();
         }
 
+        // 重启
+        if (ModKeyMappings.GHOST_EYE_REBOOT.consumeClick()) {
+            QisNetwork.sendGhostEyeReboot();
+        }
+
         /*
          * ========================================================
          * 鬼域
          * ========================================================
          */
 
+        // 化虹
         if (ModKeyMappings.GHOST_DOMAIN_TELEPORT.consumeClick()) {
-
             QisNetwork.sendGhostDomainTeleport();
         }
     }

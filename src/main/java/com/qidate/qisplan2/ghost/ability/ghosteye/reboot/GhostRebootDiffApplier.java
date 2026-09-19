@@ -119,8 +119,8 @@ public final class GhostRebootDiffApplier {
             player.connection.send(
                     new ClientboundSetExperiencePacket(
                             player.experienceProgress,
-                            player.totalExperience,
-                            player.experienceLevel
+                            player.experienceLevel,
+                            player.totalExperience
                     )
             );
         }

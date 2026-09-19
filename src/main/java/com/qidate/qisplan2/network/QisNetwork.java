@@ -5,6 +5,7 @@ import com.qidate.qisplan2.block.entity.GhostDoorPlateBlockEntity;
 import com.qidate.qisplan2.client.DoorGhostMarkClient;
 import com.qidate.qisplan2.client.GhostPianoMusicClient;
 import com.qidate.qisplan2.client.GhostPossessionClientState;
+import com.qidate.qisplan2.ghost.ability.ghosteye.reboot.GhostRebootSystem;
 import com.qidate.qisplan2.ghost.domain.GhostDomainTeleportHandler;
 import com.qidate.qisplan2.ghost.domain.client.ClientGhostDomainManager;
 import com.qidate.qisplan2.client.screen.GhostPossessionScreen;
@@ -299,6 +300,8 @@ public final class QisNetwork {
                 }
         );
 
+
+        // 化虹
         registrar.playToServer(
                 GhostDomainTeleportPayload.TYPE,
                 GhostDomainTeleportPayload.STREAM_CODEC,
@@ -496,6 +499,13 @@ public final class QisNetwork {
                         );
                     });
                 }
+        );
+
+        // 重启
+        registrar.playToServer(
+                GhostEyeRebootPayload.TYPE,
+                GhostEyeRebootPayload.STREAM_CODEC,
+                QisNetwork::handleGhostEyeReboot
         );
     }
 
@@ -778,10 +788,78 @@ public final class QisNetwork {
         });
     }
 
+    private static void handleGhostEyeReboot(
+            GhostEyeRebootPayload payload,
+            IPayloadContext context
+    ) {
+
+        context.enqueueWork(() -> {
+
+            if (!(context.player()
+                    instanceof ServerPlayer player)) {
+
+                return;
+            }
+
+            /*
+             * 必须真正驾驭鬼眼。
+             */
+            if (!PossessionHandler.hasGhost(
+                    player,
+                    GhostEyeAbility.ID
+            )) {
+
+                return;
+            }
+
+            /*
+             * 鬼眼必须处于开启状态。
+             */
+            if (!GhostEyeDomainController.isOpen(player)) {
+
+                return;
+            }
+
+            GhostDomain domain =
+                    GhostDomainManager.get(
+                            player.serverLevel()
+                    ).getBySourceAndType(
+                            player.getUUID(),
+                            GhostEyeDomainController.DOMAIN_TYPE
+                    );
+
+            if (domain == null) {
+                return;
+            }
+
+            /*
+             * 必须开启六层鬼域。
+             */
+            if (domain.getLayer() < 6) {
+                return;
+            }
+
+            /*
+             * 进入重启。
+             */
+            GhostRebootSystem.reboot(
+                    player,
+                    0
+            );
+        });
+    }
+
     public static void sendGhostDomainTeleport() {
 
         PacketDistributor.sendToServer(
                 new GhostDomainTeleportPayload()
+        );
+    }
+
+    public static void sendGhostEyeReboot() {
+
+        PacketDistributor.sendToServer(
+                new GhostEyeRebootPayload()
         );
     }
 

@@ -99,6 +99,19 @@ public final class ModKeyMappings {
                     CATEGORY
             );
 
+    public static final KeyMapping GHOST_EYE_REBOOT =
+            new KeyMapping(
+                    "key.qisplan2.ghost_eye_reboot",
+                    GLFW.GLFW_KEY_X,
+                    "key.categories.qisplan2"
+            );
+
+    /*
+     * ========================================================
+     * 鬼域通用
+     * ========================================================
+     */
+
     public static final KeyMapping GHOST_DOMAIN_TELEPORT =
             new KeyMapping(
                     "key.qisplan2.ghost_domain_teleport",

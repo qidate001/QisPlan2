@@ -2,7 +2,6 @@ package com.qidate.qisplan2.ghost.ability.ghosteye.reboot;
 
 import com.qidate.qisplan2.QisPlan2;
 import com.qidate.qisplan2.core.ModGameRules;
-import com.qidate.qisplan2.ghost.domain.type.eye.GhostEyeDomainController;
 import net.minecraft.server.level.ServerPlayer;
 
 import java.util.HashMap;
@@ -314,10 +313,6 @@ public final class GhostRebootSystem {
                 timeline,
                 commit
         );
-
-        if (timeline.size() > 3){
-            GhostRebootSystem.reboot(player, 1);
-        }
     }
 
     private static void logCommit(
