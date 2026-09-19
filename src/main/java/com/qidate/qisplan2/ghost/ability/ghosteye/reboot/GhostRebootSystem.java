@@ -10,15 +10,6 @@ import java.util.UUID;
 
 public final class GhostRebootSystem {
 
-    private static final int COMMIT_INTERVAL = 200;
-
-    private static final int MAX_COMMITS = 18;
-
-    /**
-     * 每隔多少 tick 倒退一个 Commit
-     */
-    private static final int REBOOT_STEP_INTERVAL = 10;
-
     /**
      * 玩家 → 历史时间线
      */
@@ -61,17 +52,22 @@ public final class GhostRebootSystem {
         GhostRebootTimeline timeline =
                 get(player);
 
-        long gameTime =
-                player.serverLevel().getGameTime();
+        int commitInterval =
+                player.level()
+                        .getGameRules()
+                        .getInt(
+                                ModGameRules.GHOST_REBOOT_COMMIT_INTERVAL
+                        );
 
-        if (!timeline.shouldCommit(gameTime)) {
-            return;
+        if (timeline.shouldCommit(
+                player.level().getGameTime(),
+                commitInterval
+        )) {
+            record(
+                    player,
+                    timeline
+            );
         }
-
-        record(
-                player,
-                timeline
-        );
     }
 
     private static void tickReboot(
@@ -189,8 +185,15 @@ public final class GhostRebootSystem {
         /*
          * 下一次倒流等待。
          */
+        int stepInterval =
+                player.level()
+                        .getGameRules()
+                        .getInt(
+                                ModGameRules.GHOST_REBOOT_STEP_INTERVAL
+                        );
+
         state.setTickCounter(
-                REBOOT_STEP_INTERVAL
+                Math.max(1, stepInterval)
         );
 
         /*
@@ -304,9 +307,14 @@ public final class GhostRebootSystem {
 
         timeline.push(commit);
 
-        timeline.trim(
-                MAX_COMMITS
-        );
+        int maxCommits =
+                player.level()
+                        .getGameRules()
+                        .getInt(
+                                ModGameRules.GHOST_REBOOT_MAX_COMMITS
+                        );
+
+        timeline.trim(maxCommits);
 
         logCommit(
                 player,

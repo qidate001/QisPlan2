@@ -11,11 +11,11 @@ public final class GhostRebootTimeline {
     private long lastCommitGameTime = Long.MIN_VALUE;
 
     public boolean shouldCommit(
-            long gameTime
+            long gameTime,
+            long interval
     ) {
-
         return lastCommitGameTime == Long.MIN_VALUE
-                || gameTime - lastCommitGameTime >= 200;
+                || gameTime - lastCommitGameTime >= interval;
     }
 
     public GhostRebootCommit get(

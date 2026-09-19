@@ -34,6 +34,36 @@ public class ModGameRules {
             GameRules.register("ghostCarpetKillTime", GameRules.Category.MISC, GameRules.IntegerValue.create(300));
 
     /**
+     * 多久 Commit 一次重启数据
+     */
+    public static final GameRules.Key<GameRules.IntegerValue> GHOST_REBOOT_COMMIT_INTERVAL =
+            GameRules.register(
+                    "ghostRebootCommitInterval",
+                    GameRules.Category.MISC,
+                    GameRules.IntegerValue.create(200)
+            );
+
+    /**
+     * 最大存在多少个 Commit
+     */
+    public static final GameRules.Key<GameRules.IntegerValue> GHOST_REBOOT_MAX_COMMITS =
+            GameRules.register(
+                    "ghostRebootMaxCommits",
+                    GameRules.Category.MISC,
+                    GameRules.IntegerValue.create(64)
+            );
+
+    /**
+     * 重启回溯的速度
+     */
+    public static final GameRules.Key<GameRules.IntegerValue> GHOST_REBOOT_STEP_INTERVAL =
+            GameRules.register(
+                    "ghostRebootStepInterval",
+                    GameRules.Category.MISC,
+                    GameRules.IntegerValue.create(2)
+            );
+
+    /**
      * 重启是否回档玩家的位置和视角
      *
      * 包括：
