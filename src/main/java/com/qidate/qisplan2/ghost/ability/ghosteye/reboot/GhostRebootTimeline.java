@@ -18,6 +18,19 @@ public final class GhostRebootTimeline {
                 || gameTime - lastCommitGameTime >= 200;
     }
 
+    public GhostRebootCommit get(
+            int index
+    ) {
+        if (index < 0 || index >= commits.size()) {
+            return null;
+        }
+
+        return commits.stream()
+                .skip(index)
+                .findFirst()
+                .orElse(null);
+    }
+
     public void push(
             GhostRebootCommit commit
     ) {
