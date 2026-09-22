@@ -22,6 +22,10 @@
   "key.qisplan2.ghost_eye_self_layer_up": "§4Ghost Eye§r raises the Ghost Domain layer you are in",
   "key.qisplan2.ghost_eye_self_layer_down": "§4Ghost Eye§r lowers the Ghost Domain layer you are in",
   "key.qisplan2.ghost_eye_toggle": "§4Ghost Eye§r turns the Ghost Domain on/off",
+  "key.qisplan2.ghost_eye_reboot": "§4Ghost Eye§r Reboot Self",
+  "key.qisplan2.ghost_domain_teleport": "Rainbow Transformation",
+  "key.qisplan2.ghost_domain_raise_layer": "Raise the targeted mob's current Ghost Domain layer",
+  "key.qisplan2.ghost_domain_lower_layer": "Lower the targeted mob's current Ghost Domain layer",
 
   "block.qisplan2.ghost_carpet": "§4Ghost Carpet",
   "block.qisplan2.ghost_stone_bricks": "§4Ghost Stone Bricks",

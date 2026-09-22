@@ -23,6 +23,10 @@
   "key.qisplan2.ghost_eye_self_layer_up": "§4鬼眼§r提升自己所在的鬼域层数",
   "key.qisplan2.ghost_eye_self_layer_down": "§4鬼眼§r下降自己所在的鬼域层数",
   "key.qisplan2.ghost_eye_toggle": "§4鬼眼§r开启/关闭鬼域",
+  "key.qisplan2.ghost_eye_reboot": "§4鬼眼§r重启自身",
+  "key.qisplan2.ghost_domain_teleport": "化虹",
+  "key.qisplan2.ghost_domain_raise_layer": "提升指向的生物所在鬼域层数",
+  "key.qisplan2.ghost_domain_lower_layer": "降低指向的生物所在鬼域层数",
 
   "block.qisplan2.ghost_carpet": "§4鬼地毯",
   "block.qisplan2.ghost_stone_bricks": "§4鬼石砖",
