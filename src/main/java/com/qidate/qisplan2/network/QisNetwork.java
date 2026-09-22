@@ -20,6 +20,7 @@ import com.qidate.qisplan2.ghost.domain.type.eye.GhostEyeDomainController;
 import com.qidate.qisplan2.ghost.domain.GhostDomain;
 import com.qidate.qisplan2.ghost.domain.GhostDomainManager;
 import com.qidate.qisplan2.ghost.layer.GhostLayerHandler;
+import com.qidate.qisplan2.ghost.reboot.GhostRebootSources;
 import com.qidate.qisplan2.network.payload.*;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
@@ -844,7 +845,11 @@ public final class QisNetwork {
              */
             GhostRebootManager.reboot(
                     player,
-                    0
+                    0,
+                    GhostRebootSources.ghost(
+                            player.getUUID(),
+                            GhostEyeAbility.ID
+                    )
             );
         });
     }

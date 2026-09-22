@@ -25,6 +25,99 @@ public final class GhostRebootManager {
     private GhostRebootManager() {
     }
 
+    public static void reboot(
+            ServerPlayer player,
+            int commitIndex,
+            GhostRebootSource source
+    ) {
+
+        UUID playerId =
+                player.getUUID();
+
+        GhostRebootTimeline timeline =
+                get(player);
+
+        /*
+         * 已经在重启，不允许重复启动。
+         */
+        if (REBOOTING.containsKey(playerId)) {
+
+            QisPlan2.LOGGER.info(
+                    "[GhostReboot] 玩家 {} 已经处于重启过程中",
+                    player.getGameProfile().getName()
+            );
+
+            return;
+        }
+
+        /*
+         * 没有来源是不允许的。
+         *
+         * Source 是重启框架的一部分，
+         * 每次重启都必须知道自己是谁发动的。
+         */
+        if (source == null) {
+
+            QisPlan2.LOGGER.warn(
+                    "[GhostReboot] 无法重启：未提供重启来源"
+            );
+
+            return;
+        }
+
+        GhostRebootCommit target =
+                timeline.get(
+                        commitIndex
+                );
+
+        if (target == null) {
+
+            QisPlan2.LOGGER.warn(
+                    "[GhostReboot] 无法重启：Commit #{} 不存在",
+                    commitIndex + 1
+            );
+
+            return;
+        }
+
+        int currentIndex =
+                timeline.size() - 1;
+
+        /*
+         * 不能往未来重启。
+         */
+        if (commitIndex >= currentIndex) {
+
+            QisPlan2.LOGGER.info(
+                    "[GhostReboot] 无法重启：目标 Commit #{} 已经是当前时间或未来",
+                    commitIndex + 1
+            );
+
+            return;
+        }
+
+        GhostRebootState state =
+                new GhostRebootState(
+                        source,
+                        commitIndex,
+                        currentIndex
+                );
+
+        REBOOTING.put(
+                playerId,
+                state
+        );
+
+        QisPlan2.LOGGER.info(
+                "[GhostReboot] 开始时间倒流：" +
+                        "玩家 {} | 来源={} | Commit #{} → Commit #{}",
+                player.getGameProfile().getName(),
+                describeSource(source),
+                currentIndex + 1,
+                commitIndex + 1
+        );
+    }
+
     public static void tick(
             ServerPlayer player
     ) {
@@ -351,78 +444,52 @@ public final class GhostRebootManager {
         );
     }
 
-    public static void reboot(
-            ServerPlayer player,
-            int commitIndex
+    private static String describeSource(
+            GhostRebootSource source
     ) {
 
-        UUID playerId =
-                player.getUUID();
-
-        GhostRebootTimeline timeline =
-                get(player);
-
-        /*
-         * 已经在重启，不允许重复启动。
-         */
-        if (REBOOTING.containsKey(playerId)) {
-
-            QisPlan2.LOGGER.info(
-                    "[GhostReboot] 玩家 {} 已经处于重启过程中",
-                    player.getGameProfile().getName()
-            );
-
-            return;
+        if (source == null) {
+            return "UNKNOWN";
         }
 
-        GhostRebootCommit target =
-                timeline.get(
-                        commitIndex
-                );
+        StringBuilder result =
+                new StringBuilder();
 
-        if (target == null) {
-
-            QisPlan2.LOGGER.warn(
-                    "[GhostReboot] 无法重启：Commit #{} 不存在",
-                    commitIndex + 1
-            );
-
-            return;
-        }
-
-        int currentIndex =
-                timeline.size() - 1;
-
-        /*
-         * 不能往未来重启。
-         */
-        if (commitIndex >= currentIndex) {
-
-            QisPlan2.LOGGER.info(
-                    "[GhostReboot] 无法重启：目标 Commit #{} 已经是当前时间或未来",
-                    commitIndex + 1
-            );
-
-            return;
-        }
-
-        GhostRebootState state =
-                new GhostRebootState(
-                        commitIndex,
-                        currentIndex
-                );
-
-        REBOOTING.put(
-                playerId,
-                state
+        result.append(
+                source.type()
         );
 
-        QisPlan2.LOGGER.info(
-                "[GhostReboot] 开始时间倒流：玩家 {} | Commit #{} → Commit #{}",
-                player.getGameProfile().getName(),
-                currentIndex + 1,
-                commitIndex + 1
-        );
+        if (source.sourceType() != null) {
+
+            result.append(
+                    "("
+            );
+
+            result.append(
+                    source.sourceType()
+            );
+
+            result.append(
+                    ")"
+            );
+        }
+
+        if (source.sourceUUID() != null) {
+
+            result.append(
+                    "["
+            );
+
+            result.append(
+                    source.sourceUUID()
+            );
+
+            result.append(
+                    "]"
+            );
+        }
+
+        return result.toString();
     }
 
     private static String describeDiff(
