@@ -2,19 +2,17 @@ package com.qidate.qisplan2.network;
 
 import com.qidate.qisplan2.QisPlan2;
 import com.qidate.qisplan2.block.entity.GhostDoorPlateBlockEntity;
-import com.qidate.qisplan2.client.DoorGhostMarkClient;
 import com.qidate.qisplan2.client.GhostPianoMusicClient;
 import com.qidate.qisplan2.client.GhostPossessionClientState;
 import com.qidate.qisplan2.ghost.domain.*;
 import com.qidate.qisplan2.ghost.reboot.GhostRebootManager;
-import com.qidate.qisplan2.ghost.domain.client.ClientGhostDomainManager;
 import com.qidate.qisplan2.client.screen.GhostPossessionScreen;
 import com.qidate.qisplan2.client.screen.GhostDoorPlateScreen;
 import com.qidate.qisplan2.core.ModItems;
 import com.qidate.qisplan2.ghost.GhostPossessionSession;
 import com.qidate.qisplan2.ghost.PossessionHandler;
 import com.qidate.qisplan2.ghost.ability.divinationslip.GhostDivinationSlipAbility;
-import com.qidate.qisplan2.ghost.ability.doorghost.DoorGhostAbilityHandler;
+import com.qidate.qisplan2.network.doorghost.DoorGhostNetwork;
 import com.qidate.qisplan2.ghost.ability.ghosteye.GhostEyeAbility;
 import com.qidate.qisplan2.ghost.domain.type.eye.GhostEyeDomainController;
 import com.qidate.qisplan2.ghost.layer.GhostLayerHandler;
@@ -23,9 +21,7 @@ import com.qidate.qisplan2.network.ghostdomain.GhostDomainNetwork;
 import com.qidate.qisplan2.network.payload.*;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
-import net.minecraft.server.level.ServerLevel;
 import net.minecraft.util.Mth;
-import net.minecraft.world.entity.Entity;
 import net.minecraft.world.item.ItemStack;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
@@ -115,38 +111,13 @@ public final class QisNetwork {
                 QisNetwork::handleGhostPossessionEnd
         );
 
-        registrar.playToClient(
-                DoorGhostMarkPayload.TYPE,
-                DoorGhostMarkPayload.STREAM_CODEC,
-                (payload, context) -> {
+        /*
+         * ========================================================
+         * 鬼门
+         * ========================================================
+         */
 
-                    context.enqueueWork(() -> {
-
-                        DoorGhostMarkClient.apply(
-                                payload.entityId(),
-                                payload.marked()
-                        );
-                    });
-                }
-        );
-
-        registrar.playToServer(
-                DoorGhostAbilityPayload.TYPE,
-                DoorGhostAbilityPayload.STREAM_CODEC,
-                (payload, context) -> {
-
-                    context.enqueueWork(() -> {
-
-                        if (context.player()
-                                instanceof net.minecraft.server.level.ServerPlayer player) {
-
-                            DoorGhostAbilityHandler.use(
-                                    player
-                            );
-                        }
-                    });
-                }
-        );
+        DoorGhostNetwork.register(event);
 
         /*
          * ========================================================
