@@ -5,8 +5,7 @@ import com.qidate.qisplan2.core.ModBlocks;
 import com.qidate.qisplan2.data.GhostPianoSavedData;
 import com.qidate.qisplan2.death.ModDamageTypes;
 import com.qidate.qisplan2.death.SupernaturalDeathHandler;
-import com.qidate.qisplan2.network.payload.StartGhostPianoMusicPayload;
-import com.qidate.qisplan2.network.payload.StopGhostPianoMusicPayload;
+import com.qidate.qisplan2.network.ghostpiano.GhostPianoNetwork;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -16,7 +15,6 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
-import net.neoforged.neoforge.network.PacketDistributor;
 import net.neoforged.neoforge.event.tick.ServerTickEvent;
 
 import java.util.*;
@@ -68,18 +66,6 @@ public final class GhostPianoMusicHandler {
      */
     private static final double INTERRUPTION_ATTACK_STRENGTH =
             50.0D;
-
-
-    /*
-     * ==============================
-     * 活跃鬼钢琴
-     * ==============================
-     *
-     * 每个维度单独维护。
-     */
-    private static final Map<String, Set<BlockPos>>
-            ACTIVE_PIANOS =
-            new HashMap<>();
 
 
     /*
@@ -282,11 +268,9 @@ public final class GhostPianoMusicHandler {
                 continue;
             }
 
-            PacketDistributor.sendToPlayer(
+            GhostPianoNetwork.sendStart(
                     player,
-                    new StartGhostPianoMusicPayload(
-                            pianoPos
-                    )
+                    pianoPos
             );
         }
 
@@ -304,11 +288,9 @@ public final class GhostPianoMusicHandler {
                 continue;
             }
 
-            PacketDistributor.sendToPlayer(
+            GhostPianoNetwork.sendStop(
                     player,
-                    new StopGhostPianoMusicPayload(
-                            pianoPos
-                    )
+                    pianoPos
             );
         }
 
@@ -517,11 +499,9 @@ public final class GhostPianoMusicHandler {
         for (BlockPos pianoPos :
                 heard) {
 
-            PacketDistributor.sendToPlayer(
+            GhostPianoNetwork.sendStop(
                     player,
-                    new StopGhostPianoMusicPayload(
-                            pianoPos
-                    )
+                    pianoPos
             );
         }
     }

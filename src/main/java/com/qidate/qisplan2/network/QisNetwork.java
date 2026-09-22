@@ -1,11 +1,8 @@
 package com.qidate.qisplan2.network;
 
 import com.qidate.qisplan2.QisPlan2;
-import com.qidate.qisplan2.block.entity.GhostDoorPlateBlockEntity;
-import com.qidate.qisplan2.client.GhostPianoMusicClient;
 import com.qidate.qisplan2.ghost.domain.*;
 import com.qidate.qisplan2.ghost.reboot.GhostRebootManager;
-import com.qidate.qisplan2.client.screen.GhostDoorPlateScreen;
 import com.qidate.qisplan2.core.ModItems;
 import com.qidate.qisplan2.ghost.PossessionHandler;
 import com.qidate.qisplan2.ghost.ability.divinationslip.GhostDivinationSlipAbility;
@@ -16,10 +13,10 @@ import com.qidate.qisplan2.ghost.layer.GhostLayerHandler;
 import com.qidate.qisplan2.ghost.reboot.GhostRebootSources;
 import com.qidate.qisplan2.network.ghostdomain.GhostDomainNetwork;
 import com.qidate.qisplan2.network.ghostdoor.GhostDoorPlateNetwork;
+import com.qidate.qisplan2.network.ghostpiano.GhostPianoNetwork;
 import com.qidate.qisplan2.network.payload.*;
 import com.qidate.qisplan2.network.possession.GhostPossessionNetwork;
 import net.minecraft.client.Minecraft;
-import net.minecraft.core.BlockPos;
 import net.minecraft.util.Mth;
 import net.minecraft.world.item.ItemStack;
 import net.neoforged.bus.api.SubscribeEvent;
@@ -46,37 +43,12 @@ public final class QisNetwork {
                 event.registrar("1");
 
         /*
+         * ========================================================
          * 鬼钢琴
+         * ========================================================
          */
-        registrar.playToClient(
-                StartGhostPianoMusicPayload.TYPE,
-                StartGhostPianoMusicPayload.STREAM_CODEC,
-                (payload, context) -> {
 
-                    context.enqueueWork(() -> {
-
-                        GhostPianoMusicClient.start(
-                                payload.pos()
-                        );
-
-                    });
-                }
-        );
-
-        registrar.playToClient(
-                StopGhostPianoMusicPayload.TYPE,
-                StopGhostPianoMusicPayload.STREAM_CODEC,
-                (payload, context) -> {
-
-                    context.enqueueWork(() -> {
-
-                        GhostPianoMusicClient.stop(
-                                payload.pos()
-                        );
-
-                    });
-                }
-        );
+        GhostPianoNetwork.register(event);
 
         /*
          * ========================================================
