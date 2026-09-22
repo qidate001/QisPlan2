@@ -841,11 +841,16 @@ public final class QisNetwork {
             }
 
             /*
-             * 进入重启。
+             * 切换持续重启状态。
+             *
+             * 第一次按键：
+             * 开始持续重启。
+             *
+             * 第二次按键：
+             * 停止持续重启。
              */
-            GhostRebootManager.reboot(
+            GhostRebootManager.toggleContinuousReboot(
                     player,
-                    0,
                     GhostRebootSources.ghost(
                             player.getUUID(),
                             GhostEyeAbility.ID

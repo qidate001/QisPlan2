@@ -2,34 +2,35 @@ package com.qidate.qisplan2.ghost.reboot;
 
 public final class GhostRebootState {
 
-    /**
-     * 本次重启由谁发动。
-     */
     private final GhostRebootSource source;
 
-    /**
-     * 最终要回到的 Commit。
-     */
-    private final int targetIndex;
+    private int targetIndex;
 
-    /**
-     * 当前正在处理的 Commit。
-     */
     private int currentIndex;
 
-    /**
-     * 距离下一次回溯还有多少 Tick。
-     */
     private int tickCounter;
+
+    /*
+     * 是否持续重启。
+     *
+     * true：
+     * 当前这一轮结束后，会再次从当前时间倒流到目标 Commit。
+     *
+     * false：
+     * 当前这一轮结束后，重启彻底结束。
+     */
+    private boolean continuous;
 
     public GhostRebootState(
             GhostRebootSource source,
             int targetIndex,
-            int currentIndex
+            int currentIndex,
+            boolean continuous
     ) {
         this.source = source;
         this.targetIndex = targetIndex;
         this.currentIndex = currentIndex;
+        this.continuous = continuous;
         this.tickCounter = 0;
     }
 
@@ -41,13 +42,15 @@ public final class GhostRebootState {
         return targetIndex;
     }
 
+    public void setTargetIndex(int targetIndex) {
+        this.targetIndex = targetIndex;
+    }
+
     public int getCurrentIndex() {
         return currentIndex;
     }
 
-    public void setCurrentIndex(
-            int currentIndex
-    ) {
+    public void setCurrentIndex(int currentIndex) {
         this.currentIndex = currentIndex;
     }
 
@@ -55,13 +58,19 @@ public final class GhostRebootState {
         return tickCounter;
     }
 
-    public void setTickCounter(
-            int tickCounter
-    ) {
+    public void setTickCounter(int tickCounter) {
         this.tickCounter = tickCounter;
     }
 
     public void tickCounterDown() {
         tickCounter--;
+    }
+
+    public boolean isContinuous() {
+        return continuous;
+    }
+
+    public void setContinuous(boolean continuous) {
+        this.continuous = continuous;
     }
 }

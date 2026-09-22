@@ -31,15 +31,26 @@ public final class GhostRebootManager {
             GhostRebootSource source
     ) {
 
-        UUID playerId =
-                player.getUUID();
+        startReboot(
+                player,
+                commitIndex,
+                source,
+                false
+        );
+    }
+
+    private static void startReboot(
+            ServerPlayer player,
+            int commitIndex,
+            GhostRebootSource source,
+            boolean continuous
+    ) {
+
+        UUID playerId = player.getUUID();
 
         GhostRebootTimeline timeline =
                 get(player);
 
-        /*
-         * 已经在重启，不允许重复启动。
-         */
         if (REBOOTING.containsKey(playerId)) {
 
             QisPlan2.LOGGER.info(
@@ -50,12 +61,6 @@ public final class GhostRebootManager {
             return;
         }
 
-        /*
-         * 没有来源是不允许的。
-         *
-         * Source 是重启框架的一部分，
-         * 每次重启都必须知道自己是谁发动的。
-         */
         if (source == null) {
 
             QisPlan2.LOGGER.warn(
@@ -66,9 +71,7 @@ public final class GhostRebootManager {
         }
 
         GhostRebootCommit target =
-                timeline.get(
-                        commitIndex
-                );
+                timeline.get(commitIndex);
 
         if (target == null) {
 
@@ -83,9 +86,6 @@ public final class GhostRebootManager {
         int currentIndex =
                 timeline.size() - 1;
 
-        /*
-         * 不能往未来重启。
-         */
         if (commitIndex >= currentIndex) {
 
             QisPlan2.LOGGER.info(
@@ -100,7 +100,8 @@ public final class GhostRebootManager {
                 new GhostRebootState(
                         source,
                         commitIndex,
-                        currentIndex
+                        currentIndex,
+                        continuous
                 );
 
         REBOOTING.put(
@@ -110,38 +111,33 @@ public final class GhostRebootManager {
 
         QisPlan2.LOGGER.info(
                 "[GhostReboot] 开始时间倒流：" +
-                        "玩家 {} | 来源={} | Commit #{} → Commit #{}",
+                        "玩家 {} | 来源={} | Commit #{} → Commit #{} | 持续={}",
                 player.getGameProfile().getName(),
                 describeSource(source),
                 currentIndex + 1,
-                commitIndex + 1
+                commitIndex + 1,
+                continuous
         );
     }
 
-    public static void tick(
-            ServerPlayer player
-    ) {
-
-//        if (GhostEyeDomainController.getEyeLayer(player) < 6) {
-//            return;
-//        }
+    public static void tick(ServerPlayer player) {
 
         UUID playerId =
                 player.getUUID();
 
         /*
-         * 正在重启：
-         * 不记录新的 Commit，只推进时间倒流。
+         * 当前正在执行一轮倒流。
          */
         if (REBOOTING.containsKey(playerId)) {
 
-            tickReboot(
-                    player
-            );
+            tickReboot(player);
 
             return;
         }
 
+        /*
+         * 正常记录时间线。
+         */
         GhostRebootTimeline timeline =
                 get(player);
 
@@ -156,6 +152,7 @@ public final class GhostRebootManager {
                 player.level().getGameTime(),
                 commitInterval
         )) {
+
             record(
                     player,
                     timeline
@@ -314,17 +311,8 @@ public final class GhostRebootManager {
         int targetIndex =
                 state.getTargetIndex();
 
-        /*
-         * 最后再用一次 Snapshot 校准。
-         *
-         * 这样可以保证：
-         * 即使中途有细微的浮点误差，
-         * 最终状态也一定精确落在目标 Commit。
-         */
         GhostRebootCommit target =
-                timeline.get(
-                        targetIndex
-                );
+                timeline.get(targetIndex);
 
         if (target != null) {
 
@@ -335,22 +323,55 @@ public final class GhostRebootManager {
         }
 
         /*
-         * 舍弃未来。
+         * 持续重启：
+         *
+         * 保留完整时间线。
+         *
+         * 当前这一轮结束以后，
+         * 下一轮会继续从当前时间倒流到同一个目标。
          */
-        timeline.truncateAfter(
-                targetIndex
-        );
+        if (state.isContinuous()) {
 
-        REBOOTING.remove(
-                playerId
-        );
+            if (targetIndex > 0) {
+
+                state.setCurrentIndex(targetIndex);
+                state.setTargetIndex(targetIndex - 1);
+
+                state.setTickCounter(
+                        Math.max(
+                                1,
+                                player.level()
+                                        .getGameRules()
+                                        .getInt(ModGameRules.GHOST_REBOOT_STEP_INTERVAL)
+                        )
+                );
+
+                QisPlan2.LOGGER.info(
+                        "[GhostReboot] 持续重启：继续 Commit #{} → Commit #{}",
+                        targetIndex + 1,
+                        targetIndex
+                );
+
+                return;
+            }
+
+            QisPlan2.LOGGER.info(
+                    "[GhostReboot] 持续重启到达历史极限，自动停止：玩家 {}",
+                    player.getGameProfile().getName()
+            );
+        }
+
+        /* 一次性重启才截断未来 */
+        if (!state.isContinuous()) {
+            timeline.truncateAfter(targetIndex);
+        }
+
+        REBOOTING.remove(playerId);
 
         QisPlan2.LOGGER.info(
-                "[GhostReboot] 重启完成：玩家 {} 已回到 Commit #{}，" +
-                        "时间线剩余 {} 个 Commit",
+                "[GhostReboot] 重启完成：玩家 {} 已回到 Commit #{}",
                 player.getGameProfile().getName(),
-                targetIndex + 1,
-                timeline.size()
+                targetIndex + 1
         );
     }
 
@@ -413,6 +434,47 @@ public final class GhostRebootManager {
                 player,
                 timeline,
                 commit
+        );
+    }
+
+    public static void toggleContinuousReboot(
+            ServerPlayer player,
+            GhostRebootSource source
+    ) {
+
+        UUID playerId = player.getUUID();
+
+        GhostRebootState state = REBOOTING.get(playerId);
+
+        if (state != null && state.isContinuous()) {
+
+            state.setContinuous(false);
+
+            QisPlan2.LOGGER.info(
+                    "[GhostReboot] 玩家 {} 已关闭持续重启",
+                    player.getGameProfile().getName()
+            );
+
+            return;
+        }
+
+        GhostRebootTimeline timeline = get(player);
+
+        if (timeline.size() <= 1) {
+
+            QisPlan2.LOGGER.info(
+                    "[GhostReboot] 玩家 {} 无法开始持续重启：时间线中没有足够的历史记录",
+                    player.getGameProfile().getName()
+            );
+
+            return;
+        }
+
+        startReboot(
+                player,
+                timeline.size() - 2,
+                source,
+                true
         );
     }
 
