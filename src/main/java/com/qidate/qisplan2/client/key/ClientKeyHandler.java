@@ -1,9 +1,9 @@
 package com.qidate.qisplan2.client.key;
 
 import com.qidate.qisplan2.client.gui.PossessionScreen;
-import com.qidate.qisplan2.network.QisNetwork;
 import com.qidate.qisplan2.network.divinationslip.GhostDivinationNetwork;
 import com.qidate.qisplan2.network.ghostdomain.GhostDomainNetwork;
+import com.qidate.qisplan2.network.ghosteye.GhostEyeNetwork;
 import net.minecraft.client.Minecraft;
 import net.neoforged.neoforge.client.event.ClientTickEvent;
 import net.neoforged.neoforge.client.event.RegisterKeyMappingsEvent;
@@ -84,32 +84,32 @@ public final class ClientKeyHandler {
 
         // 提高鬼域总层数
         while (GHOST_EYE_LAYER_UP.consumeClick()) {
-            QisNetwork.sendGhostEyeLayerChange(1);
+            GhostEyeNetwork.sendLayerChange(1);
         }
 
         // 降低鬼域总层数
         while (GHOST_EYE_LAYER_DOWN.consumeClick()) {
-            QisNetwork.sendGhostEyeLayerChange(-1);
+            GhostEyeNetwork.sendLayerChange(-1);
         }
 
         // 提高玩家自己所在鬼域层数
         while (GHOST_EYE_SELF_LAYER_UP.consumeClick()) {
-            QisNetwork.sendGhostEyeSelfLayerChange(1);
+            GhostEyeNetwork.sendSelfLayerChange(1);
         }
 
         // 降低玩家自己所在鬼域层数
         while (GHOST_EYE_SELF_LAYER_DOWN.consumeClick()) {
-            QisNetwork.sendGhostEyeSelfLayerChange(-1);
+            GhostEyeNetwork.sendSelfLayerChange(-1);
         }
 
         // 开关鬼眼
         while (GHOST_EYE_TOGGLE.consumeClick()) {
-            QisNetwork.sendGhostEyeToggle();
+            GhostEyeNetwork.sendToggle();
         }
 
         // 鬼眼重启
         if (GHOST_EYE_REBOOT.consumeClick()) {
-            QisNetwork.sendGhostEyeReboot();
+            GhostEyeNetwork.sendReboot();
         }
 
         /*
