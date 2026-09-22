@@ -1,9 +1,9 @@
-package com.qidate.qisplan2.network.doorghost;
+package com.qidate.qisplan2.network.ghostdoor;
 
 import com.qidate.qisplan2.client.DoorGhostMarkClient;
 import com.qidate.qisplan2.ghost.ability.doorghost.DoorGhostAbilityHandler;
-import com.qidate.qisplan2.network.payload.DoorGhostAbilityPayload;
-import com.qidate.qisplan2.network.payload.DoorGhostMarkPayload;
+import com.qidate.qisplan2.network.payload.GhostDoorAbilityPayload;
+import com.qidate.qisplan2.network.payload.GhostDoorMarkPayload;
 
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
@@ -13,9 +13,9 @@ import net.neoforged.neoforge.network.handling.IPayloadContext;
 
 import java.util.UUID;
 
-public final class DoorGhostNetwork {
+public final class GhostDoorNetwork {
 
-    private DoorGhostNetwork() {
+    private GhostDoorNetwork() {
     }
 
     public static void register(
@@ -32,8 +32,8 @@ public final class DoorGhostNetwork {
          */
 
         registrar.playToClient(
-                DoorGhostMarkPayload.TYPE,
-                DoorGhostMarkPayload.STREAM_CODEC,
+                GhostDoorMarkPayload.TYPE,
+                GhostDoorMarkPayload.STREAM_CODEC,
                 (payload, context) -> {
 
                     context.enqueueWork(() -> {
@@ -53,14 +53,14 @@ public final class DoorGhostNetwork {
          */
 
         registrar.playToServer(
-                DoorGhostAbilityPayload.TYPE,
-                DoorGhostAbilityPayload.STREAM_CODEC,
-                DoorGhostNetwork::handleAbility
+                GhostDoorAbilityPayload.TYPE,
+                GhostDoorAbilityPayload.STREAM_CODEC,
+                GhostDoorNetwork::handleAbility
         );
     }
 
     private static void handleAbility(
-            DoorGhostAbilityPayload payload,
+            GhostDoorAbilityPayload payload,
             IPayloadContext context
     ) {
 
@@ -101,7 +101,7 @@ public final class DoorGhostNetwork {
 
         PacketDistributor.sendToPlayer(
                 player,
-                new DoorGhostMarkPayload(
+                new GhostDoorMarkPayload(
                         entity.getId(),
                         marked
                 )
@@ -117,7 +117,7 @@ public final class DoorGhostNetwork {
     public static void sendAbility() {
 
         PacketDistributor.sendToServer(
-                new DoorGhostAbilityPayload()
+                new GhostDoorAbilityPayload()
         );
     }
 }

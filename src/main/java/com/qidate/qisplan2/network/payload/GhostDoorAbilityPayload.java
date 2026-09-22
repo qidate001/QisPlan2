@@ -7,10 +7,10 @@ import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.resources.ResourceLocation;
 
-public record DoorGhostAbilityPayload()
+public record GhostDoorAbilityPayload()
         implements CustomPacketPayload {
 
-    public static final Type<DoorGhostAbilityPayload> TYPE =
+    public static final Type<GhostDoorAbilityPayload> TYPE =
             new Type<>(
                     ResourceLocation.fromNamespaceAndPath(
                             QisPlan2.MODID,
@@ -20,10 +20,10 @@ public record DoorGhostAbilityPayload()
 
     public static final StreamCodec<
             RegistryFriendlyByteBuf,
-            DoorGhostAbilityPayload
+            GhostDoorAbilityPayload
             > STREAM_CODEC =
             StreamCodec.unit(
-                    new DoorGhostAbilityPayload()
+                    new GhostDoorAbilityPayload()
             );
 
     @Override

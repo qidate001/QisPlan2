@@ -4,7 +4,7 @@ import com.mojang.serialization.MapCodec;
 import com.qidate.qisplan2.QisPlan2;
 import com.qidate.qisplan2.block.entity.GhostDoorPlateBlockEntity;
 import com.qidate.qisplan2.ghost.doorplate.GhostDoorPlateRegistry;
-import com.qidate.qisplan2.network.QisNetwork;
+import com.qidate.qisplan2.network.ghostdoor.GhostDoorPlateNetwork;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerLevel;
@@ -372,7 +372,7 @@ public class GhostDoorPlateBlock
         /*
          * 打开客户端编辑界面。
          */
-        QisNetwork.sendOpenGhostDoorPlateScreen(
+        GhostDoorPlateNetwork.sendOpenScreen(
                 serverPlayer,
                 pos
         );

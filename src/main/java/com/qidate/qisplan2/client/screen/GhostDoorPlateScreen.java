@@ -1,13 +1,11 @@
 package com.qidate.qisplan2.client.screen;
 
-import com.qidate.qisplan2.network.QisNetwork;
-import net.minecraft.client.Minecraft;
+import com.qidate.qisplan2.network.ghostdoor.GhostDoorPlateNetwork;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
-import net.minecraft.network.chat.CommonComponents;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.core.BlockPos;
 
@@ -176,7 +174,7 @@ public class GhostDoorPlateScreen extends Screen {
         /*
          * 发送到服务器。
          */
-        QisNetwork.sendSetGhostDoorPlateNumber(
+        GhostDoorPlateNetwork.sendSetNumber(
                 blockPos,
                 number
         );

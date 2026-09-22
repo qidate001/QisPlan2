@@ -1,6 +1,6 @@
 package com.qidate.qisplan2.ghost.ability.doorghost;
 
-import com.qidate.qisplan2.network.doorghost.DoorGhostNetwork;
+import com.qidate.qisplan2.network.ghostdoor.GhostDoorNetwork;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -410,7 +410,7 @@ public final class DoorGhostMarkManager {
          * 这个实体不再显示门鬼轮廓。
          * ========================================================
          */
-        DoorGhostNetwork.sendMark(
+        GhostDoorNetwork.sendMark(
                 viewer,
                 target,
                 false
@@ -577,7 +577,7 @@ public final class DoorGhostMarkManager {
                         || state.hasClosing();
 
 
-        DoorGhostNetwork.sendMark(
+        GhostDoorNetwork.sendMark(
                 viewer,
                 target,
                 marked

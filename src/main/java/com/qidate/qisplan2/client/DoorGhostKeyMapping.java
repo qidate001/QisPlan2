@@ -2,7 +2,7 @@ package com.qidate.qisplan2.client;
 
 import com.mojang.blaze3d.platform.InputConstants;
 import com.qidate.qisplan2.QisPlan2;
-import com.qidate.qisplan2.network.payload.DoorGhostAbilityPayload;
+import com.qidate.qisplan2.network.payload.GhostDoorAbilityPayload;
 
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
@@ -70,7 +70,7 @@ public final class DoorGhostKeyMapping {
              * 全部由服务端决定。
              */
             PacketDistributor.sendToServer(
-                    new DoorGhostAbilityPayload()
+                    new GhostDoorAbilityPayload()
             );
         }
     }

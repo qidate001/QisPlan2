@@ -9,12 +9,13 @@ import com.qidate.qisplan2.client.screen.GhostDoorPlateScreen;
 import com.qidate.qisplan2.core.ModItems;
 import com.qidate.qisplan2.ghost.PossessionHandler;
 import com.qidate.qisplan2.ghost.ability.divinationslip.GhostDivinationSlipAbility;
-import com.qidate.qisplan2.network.doorghost.DoorGhostNetwork;
+import com.qidate.qisplan2.network.ghostdoor.GhostDoorNetwork;
 import com.qidate.qisplan2.ghost.ability.ghosteye.GhostEyeAbility;
 import com.qidate.qisplan2.ghost.domain.type.eye.GhostEyeDomainController;
 import com.qidate.qisplan2.ghost.layer.GhostLayerHandler;
 import com.qidate.qisplan2.ghost.reboot.GhostRebootSources;
 import com.qidate.qisplan2.network.ghostdomain.GhostDomainNetwork;
+import com.qidate.qisplan2.network.ghostdoor.GhostDoorPlateNetwork;
 import com.qidate.qisplan2.network.payload.*;
 import com.qidate.qisplan2.network.possession.GhostPossessionNetwork;
 import net.minecraft.client.Minecraft;
@@ -91,7 +92,7 @@ public final class QisNetwork {
          * ========================================================
          */
 
-        DoorGhostNetwork.register(event);
+        GhostDoorNetwork.register(event);
 
         /*
          * ========================================================
@@ -99,60 +100,7 @@ public final class QisNetwork {
          * ========================================================
          */
 
-        registrar.playToClient(
-                OpenGhostDoorPlateScreenPayload.TYPE,
-                OpenGhostDoorPlateScreenPayload.STREAM_CODEC,
-                (payload, context) -> {
-
-                    context.enqueueWork(() -> {
-
-                        Minecraft.getInstance().setScreen(
-                                new GhostDoorPlateScreen(
-                                        payload.pos()
-                                )
-                        );
-                    });
-                }
-        );
-
-        registrar.playToServer(
-                SetGhostDoorPlateNumberPayload.TYPE,
-                SetGhostDoorPlateNumberPayload.STREAM_CODEC,
-                (payload, context) -> {
-
-                    context.enqueueWork(() -> {
-
-                        if (!(context.player()
-                                instanceof ServerPlayer player)) {
-
-                            return;
-                        }
-
-                        if (!(player.level()
-                                .getBlockEntity(payload.pos())
-                                instanceof GhostDoorPlateBlockEntity blockEntity)) {
-
-                            return;
-                        }
-
-                        /*
-                         * 防止客户端随便修改世界里的其他位置。
-                         */
-                        if (player.distanceToSqr(
-                                payload.pos().getX() + 0.5D,
-                                payload.pos().getY() + 0.5D,
-                                payload.pos().getZ() + 0.5D
-                        ) > 64.0D) {
-
-                            return;
-                        }
-
-                        blockEntity.setNumber(
-                                payload.number()
-                        );
-                    });
-                }
-        );
+        GhostDoorPlateNetwork.register(event);
 
         /*
          * ========================================================
@@ -360,32 +308,6 @@ public final class QisNetwork {
                 GhostEyeRebootPayload.TYPE,
                 GhostEyeRebootPayload.STREAM_CODEC,
                 QisNetwork::handleGhostEyeReboot
-        );
-    }
-
-    public static void sendOpenGhostDoorPlateScreen(
-            ServerPlayer player,
-            BlockPos pos
-    ) {
-
-        PacketDistributor.sendToPlayer(
-                player,
-                new OpenGhostDoorPlateScreenPayload(
-                        pos
-                )
-        );
-    }
-
-    public static void sendSetGhostDoorPlateNumber(
-            BlockPos pos,
-            int number
-    ) {
-
-        PacketDistributor.sendToServer(
-                new SetGhostDoorPlateNumberPayload(
-                        pos,
-                        number
-                )
         );
     }
 
