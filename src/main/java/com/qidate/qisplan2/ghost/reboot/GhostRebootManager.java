@@ -304,32 +304,19 @@ public final class GhostRebootManager {
             GhostRebootTimeline timeline,
             GhostRebootState state
     ) {
+        UUID playerId = player.getUUID();
 
-        UUID playerId =
-                player.getUUID();
+        int targetIndex = state.getTargetIndex();
 
-        int targetIndex =
-                state.getTargetIndex();
-
-        GhostRebootCommit target =
-                timeline.get(targetIndex);
+        GhostRebootCommit target = timeline.get(targetIndex);
 
         if (target != null) {
-
             GhostRebootApplier.apply(
                     player,
                     target.snapshot()
             );
         }
 
-        /*
-         * 持续重启：
-         *
-         * 保留完整时间线。
-         *
-         * 当前这一轮结束以后，
-         * 下一轮会继续从当前时间倒流到同一个目标。
-         */
         if (state.isContinuous()) {
 
             if (targetIndex > 0) {
@@ -342,7 +329,9 @@ public final class GhostRebootManager {
                                 1,
                                 player.level()
                                         .getGameRules()
-                                        .getInt(ModGameRules.GHOST_REBOOT_STEP_INTERVAL)
+                                        .getInt(
+                                                ModGameRules.GHOST_REBOOT_STEP_INTERVAL
+                                        )
                         )
                 );
 
@@ -355,16 +344,35 @@ public final class GhostRebootManager {
                 return;
             }
 
+            /*
+             * 已经到达历史最早点。
+             *
+             * 此时玩家回到了 Commit #1，
+             * 所有位于它之后的旧时间线都应该被抛弃。
+             */
+            timeline.truncateAfter(targetIndex);
+
             QisPlan2.LOGGER.info(
                     "[GhostReboot] 持续重启到达历史极限，自动停止：玩家 {}",
                     player.getGameProfile().getName()
             );
+
+            REBOOTING.remove(playerId);
+
+            QisPlan2.LOGGER.info(
+                    "[GhostReboot] 重启完成：玩家 {} 已回到 Commit #{}",
+                    player.getGameProfile().getName(),
+                    targetIndex + 1
+            );
+
+            return;
         }
 
-        /* 一次性重启才截断未来 */
-        if (!state.isContinuous()) {
-            timeline.truncateAfter(targetIndex);
-        }
+        /*
+         * 一次性重启：
+         * 回到目标时间点后，直接丢弃未来。
+         */
+        timeline.truncateAfter(targetIndex);
 
         REBOOTING.remove(playerId);
 
