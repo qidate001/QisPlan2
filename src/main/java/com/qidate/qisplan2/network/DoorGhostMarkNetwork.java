@@ -1,6 +1,5 @@
 package com.qidate.qisplan2.network;
 
-import com.qidate.qisplan2.QisPlan2;
 import com.qidate.qisplan2.network.payload.DoorGhostMarkPayload;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;

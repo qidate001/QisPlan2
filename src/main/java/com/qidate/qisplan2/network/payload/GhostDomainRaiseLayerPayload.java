@@ -1,31 +1,29 @@
-package com.qidate.qisplan2.network;
+package com.qidate.qisplan2.network.payload;
 
-import net.minecraft.core.BlockPos;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.resources.ResourceLocation;
 
-public record StopGhostPianoMusicPayload(
-        BlockPos pos
-) implements CustomPacketPayload {
+import com.qidate.qisplan2.QisPlan2;
 
-    public static final Type<StopGhostPianoMusicPayload> TYPE =
+public record GhostDomainRaiseLayerPayload()
+        implements CustomPacketPayload {
+
+    public static final Type<GhostDomainRaiseLayerPayload> TYPE =
             new Type<>(
                     ResourceLocation.fromNamespaceAndPath(
-                            "qisplan2",
-                            "stop_ghost_piano_music"
+                            QisPlan2.MODID,
+                            "ghost_domain_raise_layer"
                     )
             );
 
     public static final StreamCodec<
             RegistryFriendlyByteBuf,
-            StopGhostPianoMusicPayload
+            GhostDomainRaiseLayerPayload
             > STREAM_CODEC =
-            StreamCodec.composite(
-                    BlockPos.STREAM_CODEC,
-                    StopGhostPianoMusicPayload::pos,
-                    StopGhostPianoMusicPayload::new
+            StreamCodec.unit(
+                    new GhostDomainRaiseLayerPayload()
             );
 
     @Override

@@ -2,6 +2,7 @@ package com.qidate.qisplan2.client.key;
 
 import com.mojang.blaze3d.platform.InputConstants;
 import net.minecraft.client.KeyMapping;
+import net.neoforged.neoforge.client.settings.KeyConflictContext;
 import org.lwjgl.glfw.GLFW;
 
 public final class ModKeyMappings {
@@ -116,6 +117,20 @@ public final class ModKeyMappings {
             new KeyMapping(
                     "key.qisplan2.ghost_domain_teleport",
                     GLFW.GLFW_KEY_R,
+                    "key.categories.qisplan2"
+            );
+
+    public static final KeyMapping GHOST_DOMAIN_RAISE_LAYER =
+            new KeyMapping(
+                    "key.qisplan2.ghost_domain_raise_layer",
+                    GLFW.GLFW_KEY_PAGE_UP,
+                    "key.categories.qisplan2"
+            );
+
+    public static final KeyMapping GHOST_DOMAIN_LOWER_LAYER =
+            new KeyMapping(
+                    "key.qisplan2.ghost_domain_lower_layer",
+                    GLFW.GLFW_KEY_PAGE_DOWN,
                     "key.categories.qisplan2"
             );
 

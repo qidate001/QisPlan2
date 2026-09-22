@@ -5,8 +5,8 @@ import com.qidate.qisplan2.block.entity.GhostDoorPlateBlockEntity;
 import com.qidate.qisplan2.client.DoorGhostMarkClient;
 import com.qidate.qisplan2.client.GhostPianoMusicClient;
 import com.qidate.qisplan2.client.GhostPossessionClientState;
+import com.qidate.qisplan2.ghost.domain.*;
 import com.qidate.qisplan2.ghost.reboot.GhostRebootManager;
-import com.qidate.qisplan2.ghost.domain.GhostDomainTeleportHandler;
 import com.qidate.qisplan2.ghost.domain.client.ClientGhostDomainManager;
 import com.qidate.qisplan2.client.screen.GhostPossessionScreen;
 import com.qidate.qisplan2.client.screen.GhostDoorPlateScreen;
@@ -17,8 +17,6 @@ import com.qidate.qisplan2.ghost.ability.divinationslip.GhostDivinationSlipAbili
 import com.qidate.qisplan2.ghost.ability.doorghost.DoorGhostAbilityHandler;
 import com.qidate.qisplan2.ghost.ability.ghosteye.GhostEyeAbility;
 import com.qidate.qisplan2.ghost.domain.type.eye.GhostEyeDomainController;
-import com.qidate.qisplan2.ghost.domain.GhostDomain;
-import com.qidate.qisplan2.ghost.domain.GhostDomainManager;
 import com.qidate.qisplan2.ghost.layer.GhostLayerHandler;
 import com.qidate.qisplan2.ghost.reboot.GhostRebootSources;
 import com.qidate.qisplan2.network.payload.*;
@@ -26,6 +24,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.util.Mth;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.item.ItemStack;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
@@ -307,6 +306,20 @@ public final class QisNetwork {
                 GhostDomainTeleportPayload.TYPE,
                 GhostDomainTeleportPayload.STREAM_CODEC,
                 QisNetwork::handleGhostDomainTeleport
+        );
+
+        // 为实体提升层数
+        registrar.playToServer(
+                GhostDomainRaiseLayerPayload.TYPE,
+                GhostDomainRaiseLayerPayload.STREAM_CODEC,
+                QisNetwork::handleGhostDomainRaiseLayer
+        );
+
+        // 为实体降低层数
+        registrar.playToServer(
+                GhostDomainLowerLayerPayload.TYPE,
+                GhostDomainLowerLayerPayload.STREAM_CODEC,
+                QisNetwork::handleGhostDomainLowerLayer
         );
 
         /*
@@ -866,16 +879,94 @@ public final class QisNetwork {
         );
     }
 
-    public static void sendGhostEyeReboot() {
-
+    public static void sendGhostDomainRaiseLayer() {
         PacketDistributor.sendToServer(
-                new GhostEyeRebootPayload()
+                new GhostDomainRaiseLayerPayload()
+        );
+    }
+
+    public static void sendGhostDomainLowerLayer() {
+        PacketDistributor.sendToServer(
+                new GhostDomainLowerLayerPayload()
+        );
+    }
+
+    private static void handleGhostDomainRaiseLayer(
+            GhostDomainRaiseLayerPayload payload,
+            IPayloadContext context
+    ) {
+        if (!(context.player() instanceof ServerPlayer player)) {
+            return;
+        }
+
+//        QisPlan2.LOGGER.info(
+//                "[鬼域层数] 收到提升层数请求：{}",
+//                player.getGameProfile().getName()
+//        );
+
+        GhostDomainLayerHandler.raise(player);
+    }
+
+    private static void handleGhostDomainLowerLayer(
+            GhostDomainLowerLayerPayload payload,
+            IPayloadContext context
+    ) {
+        if (!(context.player() instanceof ServerPlayer player)) {
+            return;
+        }
+
+//        QisPlan2.LOGGER.info(
+//                "[鬼域层数] 收到降低层数请求：{}",
+//                player.getGameProfile().getName()
+//        );
+
+        GhostDomainLayerHandler.lower(player);
+    }
+
+    private static void changeTargetLayer(
+            ServerPlayer player,
+            int delta
+    ) {
+        Entity target =
+                GhostDomainTargetHandler.getLookTarget(player);
+
+        if (target == null) {
+            return;
+        }
+
+        GhostDomainManager manager =
+                GhostDomainManager.get(player.serverLevel());
+
+        GhostDomain domain =
+                manager.getEffectiveDomain(target);
+
+        if (domain == null) {
+            return;
+        }
+
+        int currentLayer =
+                GhostLayerHandler.getLayer(target);
+
+        int newLayer =
+                Mth.clamp(
+                        currentLayer + delta,
+                        1,
+                        domain.getLayer()
+                );
+
+        if (newLayer == currentLayer) {
+            return;
+        }
+
+        GhostLayerHandler.setLayer(
+                target,
+                newLayer
         );
     }
 
     /*
      * ========================================================
-     * C2S：鬼眼层数
+     * C2S：鬼眼
      * ========================================================
      */
     public static void sendGhostEyeLayerChange(
@@ -885,6 +976,13 @@ public final class QisNetwork {
                 new GhostEyeLayerChangePayload(
                         delta
                 )
+        );
+    }
+
+    public static void sendGhostEyeReboot() {
+
+        PacketDistributor.sendToServer(
+                new GhostEyeRebootPayload()
         );
     }
 

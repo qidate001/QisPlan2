@@ -44,7 +44,7 @@ public interface GhostDomainBehavior {
     ) {
         GhostLayerHandler.setLayer(
                 entity,
-                domain.getLayer()
+                1
         );
     }
 
@@ -73,7 +73,7 @@ public interface GhostDomainBehavior {
     ) {
         GhostLayerHandler.setLayer(
                 entity,
-                newDomain.getLayer()
+                1
         );
     }
 
