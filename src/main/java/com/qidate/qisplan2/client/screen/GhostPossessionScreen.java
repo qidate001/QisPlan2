@@ -1,7 +1,7 @@
 package com.qidate.qisplan2.client.screen;
 
 import com.qidate.qisplan2.client.GhostPossessionClientState;
-import com.qidate.qisplan2.network.QisNetwork;
+import com.qidate.qisplan2.network.possession.GhostPossessionNetwork;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
@@ -270,7 +270,7 @@ public class GhostPossessionScreen extends Screen {
          */
         if (keyCode == GLFW.GLFW_KEY_LEFT) {
 
-            QisNetwork.sendPossessionInput(
+            GhostPossessionNetwork.sendInput(
                     true,
                     false,
                     false
@@ -284,7 +284,7 @@ public class GhostPossessionScreen extends Screen {
          */
         if (keyCode == GLFW.GLFW_KEY_RIGHT) {
 
-            QisNetwork.sendPossessionInput(
+            GhostPossessionNetwork.sendInput(
                     false,
                     true,
                     false
@@ -298,7 +298,7 @@ public class GhostPossessionScreen extends Screen {
          */
         if (keyCode == GLFW.GLFW_KEY_SPACE) {
 
-            QisNetwork.sendPossessionInput(
+            GhostPossessionNetwork.sendInput(
                     false,
                     false,
                     true
@@ -312,7 +312,7 @@ public class GhostPossessionScreen extends Screen {
          */
         if (keyCode == GLFW.GLFW_KEY_DOWN) {
 
-            QisNetwork.sendPossessionInput(
+            GhostPossessionNetwork.sendInput(
                     false,
                     false,
                     true
@@ -348,7 +348,7 @@ public class GhostPossessionScreen extends Screen {
         if (keyCode == GLFW.GLFW_KEY_LEFT
                 || keyCode == GLFW.GLFW_KEY_RIGHT) {
 
-            QisNetwork.sendPossessionInput(
+            GhostPossessionNetwork.sendInput(
                     false,
                     false,
                     false

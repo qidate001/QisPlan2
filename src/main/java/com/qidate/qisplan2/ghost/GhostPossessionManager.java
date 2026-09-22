@@ -1,17 +1,8 @@
 package com.qidate.qisplan2.ghost;
 
-import com.qidate.qisplan2.core.ModDataComponents;
-import com.qidate.qisplan2.core.ModItems;
-import com.qidate.qisplan2.death.SupernaturalEntity;
-import com.qidate.qisplan2.entity.AbstractGhostEntity;
-import com.qidate.qisplan2.ghost.ability.divinationslip.GhostDivinationSlipAbility;
-import com.qidate.qisplan2.network.QisNetwork;
+import com.qidate.qisplan2.network.possession.GhostPossessionNetwork;
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.world.InteractionHand;
-import net.minecraft.world.entity.Entity;
-import net.minecraft.world.item.ItemStack;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -66,7 +57,7 @@ public final class GhostPossessionManager {
                 session
         );
 
-        QisNetwork.sendPossessionStart(
+        GhostPossessionNetwork.sendStart(
                 player,
                 session
         );
@@ -134,7 +125,7 @@ public final class GhostPossessionManager {
                 continue;
             }
 
-            QisNetwork.sendPossessionUpdate(
+            GhostPossessionNetwork.sendUpdate(
                     player,
                     session
             );
@@ -202,7 +193,7 @@ public final class GhostPossessionManager {
          * ========================================================
          */
 
-        QisNetwork.sendPossessionEnd(
+        GhostPossessionNetwork.sendEnd(
                 player,
                 won,
                 success
