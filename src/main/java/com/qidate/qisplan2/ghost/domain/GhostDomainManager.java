@@ -2,6 +2,7 @@ package com.qidate.qisplan2.ghost.domain;
 
 import com.qidate.qisplan2.QisPlan2;
 import com.qidate.qisplan2.network.QisNetwork;
+import com.qidate.qisplan2.network.ghostdomain.GhostDomainNetwork;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -43,7 +44,7 @@ public final class GhostDomainManager {
                 domain
         );
 
-        QisNetwork.sendGhostDomainAdd(
+        GhostDomainNetwork.sendAdd(
                 level,
                 domain
         );
@@ -53,7 +54,7 @@ public final class GhostDomainManager {
 
         for (GhostDomain domain : domains.values()) {
 
-            QisNetwork.sendGhostDomainAdd(
+            GhostDomainNetwork.sendAdd(
                     player,
                     domain
             );
@@ -83,7 +84,7 @@ public final class GhostDomainManager {
                 domain
         );
 
-        QisNetwork.sendGhostDomainRemove(
+        GhostDomainNetwork.sendRemove(
                 level,
                 domain.getId()
         );
@@ -141,7 +142,7 @@ public final class GhostDomainManager {
 
             domain.setPosition(x, y, z);
 
-            QisNetwork.sendGhostDomainUpdate(
+            GhostDomainNetwork.sendUpdate(
                     level,
                     domain,
                     false
@@ -166,7 +167,7 @@ public final class GhostDomainManager {
 
         domain.setPosition(x, y, z);
 
-        QisNetwork.sendGhostDomainUpdate(
+        GhostDomainNetwork.sendUpdate(
                 level,
                 domain,
                 false
@@ -197,7 +198,7 @@ public final class GhostDomainManager {
                 z
         );
 
-        QisNetwork.sendGhostDomainUpdate(
+        GhostDomainNetwork.sendUpdate(
                 level,
                 domain,
                 true
@@ -232,7 +233,7 @@ public final class GhostDomainManager {
                         oldLayer
                 );
 
-        QisNetwork.sendGhostDomainUpdate(
+        GhostDomainNetwork.sendUpdate(
                 level,
                 domain,
                 false

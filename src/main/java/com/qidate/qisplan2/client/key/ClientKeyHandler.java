@@ -2,6 +2,7 @@ package com.qidate.qisplan2.client.key;
 
 import com.qidate.qisplan2.client.gui.PossessionScreen;
 import com.qidate.qisplan2.network.QisNetwork;
+import com.qidate.qisplan2.network.ghostdomain.GhostDomainNetwork;
 import net.minecraft.client.Minecraft;
 import net.neoforged.neoforge.client.event.ClientTickEvent;
 import net.neoforged.neoforge.client.event.RegisterKeyMappingsEvent;
@@ -118,17 +119,17 @@ public final class ClientKeyHandler {
 
         // 化虹
         if (GHOST_DOMAIN_TELEPORT.consumeClick()) {
-            QisNetwork.sendGhostDomainTeleport();
+            GhostDomainNetwork.sendTeleport();
         }
 
         // 提升指向的生物所在层数
         if (GHOST_DOMAIN_RAISE_LAYER.consumeClick()) {
-            QisNetwork.sendGhostDomainRaiseLayer();
+            GhostDomainNetwork.sendRaiseLayer();
         }
 
         // 降低指向的生物所在层数
         if (GHOST_DOMAIN_LOWER_LAYER.consumeClick()) {
-            QisNetwork.sendGhostDomainLowerLayer();
+            GhostDomainNetwork.sendLowerLayer();
         }
     }
 }
