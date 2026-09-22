@@ -6,6 +6,7 @@ import com.qidate.qisplan2.ghost.reboot.GhostRebootManager;
 import com.qidate.qisplan2.core.ModItems;
 import com.qidate.qisplan2.ghost.PossessionHandler;
 import com.qidate.qisplan2.ghost.ability.divinationslip.GhostDivinationSlipAbility;
+import com.qidate.qisplan2.network.divinationslip.GhostDivinationNetwork;
 import com.qidate.qisplan2.network.ghostdoor.GhostDoorNetwork;
 import com.qidate.qisplan2.ghost.ability.ghosteye.GhostEyeAbility;
 import com.qidate.qisplan2.ghost.domain.type.eye.GhostEyeDomainController;
@@ -88,56 +89,7 @@ public final class QisNetwork {
          * ========================================================
          */
 
-        registrar.playToServer(
-                GhostDivinationUsePayload.TYPE,
-                GhostDivinationUsePayload.STREAM_CODEC,
-                QisNetwork::handleGhostDivinationUse
-        );
-
-        registrar.playToClient(
-                GhostDivinationResultPayload.TYPE,
-                GhostDivinationResultPayload.STREAM_CODEC,
-                (payload, context) -> {
-
-                    context.enqueueWork(() -> {
-
-                        Minecraft minecraft =
-                                Minecraft.getInstance();
-
-                        ItemStack resultStack;
-
-                        switch (payload.result()) {
-
-                            case 0 -> resultStack =
-                                    new ItemStack(
-                                            ModItems.LIFE_SIGN.get()
-                                    );
-
-                            case 1 -> resultStack =
-                                    new ItemStack(
-                                            ModItems.DEATH_SIGN.get()
-                                    );
-
-                            case 2 -> resultStack =
-                                    new ItemStack(
-                                            ModItems.GHOST_SIGN.get()
-                                    );
-
-                            default -> {
-                                return;
-                            }
-                        }
-
-                        /*
-                         * 原版不死图腾触发动画。
-                         */
-                        minecraft.gameRenderer
-                                .displayItemActivation(
-                                        resultStack
-                                );
-                    });
-                }
-        );
+        GhostDivinationNetwork.register(event);
 
         /*
          * ========================================================
@@ -372,71 +324,6 @@ public final class QisNetwork {
 
         PacketDistributor.sendToServer(
                 new GhostEyeRebootPayload()
-        );
-    }
-
-    /*
-     * ========================================================
-     * S2C：鬼签
-     * ========================================================
-     */
-    public static void sendGhostDivinationResult(
-            ServerPlayer player,
-            int result
-    ) {
-
-        PacketDistributor.sendToPlayer(
-                player,
-                new GhostDivinationResultPayload(
-                        result
-                )
-        );
-    }
-
-    /*
-     * ========================================================
-     * C2S：鬼签使用
-     * ========================================================
-     */
-    private static void handleGhostDivinationUse(
-            GhostDivinationUsePayload payload,
-            IPayloadContext context
-    ) {
-
-        context.enqueueWork(() -> {
-
-            if (!(context.player()
-                    instanceof ServerPlayer player)) {
-
-                return;
-            }
-
-            /*
-             * 必须真的驾驭了鬼签。
-             */
-            if (!PossessionHandler.hasGhost(
-                    player,
-                    GhostDivinationSlipAbility.ID
-            )) {
-
-                return;
-            }
-
-            GhostDivinationSlipAbility.useResult(
-                    player,
-                    payload.result()
-            );
-        });
-    }
-
-    public static void sendGhostDivinationUse(
-            int result
-    ) {
-
-        PacketDistributor.sendToServer(
-                new GhostDivinationUsePayload(
-                        result
-                )
         );
     }
 

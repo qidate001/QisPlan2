@@ -6,7 +6,7 @@ import com.qidate.qisplan2.death.ModDamageTypes;
 import com.qidate.qisplan2.death.SupernaturalDeathHandler;
 import com.qidate.qisplan2.ghost.PossessedGhostState;
 import com.qidate.qisplan2.ghost.PossessionHandler;
-import com.qidate.qisplan2.network.QisNetwork;
+import com.qidate.qisplan2.network.divinationslip.GhostDivinationNetwork;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.item.ItemStack;
@@ -61,7 +61,7 @@ public final class GhostDivinationSlipSystem {
             ServerPlayer player
     ) {
 
-        QisNetwork.sendGhostDivinationResult(
+        GhostDivinationNetwork.sendResult(
                 player,
                 0
         );
@@ -120,7 +120,7 @@ public final class GhostDivinationSlipSystem {
             ServerPlayer player
     ) {
 
-        QisNetwork.sendGhostDivinationResult(
+        GhostDivinationNetwork.sendResult(
                 player,
                 2
         );
@@ -139,7 +139,7 @@ public final class GhostDivinationSlipSystem {
             ServerPlayer player
     ) {
 
-        QisNetwork.sendGhostDivinationResult(
+        GhostDivinationNetwork.sendResult(
                 player,
                 1
         );
@@ -192,7 +192,7 @@ public final class GhostDivinationSlipSystem {
             ItemStack stack
     ) {
 
-        QisNetwork.sendGhostDivinationResult(
+        GhostDivinationNetwork.sendResult(
                 player,
                 1
         );

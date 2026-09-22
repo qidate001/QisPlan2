@@ -2,6 +2,7 @@ package com.qidate.qisplan2.client.key;
 
 import com.qidate.qisplan2.client.gui.PossessionScreen;
 import com.qidate.qisplan2.network.QisNetwork;
+import com.qidate.qisplan2.network.divinationslip.GhostDivinationNetwork;
 import com.qidate.qisplan2.network.ghostdomain.GhostDomainNetwork;
 import net.minecraft.client.Minecraft;
 import net.neoforged.neoforge.client.event.ClientTickEvent;
@@ -62,17 +63,17 @@ public final class ClientKeyHandler {
 
         // 活签
         while (GHOST_DIVINATION_LIFE.consumeClick()) {
-            QisNetwork.sendGhostDivinationUse(0);
+            GhostDivinationNetwork.sendUse(0);
         }
 
         // 死签
         while (GHOST_DIVINATION_DEATH.consumeClick()) {
-            QisNetwork.sendGhostDivinationUse(1);
+            GhostDivinationNetwork.sendUse(1);
         }
 
         // 鬼签
         while (GHOST_DIVINATION_GHOST.consumeClick()) {
-            QisNetwork.sendGhostDivinationUse(2);
+            GhostDivinationNetwork.sendUse(2);
         }
 
         /*
