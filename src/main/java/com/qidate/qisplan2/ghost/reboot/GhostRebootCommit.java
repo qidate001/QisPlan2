@@ -1,4 +1,4 @@
-package com.qidate.qisplan2.ghost.ability.ghosteye.reboot;
+package com.qidate.qisplan2.ghost.reboot;
 
 public record GhostRebootCommit(
         long gameTime,

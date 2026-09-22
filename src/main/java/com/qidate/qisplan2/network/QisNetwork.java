@@ -5,7 +5,7 @@ import com.qidate.qisplan2.block.entity.GhostDoorPlateBlockEntity;
 import com.qidate.qisplan2.client.DoorGhostMarkClient;
 import com.qidate.qisplan2.client.GhostPianoMusicClient;
 import com.qidate.qisplan2.client.GhostPossessionClientState;
-import com.qidate.qisplan2.ghost.ability.ghosteye.reboot.GhostRebootSystem;
+import com.qidate.qisplan2.ghost.reboot.GhostRebootManager;
 import com.qidate.qisplan2.ghost.domain.GhostDomainTeleportHandler;
 import com.qidate.qisplan2.ghost.domain.client.ClientGhostDomainManager;
 import com.qidate.qisplan2.client.screen.GhostPossessionScreen;
@@ -842,7 +842,7 @@ public final class QisNetwork {
             /*
              * 进入重启。
              */
-            GhostRebootSystem.reboot(
+            GhostRebootManager.reboot(
                     player,
                     0
             );

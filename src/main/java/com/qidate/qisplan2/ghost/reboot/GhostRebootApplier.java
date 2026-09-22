@@ -1,11 +1,10 @@
-package com.qidate.qisplan2.ghost.ability.ghosteye.reboot;
+package com.qidate.qisplan2.ghost.reboot;
 
 import com.qidate.qisplan2.core.ModGameRules;
 import net.minecraft.network.protocol.game.ClientboundSetExperiencePacket;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.entity.player.Inventory;
-import net.minecraft.world.item.ItemStack;
 
 public final class GhostRebootApplier {
 

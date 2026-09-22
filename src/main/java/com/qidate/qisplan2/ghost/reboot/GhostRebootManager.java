@@ -1,4 +1,4 @@
-package com.qidate.qisplan2.ghost.ability.ghosteye.reboot;
+package com.qidate.qisplan2.ghost.reboot;
 
 import com.qidate.qisplan2.QisPlan2;
 import com.qidate.qisplan2.core.ModGameRules;
@@ -8,7 +8,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
-public final class GhostRebootSystem {
+public final class GhostRebootManager {
 
     /**
      * 玩家 → 历史时间线
@@ -22,7 +22,7 @@ public final class GhostRebootSystem {
     private static final Map<UUID, GhostRebootState> REBOOTING =
             new HashMap<>();
 
-    private GhostRebootSystem() {
+    private GhostRebootManager() {
     }
 
     public static void tick(

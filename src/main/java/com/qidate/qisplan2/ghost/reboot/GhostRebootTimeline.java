@@ -1,4 +1,4 @@
-package com.qidate.qisplan2.ghost.ability.ghosteye.reboot;
+package com.qidate.qisplan2.ghost.reboot;
 
 import java.util.ArrayDeque;
 import java.util.Deque;

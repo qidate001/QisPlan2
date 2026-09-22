@@ -1,4 +1,4 @@
-package com.qidate.qisplan2.ghost.ability.ghosteye.reboot;
+package com.qidate.qisplan2.ghost.reboot;
 
 import com.qidate.qisplan2.core.ModGameRules;
 import net.minecraft.network.protocol.game.ClientboundSetExperiencePacket;

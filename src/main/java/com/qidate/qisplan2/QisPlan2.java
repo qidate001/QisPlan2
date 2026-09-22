@@ -12,7 +12,7 @@ import com.qidate.qisplan2.ghost.GhostAbilityInteractionHandler;
 import com.qidate.qisplan2.ghost.ability.GhostAbilityRegistry;
 import com.qidate.qisplan2.ghost.domain.GhostDomainPlayerLogout;
 import com.qidate.qisplan2.ghost.domain.GhostDomainPlayerSync;
-import com.qidate.qisplan2.ghost.domain.GhostDomainServerTick;
+import com.qidate.qisplan2.ghost.domain.GhostDomainServerManager;
 import com.qidate.qisplan2.ghost.doorplate.GhostDoorPlateTeleportHandler;
 import com.qidate.qisplan2.ghost.layer.GhostLayerInteractionHandler;
 import net.minecraft.client.renderer.ShaderInstance;
@@ -60,11 +60,6 @@ public class QisPlan2 {
         // 普通伤害处理
         NeoForge.EVENT_BUS.register(
                 GhostLayerCombatHandler.class
-        );
-
-        // 鬼域
-        NeoForge.EVENT_BUS.register(
-                GhostDomainServerTick.class
         );
 
         // 鬼域异步
