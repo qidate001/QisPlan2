@@ -1,10 +1,8 @@
 package com.qidate.qisplan2.ghost.domain;
 
-import com.qidate.qisplan2.QisPlan2;
-import com.qidate.qisplan2.ghost.layer.GhostLayerHandler;
+import com.qidate.qisplan2.ghost.layer.GhostLayerAccess;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
 
 import java.util.*;
@@ -89,16 +87,25 @@ public final class GhostDomainEntityTracker {
         for (GhostDomain domain :
                 manager.getDomains()) {
 
-            if (domain.contains(
+            /*
+             * 位置判断
+             */
+            if (!domain.contains(
                     entity.getX(),
                     entity.getY(),
                     entity.getZ()
             )) {
-
-                currentDomains.add(
-                        domain.getId()
-                );
+                continue;
             }
+
+            /*
+             * 肉身鬼域抵抗
+             */
+            if (!GhostLayerAccess.canEnter(entity, domain)) {
+                continue;
+            }
+
+            currentDomains.add(domain.getId());
         }
 
         /*
@@ -591,6 +598,48 @@ public final class GhostDomainEntityTracker {
         );
     }
 
+    /**
+     * 当鬼域层数发生变化时，
+     * 刷新当前维度中所有实体与该鬼域的关系。
+     *
+     * <p>
+     * 鬼域层数变化可能导致实体：
+     * </p>
+     *
+     * <ul>
+     *     <li>原本无法进入鬼域，现在可以进入</li>
+     *     <li>原本处于鬼域中，现在因抵抗重新失去资格</li>
+     *     <li>最终生效鬼域发生变化</li>
+     *     <li>实体所在鬼域层数需要重新处理</li>
+     * </ul>
+     *
+     * <p>
+     * 所有判定统一交给 {@link GhostLayerAccess}，
+     * 本方法不再自行判断肉身鬼域抵抗。
+     * </p>
+     *
+     * @param domain 层数发生变化的鬼域
+     * @param oldLayer 变化前的鬼域层数
+     */
+    public void refreshDomainLayer(
+            GhostDomain domain,
+            int oldLayer
+    ) {
+
+        /*
+         * 鬼域层数发生变化后，
+         * 重新计算当前维度所有实体与鬼域的关系。
+         *
+         * 不直接遍历 domainEntities，
+         * 因为原本无法进入该鬼域的实体
+         * 根本不会存在于 domainEntities 中。
+         */
+        for (Entity entity : level.getAllEntities()) {
+
+            update(entity);
+        }
+    }
+
     public boolean isInside(
             Entity entity,
             ResourceLocation type
@@ -607,113 +656,6 @@ public final class GhostDomainEntityTracker {
         }
 
         return false;
-    }
-
-    /**
-     * 当鬼域层数发生变化时，
-     * 刷新当前处于该鬼域中的实体层数。
-     *
-     * <p>只有当前最终生效鬼域就是该鬼域的实体，
-     * 才会受到影响。</p>
-     *
-     * @param domain 层数发生变化的鬼域
-     */
-    public void refreshDomainLayer(
-            GhostDomain domain,
-            int oldLayer
-    ) {
-
-        Set<UUID> entityUUIDs =
-                domainEntities.get(
-                        domain.getId()
-                );
-
-        if (entityUUIDs == null
-                || entityUUIDs.isEmpty()) {
-            return;
-        }
-
-        Set<UUID> affectedEntities =
-                new LinkedHashSet<>(entityUUIDs);
-
-        for (UUID entityUUID : affectedEntities) {
-
-            UUID effectiveDomainId =
-                    effectiveDomains.get(
-                            entityUUID
-                    );
-
-            /*
-             * 只有这个鬼域当前真正生效，
-             * 才处理实体。
-             */
-            if (!domain.getId().equals(
-                    effectiveDomainId
-            )) {
-                continue;
-            }
-
-            Entity entity =
-                    level.getEntity(entityUUID);
-
-            if (entity == null) {
-                continue;
-            }
-
-            /*
-             * ========================================================
-             * 总层数增加
-             * ========================================================
-             *
-             * 默认不提升实体所在层数。
-             */
-            if (domain.getLayer() > oldLayer) {
-
-                if (domain.getBehavior()
-                        .shouldRaiseEntityLayer(
-                                level,
-                                domain,
-                                entity
-                        )) {
-
-                    domain.getBehavior()
-                            .onEntityLayerChange(
-                                    level,
-                                    domain,
-                                    entity
-                            );
-                }
-
-                continue;
-            }
-
-            /*
-             * ========================================================
-             * 总层数降低
-             * ========================================================
-             *
-             * 只有实体当前层数超过新的总层数，
-             * 才需要进行修正。
-             */
-            if (domain.getLayer() < oldLayer) {
-
-                int entityLayer =
-                        GhostLayerHandler.getLayer(
-                                entity
-                        );
-
-                if (entityLayer <= domain.getLayer()) {
-                    continue;
-                }
-
-                domain.getBehavior()
-                        .onEntityLayerChange(
-                                level,
-                                domain,
-                                entity
-                        );
-            }
-        }
     }
 
     /**

@@ -122,4 +122,26 @@ public class ModAttachments {
                                     .copyOnDeath()
                                     .build()
             );
+
+    // 实体肉身鬼域抵抗
+    public static final DeferredHolder<
+            AttachmentType<?>,
+            AttachmentType<Integer>
+            > GHOST_RESISTANCE =
+            ATTACHMENT_TYPES.register(
+                    "ghost_resistance",
+                    () ->
+                            AttachmentType
+                                    .builder(
+                                            () -> 0
+                                    )
+                                    .serialize(
+                                            Codec.INT
+                                    )
+                                    .sync(
+                                            ByteBufCodecs.VAR_INT
+                                    )
+                                    .copyOnDeath()
+                                    .build()
+            );
 }

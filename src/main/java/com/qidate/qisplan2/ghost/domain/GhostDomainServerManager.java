@@ -17,7 +17,7 @@ public final class GhostDomainServerManager {
         for (ServerLevel level : server.getAllLevels()) {
 
             /*
-             * 更新会自动创建 / 删除鬼域的控制器
+             * 鬼雨伞 更新会自动创建 / 删除鬼域的控制器
              */
             for (ServerPlayer player : level.players()) {
                 GhostUmbrellaDomainController.tick(player);
