@@ -1,7 +1,7 @@
 package com.qidate.qisplan2.ghost.possession.ability.ghosteye;
 
 import com.qidate.qisplan2.QisPlan2;
-import com.qidate.qisplan2.ghost.GhostAbilityContext;
+import com.qidate.qisplan2.ghost.possession.ability.GhostAbilityContext;
 import com.qidate.qisplan2.ghost.possession.ability.PossessedGhostAbility;
 import com.qidate.qisplan2.ghost.corrosion.CorrosionType;
 import com.qidate.qisplan2.ghost.corrosion.GhostCorrosion;

@@ -1,7 +1,6 @@
 package com.qidate.qisplan2.ghost.possession.ability;
 
 import com.qidate.qisplan2.entity.AbstractGhostEntity;
-import com.qidate.qisplan2.ghost.GhostAbilityContext;
 import com.qidate.qisplan2.ghost.corrosion.CorrosionType;
 import com.qidate.qisplan2.ghost.corrosion.GhostCorrosion;
 import net.minecraft.network.chat.Component;

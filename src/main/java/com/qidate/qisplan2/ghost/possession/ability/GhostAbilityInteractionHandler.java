@@ -1,4 +1,4 @@
-package com.qidate.qisplan2.ghost;
+package com.qidate.qisplan2.ghost.possession.ability;
 
 import com.qidate.qisplan2.ghost.possession.ability.knockingghost.KnockingGhostAbility;
 

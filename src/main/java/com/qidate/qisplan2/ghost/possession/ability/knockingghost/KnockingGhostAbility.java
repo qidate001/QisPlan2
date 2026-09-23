@@ -3,7 +3,7 @@ package com.qidate.qisplan2.ghost.possession.ability.knockingghost;
 import com.qidate.qisplan2.QisPlan2;
 import com.qidate.qisplan2.core.ModEntities;
 import com.qidate.qisplan2.entity.AbstractGhostEntity;
-import com.qidate.qisplan2.ghost.GhostAbilityContext;
+import com.qidate.qisplan2.ghost.possession.ability.GhostAbilityContext;
 import com.qidate.qisplan2.ghost.possession.data.PossessedGhostState;
 import com.qidate.qisplan2.ghost.possession.manager.PossessionHandler;
 import com.qidate.qisplan2.ghost.possession.ability.PossessedGhostAbility;

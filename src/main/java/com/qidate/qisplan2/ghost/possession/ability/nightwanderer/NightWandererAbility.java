@@ -5,7 +5,7 @@ import com.qidate.qisplan2.core.ModEntities;
 import com.qidate.qisplan2.death.ModDamageTypes;
 import com.qidate.qisplan2.death.SupernaturalDeathHandler;
 import com.qidate.qisplan2.entity.AbstractGhostEntity;
-import com.qidate.qisplan2.ghost.GhostAbilityContext;
+import com.qidate.qisplan2.ghost.possession.ability.GhostAbilityContext;
 import com.qidate.qisplan2.ghost.possession.data.PossessedGhostState;
 import com.qidate.qisplan2.ghost.possession.manager.PossessionHandler;
 
