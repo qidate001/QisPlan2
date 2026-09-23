@@ -4,7 +4,7 @@ import com.qidate.qisplan2.entity.AbstractDoorTriggerGhost;
 import com.qidate.qisplan2.entity.ClosingGhost;
 import com.qidate.qisplan2.entity.OpeningGhost;
 
-import com.qidate.qisplan2.ghost.possession.ability.doorghost.DoorGhostAbilityHandler;
+import com.qidate.qisplan2.ghost.possession.ability.ghostdoor.GhostDoorAbilityHandler;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.LivingEntity;
@@ -69,7 +69,7 @@ public final class DoorGhostTriggerHandler {
             return;
         }
 
-        DoorGhostAbilityHandler.onDoorChanged(
+        GhostDoorAbilityHandler.onDoorChanged(
                 level,
                 doorPos,
                 source,

@@ -1,4 +1,4 @@
-package com.qidate.qisplan2.ghost.possession.ability.doorghost;
+package com.qidate.qisplan2.ghost.possession.ability.ghostdoor;
 
 import com.qidate.qisplan2.QisPlan2;
 import com.qidate.qisplan2.death.ModDamageTypes;
@@ -25,7 +25,7 @@ import net.minecraft.world.phys.Vec3;
  * 1. 门事件触发时，给附近的驾驭者标记触发者。
  * 2. 玩家按 G 时，寻找最近的标记目标并发动突袭。
  */
-public final class DoorGhostAbilityHandler {
+public final class GhostDoorAbilityHandler {
     /**
      * 驾驭后的开门鬼 / 关门鬼：
      *
@@ -35,7 +35,7 @@ public final class DoorGhostAbilityHandler {
     private static final double ACTIVE_ATTACK_RADIUS = 30.0D;
 
 
-    private DoorGhostAbilityHandler() {
+    private GhostDoorAbilityHandler() {
     }
 
     /*
@@ -136,7 +136,7 @@ public final class DoorGhostAbilityHandler {
 
                 if (hasOpeningGhost) {
 
-                    DoorGhostMarkManager.markOpening(
+                    GhostDoorMarkManager.markOpening(
                             player,
                             source.getUUID()
                     );
@@ -160,7 +160,7 @@ public final class DoorGhostAbilityHandler {
 
                 if (hasClosingGhost) {
 
-                    DoorGhostMarkManager.markClosing(
+                    GhostDoorMarkManager.markClosing(
                             player,
                             source.getUUID()
                     );
@@ -547,7 +547,7 @@ public final class DoorGhostAbilityHandler {
          */
 
         LivingEntity target =
-                DoorGhostMarkManager.findNearestMarkedTarget(
+                GhostDoorMarkManager.findNearestMarkedTarget(
                         player,
                         serverLevel
                 );
@@ -564,13 +564,13 @@ public final class DoorGhostAbilityHandler {
          */
 
         boolean openingMarked =
-                DoorGhostMarkManager.hasOpeningMark(
+                GhostDoorMarkManager.hasOpeningMark(
                         player,
                         target.getUUID()
                 );
 
         boolean closingMarked =
-                DoorGhostMarkManager.hasClosingMark(
+                GhostDoorMarkManager.hasClosingMark(
                         player,
                         target.getUUID()
                 );
@@ -687,7 +687,7 @@ public final class DoorGhostAbilityHandler {
             /*
              * 目标本次门鬼标记消失。
              */
-            DoorGhostMarkManager.clearMarks(
+            GhostDoorMarkManager.clearMarks(
                     player,
                     target.getUUID()
             );
@@ -756,7 +756,7 @@ public final class DoorGhostAbilityHandler {
             /*
              * 清除目标全部门鬼标记。
              */
-            DoorGhostMarkManager.clearMarks(
+            GhostDoorMarkManager.clearMarks(
                     player,
                     target.getUUID()
             );
@@ -826,7 +826,7 @@ public final class DoorGhostAbilityHandler {
                 /*
                  * 攻击以后清除标记。
                  */
-                DoorGhostMarkManager.clearMarks(
+                GhostDoorMarkManager.clearMarks(
                         player,
                         target.getUUID()
                 );
@@ -885,7 +885,7 @@ public final class DoorGhostAbilityHandler {
                 /*
                  * 攻击以后清除标记。
                  */
-                DoorGhostMarkManager.clearMarks(
+                GhostDoorMarkManager.clearMarks(
                         player,
                         target.getUUID()
                 );
@@ -959,7 +959,7 @@ public final class DoorGhostAbilityHandler {
                 /*
                  * 攻击之后清除两个标记。
                  */
-                DoorGhostMarkManager.clearMarks(
+                GhostDoorMarkManager.clearMarks(
                         player,
                         target.getUUID()
                 );

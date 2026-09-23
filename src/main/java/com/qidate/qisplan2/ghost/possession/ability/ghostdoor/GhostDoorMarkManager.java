@@ -1,4 +1,4 @@
-package com.qidate.qisplan2.ghost.possession.ability.doorghost;
+package com.qidate.qisplan2.ghost.possession.ability.ghostdoor;
 
 import com.qidate.qisplan2.network.ghostdoor.GhostDoorNetwork;
 import net.minecraft.server.MinecraftServer;
@@ -23,7 +23,7 @@ import java.util.UUID;
  *
  * 两种标记可以同时存在。
  */
-public final class DoorGhostMarkManager {
+public final class GhostDoorMarkManager {
 
     /**
      * 标记持续时间：
@@ -85,7 +85,7 @@ public final class DoorGhostMarkManager {
     }
 
 
-    private DoorGhostMarkManager() {
+    private GhostDoorMarkManager() {
     }
 
 

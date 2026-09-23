@@ -1,8 +1,8 @@
 package com.qidate.qisplan2.ghost.possession.ability;
 
 import com.qidate.qisplan2.ghost.possession.ability.divinationslip.GhostDivinationSlipAbility;
-import com.qidate.qisplan2.ghost.possession.ability.doorghost.ClosingGhostAbility;
-import com.qidate.qisplan2.ghost.possession.ability.doorghost.OpeningGhostAbility;
+import com.qidate.qisplan2.ghost.possession.ability.ghostdoor.ClosingGhostAbility;
+import com.qidate.qisplan2.ghost.possession.ability.ghostdoor.OpeningGhostAbility;
 import com.qidate.qisplan2.ghost.possession.ability.ghosteye.GhostEyeAbility;
 import com.qidate.qisplan2.ghost.possession.ability.knockingghost.KnockingGhostAbility;
 import com.qidate.qisplan2.ghost.possession.ability.nightwanderer.NightWandererAbility;

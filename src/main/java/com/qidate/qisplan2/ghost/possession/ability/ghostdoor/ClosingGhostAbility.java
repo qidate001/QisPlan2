@@ -1,4 +1,4 @@
-package com.qidate.qisplan2.ghost.possession.ability.doorghost;
+package com.qidate.qisplan2.ghost.possession.ability.ghostdoor;
 
 import com.qidate.qisplan2.QisPlan2;
 import com.qidate.qisplan2.core.ModEntities;

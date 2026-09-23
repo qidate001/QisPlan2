@@ -1,7 +1,7 @@
 package com.qidate.qisplan2.network.ghostdoor;
 
 import com.qidate.qisplan2.client.DoorGhostMarkClient;
-import com.qidate.qisplan2.ghost.possession.ability.doorghost.DoorGhostAbilityHandler;
+import com.qidate.qisplan2.ghost.possession.ability.ghostdoor.GhostDoorAbilityHandler;
 import com.qidate.qisplan2.network.payload.GhostDoorAbilityPayload;
 import com.qidate.qisplan2.network.payload.GhostDoorMarkPayload;
 
@@ -72,7 +72,7 @@ public final class GhostDoorNetwork {
                 return;
             }
 
-            DoorGhostAbilityHandler.use(
+            GhostDoorAbilityHandler.use(
                     player
             );
         });
