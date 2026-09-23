@@ -12,6 +12,7 @@ import com.qidate.qisplan2.ghost.possession.ability.nightwanderer.NightWandererA
 import com.qidate.qisplan2.ghost.corrosion.CorrosionMatrix;
 import com.qidate.qisplan2.ghost.corrosion.CorrosionType;
 import com.qidate.qisplan2.ghost.corrosion.GhostCorrosion;
+import com.qidate.qisplan2.ghost.possession.suppression.GhostSuppressionSystem;
 import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
@@ -404,15 +405,8 @@ public final class PossessionHandler {
     }
 
     /**
-     * 根据某只鬼在指定部位的侵蚀占比，
+     * 根据该鬼的被压制状态，
      * 计算实际复苏增长后再增加复苏值。
-     *
-     * 例如：
-     *
-     * 基础增长 = 10%
-     * 该鬼占该部位侵蚀 = 50%
-     *
-     * 实际增长 = 10% × 50% = 5%
      */
     public static PossessedGhostState addRevival(
             ServerPlayer player,
@@ -448,20 +442,19 @@ public final class PossessionHandler {
 
         /*
          * ========================================================
-         * 根据侵蚀占比计算实际复苏增长
+         * 根据被压制数计算实际复苏增长
          * ========================================================
          */
 
-        double ratio =
-                getCorrosionRatio(
+        double suppression =
+                GhostSuppressionSystem.getSuppression(
                         player,
-                        ghost,
-                        type
+                        ghost
                 );
 
         double actualRevival =
-                revivalPercent * ratio;
-
+                revivalPercent
+                        * (1.0D - suppression);
 
         /*
          * ========================================================
