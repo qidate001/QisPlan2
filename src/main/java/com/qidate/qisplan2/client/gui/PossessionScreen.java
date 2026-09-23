@@ -23,6 +23,8 @@ public class PossessionScreen extends Screen {
     private static final int PANEL_WIDTH = 600;
     private static final int PANEL_HEIGHT = 320;
 
+    private float panelScale = 1.0F;
+
     private int panelX;
     private int panelY;
 
@@ -169,19 +171,43 @@ public class PossessionScreen extends Screen {
     @Override
     protected void init() {
 
+        panelScale = Math.min(
+                (float) this.width / (PANEL_WIDTH + 2),
+                (float) this.height / (PANEL_HEIGHT + 2)
+        );
+
+        int scaledWidth =
+                Math.round(PANEL_WIDTH * panelScale);
+
+        int scaledHeight =
+                Math.round(PANEL_HEIGHT * panelScale);
+
         panelX =
-                (this.width - PANEL_WIDTH) / 2;
+                (this.width - scaledWidth) / 2;
 
         panelY =
-                (this.height - PANEL_HEIGHT) / 2;
+                (this.height - scaledHeight) / 2;
     }
 
     @Override
-    public void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
+    public void render(
+            GuiGraphics graphics,
+            int mouseX,
+            int mouseY,
+            float partialTick
+    ) {
+
         this.renderBackground(graphics, mouseX, mouseY, partialTick);
+
+        graphics.pose().pushPose();
+
+        graphics.pose().translate(panelX, panelY, 0);
+        graphics.pose().scale(panelScale, panelScale, 1.0F);
 
         drawPanel(graphics);
         drawContent(graphics);
+
+        graphics.pose().popPose();
     }
 
     private void drawPanel(
@@ -192,10 +218,10 @@ public class PossessionScreen extends Screen {
          * 外框。
          */
         graphics.fill(
-                panelX - 1,
-                panelY - 1,
-                panelX + PANEL_WIDTH + 1,
-                panelY + PANEL_HEIGHT + 1,
+                -1,
+                -1,
+                PANEL_WIDTH + 1,
+                PANEL_HEIGHT + 1,
                 0xFF606060
         );
 
@@ -203,10 +229,10 @@ public class PossessionScreen extends Screen {
          * 主背景。
          */
         graphics.fill(
-                panelX,
-                panelY,
-                panelX + PANEL_WIDTH,
-                panelY + PANEL_HEIGHT,
+                0,
+                0,
+                PANEL_WIDTH,
+                PANEL_HEIGHT,
                 0xF0101016
         );
 
@@ -214,21 +240,22 @@ public class PossessionScreen extends Screen {
          * 顶部标题区域。
          */
         graphics.fill(
-                panelX,
-                panelY,
-                panelX + PANEL_WIDTH,
-                panelY + 24,
+                0,
+                0,
+                PANEL_WIDTH,
+                24,
                 0xF0181820
         );
 
         /*
          * 标题。
          */
+
         graphics.drawCenteredString(
                 this.font,
                 "驭鬼者状态",
-                panelX + PANEL_WIDTH / 2,
-                panelY + 7,
+                PANEL_WIDTH / 2,
+                7,
                 0xFFFFFFFF
         );
     }
@@ -256,8 +283,8 @@ public class PossessionScreen extends Screen {
         // 左侧：基础状态
         // =========================
 
-        int leftX = panelX + 14;
-        int topY = panelY + 38;
+        int leftX = 14;
+        int topY = 38;
 
         graphics.drawString(
                 this.font,
