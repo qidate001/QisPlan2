@@ -1,6 +1,6 @@
 package com.qidate.qisplan2.ghost.reboot;
 
-import com.qidate.qisplan2.ghost.PossessedGhostState;
+import com.qidate.qisplan2.ghost.possession.data.PossessedGhostState;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.item.ItemStack;

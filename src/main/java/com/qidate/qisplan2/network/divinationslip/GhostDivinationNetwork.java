@@ -1,8 +1,8 @@
 package com.qidate.qisplan2.network.divinationslip;
 
 import com.qidate.qisplan2.core.ModItems;
-import com.qidate.qisplan2.ghost.PossessionHandler;
-import com.qidate.qisplan2.ghost.ability.divinationslip.GhostDivinationSlipAbility;
+import com.qidate.qisplan2.ghost.possession.manager.PossessionHandler;
+import com.qidate.qisplan2.ghost.possession.ability.divinationslip.GhostDivinationSlipAbility;
 import com.qidate.qisplan2.network.payload.GhostDivinationResultPayload;
 import com.qidate.qisplan2.network.payload.GhostDivinationUsePayload;
 import net.minecraft.client.Minecraft;

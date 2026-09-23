@@ -1,9 +1,9 @@
-package com.qidate.qisplan2.ghost.ability.doorghost;
+package com.qidate.qisplan2.ghost.possession.ability.doorghost;
 
 import com.qidate.qisplan2.QisPlan2;
 import com.qidate.qisplan2.core.ModEntities;
 import com.qidate.qisplan2.entity.AbstractGhostEntity;
-import com.qidate.qisplan2.ghost.ability.PossessedGhostAbility;
+import com.qidate.qisplan2.ghost.possession.ability.PossessedGhostAbility;
 import com.qidate.qisplan2.ghost.corrosion.CorrosionType;
 import com.qidate.qisplan2.ghost.corrosion.GhostCorrosion;
 import net.minecraft.resources.ResourceLocation;

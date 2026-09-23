@@ -1,10 +1,10 @@
-package com.qidate.qisplan2.ghost.ability.doorghost;
+package com.qidate.qisplan2.ghost.possession.ability.doorghost;
 
 import com.qidate.qisplan2.QisPlan2;
 import com.qidate.qisplan2.death.ModDamageTypes;
 import com.qidate.qisplan2.death.SupernaturalDeathHandler;
-import com.qidate.qisplan2.ghost.PossessedGhostState;
-import com.qidate.qisplan2.ghost.PossessionHandler;
+import com.qidate.qisplan2.ghost.possession.data.PossessedGhostState;
+import com.qidate.qisplan2.ghost.possession.manager.PossessionHandler;
 
 import com.qidate.qisplan2.ghost.corrosion.CorrosionType;
 import net.minecraft.core.BlockPos;

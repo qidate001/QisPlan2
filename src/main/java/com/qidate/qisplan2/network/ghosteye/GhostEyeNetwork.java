@@ -1,7 +1,7 @@
 package com.qidate.qisplan2.network.ghosteye;
 
-import com.qidate.qisplan2.ghost.PossessionHandler;
-import com.qidate.qisplan2.ghost.ability.ghosteye.GhostEyeAbility;
+import com.qidate.qisplan2.ghost.possession.manager.PossessionHandler;
+import com.qidate.qisplan2.ghost.possession.ability.ghosteye.GhostEyeAbility;
 import com.qidate.qisplan2.ghost.domain.GhostDomain;
 import com.qidate.qisplan2.ghost.domain.GhostDomainManager;
 import com.qidate.qisplan2.ghost.domain.type.eye.GhostEyeDomainController;

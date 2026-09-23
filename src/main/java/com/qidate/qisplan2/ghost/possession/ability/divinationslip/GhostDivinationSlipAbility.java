@@ -1,11 +1,10 @@
-package com.qidate.qisplan2.ghost.ability.divinationslip;
+package com.qidate.qisplan2.ghost.possession.ability.divinationslip;
 
 import com.qidate.qisplan2.QisPlan2;
-import com.qidate.qisplan2.client.key.ModKeyMappings;
 import com.qidate.qisplan2.ghost.GhostAbilityContext;
-import com.qidate.qisplan2.ghost.PossessedGhostState;
-import com.qidate.qisplan2.ghost.PossessionHandler;
-import com.qidate.qisplan2.ghost.ability.PossessedGhostAbility;
+import com.qidate.qisplan2.ghost.possession.data.PossessedGhostState;
+import com.qidate.qisplan2.ghost.possession.manager.PossessionHandler;
+import com.qidate.qisplan2.ghost.possession.ability.PossessedGhostAbility;
 import com.qidate.qisplan2.ghost.corrosion.CorrosionType;
 import com.qidate.qisplan2.ghost.corrosion.GhostCorrosion;
 import net.minecraft.resources.ResourceLocation;

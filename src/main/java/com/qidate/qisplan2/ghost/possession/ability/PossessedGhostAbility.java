@@ -1,4 +1,4 @@
-package com.qidate.qisplan2.ghost.ability;
+package com.qidate.qisplan2.ghost.possession.ability;
 
 import com.qidate.qisplan2.entity.AbstractGhostEntity;
 import com.qidate.qisplan2.ghost.GhostAbilityContext;

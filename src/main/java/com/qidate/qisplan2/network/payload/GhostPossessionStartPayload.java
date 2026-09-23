@@ -1,7 +1,7 @@
 package com.qidate.qisplan2.network.payload;
 
 import com.qidate.qisplan2.QisPlan2;
-import com.qidate.qisplan2.ghost.GhostPossessionSession;
+import com.qidate.qisplan2.ghost.possession.manager.GhostPossessionSession;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;

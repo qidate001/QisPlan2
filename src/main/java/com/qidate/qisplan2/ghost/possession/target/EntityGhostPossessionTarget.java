@@ -1,9 +1,9 @@
-package com.qidate.qisplan2.ghost;
+package com.qidate.qisplan2.ghost.possession.target;
 
 import com.qidate.qisplan2.core.ModItems;
 import com.qidate.qisplan2.death.SupernaturalEntity;
 import com.qidate.qisplan2.entity.AbstractGhostEntity;
-import com.qidate.qisplan2.network.QisNetwork;
+import com.qidate.qisplan2.ghost.possession.manager.PossessionHandler;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.ItemStack;

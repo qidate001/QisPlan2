@@ -1,11 +1,13 @@
-package com.qidate.qisplan2.ghost;
+package com.qidate.qisplan2.ghost.possession.manager;
 
 import com.qidate.qisplan2.core.ModAttachments;
 import com.qidate.qisplan2.death.QisDeathHandler;
 import com.qidate.qisplan2.event.GhostBreakoutHandler;
-import com.qidate.qisplan2.ghost.ability.GhostAbilityRegistry;
-import com.qidate.qisplan2.ghost.ability.PossessedGhostAbility;
-import com.qidate.qisplan2.ghost.ability.nightwanderer.NightWandererAbility;
+import com.qidate.qisplan2.ghost.GhostAbilityContext;
+import com.qidate.qisplan2.ghost.possession.data.PossessedGhostState;
+import com.qidate.qisplan2.ghost.possession.ability.GhostAbilityRegistry;
+import com.qidate.qisplan2.ghost.possession.ability.PossessedGhostAbility;
+import com.qidate.qisplan2.ghost.possession.ability.nightwanderer.NightWandererAbility;
 
 import com.qidate.qisplan2.ghost.corrosion.CorrosionMatrix;
 import com.qidate.qisplan2.ghost.corrosion.CorrosionType;

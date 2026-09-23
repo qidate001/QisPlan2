@@ -4,15 +4,14 @@ import com.qidate.qisplan2.QisPlan2;
 import com.qidate.qisplan2.core.ModEntities;
 import com.qidate.qisplan2.death.QisDeathHandler;
 import com.qidate.qisplan2.entity.AbstractGhostEntity;
-import com.qidate.qisplan2.ghost.PossessedGhostState;
-import com.qidate.qisplan2.ghost.PossessionHandler;
+import com.qidate.qisplan2.ghost.possession.data.PossessedGhostState;
+import com.qidate.qisplan2.ghost.possession.manager.PossessionHandler;
 
-import com.qidate.qisplan2.ghost.ability.GhostAbilityRegistry;
-import com.qidate.qisplan2.ghost.ability.PossessedGhostAbility;
+import com.qidate.qisplan2.ghost.possession.ability.GhostAbilityRegistry;
+import com.qidate.qisplan2.ghost.possession.ability.PossessedGhostAbility;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
 

@@ -5,11 +5,10 @@ import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
 
-import com.qidate.qisplan2.QisPlan2;
 import com.qidate.qisplan2.core.ModAttachments;
-import com.qidate.qisplan2.ghost.PossessedGhostState;
-import com.qidate.qisplan2.ghost.PossessionHandler;
-import com.qidate.qisplan2.ghost.ability.GhostAbilityRegistry;
+import com.qidate.qisplan2.ghost.possession.data.PossessedGhostState;
+import com.qidate.qisplan2.ghost.possession.manager.PossessionHandler;
+import com.qidate.qisplan2.ghost.possession.ability.GhostAbilityRegistry;
 
 import com.qidate.qisplan2.ghost.corrosion.CorrosionMatrix;
 import com.qidate.qisplan2.ghost.corrosion.CorrosionType;
@@ -20,7 +19,6 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 
-import java.util.EnumMap;
 import java.util.Map;
 
 public final class GhostCommands {

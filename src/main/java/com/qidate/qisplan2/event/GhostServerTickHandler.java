@@ -2,7 +2,7 @@ package com.qidate.qisplan2.event;
 
 import com.qidate.qisplan2.QisPlan2;
 import com.qidate.qisplan2.ghost.GhostServerManager;
-import com.qidate.qisplan2.ghost.ability.knockingghost.KnockingGhostDoorSystem;
+import com.qidate.qisplan2.ghost.possession.ability.knockingghost.KnockingGhostDoorSystem;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.tick.ServerTickEvent;

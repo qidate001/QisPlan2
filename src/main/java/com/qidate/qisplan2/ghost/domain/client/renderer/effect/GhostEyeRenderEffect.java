@@ -1,7 +1,7 @@
 package com.qidate.qisplan2.ghost.domain.client.renderer.effect;
 
 import com.mojang.blaze3d.systems.RenderSystem;
-import com.qidate.qisplan2.ghost.ability.ghosteye.GhostEyeAbility;
+import com.qidate.qisplan2.ghost.possession.ability.ghosteye.GhostEyeAbility;
 import com.qidate.qisplan2.ghost.domain.client.ClientGhostDomain;
 import com.qidate.qisplan2.ghost.domain.client.ClientGhostDomainManager;
 import com.qidate.qisplan2.ghost.domain.client.renderer.GhostDomainMatrices;

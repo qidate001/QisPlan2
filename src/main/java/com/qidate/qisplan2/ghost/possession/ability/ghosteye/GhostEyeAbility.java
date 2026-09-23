@@ -1,27 +1,26 @@
-package com.qidate.qisplan2.ghost.ability.doorghost;
+package com.qidate.qisplan2.ghost.possession.ability.ghosteye;
 
 import com.qidate.qisplan2.QisPlan2;
-import com.qidate.qisplan2.core.ModEntities;
-import com.qidate.qisplan2.entity.AbstractGhostEntity;
-import com.qidate.qisplan2.ghost.ability.PossessedGhostAbility;
+import com.qidate.qisplan2.ghost.GhostAbilityContext;
+import com.qidate.qisplan2.ghost.possession.ability.PossessedGhostAbility;
 import com.qidate.qisplan2.ghost.corrosion.CorrosionType;
 import com.qidate.qisplan2.ghost.corrosion.GhostCorrosion;
+import com.qidate.qisplan2.ghost.domain.type.eye.GhostEyeDomainController;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.world.entity.EntityType;
 
-public final class ClosingGhostAbility
+public final class GhostEyeAbility
         implements PossessedGhostAbility {
 
     public static final ResourceLocation ID =
             ResourceLocation.fromNamespaceAndPath(
                     QisPlan2.MODID,
-                    "closing_ghost"
+                    "ghost_eye"
             );
 
     private static final GhostCorrosion CORROSION =
             GhostCorrosion.builder()
-                    .add(CorrosionType.GLOBAL, 10)
-                    .add(CorrosionType.HAND, 20)
+                    .add(CorrosionType.EYE, 100)
+                    .add(CorrosionType.GLOBAL, 40)
                     .build();
 
     @Override
@@ -30,23 +29,33 @@ public final class ClosingGhostAbility
     }
 
     @Override
-    public EntityType<? extends AbstractGhostEntity> entityType() {
-
-        return ModEntities.CLOSING_GHOST.get();
-    }
-
-    @Override
     public double initialIntrinsicStrength() {
-        return 5.0D;
+        return 200.0D;
     }
 
     @Override
     public double minimumStrengthRatio() {
-        return 1.0D / 3.0D;
+        return 0.50D;
     }
 
     @Override
     public GhostCorrosion corrosion() {
         return CORROSION;
+    }
+
+    @Override
+    public void tick(
+            GhostAbilityContext context
+    ) {
+
+        GhostEyeDomainController.tick(context);
+    }
+
+    @Override
+    public void onRelease(
+            GhostAbilityContext context
+    ) {
+
+        GhostEyeDomainController.close(context.player());
     }
 }

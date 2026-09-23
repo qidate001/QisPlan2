@@ -2,6 +2,7 @@ package com.qidate.qisplan2.ghost;
 
 import com.qidate.qisplan2.ghost.domain.GhostDomainManager;
 import com.qidate.qisplan2.ghost.domain.GhostDomainServerManager;
+import com.qidate.qisplan2.ghost.possession.manager.GhostPossessionManager;
 import com.qidate.qisplan2.ghost.reboot.GhostRebootManager;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;

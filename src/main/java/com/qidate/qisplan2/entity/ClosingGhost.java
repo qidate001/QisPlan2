@@ -2,8 +2,7 @@ package com.qidate.qisplan2.entity;
 
 import com.qidate.qisplan2.death.ModDamageTypes;
 
-import com.qidate.qisplan2.ghost.ability.doorghost.ClosingGhostAbility;
-import com.qidate.qisplan2.ghost.ability.doorghost.OpeningGhostAbility;
+import com.qidate.qisplan2.ghost.possession.ability.doorghost.ClosingGhostAbility;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.Entity;

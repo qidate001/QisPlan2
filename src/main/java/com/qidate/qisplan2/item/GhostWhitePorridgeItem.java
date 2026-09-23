@@ -1,6 +1,6 @@
 package com.qidate.qisplan2.item;
 
-import com.qidate.qisplan2.ghost.PossessionHandler;
+import com.qidate.qisplan2.ghost.possession.manager.PossessionHandler;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;

@@ -4,8 +4,8 @@ import com.qidate.qisplan2.QisPlan2;
 import com.qidate.qisplan2.core.ModEntities;
 import com.qidate.qisplan2.data.NightWandererSpawnData;
 import com.qidate.qisplan2.entity.NightWanderer;
-import com.qidate.qisplan2.ghost.PossessionHandler;
-import com.qidate.qisplan2.ghost.ability.nightwanderer.NightWandererAbility;
+import com.qidate.qisplan2.ghost.possession.manager.PossessionHandler;
+import com.qidate.qisplan2.ghost.possession.ability.nightwanderer.NightWandererAbility;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerLevel;
@@ -14,13 +14,10 @@ import net.minecraft.world.level.LightLayer;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.levelgen.Heightmap;
 import net.minecraft.world.level.saveddata.SavedData;
-import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.tick.ServerTickEvent;
-
-import java.util.List;
 
 @EventBusSubscriber(modid = QisPlan2.MODID)
 public class NightWandererSpawnHandler {

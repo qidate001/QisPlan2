@@ -1,5 +1,6 @@
-package com.qidate.qisplan2.ghost;
+package com.qidate.qisplan2.ghost.possession.manager;
 
+import com.qidate.qisplan2.ghost.possession.target.GhostPossessionTarget;
 import net.minecraft.server.level.ServerPlayer;
 
 import java.util.Random;

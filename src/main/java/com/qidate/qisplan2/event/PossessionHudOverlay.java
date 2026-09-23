@@ -2,7 +2,7 @@ package com.qidate.qisplan2.event;
 
 import com.qidate.qisplan2.QisPlan2;
 import com.qidate.qisplan2.core.ModAttachments;
-import com.qidate.qisplan2.ghost.PossessedGhostState;
+import com.qidate.qisplan2.ghost.possession.data.PossessedGhostState;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.util.Mth;

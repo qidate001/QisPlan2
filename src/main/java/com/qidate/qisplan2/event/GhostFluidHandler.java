@@ -6,8 +6,8 @@ import com.qidate.qisplan2.core.ModFluids;
 import com.qidate.qisplan2.death.ModDamageTypes;
 import com.qidate.qisplan2.death.SupernaturalDeathHandler;
 import com.qidate.qisplan2.fluid.GhostFluidConfig;
-import com.qidate.qisplan2.ghost.PossessedGhostState;
-import com.qidate.qisplan2.ghost.PossessionHandler;
+import com.qidate.qisplan2.ghost.possession.data.PossessedGhostState;
+import com.qidate.qisplan2.ghost.possession.manager.PossessionHandler;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceLocation;

@@ -1,19 +1,13 @@
 package com.qidate.qisplan2.item;
 
 import com.qidate.qisplan2.core.ModDataComponents;
-import com.qidate.qisplan2.core.ModMobEffects;
-import com.qidate.qisplan2.death.SupernaturalDeathHandler;
-import com.qidate.qisplan2.death.ModDamageTypes;
-import com.qidate.qisplan2.ghost.GhostPossessionManager;
-import com.qidate.qisplan2.ghost.ItemGhostPossessionTarget;
-import com.qidate.qisplan2.ghost.ability.divinationslip.GhostDivinationSlipAbility;
-import com.qidate.qisplan2.ghost.ability.divinationslip.GhostDivinationSlipSystem;
-import com.qidate.qisplan2.network.QisNetwork;
-import net.minecraft.network.chat.Component;
+import com.qidate.qisplan2.ghost.possession.manager.GhostPossessionManager;
+import com.qidate.qisplan2.ghost.possession.target.ItemGhostPossessionTarget;
+import com.qidate.qisplan2.ghost.possession.ability.divinationslip.GhostDivinationSlipAbility;
+import com.qidate.qisplan2.ghost.possession.ability.divinationslip.GhostDivinationSlipSystem;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResultHolder;
-import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;

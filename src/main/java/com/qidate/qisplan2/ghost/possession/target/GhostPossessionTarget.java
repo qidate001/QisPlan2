@@ -1,4 +1,4 @@
-package com.qidate.qisplan2.ghost;
+package com.qidate.qisplan2.ghost.possession.target;
 
 import net.minecraft.server.level.ServerPlayer;
 

@@ -3,7 +3,7 @@ package com.qidate.qisplan2.entity;
 import com.qidate.qisplan2.QisPlan2;
 import com.qidate.qisplan2.death.ModDamageTypes;
 import com.qidate.qisplan2.death.SupernaturalDeathHandler;
-import com.qidate.qisplan2.ghost.ability.nightwanderer.NightWandererAbility;
+import com.qidate.qisplan2.ghost.possession.ability.nightwanderer.NightWandererAbility;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.resources.ResourceLocation;

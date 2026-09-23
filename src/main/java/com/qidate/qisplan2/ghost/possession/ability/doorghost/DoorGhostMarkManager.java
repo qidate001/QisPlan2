@@ -1,4 +1,4 @@
-package com.qidate.qisplan2.ghost.ability.doorghost;
+package com.qidate.qisplan2.ghost.possession.ability.doorghost;
 
 import com.qidate.qisplan2.network.ghostdoor.GhostDoorNetwork;
 import net.minecraft.server.MinecraftServer;

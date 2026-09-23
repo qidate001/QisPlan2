@@ -1,11 +1,11 @@
-package com.qidate.qisplan2.ghost.ability.divinationslip;
+package com.qidate.qisplan2.ghost.possession.ability.divinationslip;
 
 import com.qidate.qisplan2.core.ModDataComponents;
 import com.qidate.qisplan2.core.ModMobEffects;
 import com.qidate.qisplan2.death.ModDamageTypes;
 import com.qidate.qisplan2.death.SupernaturalDeathHandler;
-import com.qidate.qisplan2.ghost.PossessedGhostState;
-import com.qidate.qisplan2.ghost.PossessionHandler;
+import com.qidate.qisplan2.ghost.possession.data.PossessedGhostState;
+import com.qidate.qisplan2.ghost.possession.manager.PossessionHandler;
 import com.qidate.qisplan2.network.divinationslip.GhostDivinationNetwork;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.effect.MobEffectInstance;

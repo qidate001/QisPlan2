@@ -1,7 +1,7 @@
 package com.qidate.qisplan2.core;
 
 import com.mojang.serialization.Codec;
-import com.qidate.qisplan2.ghost.PossessedGhostState;
+import com.qidate.qisplan2.ghost.possession.data.PossessedGhostState;
 import com.qidate.qisplan2.ghost.layer.GhostLayerData;
 import com.qidate.qisplan2.ghost.partition.PartitionReturnData;
 import net.minecraft.network.codec.ByteBufCodecs;

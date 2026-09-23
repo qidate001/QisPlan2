@@ -1,12 +1,12 @@
-package com.qidate.qisplan2.ghost.ability.knockingghost;
+package com.qidate.qisplan2.ghost.possession.ability.knockingghost;
 
 import com.qidate.qisplan2.QisPlan2;
 import com.qidate.qisplan2.core.ModEntities;
 import com.qidate.qisplan2.entity.AbstractGhostEntity;
 import com.qidate.qisplan2.ghost.GhostAbilityContext;
-import com.qidate.qisplan2.ghost.PossessedGhostState;
-import com.qidate.qisplan2.ghost.PossessionHandler;
-import com.qidate.qisplan2.ghost.ability.PossessedGhostAbility;
+import com.qidate.qisplan2.ghost.possession.data.PossessedGhostState;
+import com.qidate.qisplan2.ghost.possession.manager.PossessionHandler;
+import com.qidate.qisplan2.ghost.possession.ability.PossessedGhostAbility;
 
 import com.qidate.qisplan2.ghost.corrosion.CorrosionType;
 import com.qidate.qisplan2.ghost.corrosion.GhostCorrosion;

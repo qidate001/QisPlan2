@@ -1,4 +1,6 @@
-package com.qidate.qisplan2.ghost;
+package com.qidate.qisplan2.ghost.possession.manager;
+
+import com.qidate.qisplan2.ghost.possession.data.PossessedGhostState;
 
 /**
  * 厉鬼强度系统。

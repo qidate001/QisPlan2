@@ -1,7 +1,7 @@
 package com.qidate.qisplan2.event;
 
 import com.qidate.qisplan2.QisPlan2;
-import com.qidate.qisplan2.ghost.PossessionHandler;
+import com.qidate.qisplan2.ghost.possession.manager.PossessionHandler;
 import net.minecraft.server.level.ServerPlayer;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;

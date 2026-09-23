@@ -1,7 +1,8 @@
 package com.qidate.qisplan2.ghost;
 
-import com.qidate.qisplan2.ghost.ability.knockingghost.KnockingGhostAbility;
+import com.qidate.qisplan2.ghost.possession.ability.knockingghost.KnockingGhostAbility;
 
+import com.qidate.qisplan2.ghost.possession.manager.PossessionHandler;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.ItemStack;
 import net.neoforged.bus.api.SubscribeEvent;

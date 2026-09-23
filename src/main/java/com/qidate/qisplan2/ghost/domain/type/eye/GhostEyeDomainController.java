@@ -2,8 +2,8 @@ package com.qidate.qisplan2.ghost.domain.type.eye;
 
 import com.qidate.qisplan2.QisPlan2;
 import com.qidate.qisplan2.ghost.GhostAbilityContext;
-import com.qidate.qisplan2.ghost.PossessionHandler;
-import com.qidate.qisplan2.ghost.ability.ghosteye.GhostEyeAbility;
+import com.qidate.qisplan2.ghost.possession.manager.PossessionHandler;
+import com.qidate.qisplan2.ghost.possession.ability.ghosteye.GhostEyeAbility;
 import com.qidate.qisplan2.ghost.domain.*;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
