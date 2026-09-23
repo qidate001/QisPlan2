@@ -144,4 +144,42 @@ public class ModAttachments {
                                     .copyOnDeath()
                                     .build()
             );
+
+    public static final DeferredHolder<
+            AttachmentType<?>,
+            AttachmentType<Map<ResourceLocation, Map<ResourceLocation, Integer>>>
+            > GHOST_SUPPRESSION_ALLOCATION =
+            ATTACHMENT_TYPES.register(
+                    "ghost_suppression_allocation",
+                    () -> AttachmentType
+                            .<Map<ResourceLocation, Map<ResourceLocation, Integer>>>builder(
+                                    (java.util.function.Supplier<
+                                            Map<ResourceLocation, Map<ResourceLocation, Integer>>
+                                            >) HashMap::new
+                            )
+                            .serialize(
+                                    Codec.unboundedMap(
+                                            ResourceLocation.CODEC,
+                                            Codec.unboundedMap(
+                                                    ResourceLocation.CODEC,
+                                                    Codec.INT
+                                            )
+                                    )
+                            )
+                            .sync(
+                                    ByteBufCodecs.map(
+                                            HashMap::new,
+                                            ResourceLocation.STREAM_CODEC,
+                                            ByteBufCodecs.map(
+                                                    HashMap::new,
+                                                    ResourceLocation.STREAM_CODEC,
+                                                    ByteBufCodecs.VAR_INT,
+                                                    32
+                                            ),
+                                            32
+                                    )
+                            )
+                            .copyOnDeath()
+                            .build()
+            );
 }

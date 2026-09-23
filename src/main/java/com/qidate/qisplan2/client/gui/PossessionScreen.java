@@ -507,6 +507,24 @@ public class PossessionScreen extends Screen {
                 0xFFFFFFFF
         );
 
+        // ===== 可用压制资源 =====
+
+        PossessedGhostAbility ability =
+                GhostAbilityRegistry.get(ghostId);
+
+        int units =
+                ability == null
+                        ? 0
+                        : ability.suppressionUnits();
+
+        graphics.drawString(
+                this.font,
+                "资源 " + units,
+                x + 28,
+                y + 44,
+                0xFFAAAAAA
+        );
+
         // ===== 复苏 =====
 
         graphics.drawString(

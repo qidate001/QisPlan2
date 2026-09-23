@@ -226,4 +226,28 @@ public interface PossessedGhostAbility {
 
         return GhostClassification.empty();
     }
+
+    /*
+     * ============================================================
+     * 压制资源
+     * ============================================================
+     */
+
+    /**
+     * 可分配压制单位数量。
+     *
+     * 默认没有压制资源。
+     */
+    default int suppressionUnits() {
+        return 0;
+    }
+
+    /**
+     * 每单位压制资源对应多少基础灵异强度。
+     *
+     * 默认100。
+     */
+    default double suppressionUnitStrength() {
+        return 100.0D;
+    }
 }

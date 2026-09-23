@@ -57,6 +57,16 @@ public final class GhostEyeAbility
     }
 
     @Override
+    public int suppressionUnits() {
+        return 10;
+    }
+
+    @Override
+    public double suppressionUnitStrength() {
+        return 100.0D;
+    }
+
+    @Override
     public void tick(
             GhostAbilityContext context
     ) {
