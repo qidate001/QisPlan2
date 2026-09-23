@@ -38,6 +38,8 @@ public class PossessionScreen extends Screen {
     private static final int PERMANENT_STUN_COLOR = 0xFFFFC83D;
     private static final double MAX_SHALLOW_STUN = 100.0D;
 
+    private int currentPage = 0;
+
     private static final ResourceLocation HUMAN_BODY = body("human_body");
 
     private static final ResourceLocation BRAIN = body("brain");
@@ -196,18 +198,108 @@ public class PossessionScreen extends Screen {
             int mouseY,
             float partialTick
     ) {
-
-        this.renderBackground(graphics, mouseX, mouseY, partialTick);
+        this.renderBackground(
+                graphics,
+                mouseX,
+                mouseY,
+                partialTick
+        );
 
         graphics.pose().pushPose();
 
-        graphics.pose().translate(panelX, panelY, 0);
-        graphics.pose().scale(panelScale, panelScale, 1.0F);
+        graphics.pose().translate(
+                panelX,
+                panelY,
+                0
+        );
+
+        graphics.pose().scale(
+                panelScale,
+                panelScale,
+                1.0F
+        );
 
         drawPanel(graphics);
-        drawContent(graphics);
+        drawTabs(graphics);
+
+        if (currentPage == 0) {
+            drawStatusPage(graphics);
+        } else {
+            drawSuppressionPage(graphics);
+        }
 
         graphics.pose().popPose();
+    }
+
+    @Override
+    public boolean mouseClicked(
+            double mouseX,
+            double mouseY,
+            int button
+    ) {
+
+        if (button != 0) {
+            return super.mouseClicked(
+                    mouseX,
+                    mouseY,
+                    button
+            );
+        }
+
+        /*
+         * 将屏幕坐标转换为面板局部坐标。
+         */
+        double localX =
+                (mouseX - panelX) / panelScale;
+
+        double localY =
+                (mouseY - panelY) / panelScale;
+
+        int tabY = 24;
+        int tabWidth = 70;
+        int tabHeight = 20;
+
+        int statusX = 12;
+        int suppressionX =
+                statusX + tabWidth + 4;
+
+        /*
+         * 状态页。
+         */
+        if (isInside(
+                localX,
+                localY,
+                statusX,
+                tabY,
+                tabWidth,
+                tabHeight
+        )) {
+
+            currentPage = 0;
+            return true;
+        }
+
+        /*
+         * 灵异页。
+         */
+        if (isInside(
+                localX,
+                localY,
+                suppressionX,
+                tabY,
+                tabWidth,
+                tabHeight
+        )) {
+
+            currentPage = 1;
+            return true;
+        }
+
+        return super.mouseClicked(
+                mouseX,
+                mouseY,
+                button
+        );
     }
 
     private void drawPanel(
@@ -260,7 +352,118 @@ public class PossessionScreen extends Screen {
         );
     }
 
-    private void drawContent(GuiGraphics graphics) {
+    private void drawTabs(
+            GuiGraphics graphics
+    ) {
+
+        int tabY = 24;
+
+        int tabWidth = 70;
+        int tabHeight = 20;
+
+        int statusX = 12;
+        int suppressionX = statusX + tabWidth + 4;
+
+        // =========================
+        // 状态
+        // =========================
+
+        drawTab(
+                graphics,
+                statusX,
+                tabY,
+                tabWidth,
+                tabHeight,
+                "状态",
+                currentPage == 0
+        );
+
+        // =========================
+        // 灵异
+        // =========================
+
+        drawTab(
+                graphics,
+                suppressionX,
+                tabY,
+                tabWidth,
+                tabHeight,
+                "灵异",
+                currentPage == 1
+        );
+    }
+
+    private void drawTab(
+            GuiGraphics graphics,
+            int x,
+            int y,
+            int width,
+            int height,
+            String text,
+            boolean selected
+    ) {
+
+        int backgroundColor =
+                selected
+                        ? 0xFF30303A
+                        : 0xFF181820;
+
+        int borderColor =
+                selected
+                        ? 0xFF80808C
+                        : 0xFF383840;
+
+        // 外框
+        graphics.fill(
+                x,
+                y,
+                x + width,
+                y + height,
+                borderColor
+        );
+
+        // 内部
+        graphics.fill(
+                x + 1,
+                y + 1,
+                x + width - 1,
+                y + height - 1,
+                backgroundColor
+        );
+
+        graphics.drawCenteredString(
+                this.font,
+                text,
+                x + width / 2,
+                y + 6,
+                selected
+                        ? 0xFFFFFFFF
+                        : 0xFFAAAAAA
+        );
+    }
+
+    private void drawSuppressionPage(
+            GuiGraphics graphics
+    ) {
+
+        graphics.drawCenteredString(
+                this.font,
+                "灵异配平",
+                PANEL_WIDTH / 2,
+                70,
+                0xFFFFFFFF
+        );
+
+        graphics.drawCenteredString(
+                this.font,
+                "灵异配置界面",
+                PANEL_WIDTH / 2,
+                90,
+                0xFF888888
+        );
+    }
+
+    private void drawStatusPage(GuiGraphics graphics) {
         Minecraft minecraft = Minecraft.getInstance();
         if (minecraft.player == null) return;
 
@@ -284,7 +487,7 @@ public class PossessionScreen extends Screen {
         // =========================
 
         int leftX = 14;
-        int topY = 38;
+        int topY = 52;
 
         graphics.drawString(
                 this.font,
@@ -811,6 +1014,21 @@ public class PossessionScreen extends Screen {
             int bodyHeight
     ) {
         return bodyY + originalY * bodyHeight / 413;
+    }
+
+    private boolean isInside(
+            double mouseX,
+            double mouseY,
+            int x,
+            int y,
+            int width,
+            int height
+    ) {
+
+        return mouseX >= x
+                && mouseX < x + width
+                && mouseY >= y
+                && mouseY < y + height;
     }
 
     @Override
