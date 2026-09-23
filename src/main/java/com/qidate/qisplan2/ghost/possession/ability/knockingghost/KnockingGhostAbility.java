@@ -4,6 +4,8 @@ import com.qidate.qisplan2.QisPlan2;
 import com.qidate.qisplan2.core.ModEntities;
 import com.qidate.qisplan2.entity.AbstractGhostEntity;
 import com.qidate.qisplan2.ghost.possession.ability.GhostAbilityContext;
+import com.qidate.qisplan2.ghost.possession.classification.GhostClassification;
+import com.qidate.qisplan2.ghost.possession.classification.GhostTag;
 import com.qidate.qisplan2.ghost.possession.data.PossessedGhostState;
 import com.qidate.qisplan2.ghost.possession.manager.PossessionHandler;
 import com.qidate.qisplan2.ghost.possession.ability.PossessedGhostAbility;
@@ -99,6 +101,19 @@ public final class KnockingGhostAbility
     @Override
     public GhostCorrosion corrosion() {
         return CORROSION;
+    }
+
+    /**
+     * 厉鬼标签
+     */
+    @Override
+    public GhostClassification classification() {
+
+        return GhostClassification.of(
+                GhostTag.ENTITY,
+                GhostTag.EXISTENCE_FORM,
+                GhostTag.DOOR
+        );
     }
 
     /**
