@@ -3,6 +3,7 @@ package com.qidate.qisplan2.ghost.possession.ability;
 import com.qidate.qisplan2.entity.AbstractGhostEntity;
 import com.qidate.qisplan2.ghost.corrosion.CorrosionType;
 import com.qidate.qisplan2.ghost.corrosion.GhostCorrosion;
+import com.qidate.qisplan2.ghost.possession.classification.GhostClassification;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
@@ -212,5 +213,17 @@ public interface PossessedGhostAbility {
         return GhostCorrosion.builder()
                 .add(CorrosionType.GLOBAL, 10)
                 .build();
+    }
+
+    /**
+     * 这个鬼的灵异分类。
+     *
+     * <p>
+     * 用于描述鬼的本质、存在形态以及具体灵异特征。
+     * </p>
+     */
+    default GhostClassification classification() {
+
+        return GhostClassification.empty();
     }
 }
