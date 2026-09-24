@@ -116,6 +116,21 @@ public final class KnockingGhostAbility
         );
     }
 
+    @Override
+    public GhostClassification suppressionTargets() {
+        return GhostClassification.empty();
+    }
+
+    @Override
+    public int suppressionUnits() {
+        return 1;
+    }
+
+    @Override
+    public double suppressionUnitStrength() {
+        return 20.0D;
+    }
+
     /**
      * Shift + 右键门。
      */

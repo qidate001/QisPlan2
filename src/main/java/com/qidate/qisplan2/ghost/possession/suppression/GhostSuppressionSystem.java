@@ -18,27 +18,6 @@ public final class GhostSuppressionSystem {
     private GhostSuppressionSystem() {
     }
 
-    private static final List<GhostSuppressionRule> RULES =
-            List.of(
-
-                    /*
-                     * ====================================================
-                     * 鬼眼 → 实体鬼
-                     * ====================================================
-                     *
-                     * 鬼眼的 EYE 灵异针对 ENTITY。
-                     *
-                     * 正向效率：90%
-                     * 反向效率：45%
-                     */
-                    new GhostSuppressionRule(
-                            GhostTag.EYE,
-                            GhostTag.ENTITY,
-                            0.9D,
-                            0.45D
-                    )
-            );
-
     private record SuppressionResult(
             double forward,
             double reverse
@@ -177,8 +156,7 @@ public final class GhostSuppressionSystem {
         }
 
         double forwardRuleStrength =
-                getRuleStrength(
-                        sourceAbility,
+                sourceAbility.suppressionEfficiency(
                         targetAbility
                 );
 
@@ -196,8 +174,7 @@ public final class GhostSuppressionSystem {
          * ================================================================
          */
         double reverseRuleStrength =
-                getReverseRuleStrength(
-                        sourceAbility,
+                sourceAbility.reverseSuppressionEfficiency(
                         targetAbility
                 );
 
@@ -567,155 +544,5 @@ public final class GhostSuppressionSystem {
                 0.0D,
                 1.0D
         );
-    }
-
-    /**
-     * 获取 source 对 target 的分类压制效率。
-     */
-    private static double getRuleStrength(
-            PossessedGhostAbility source,
-            PossessedGhostAbility target
-    ) {
-
-        GhostClassification sourceClassification =
-                source.classification();
-
-        GhostClassification suppressionTargets =
-                source.suppressionTargets();
-
-        GhostClassification targetClassification =
-                target.classification();
-
-        double result =
-                0.0D;
-
-        for (GhostSuppressionRule rule :
-                RULES) {
-
-            /*
-             * 规则规定的来源 Tag，
-             * 必须属于来源鬼自身分类。
-             */
-            if (!sourceClassification.has(
-                    rule.sourceTag()
-            )) {
-                continue;
-            }
-
-            /*
-             * 规则规定的目标 Tag，
-             * 必须是来源鬼声明可以压制的 Tag。
-             */
-            if (!suppressionTargets.has(
-                    rule.targetTag()
-            )) {
-                continue;
-            }
-
-            /*
-             * 目标鬼必须拥有这个 Tag。
-             */
-            if (!targetClassification.has(
-                    rule.targetTag()
-            )) {
-                continue;
-            }
-
-            result =
-                    Math.max(
-                            result,
-                            rule.strength()
-                    );
-        }
-
-        return result;
-    }
-
-    /**
-     * 获取 source 对 target 的反向分类压制效率。
-     *
-     * <p>
-     * 这里对应的是：
-     *
-     * <pre>
-     * source → target
-     * target → source
-     * </pre>
-     *
-     * <p>
-     * 反向压制不要求 target 自己声明
-     * suppressionTargets()。
-     *
-     * <p>
-     * 只要正向压制关系成立，
-     * 就会根据规则产生对应的反向灵异限制。
-     */
-    private static double getReverseRuleStrength(
-            PossessedGhostAbility source,
-            PossessedGhostAbility target
-    ) {
-
-        GhostClassification sourceClassification =
-                source.classification();
-
-        GhostClassification targetClassification =
-                target.classification();
-
-        double result =
-                0.0D;
-
-        for (GhostSuppressionRule rule :
-                RULES) {
-
-            /*
-             * ============================================================
-             * 正向来源必须拥有 sourceTag。
-             *
-             * 例如：
-             *
-             * 鬼眼 = EYE
-             * ============================================================
-             */
-            if (!sourceClassification.has(
-                    rule.sourceTag()
-            )) {
-                continue;
-            }
-
-            /*
-             * ============================================================
-             * 正向目标必须拥有 targetTag。
-             *
-             * 例如：
-             *
-             * 敲门鬼 = ENTITY
-             * ============================================================
-             */
-            if (!targetClassification.has(
-                    rule.targetTag()
-            )) {
-                continue;
-            }
-
-            /*
-             * ============================================================
-             * 找到对应规则后，
-             * 返回反向压制效率。
-             *
-             * 例如：
-             *
-             * EYE → ENTITY
-             *
-             * reverseStrength = 0.45
-             * ============================================================
-             */
-            result =
-                    Math.max(
-                            result,
-                            rule.reverseStrength()
-                    );
-        }
-
-        return result;
     }
 }

@@ -312,20 +312,39 @@ public interface PossessedGhostAbility {
     }
 
     /**
-     * 这只鬼拥有多少个压制额度。
-     *
-     * 每一个额度都是一个可独立分配的灵异单位。
-     */
-    default int suppressionSlots() {
-        return 1;
-    }
-
-    /**
      * 每单位压制资源对应多少基础灵异强度。
      *
      * 默认100。
      */
     default double suppressionUnitStrength() {
         return 100.0D;
+    }
+
+    /*
+     * ============================================================
+     * 压制效率
+     * ============================================================
+     */
+
+    /**
+     * 自身压制目标时的效率。
+     *
+     * 默认 90%。
+     */
+    default double suppressionEfficiency(
+            PossessedGhostAbility target
+    ) {
+        return 0.9D;
+    }
+
+    /**
+     * 被目标反向限制时的效率。
+     *
+     * 默认是正向的一半。
+     */
+    default double reverseSuppressionEfficiency(
+            PossessedGhostAbility target
+    ) {
+        return suppressionEfficiency(target) * 0.5D;
     }
 }

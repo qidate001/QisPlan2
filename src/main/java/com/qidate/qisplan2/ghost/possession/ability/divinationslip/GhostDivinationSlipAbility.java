@@ -2,6 +2,8 @@ package com.qidate.qisplan2.ghost.possession.ability.divinationslip;
 
 import com.qidate.qisplan2.QisPlan2;
 import com.qidate.qisplan2.ghost.possession.ability.GhostAbilityContext;
+import com.qidate.qisplan2.ghost.possession.classification.GhostClassification;
+import com.qidate.qisplan2.ghost.possession.classification.GhostTag;
 import com.qidate.qisplan2.ghost.possession.data.PossessedGhostState;
 import com.qidate.qisplan2.ghost.possession.manager.PossessionHandler;
 import com.qidate.qisplan2.ghost.possession.ability.PossessedGhostAbility;
@@ -47,6 +49,31 @@ public final class GhostDivinationSlipAbility
                 QisPlan2.MODID,
                 "textures/item/ghost_divination_slip.png"
         );
+    }
+
+    @Override
+    public ResourceLocation suppressionIconTexture() {
+        return ResourceLocation.fromNamespaceAndPath(
+                QisPlan2.MODID,
+                "textures/item/death_sign.png"
+        );
+    }
+
+    @Override
+    public GhostClassification suppressionTargets() {
+        return GhostClassification.of(
+                GhostTag.ENTITY
+        );
+    }
+
+    @Override
+    public int suppressionUnits() {
+        return 2;
+    }
+
+    @Override
+    public double suppressionUnitStrength() {
+        return 20.0D;
     }
 
     /**
