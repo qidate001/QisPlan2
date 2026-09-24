@@ -524,67 +524,297 @@ public class PossessionScreen extends Screen {
                             localY
                     );
 
-            if (
-                    targetGhost != null
-                            && !targetGhost.equals(draggingSourceGhost)
-            ) {
+            Minecraft minecraft =
+                    Minecraft.getInstance();
 
-                Minecraft minecraft =
-                        Minecraft.getInstance();
+            if (minecraft.player != null) {
 
-                if (minecraft.player != null) {
-
-                    int targetIndex = 0;
-
-                    for (ResourceLocation ghostId
-                            : minecraft.player
-                            .getData(ModAttachments.POSSESSED_GHOSTS)
-                            .keySet()) {
-
-                        if (ghostId.equals(targetGhost)) {
-                            break;
-                        }
-
-                        targetIndex++;
-                    }
-
-                    int targetCardX =
-                            getWorkbenchCardX(targetIndex);
-
-                    int targetCardY =
-                            getWorkbenchCardY(targetIndex);
+                /*
+                 * =====================================================
+                 * 情况 1：
+                 *
+                 * 原本就是一个已经分配出去的压制额度。
+                 * =====================================================
+                 */
+                if (draggingOriginalTargetGhost != null) {
 
                     /*
-                     * 保存相对于目标鬼卡片的位置。
+                     * -------------------------------------------------
+                     * 情况 1-A：
                      *
-                     * 这里不能保存屏幕坐标，
-                     * 因为面板可以缩放，而且窗口大小也可能改变。
+                     * 拖回自己的来源鬼。
+                     *
+                     * → 删除原分配
+                     * → slot 自动重新成为来源鬼的空闲槽位
+                     * -------------------------------------------------
                      */
-                    double relativeX =
-                            localX - targetCardX;
+                    if (
+                            targetGhost != null
+                                    && targetGhost.equals(
+                                    draggingSourceGhost
+                            )
+                    ) {
 
-                    double relativeY =
-                            localY - targetCardY;
+                        QisPlan2.LOGGER.info(
+                                "[灵异配平] 撤回压制额度：{} 的 slot {} ← {}",
+                                draggingSourceGhost,
+                                draggingSlotIndex,
+                                draggingOriginalTargetGhost
+                        );
 
-                    QisPlan2.LOGGER.info(
-                            "[灵异配平] 拖动压制额度：{} 的 slot {} → {}，位置=({}, {})",
-                            draggingSourceGhost,
-                            draggingSlotIndex,
-                            targetGhost,
-                            relativeX,
-                            relativeY
-                    );
+                        GhostPossessionNetwork
+                                .sendSuppressionRemove(
+                                        draggingSourceGhost,
+                                        draggingOriginalTargetGhost,
+                                        draggingSlotIndex
+                                );
+                    }
 
-                    GhostPossessionNetwork.sendSuppressionAllocation(
-                            draggingSourceGhost,
-                            targetGhost,
-                            draggingSlotIndex,
-                            relativeX,
-                            relativeY
-                    );
+                    /*
+                     * -------------------------------------------------
+                     * 情况 1-B：
+                     *
+                     * 拖到了其他鬼。
+                     *
+                     * → 移动分配
+                     * -------------------------------------------------
+                     */
+                    else if (
+                            targetGhost != null
+                                    && !targetGhost.equals(
+                                    draggingSourceGhost
+                            )
+                    ) {
+
+                        int targetIndex = 0;
+
+                        for (
+                                ResourceLocation ghostId
+                                : minecraft.player
+                                .getData(
+                                        ModAttachments.POSSESSED_GHOSTS
+                                )
+                                .keySet()
+                        ) {
+
+                            if (ghostId.equals(targetGhost)) {
+                                break;
+                            }
+
+                            targetIndex++;
+                        }
+
+                        int targetCardX =
+                                getWorkbenchCardX(
+                                        targetIndex
+                                );
+
+                        int targetCardY =
+                                getWorkbenchCardY(
+                                        targetIndex
+                                );
+
+                        double relativeX =
+                                localX - targetCardX;
+
+                        double relativeY =
+                                localY - targetCardY;
+
+                        QisPlan2.LOGGER.info(
+                                "[灵异配平] 移动压制额度：{} 的 slot {}：{} → {}，位置=({}, {})",
+                                draggingSourceGhost,
+                                draggingSlotIndex,
+                                draggingOriginalTargetGhost,
+                                targetGhost,
+                                relativeX,
+                                relativeY
+                        );
+
+                        /*
+                         * 这里不能直接调用 allocate()。
+                         *
+                         * 因为这个 slot 原本已经存在。
+                         *
+                         * 因此需要：
+                         * 原目标 → 新目标
+                         */
+                        GhostPossessionNetwork
+                                .sendSuppressionMove(
+                                        draggingSourceGhost,
+                                        draggingOriginalTargetGhost,
+                                        targetGhost,
+                                        draggingSlotIndex,
+                                        relativeX,
+                                        relativeY
+                                );
+                    }
+
+                    /*
+                     * -------------------------------------------------
+                     * 情况 1-C：
+                     *
+                     * 拖到了原来的目标鬼卡片。
+                     *
+                     * → 仍然是移动
+                     * → 只是目标没变
+                     * → 更新图标位置
+                     * -------------------------------------------------
+                     */
+                    else if (
+                            targetGhost != null
+                                    && targetGhost.equals(
+                                    draggingOriginalTargetGhost
+                            )
+                    ) {
+
+                        int targetIndex = 0;
+
+                        for (
+                                ResourceLocation ghostId
+                                : minecraft.player
+                                .getData(
+                                        ModAttachments.POSSESSED_GHOSTS
+                                )
+                                .keySet()
+                        ) {
+
+                            if (ghostId.equals(targetGhost)) {
+                                break;
+                            }
+
+                            targetIndex++;
+                        }
+
+                        int targetCardX =
+                                getWorkbenchCardX(
+                                        targetIndex
+                                );
+
+                        int targetCardY =
+                                getWorkbenchCardY(
+                                        targetIndex
+                                );
+
+                        double relativeX =
+                                localX - targetCardX;
+
+                        double relativeY =
+                                localY - targetCardY;
+
+                        QisPlan2.LOGGER.info(
+                                "[灵异配平] 调整压制额度位置：{} 的 slot {} → {}，位置=({}, {})",
+                                draggingSourceGhost,
+                                draggingSlotIndex,
+                                targetGhost,
+                                relativeX,
+                                relativeY
+                        );
+
+                        GhostPossessionNetwork
+                                .sendSuppressionMove(
+                                        draggingSourceGhost,
+                                        draggingOriginalTargetGhost,
+                                        targetGhost,
+                                        draggingSlotIndex,
+                                        relativeX,
+                                        relativeY
+                                );
+                    }
+
+                    /*
+                     * -------------------------------------------------
+                     * 情况 1-D：
+                     *
+                     * targetGhost == null
+                     *
+                     * → 什么都不做
+                     * → 原来的分配保持不变
+                     * -------------------------------------------------
+                     */
+                }
+
+                /*
+                 * =====================================================
+                 * 情况 2：
+                 *
+                 * 从一个尚未分配的空闲 slot 拖出来。
+                 * =====================================================
+                 */
+                else {
+
+                    /*
+                     * 只有拖到其他鬼卡片才建立分配。
+                     */
+                    if (
+                            targetGhost != null
+                                    && !targetGhost.equals(
+                                    draggingSourceGhost
+                            )
+                    ) {
+
+                        int targetIndex = 0;
+
+                        for (
+                                ResourceLocation ghostId
+                                : minecraft.player
+                                .getData(
+                                        ModAttachments.POSSESSED_GHOSTS
+                                )
+                                .keySet()
+                        ) {
+
+                            if (ghostId.equals(targetGhost)) {
+                                break;
+                            }
+
+                            targetIndex++;
+                        }
+
+                        int targetCardX =
+                                getWorkbenchCardX(
+                                        targetIndex
+                                );
+
+                        int targetCardY =
+                                getWorkbenchCardY(
+                                        targetIndex
+                                );
+
+                        double relativeX =
+                                localX - targetCardX;
+
+                        double relativeY =
+                                localY - targetCardY;
+
+                        QisPlan2.LOGGER.info(
+                                "[灵异配平] 新增压制额度：{} 的 slot {} → {}，位置=({}, {})",
+                                draggingSourceGhost,
+                                draggingSlotIndex,
+                                targetGhost,
+                                relativeX,
+                                relativeY
+                        );
+
+                        GhostPossessionNetwork
+                                .sendSuppressionAllocation(
+                                        draggingSourceGhost,
+                                        targetGhost,
+                                        draggingSlotIndex,
+                                        relativeX,
+                                        relativeY
+                                );
+                    }
+
+                    /*
+                     * 拖回自己 / 拖到卡片外：
+                     * 什么都不做。
+                     */
                 }
             }
 
+            /*
+             * 清理客户端拖动状态。
+             */
             draggingSuppression = false;
 
             draggingSourceGhost = null;
@@ -1309,6 +1539,7 @@ public class PossessionScreen extends Screen {
             int cardX,
             int cardY
     ) {
+
         Minecraft minecraft =
                 Minecraft.getInstance();
 
@@ -1328,27 +1559,91 @@ public class PossessionScreen extends Screen {
         int size = 14;
 
         /*
-         * 遍历所有“来源鬼 → 当前目标鬼”的压制分配。
+         * ========================================================
+         * 遍历所有：
+         *
+         * sourceGhost → targetGhost
+         *
+         * 只绘制当前这张鬼卡片作为目标的分配。
+         * ========================================================
          */
         for (
-                Map<ResourceLocation, List<SuppressionAllocation>>
-                        targets
-                : allocations.values()
+                Map.Entry<
+                        ResourceLocation,
+                        Map<ResourceLocation, List<SuppressionAllocation>>
+                        >
+                        sourceEntry
+                : allocations.entrySet()
         ) {
+
+            ResourceLocation sourceGhost =
+                    sourceEntry.getKey();
+
+            Map<ResourceLocation, List<SuppressionAllocation>>
+                    targets =
+                    sourceEntry.getValue();
 
             List<SuppressionAllocation> list =
                     targets.get(targetGhost);
 
-            if (list == null) {
+            if (list == null || list.isEmpty()) {
                 continue;
             }
 
             /*
-             * 当前这个 targets 来自某一个 sourceGhost。
+             * ========================================================
+             * 根据来源鬼获取压制额度图标。
              *
-             * 这里需要找到 sourceGhost，
-             * 因此下面这个写法暂时不能直接使用 values()。
+             * 每个鬼都可以拥有自己的 suppressionIconTexture()。
+             *
+             * null：
+             * 使用全局默认压制额度图标。
+             * ========================================================
              */
+            PossessedGhostAbility sourceAbility =
+                    GhostAbilityRegistry.get(
+                            sourceGhost
+                    );
+
+            ResourceLocation texture =
+                    sourceAbility == null
+                            ? DEFAULT_SUPPRESSION_ICON
+                            : sourceAbility.suppressionIconTexture();
+
+            if (texture == null) {
+                texture =
+                        DEFAULT_SUPPRESSION_ICON;
+            }
+
+            /*
+             * ========================================================
+             * 绘制所有已经分配到当前鬼的压制额度。
+             * ========================================================
+             */
+            for (SuppressionAllocation allocation : list) {
+
+                int x =
+                        cardX
+                                + (int) allocation.x()
+                                - size / 2;
+
+                int y =
+                        cardY
+                                + (int) allocation.y()
+                                - size / 2;
+
+                graphics.blit(
+                        texture,
+                        x,
+                        y,
+                        0,
+                        0,
+                        size,
+                        size,
+                        size,
+                        size
+                );
+            }
         }
     }
 

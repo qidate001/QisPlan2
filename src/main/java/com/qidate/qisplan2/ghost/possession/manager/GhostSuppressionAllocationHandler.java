@@ -1,7 +1,6 @@
 package com.qidate.qisplan2.ghost.possession.manager;
 
 import com.qidate.qisplan2.core.ModAttachments;
-import com.qidate.qisplan2.ghost.possession.data.PossessedGhostState;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.player.Player;
 
@@ -12,11 +11,10 @@ import java.util.Map;
 
 public final class GhostSuppressionAllocationHandler {
 
-    private GhostSuppressionAllocationHandler() {
-    }
+    private GhostSuppressionAllocationHandler() {}
 
     /**
-     * 获取玩家当前所有灵异压制分配。
+     * 获取玩家全部压制额度分配。
      */
     public static Map<
             ResourceLocation,
@@ -29,7 +27,7 @@ public final class GhostSuppressionAllocationHandler {
     }
 
     /**
-     * 获取某个源鬼对某个目标鬼的所有压制分配。
+     * 获取指定“来源鬼 → 目标鬼”的全部分配。
      */
     public static List<SuppressionAllocation> getAllocations(
             Player player,
@@ -40,27 +38,29 @@ public final class GhostSuppressionAllocationHandler {
         Map<
                 ResourceLocation,
                 Map<ResourceLocation, List<SuppressionAllocation>>
-                > allocations = getAllocations(player);
+                > allocations =
+                getAllocations(player);
 
-        Map<ResourceLocation, List<SuppressionAllocation>> targets =
+        Map<ResourceLocation, List<SuppressionAllocation>>
+                targets =
                 allocations.get(sourceGhost);
 
         if (targets == null) {
             return List.of();
         }
 
-        List<SuppressionAllocation> result =
+        List<SuppressionAllocation> list =
                 targets.get(targetGhost);
 
-        if (result == null) {
+        if (list == null) {
             return List.of();
         }
 
-        return result;
+        return list;
     }
 
     /**
-     * 判断某个源鬼的某一个压制额度是否已经被使用。
+     * 判断某个来源鬼的 slot 是否已经被分配。
      */
     public static boolean isSlotAllocated(
             Player player,
@@ -71,9 +71,11 @@ public final class GhostSuppressionAllocationHandler {
         Map<
                 ResourceLocation,
                 Map<ResourceLocation, List<SuppressionAllocation>>
-                > allocations = getAllocations(player);
+                > allocations =
+                getAllocations(player);
 
-        Map<ResourceLocation, List<SuppressionAllocation>> targets =
+        Map<ResourceLocation, List<SuppressionAllocation>>
+                targets =
                 allocations.get(sourceGhost);
 
         if (targets == null) {
@@ -94,9 +96,9 @@ public final class GhostSuppressionAllocationHandler {
     }
 
     /**
-     * 将一个压制额度分配给目标鬼。
+     * 分配一个新的压制额度。
      *
-     * x / y 为目标鬼卡片内部的相对坐标。
+     * 一个 slot 只能存在一份分配。
      */
     public static boolean allocate(
             Player player,
@@ -119,14 +121,6 @@ public final class GhostSuppressionAllocationHandler {
             return false;
         }
 
-        /*
-         * Attachment 中的 Map 可能是不可修改的。
-         *
-         * 因此不能直接对 getAllocations(player)
-         * 返回的 Map 调用 computeIfAbsent()。
-         *
-         * 这里创建一份完整的可修改副本。
-         */
         Map<
                 ResourceLocation,
                 Map<ResourceLocation, List<SuppressionAllocation>>
@@ -137,33 +131,8 @@ public final class GhostSuppressionAllocationHandler {
                 ResourceLocation,
                 Map<ResourceLocation, List<SuppressionAllocation>>
                 > allocations =
-                new HashMap<>();
+                deepCopy(oldAllocations);
 
-        for (var sourceEntry : oldAllocations.entrySet()) {
-
-            Map<ResourceLocation, List<SuppressionAllocation>>
-                    targets =
-                    new HashMap<>();
-
-            for (var targetEntry : sourceEntry.getValue().entrySet()) {
-
-                targets.put(
-                        targetEntry.getKey(),
-                        new ArrayList<>(
-                                targetEntry.getValue()
-                        )
-                );
-            }
-
-            allocations.put(
-                    sourceEntry.getKey(),
-                    targets
-            );
-        }
-
-        /*
-         * 获取来源鬼的分配表。
-         */
         Map<ResourceLocation, List<SuppressionAllocation>>
                 targets =
                 allocations.computeIfAbsent(
@@ -171,18 +140,12 @@ public final class GhostSuppressionAllocationHandler {
                         ignored -> new HashMap<>()
                 );
 
-        /*
-         * 获取目标鬼的分配列表。
-         */
         List<SuppressionAllocation> list =
                 targets.computeIfAbsent(
                         targetGhost,
                         ignored -> new ArrayList<>()
                 );
 
-        /*
-         * 写入新的分配。
-         */
         list.add(
                 new SuppressionAllocation(
                         slotIndex,
@@ -191,9 +154,6 @@ public final class GhostSuppressionAllocationHandler {
                 )
         );
 
-        /*
-         * 将新的可修改 Map 重新写回 Attachment。
-         */
         player.setData(
                 ModAttachments.GHOST_SUPPRESSION_ALLOCATION,
                 allocations
@@ -203,7 +163,7 @@ public final class GhostSuppressionAllocationHandler {
     }
 
     /**
-     * 移除一个已经分配出去的压制额度。
+     * 删除指定来源鬼的某一个 slot 分配。
      */
     public static boolean remove(
             Player player,
@@ -215,9 +175,17 @@ public final class GhostSuppressionAllocationHandler {
         Map<
                 ResourceLocation,
                 Map<ResourceLocation, List<SuppressionAllocation>>
-                > allocations = getAllocations(player);
+                > oldAllocations =
+                getAllocations(player);
 
-        Map<ResourceLocation, List<SuppressionAllocation>> targets =
+        Map<
+                ResourceLocation,
+                Map<ResourceLocation, List<SuppressionAllocation>>
+                > allocations =
+                deepCopy(oldAllocations);
+
+        Map<ResourceLocation, List<SuppressionAllocation>>
+                targets =
                 allocations.get(sourceGhost);
 
         if (targets == null) {
@@ -234,9 +202,17 @@ public final class GhostSuppressionAllocationHandler {
         boolean removed =
                 list.removeIf(
                         allocation ->
-                                allocation.slotIndex() == slotIndex
+                                allocation.slotIndex()
+                                        == slotIndex
                 );
 
+        if (!removed) {
+            return false;
+        }
+
+        /*
+         * 清理空容器。
+         */
         if (list.isEmpty()) {
             targets.remove(targetGhost);
         }
@@ -245,6 +221,168 @@ public final class GhostSuppressionAllocationHandler {
             allocations.remove(sourceGhost);
         }
 
-        return removed;
+        player.setData(
+                ModAttachments.GHOST_SUPPRESSION_ALLOCATION,
+                allocations
+        );
+
+        return true;
+    }
+
+    /**
+     * 移动一个已经存在的压制额度。
+     *
+     * oldTargetGhost：
+     * 原来的目标鬼。
+     *
+     * newTargetGhost：
+     * 新的目标鬼。
+     *
+     * x / y：
+     * 新目标卡片中的相对位置。
+     */
+    public static boolean move(
+            Player player,
+            ResourceLocation sourceGhost,
+            ResourceLocation oldTargetGhost,
+            ResourceLocation newTargetGhost,
+            int slotIndex,
+            double x,
+            double y
+    ) {
+
+        if (sourceGhost.equals(newTargetGhost)) {
+            return false;
+        }
+
+        Map<
+                ResourceLocation,
+                Map<ResourceLocation, List<SuppressionAllocation>>
+                > oldAllocations =
+                getAllocations(player);
+
+        Map<
+                ResourceLocation,
+                Map<ResourceLocation, List<SuppressionAllocation>>
+                > allocations =
+                deepCopy(oldAllocations);
+
+        Map<ResourceLocation, List<SuppressionAllocation>>
+                targets =
+                allocations.get(sourceGhost);
+
+        if (targets == null) {
+            return false;
+        }
+
+        List<SuppressionAllocation> oldList =
+                targets.get(oldTargetGhost);
+
+        if (oldList == null) {
+            return false;
+        }
+
+        boolean removed =
+                oldList.removeIf(
+                        allocation ->
+                                allocation.slotIndex()
+                                        == slotIndex
+                );
+
+        if (!removed) {
+            return false;
+        }
+
+        /*
+         * 原目标已经没有这个分配后，
+         * 再加入新目标。
+         */
+        if (oldList.isEmpty()) {
+            targets.remove(oldTargetGhost);
+        }
+
+        List<SuppressionAllocation> newList =
+                targets.computeIfAbsent(
+                        newTargetGhost,
+                        ignored -> new ArrayList<>()
+                );
+
+        /*
+         * 理论上 slot 不应该已经存在于其他目标。
+         * 这里再检查一次，防止非法状态。
+         */
+        for (List<SuppressionAllocation> list
+                : targets.values()) {
+
+            for (SuppressionAllocation allocation : list) {
+
+                if (allocation.slotIndex() == slotIndex) {
+                    return false;
+                }
+            }
+        }
+
+        newList.add(
+                new SuppressionAllocation(
+                        slotIndex,
+                        x,
+                        y
+                )
+        );
+
+        player.setData(
+                ModAttachments.GHOST_SUPPRESSION_ALLOCATION,
+                allocations
+        );
+
+        return true;
+    }
+
+    /**
+     * 深拷贝整个压制分配结构。
+     *
+     * Attachment 中的默认数据可能是不可变 Map/List，
+     * 所以所有修改都必须基于新的可变结构进行。
+     */
+    private static Map<
+            ResourceLocation,
+            Map<ResourceLocation, List<SuppressionAllocation>>
+            > deepCopy(
+            Map<
+                    ResourceLocation,
+                    Map<ResourceLocation, List<SuppressionAllocation>>
+                    > source
+    ) {
+
+        Map<
+                ResourceLocation,
+                Map<ResourceLocation, List<SuppressionAllocation>>
+                > result =
+                new HashMap<>();
+
+        for (var sourceEntry : source.entrySet()) {
+
+            Map<ResourceLocation, List<SuppressionAllocation>>
+                    targets =
+                    new HashMap<>();
+
+            for (var targetEntry
+                    : sourceEntry.getValue().entrySet()) {
+
+                targets.put(
+                        targetEntry.getKey(),
+                        new ArrayList<>(
+                                targetEntry.getValue()
+                        )
+                );
+            }
+
+            result.put(
+                    sourceEntry.getKey(),
+                    targets
+            );
+        }
+
+        return result;
     }
 }

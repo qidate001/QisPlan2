@@ -86,6 +86,18 @@ public final class GhostPossessionNetwork {
                 GhostSuppressionAllocationPayload.STREAM_CODEC,
                 GhostPossessionNetwork::handleSuppressionAllocation
         );
+
+        registrar.playToServer(
+                GhostSuppressionMovePayload.TYPE,
+                GhostSuppressionMovePayload.STREAM_CODEC,
+                GhostPossessionNetwork::handleSuppressionMove
+        );
+
+        registrar.playToServer(
+                GhostSuppressionRemovePayload.TYPE,
+                GhostSuppressionRemovePayload.STREAM_CODEC,
+                GhostPossessionNetwork::handleSuppressionRemove
+        );
     }
 
     /*
@@ -255,6 +267,84 @@ public final class GhostPossessionNetwork {
 
     /*
      * ========================================================
+     * C2S：移动灵异配平
+     * ========================================================
+     */
+
+    private static void handleSuppressionMove(
+            GhostSuppressionMovePayload payload,
+            IPayloadContext context
+    ) {
+
+        context.enqueueWork(() -> {
+
+            if (!(context.player()
+                    instanceof ServerPlayer player)) {
+
+                return;
+            }
+
+            boolean success =
+                    GhostSuppressionAllocationHandler.move(
+                            player,
+                            payload.sourceGhost(),
+                            payload.oldTargetGhost(),
+                            payload.newTargetGhost(),
+                            payload.slotIndex(),
+                            payload.x(),
+                            payload.y()
+                    );
+
+            QisPlan2.LOGGER.info(
+                    "[灵异配平] 移动分配：{} 的 slot {}：{} → {}，结果={}",
+                    payload.sourceGhost(),
+                    payload.slotIndex(),
+                    payload.oldTargetGhost(),
+                    payload.newTargetGhost(),
+                    success ? "成功" : "失败"
+            );
+        });
+    }
+
+    /*
+     * ========================================================
+     * C2S：撤回灵异配平
+     * ========================================================
+     */
+
+    private static void handleSuppressionRemove(
+            GhostSuppressionRemovePayload payload,
+            IPayloadContext context
+    ) {
+
+        context.enqueueWork(() -> {
+
+            if (!(context.player()
+                    instanceof ServerPlayer player)) {
+
+                return;
+            }
+
+            boolean success =
+                    GhostSuppressionAllocationHandler.remove(
+                            player,
+                            payload.sourceGhost(),
+                            payload.targetGhost(),
+                            payload.slotIndex()
+                    );
+
+            QisPlan2.LOGGER.info(
+                    "[灵异配平] 撤回分配：{} 的 slot {} ← {}，结果={}",
+                    payload.sourceGhost(),
+                    payload.slotIndex(),
+                    payload.targetGhost(),
+                    success ? "成功" : "失败"
+            );
+        });
+    }
+
+    /*
+     * ========================================================
      * S2C：开始
      * ========================================================
      */
@@ -354,6 +444,54 @@ public final class GhostPossessionNetwork {
                         slotIndex,
                         x,
                         y
+                )
+        );
+    }
+
+    /*
+     * ========================================================
+     * C2S：移动灵异配平
+     * ========================================================
+     */
+
+    public static void sendSuppressionMove(
+            ResourceLocation sourceGhost,
+            ResourceLocation oldTargetGhost,
+            ResourceLocation newTargetGhost,
+            int slotIndex,
+            double x,
+            double y
+    ) {
+
+        PacketDistributor.sendToServer(
+                new GhostSuppressionMovePayload(
+                        sourceGhost,
+                        oldTargetGhost,
+                        newTargetGhost,
+                        slotIndex,
+                        x,
+                        y
+                )
+        );
+    }
+
+    /*
+     * ========================================================
+     * C2S：撤回灵异配平
+     * ========================================================
+     */
+
+    public static void sendSuppressionRemove(
+            ResourceLocation sourceGhost,
+            ResourceLocation targetGhost,
+            int slotIndex
+    ) {
+
+        PacketDistributor.sendToServer(
+                new GhostSuppressionRemovePayload(
+                        sourceGhost,
+                        targetGhost,
+                        slotIndex
                 )
         );
     }
