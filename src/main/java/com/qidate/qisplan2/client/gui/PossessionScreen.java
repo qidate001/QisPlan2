@@ -43,6 +43,15 @@ public class PossessionScreen extends Screen {
 
     private int currentPage = 0;
 
+    private boolean draggingSuppression = false;
+
+    private ResourceLocation draggingSourceGhost = null;
+
+    private int draggingSlotIndex = -1;
+
+    private int draggingMouseX = 0;
+    private int draggingMouseY = 0;
+
     private static final ResourceLocation HUMAN_BODY = body("human_body");
 
     private static final ResourceLocation BRAIN = body("brain");
@@ -231,6 +240,10 @@ public class PossessionScreen extends Screen {
             drawSuppressionPage(graphics);
         }
 
+        if (draggingSuppression) {
+            drawDraggingSuppression(graphics);
+        }
+
         graphics.pose().popPose();
     }
 
@@ -257,6 +270,77 @@ public class PossessionScreen extends Screen {
 
         double localY =
                 (mouseY - panelY) / panelScale;
+
+        if (
+                currentPage == 1
+                        && button == 0
+        ) {
+
+            Minecraft minecraft =
+                    Minecraft.getInstance();
+
+            if (minecraft.player != null) {
+
+                Map<ResourceLocation, PossessedGhostState> ghosts =
+                        minecraft.player.getData(
+                                ModAttachments.POSSESSED_GHOSTS
+                        );
+
+                int index = 0;
+
+                for (var entry : ghosts.entrySet()) {
+
+                    ResourceLocation ghostId =
+                            entry.getKey();
+
+                    PossessedGhostAbility ability =
+                            GhostAbilityRegistry.get(
+                                    ghostId
+                            );
+
+                    if (ability == null) {
+                        index++;
+                        continue;
+                    }
+
+                    int cardX =
+                            getWorkbenchCardX(index);
+
+                    int cardY =
+                            getWorkbenchCardY(index);
+
+                    int slot =
+                            getSuppressionSlotAt(
+                                    localX,
+                                    localY,
+                                    cardX,
+                                    cardY,
+                                    ability.suppressionUnits()
+                            );
+
+                    if (slot >= 0) {
+
+                        draggingSuppression = true;
+
+                        draggingSourceGhost =
+                                ghostId;
+
+                        draggingSlotIndex =
+                                slot;
+
+                        draggingMouseX =
+                                (int) localX;
+
+                        draggingMouseY =
+                                (int) localY;
+
+                        return true;
+                    }
+
+                    index++;
+                }
+            }
+        }
 
         int tabY = 24;
         int tabWidth = 70;
@@ -299,6 +383,101 @@ public class PossessionScreen extends Screen {
         }
 
         return super.mouseClicked(
+                mouseX,
+                mouseY,
+                button
+        );
+    }
+
+    @Override
+    public boolean mouseDragged(
+            double mouseX,
+            double mouseY,
+            int button,
+            double dragX,
+            double dragY
+    ) {
+
+        if (
+                draggingSuppression
+                        && button == 0
+        ) {
+
+            double localX =
+                    (mouseX - panelX)
+                            / panelScale;
+
+            double localY =
+                    (mouseY - panelY)
+                            / panelScale;
+
+            draggingMouseX =
+                    (int) localX;
+
+            draggingMouseY =
+                    (int) localY;
+
+            return true;
+        }
+
+        return super.mouseDragged(
+                mouseX,
+                mouseY,
+                button,
+                dragX,
+                dragY
+        );
+    }
+
+    @Override
+    public boolean mouseReleased(
+            double mouseX,
+            double mouseY,
+            int button
+    ) {
+
+        if (
+                draggingSuppression
+                        && button == 0
+        ) {
+
+            double localX =
+                    (mouseX - panelX)
+                            / panelScale;
+
+            double localY =
+                    (mouseY - panelY)
+                            / panelScale;
+
+            ResourceLocation targetGhost =
+                    getWorkbenchGhostAt(
+                            localX,
+                            localY
+                    );
+
+            if (
+                    targetGhost != null
+                            && !targetGhost.equals(
+                            draggingSourceGhost
+                    )
+            ) {
+
+                QisPlan2.LOGGER.info(
+                        "[灵异配平] 拖动压制额度：{} 的 slot {} → {}",
+                        draggingSourceGhost,
+                        draggingSlotIndex,
+                        targetGhost
+                );
+            }
+
+            draggingSuppression = false;
+            draggingSourceGhost = null;
+            draggingSlotIndex = -1;
+
+            return true;
+        }
+
+        return super.mouseReleased(
                 mouseX,
                 mouseY,
                 button
@@ -951,6 +1130,62 @@ public class PossessionScreen extends Screen {
         );
     }
 
+    private void drawDraggingSuppression(
+            GuiGraphics graphics
+    ) {
+
+        if (draggingSourceGhost == null) {
+            return;
+        }
+
+        PossessedGhostAbility ability =
+                GhostAbilityRegistry.get(
+                        draggingSourceGhost
+                );
+
+        if (ability == null) {
+            return;
+        }
+
+        ResourceLocation texture =
+                ability.suppressionIconTexture();
+
+        int size = 14;
+
+        int x =
+                draggingMouseX
+                        - size / 2;
+
+        int y =
+                draggingMouseY
+                        - size / 2;
+
+        if (texture == null) {
+
+            graphics.fill(
+                    x,
+                    y,
+                    x + size,
+                    y + size,
+                    0xFFE02020
+            );
+
+        } else {
+
+            graphics.blit(
+                    texture,
+                    x,
+                    y,
+                    0,
+                    0,
+                    size,
+                    size,
+                    size,
+                    size
+            );
+        }
+    }
+
     private void drawProgressBar(
             GuiGraphics graphics,
             int x,
@@ -1239,6 +1474,145 @@ public class PossessionScreen extends Screen {
             int bodyHeight
     ) {
         return bodyY + originalY * bodyHeight / 413;
+    }
+
+
+
+    private int getWorkbenchCardX(int index) {
+
+        int columns = 3;
+        int gapX = 18;
+
+        int totalWidth =
+                columns * GHOST_WORKBENCH_CARD_WIDTH
+                        + (columns - 1) * gapX;
+
+        int startX =
+                (PANEL_WIDTH - totalWidth) / 2;
+
+        int column = index % columns;
+
+        return startX
+                + column
+                * (GHOST_WORKBENCH_CARD_WIDTH + gapX);
+    }
+
+    private int getWorkbenchCardY(int index) {
+
+        int gapY = 12;
+        int startY = 52;
+
+        int row = index / 3;
+
+        return startY
+                + row
+                * (GHOST_WORKBENCH_CARD_HEIGHT + gapY);
+    }
+
+    private ResourceLocation getWorkbenchGhostAt(
+            double mouseX,
+            double mouseY
+    ) {
+
+        Minecraft minecraft =
+                Minecraft.getInstance();
+
+        if (minecraft.player == null) {
+            return null;
+        }
+
+        Map<ResourceLocation, PossessedGhostState> ghosts =
+                minecraft.player.getData(
+                        ModAttachments.POSSESSED_GHOSTS
+                );
+
+        int index = 0;
+
+        for (ResourceLocation ghostId : ghosts.keySet()) {
+
+            int x = getWorkbenchCardX(index);
+            int y = getWorkbenchCardY(index);
+
+            if (
+                    mouseX >= x
+                            && mouseX < x + GHOST_WORKBENCH_CARD_WIDTH
+                            && mouseY >= y
+                            && mouseY < y + GHOST_WORKBENCH_CARD_HEIGHT
+            ) {
+                return ghostId;
+            }
+
+            index++;
+        }
+
+        return null;
+    }
+
+    private int getSuppressionSlotX(
+            int cardX,
+            int slotIndex
+    ) {
+
+        int size = 10;
+        int gap = 4;
+
+        int column = slotIndex % 5;
+
+        return cardX
+                + 8
+                + column * (size + gap);
+    }
+
+    private int getSuppressionSlotY(
+            int cardY,
+            int slotIndex
+    ) {
+
+        int size = 10;
+        int gap = 4;
+
+        int row = slotIndex / 5;
+
+        return cardY
+                + 50
+                + row * (size + gap);
+    }
+
+    private int getSuppressionSlotAt(
+            double mouseX,
+            double mouseY,
+            int cardX,
+            int cardY,
+            int slots
+    ) {
+
+        int size = 10;
+
+        for (int i = 0; i < slots; i++) {
+
+            int x =
+                    getSuppressionSlotX(
+                            cardX,
+                            i
+                    );
+
+            int y =
+                    getSuppressionSlotY(
+                            cardY,
+                            i
+                    );
+
+            if (
+                    mouseX >= x
+                            && mouseX < x + size
+                            && mouseY >= y
+                            && mouseY < y + size
+            ) {
+                return i;
+            }
+        }
+
+        return -1;
     }
 
     private boolean isInside(
