@@ -5,7 +5,9 @@ import com.qidate.qisplan2.ghost.possession.ability.PossessedGhostAbility;
 import com.qidate.qisplan2.ghost.possession.classification.GhostClassification;
 import com.qidate.qisplan2.ghost.possession.classification.GhostTag;
 import com.qidate.qisplan2.ghost.possession.data.PossessedGhostState;
+import com.qidate.qisplan2.ghost.possession.manager.GhostSuppressionAllocationHandler;
 import com.qidate.qisplan2.ghost.possession.manager.PossessionHandler;
+import com.qidate.qisplan2.ghost.possession.manager.SuppressionAllocation;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 
@@ -24,45 +26,51 @@ public final class GhostSuppressionSystem {
                      * 鬼眼 → 实体鬼
                      * ====================================================
                      *
-                     * 只要目标拥有 ENTITY，
-                     * 就属于鬼眼天然可以影响的对象。
+                     * 鬼眼的 EYE 灵异针对 ENTITY。
+                     *
+                     * 0.9 = 90% 灵异效率。
                      */
                     new GhostSuppressionRule(
                             GhostTag.EYE,
                             GhostTag.ENTITY,
-                            0.5D
+                            0.9D
                     )
             );
 
     /**
      * 判断 source 是否能够压制 target。
+     *
+     * <p>
+     * 来源鬼通过 suppressionTargets()
+     * 声明自己能够压制哪些 Tag。
+     *
+     * <p>
+     * 目标鬼通过 classification()
+     * 声明自己的分类。
      */
     public static boolean canSuppress(
             PossessedGhostAbility source,
             PossessedGhostAbility target
     ) {
 
-        GhostClassification sourceClassification =
-                source.classification();
+        if (source == null || target == null) {
+            return false;
+        }
+
+        GhostClassification suppressionTargets =
+                source.suppressionTargets();
 
         GhostClassification targetClassification =
                 target.classification();
 
-        for (GhostSuppressionRule rule : RULES) {
+        for (GhostTag targetTag :
+                suppressionTargets.tags()) {
 
-            if (!sourceClassification.has(
-                    rule.sourceTag()
+            if (targetClassification.has(
+                    targetTag
             )) {
-                continue;
+                return true;
             }
-
-            if (!targetClassification.has(
-                    rule.targetTag()
-            )) {
-                continue;
-            }
-
-            return true;
         }
 
         return false;
@@ -80,15 +88,12 @@ public final class GhostSuppressionSystem {
      * </ul>
      *
      * <p>
-     * 压制由：
+     * 现在的压制来源不再是“整个来源鬼自动参与”。
      *
-     * <ul>
-     *     <li>分类上的天然压制关系</li>
-     *     <li>压制者当前灵异强度</li>
-     *     <li>被压制者当前灵异强度</li>
-     * </ul>
-     *
-     * 共同决定。
+     * <p>
+     * 只有玩家通过灵异配平系统，
+     * 实际分配给目标鬼的 slot，
+     * 才会转化为压制力量。
      */
     public static double getSuppression(
             ServerPlayer player,
@@ -121,6 +126,13 @@ public final class GhostSuppressionSystem {
         double remaining =
                 1.0D;
 
+        /*
+         * ================================================================
+         * 遍历所有实际存在的压制分配。
+         *
+         * 不再遍历所有厉鬼然后自动计算。
+         * ================================================================
+         */
         for (ResourceLocation sourceGhost :
                 PossessionHandler
                         .getAllStates(player)
@@ -135,6 +147,9 @@ public final class GhostSuppressionSystem {
                 continue;
             }
 
+            /*
+             * 获取来源鬼。
+             */
             PossessedGhostAbility sourceAbility =
                     GhostAbilityRegistry.get(
                             sourceGhost
@@ -146,10 +161,42 @@ public final class GhostSuppressionSystem {
 
             /*
              * ========================================================
-             * 查找分类上的压制关系
+             * 只有存在实际分配时，
+             * 来源鬼才参与这次压制。
              * ========================================================
              */
+            List<SuppressionAllocation> allocations =
+                    GhostSuppressionAllocationHandler
+                            .getAllocations(
+                                    player,
+                                    sourceGhost,
+                                    targetGhost
+                            );
 
+            if (
+                    allocations == null
+                            || allocations.isEmpty()
+            ) {
+                continue;
+            }
+
+            /*
+             * ========================================================
+             * Tag 是否允许压制？
+             * ========================================================
+             */
+            if (!canSuppress(
+                    sourceAbility,
+                    targetAbility
+            )) {
+                continue;
+            }
+
+            /*
+             * ========================================================
+             * 获取 Tag 对应的压制效率。
+             * ========================================================
+             */
             double ruleStrength =
                     getRuleStrength(
                             sourceAbility,
@@ -162,45 +209,79 @@ public final class GhostSuppressionSystem {
 
             /*
              * ========================================================
-             * 获取双方当前实际灵异强度
+             * 计算这次实际分配出去的灵异力量。
+             *
+             * 一个 slot =
+             * suppressionUnitStrength()
+             *
+             * 例如：
+             *
+             * 鬼眼：
+             * 1 slot = 100
+             * 3 slot = 300
              * ========================================================
              */
+            double allocatedStrength =
+                    allocations.size()
+                            * sourceAbility
+                            .suppressionUnitStrength();
 
-            double sourceStrength =
-                    PossessionHandler.getEffectiveStrength(
-                            player,
-                            sourceGhost
-                    );
+            if (allocatedStrength <= 0.0D) {
+                continue;
+            }
 
+            /*
+             * ========================================================
+             * 获取目标鬼当前实际灵异强度。
+             * ========================================================
+             */
             double targetStrength =
                     PossessionHandler.getEffectiveStrength(
                             player,
                             targetGhost
                     );
 
-            if (sourceStrength <= 0.0D) {
+            if (targetStrength <= 0.0D) {
+                /*
+                 * 目标已经没有有效灵异力量。
+                 *
+                 * 此时直接视为完全压制。
+                 */
                 continue;
             }
 
             /*
              * ========================================================
-             * 当前双方灵异强度对抗比例
+             * 当前双方灵异力量对抗比例。
+             *
+             * 例如：
+             *
+             * 来源分配 = 100
+             * 目标强度 = 200
+             *
+             * 100 / (100 + 200)
+             * = 0.3333
+             *
+             * 再乘以 50% Tag 效率：
+             *
+             * 0.3333 × 0.5
+             * = 0.1667
+             *
+             * 即约 16.67% 压制。
              * ========================================================
              */
-
             double strengthRatio =
-                    sourceStrength
+                    allocatedStrength
                             / (
-                            sourceStrength
+                            allocatedStrength
                                     + targetStrength
                     );
 
             /*
              * ========================================================
-             * 本次压制
+             * 本次压制。
              * ========================================================
              */
-
             double suppression =
                     ruleStrength
                             * strengthRatio;
@@ -214,13 +295,12 @@ public final class GhostSuppressionSystem {
 
             /*
              * ========================================================
-             * 多个厉鬼同时压制时，
-             * 使用剩余量继续计算。
+             * 多个来源鬼同时压制：
              *
-             * 这样不会简单相加超过 100%。
+             * 使用剩余量继续计算，
+             * 避免简单相加超过 100%。
              * ========================================================
              */
-
             remaining *=
                     1.0D - suppression;
         }
@@ -233,7 +313,7 @@ public final class GhostSuppressionSystem {
     }
 
     /**
-     * 获取 source 对 target 的分类压制强度。
+     * 获取 source 对 target 的分类压制效率。
      */
     private static double getRuleStrength(
             PossessedGhostAbility source,
@@ -242,6 +322,9 @@ public final class GhostSuppressionSystem {
 
         GhostClassification sourceClassification =
                 source.classification();
+
+        GhostClassification suppressionTargets =
+                source.suppressionTargets();
 
         GhostClassification targetClassification =
                 target.classification();
@@ -252,12 +335,29 @@ public final class GhostSuppressionSystem {
         for (GhostSuppressionRule rule :
                 RULES) {
 
+            /*
+             * 规则规定的来源 Tag，
+             * 必须属于来源鬼自身分类。
+             */
             if (!sourceClassification.has(
                     rule.sourceTag()
             )) {
                 continue;
             }
 
+            /*
+             * 规则规定的目标 Tag，
+             * 必须是来源鬼声明可以压制的 Tag。
+             */
+            if (!suppressionTargets.has(
+                    rule.targetTag()
+            )) {
+                continue;
+            }
+
+            /*
+             * 目标鬼必须拥有这个 Tag。
+             */
             if (!targetClassification.has(
                     rule.targetTag()
             )) {
