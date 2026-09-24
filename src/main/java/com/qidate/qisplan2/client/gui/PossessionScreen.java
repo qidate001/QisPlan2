@@ -1692,10 +1692,28 @@ public class PossessionScreen extends Screen {
             return;
         }
 
-        int slots = ability.suppressionUnits();
+        Minecraft minecraft =
+                Minecraft.getInstance();
+
+        if (minecraft.player == null) {
+            return;
+        }
+
+        ResourceLocation sourceGhost =
+                ability.id();
+
+        int slots =
+                ability.suppressionUnits();
 
         int size = 10;
         int gap = 4;
+
+        ResourceLocation texture =
+                ability.suppressionIconTexture();
+
+        if (texture == null) {
+            texture = DEFAULT_SUPPRESSION_ICON;
+        }
 
         for (int i = 0; i < slots; i++) {
 
@@ -1708,13 +1726,45 @@ public class PossessionScreen extends Screen {
             int sy =
                     y + row * (size + gap);
 
-            ResourceLocation texture =
-                    ability.suppressionIconTexture();
+            boolean allocated =
+                    GhostSuppressionAllocationHandler
+                            .isSlotAllocated(
+                                    minecraft.player,
+                                    sourceGhost,
+                                    i
+                            );
 
-            if (texture == null) {
-                texture = DEFAULT_SUPPRESSION_ICON;
+            /*
+             * 已经被分配出去：
+             *
+             * 只画一个空槽框。
+             */
+            if (allocated) {
+
+                graphics.fill(
+                        sx,
+                        sy,
+                        sx + size,
+                        sy + size,
+                        0xFF555555
+                );
+
+                graphics.fill(
+                        sx + 1,
+                        sy + 1,
+                        sx + size - 1,
+                        sy + size - 1,
+                        0xFF202020
+                );
+
+                continue;
             }
 
+            /*
+             * 尚未分配：
+             *
+             * 正常显示压制图标。
+             */
             graphics.blit(
                     texture,
                     sx,
