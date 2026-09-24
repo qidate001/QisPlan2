@@ -5,6 +5,7 @@ import com.qidate.qisplan2.ghost.possession.classification.GhostTag;
 public record GhostSuppressionRule(
         GhostTag sourceTag,
         GhostTag targetTag,
-        double strength
+        double strength,
+        double reverseStrength
 ) {
 }
