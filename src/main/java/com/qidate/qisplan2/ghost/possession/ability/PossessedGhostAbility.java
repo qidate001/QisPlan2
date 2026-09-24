@@ -93,6 +93,24 @@ public interface PossessedGhostAbility {
         );
     }
 
+    /**
+     * 灵异卡片的大图标。
+     *
+     * 返回 null 时使用默认占位图标。
+     */
+    default ResourceLocation iconTexture() {
+        return null;
+    }
+
+    /**
+     * 压制额度的小图标。
+     *
+     * 返回 null 时使用默认占位图标。
+     */
+    default ResourceLocation suppressionIconTexture() {
+        return null;
+    }
+
 
     /*
      * ============================================================

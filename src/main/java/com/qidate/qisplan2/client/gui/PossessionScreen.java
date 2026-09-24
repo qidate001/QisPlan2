@@ -905,16 +905,16 @@ public class PossessionScreen extends Screen {
                 0x40FFFFFF
         );
 
-        graphics.fill(
-                x + 6,
-                y + 6,
-                x + 24,
-                y + 24,
-                0xFF555565
-        );
-
         PossessedGhostAbility ability =
                 GhostAbilityRegistry.get(ghostId);
+
+        drawGhostIcon(
+                graphics,
+                ability,
+                x + 6,
+                y + 6,
+                18
+        );
 
         graphics.drawString(
                 this.font,
@@ -947,9 +947,7 @@ public class PossessionScreen extends Screen {
                 graphics,
                 x + 8,
                 y + 50,
-                ability == null
-                        ? 1
-                        : ability.suppressionUnits()
+                ability
         );
     }
 
@@ -991,8 +989,14 @@ public class PossessionScreen extends Screen {
             GuiGraphics graphics,
             int x,
             int y,
-            int slots
+            PossessedGhostAbility ability
     ) {
+
+        if (ability == null) {
+            return;
+        }
+
+        int slots = ability.suppressionUnits();
 
         int size = 10;
         int gap = 4;
@@ -1008,21 +1012,42 @@ public class PossessionScreen extends Screen {
             int sy =
                     y + row * (size + gap);
 
-            graphics.fill(
-                    sx,
-                    sy,
-                    sx + size,
-                    sy + size,
-                    0xFF2A2A34
-            );
+            ResourceLocation texture =
+                    ability.suppressionIconTexture();
 
-            graphics.fill(
-                    sx + 1,
-                    sy + 1,
-                    sx + size - 1,
-                    sy + size - 1,
-                    0xFF6A6A78
-            );
+            if (texture == null) {
+
+                // 默认压制额度图标
+                graphics.fill(
+                        sx,
+                        sy,
+                        sx + size,
+                        sy + size,
+                        0xFF2A2A34
+                );
+
+                graphics.fill(
+                        sx + 1,
+                        sy + 1,
+                        sx + size - 1,
+                        sy + size - 1,
+                        0xFFE02020
+                );
+
+            } else {
+
+                graphics.blit(
+                        texture,
+                        sx,
+                        sy,
+                        0,
+                        0,
+                        size,
+                        size,
+                        size,
+                        size
+                );
+            }
         }
     }
 
@@ -1043,6 +1068,55 @@ public class PossessionScreen extends Screen {
         }
 
         return id.toString();
+    }
+
+    private void drawGhostIcon(
+            GuiGraphics graphics,
+            PossessedGhostAbility ability,
+            int x,
+            int y,
+            int size
+    ) {
+
+        if (ability == null) {
+            graphics.fill(
+                    x,
+                    y,
+                    x + size,
+                    y + size,
+                    0xFF555565
+            );
+            return;
+        }
+
+        ResourceLocation texture =
+                ability.iconTexture();
+
+        if (texture == null) {
+
+            // 暂时使用纯红色作为默认灵异图标
+            graphics.fill(
+                    x,
+                    y,
+                    x + size,
+                    y + size,
+                    0xFFE02020
+            );
+
+            return;
+        }
+
+        graphics.blit(
+                texture,
+                x,
+                y,
+                0,
+                0,
+                size,
+                size,
+                size,
+                size
+        );
     }
 
     private void drawCorrosionLayer(

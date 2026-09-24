@@ -1,15 +1,19 @@
 package com.qidate.qisplan2.core;
 
 import com.mojang.serialization.Codec;
+import com.mojang.serialization.codecs.RecordCodecBuilder;
 import com.qidate.qisplan2.ghost.possession.data.PossessedGhostState;
 import com.qidate.qisplan2.ghost.layer.GhostLayerData;
 import com.qidate.qisplan2.ghost.partition.PartitionReturnData;
+import com.qidate.qisplan2.ghost.possession.manager.SuppressionAllocation;
 import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.resources.ResourceLocation;
 import net.neoforged.neoforge.attachment.AttachmentType;
 import net.neoforged.neoforge.registries.DeferredHolder;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import static com.qidate.qisplan2.core.ModRegistries.ATTACHMENT_TYPES;
@@ -147,14 +151,14 @@ public class ModAttachments {
 
     public static final DeferredHolder<
             AttachmentType<?>,
-            AttachmentType<Map<ResourceLocation, Map<ResourceLocation, Integer>>>
+            AttachmentType<Map<ResourceLocation, Map<ResourceLocation, List<SuppressionAllocation>>>>
             > GHOST_SUPPRESSION_ALLOCATION =
             ATTACHMENT_TYPES.register(
                     "ghost_suppression_allocation",
                     () -> AttachmentType
-                            .<Map<ResourceLocation, Map<ResourceLocation, Integer>>>builder(
+                            .<Map<ResourceLocation, Map<ResourceLocation, List<SuppressionAllocation>>>>builder(
                                     (java.util.function.Supplier<
-                                            Map<ResourceLocation, Map<ResourceLocation, Integer>>
+                                            Map<ResourceLocation, Map<ResourceLocation, List<SuppressionAllocation>>>
                                             >) HashMap::new
                             )
                             .serialize(
@@ -162,7 +166,7 @@ public class ModAttachments {
                                             ResourceLocation.CODEC,
                                             Codec.unboundedMap(
                                                     ResourceLocation.CODEC,
-                                                    Codec.INT
+                                                    SuppressionAllocation.CODEC.listOf()
                                             )
                                     )
                             )
@@ -170,12 +174,19 @@ public class ModAttachments {
                                     ByteBufCodecs.map(
                                             HashMap::new,
                                             ResourceLocation.STREAM_CODEC,
+
                                             ByteBufCodecs.map(
                                                     HashMap::new,
                                                     ResourceLocation.STREAM_CODEC,
-                                                    ByteBufCodecs.VAR_INT,
+
+                                                    SuppressionAllocation.STREAM_CODEC
+                                                            .apply(
+                                                                    ByteBufCodecs.list()
+                                                            ),
+
                                                     32
                                             ),
+
                                             32
                                     )
                             )
