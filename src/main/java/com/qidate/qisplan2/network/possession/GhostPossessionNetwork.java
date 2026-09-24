@@ -5,12 +5,11 @@ import com.qidate.qisplan2.client.GhostPossessionClientState;
 import com.qidate.qisplan2.client.screen.GhostPossessionScreen;
 import com.qidate.qisplan2.ghost.possession.manager.GhostPossessionManager;
 import com.qidate.qisplan2.ghost.possession.manager.GhostPossessionSession;
-import com.qidate.qisplan2.network.payload.GhostPossessionEndPayload;
-import com.qidate.qisplan2.network.payload.GhostPossessionInputPayload;
-import com.qidate.qisplan2.network.payload.GhostPossessionStartPayload;
-import com.qidate.qisplan2.network.payload.GhostPossessionUpdatePayload;
+import com.qidate.qisplan2.ghost.possession.manager.GhostSuppressionAllocationHandler;
+import com.qidate.qisplan2.network.payload.*;
 
 import net.minecraft.client.Minecraft;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.neoforged.neoforge.network.PacketDistributor;
 import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent;
@@ -74,6 +73,18 @@ public final class GhostPossessionNetwork {
                 GhostPossessionEndPayload.TYPE,
                 GhostPossessionEndPayload.STREAM_CODEC,
                 GhostPossessionNetwork::handleEnd
+        );
+
+        /*
+         * ========================================================
+         * C2S：灵异配平
+         * ========================================================
+         */
+
+        registrar.playToServer(
+                GhostSuppressionAllocationPayload.TYPE,
+                GhostSuppressionAllocationPayload.STREAM_CODEC,
+                GhostPossessionNetwork::handleSuppressionAllocation
         );
     }
 
@@ -205,6 +216,45 @@ public final class GhostPossessionNetwork {
 
     /*
      * ========================================================
+     * C2S：灵异配平
+     * ========================================================
+     */
+
+    private static void handleSuppressionAllocation(
+            GhostSuppressionAllocationPayload payload,
+            IPayloadContext context
+    ) {
+
+        context.enqueueWork(() -> {
+
+            if (!(context.player()
+                    instanceof ServerPlayer player)) {
+
+                return;
+            }
+
+            boolean success =
+                    GhostSuppressionAllocationHandler.allocate(
+                            player,
+                            payload.sourceGhost(),
+                            payload.targetGhost(),
+                            payload.slotIndex(),
+                            payload.x(),
+                            payload.y()
+                    );
+
+            QisPlan2.LOGGER.info(
+                    "[灵异配平] 分配请求：{} 的 slot {} → {}，结果={}",
+                    payload.sourceGhost(),
+                    payload.slotIndex(),
+                    payload.targetGhost(),
+                    success ? "成功" : "失败"
+            );
+        });
+    }
+
+    /*
+     * ========================================================
      * S2C：开始
      * ========================================================
      */
@@ -279,6 +329,31 @@ public final class GhostPossessionNetwork {
                         left,
                         right,
                         attempt
+                )
+        );
+    }
+
+    /*
+     * ========================================================
+     * C2S：灵异配平
+     * ========================================================
+     */
+
+    public static void sendSuppressionAllocation(
+            ResourceLocation sourceGhost,
+            ResourceLocation targetGhost,
+            int slotIndex,
+            double x,
+            double y
+    ) {
+
+        PacketDistributor.sendToServer(
+                new GhostSuppressionAllocationPayload(
+                        sourceGhost,
+                        targetGhost,
+                        slotIndex,
+                        x,
+                        y
                 )
         );
     }

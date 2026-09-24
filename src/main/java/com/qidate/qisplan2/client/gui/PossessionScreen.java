@@ -10,6 +10,7 @@ import com.qidate.qisplan2.ghost.possession.ability.GhostAbilityRegistry;
 import com.qidate.qisplan2.ghost.possession.ability.PossessedGhostAbility;
 import com.qidate.qisplan2.ghost.corrosion.CorrosionMatrix;
 import com.qidate.qisplan2.ghost.corrosion.CorrosionType;
+import com.qidate.qisplan2.network.possession.GhostPossessionNetwork;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.Screen;
@@ -457,17 +458,63 @@ public class PossessionScreen extends Screen {
 
             if (
                     targetGhost != null
-                            && !targetGhost.equals(
-                            draggingSourceGhost
-                    )
+                            && !targetGhost.equals(draggingSourceGhost)
             ) {
 
-                QisPlan2.LOGGER.info(
-                        "[灵异配平] 拖动压制额度：{} 的 slot {} → {}",
-                        draggingSourceGhost,
-                        draggingSlotIndex,
-                        targetGhost
-                );
+                Minecraft minecraft =
+                        Minecraft.getInstance();
+
+                if (minecraft.player != null) {
+
+                    int targetIndex = 0;
+
+                    for (ResourceLocation ghostId
+                            : minecraft.player
+                            .getData(ModAttachments.POSSESSED_GHOSTS)
+                            .keySet()) {
+
+                        if (ghostId.equals(targetGhost)) {
+                            break;
+                        }
+
+                        targetIndex++;
+                    }
+
+                    int targetCardX =
+                            getWorkbenchCardX(targetIndex);
+
+                    int targetCardY =
+                            getWorkbenchCardY(targetIndex);
+
+                    /*
+                     * 保存相对于目标鬼卡片的位置。
+                     *
+                     * 这里不能保存屏幕坐标，
+                     * 因为面板可以缩放，而且窗口大小也可能改变。
+                     */
+                    double relativeX =
+                            localX - targetCardX;
+
+                    double relativeY =
+                            localY - targetCardY;
+
+                    QisPlan2.LOGGER.info(
+                            "[灵异配平] 拖动压制额度：{} 的 slot {} → {}，位置=({}, {})",
+                            draggingSourceGhost,
+                            draggingSlotIndex,
+                            targetGhost,
+                            relativeX,
+                            relativeY
+                    );
+
+                    GhostPossessionNetwork.sendSuppressionAllocation(
+                            draggingSourceGhost,
+                            targetGhost,
+                            draggingSlotIndex,
+                            relativeX,
+                            relativeY
+                    );
+                }
             }
 
             draggingSuppression = false;
@@ -906,7 +953,7 @@ public class PossessionScreen extends Screen {
 
             rightY += CARD_HEIGHT + 8;
 
-            if (rightY > panelY + PANEL_HEIGHT - CARD_HEIGHT) {
+            if (rightY > PANEL_HEIGHT - CARD_HEIGHT) {
                 break;
             }
         }
