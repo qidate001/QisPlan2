@@ -4,6 +4,7 @@ import com.qidate.qisplan2.entity.AbstractGhostEntity;
 import com.qidate.qisplan2.ghost.corrosion.CorrosionType;
 import com.qidate.qisplan2.ghost.corrosion.GhostCorrosion;
 import com.qidate.qisplan2.ghost.possession.classification.GhostClassification;
+import com.qidate.qisplan2.ghost.possession.classification.GhostTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
@@ -233,6 +234,12 @@ public interface PossessedGhostAbility {
                 .build();
     }
 
+    /*
+     * ============================================================
+     * 压制Tag
+     * ============================================================
+     */
+
     /**
      * 这个鬼的灵异分类。
      *
@@ -243,6 +250,50 @@ public interface PossessedGhostAbility {
     default GhostClassification classification() {
 
         return GhostClassification.empty();
+    }
+
+    /**
+     * 这个鬼的灵异能够压制的目标分类。
+     *
+     * <p>
+     * 用于描述这个鬼的灵异规则可以针对哪些类型的存在。
+     * </p>
+     */
+    default GhostClassification suppressionTargets() {
+
+        return GhostClassification.empty();
+    }
+
+    /**
+     * 判断这个鬼的灵异是否能够压制目标鬼。
+     *
+     * <p>
+     * 只要自身的压制目标 Tag 与目标鬼的分类 Tag
+     * 存在至少一个交集，就认为可以进行压制。
+     * </p>
+     */
+    default boolean canSuppress(
+            PossessedGhostAbility target
+    ) {
+
+        if (target == null) {
+            return false;
+        }
+
+        GhostClassification targets =
+                suppressionTargets();
+
+        GhostClassification targetClassification =
+                target.classification();
+
+        for (GhostTag tag : targets.tags()) {
+
+            if (targetClassification.has(tag)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /*

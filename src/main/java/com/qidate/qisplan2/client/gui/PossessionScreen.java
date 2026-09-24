@@ -586,6 +586,35 @@ public class PossessionScreen extends Screen {
                             )
                     ) {
 
+                        /*
+                         * 目标鬼必须能够被来源鬼的灵异压制。
+                         */
+                        if (
+                                !canSuppress(
+                                        draggingSourceGhost,
+                                        targetGhost
+                                )
+                        ) {
+
+                            QisPlan2.LOGGER.info(
+                                    "[灵异配平] {} 无法压制 {}，拒绝移动",
+                                    draggingSourceGhost,
+                                    targetGhost
+                            );
+
+                            /*
+                             * 不发送任何网络请求。
+                             *
+                             * 原来的分配保持不变。
+                             */
+                            draggingSuppression = false;
+                            draggingSourceGhost = null;
+                            draggingOriginalTargetGhost = null;
+                            draggingSlotIndex = -1;
+
+                            return true;
+                        }
+
                         int targetIndex = 0;
 
                         for (
@@ -752,6 +781,30 @@ public class PossessionScreen extends Screen {
                             )
                     ) {
 
+                        /*
+                         * 目标鬼必须能够被来源鬼的灵异压制。
+                         */
+                        if (
+                                !canSuppress(
+                                        draggingSourceGhost,
+                                        targetGhost
+                                )
+                        ) {
+
+                            QisPlan2.LOGGER.info(
+                                    "[灵异配平] {} 无法压制 {}，拒绝分配",
+                                    draggingSourceGhost,
+                                    targetGhost
+                            );
+
+                            draggingSuppression = false;
+                            draggingSourceGhost = null;
+                            draggingOriginalTargetGhost = null;
+                            draggingSlotIndex = -1;
+
+                            return true;
+                        }
+
                         int targetIndex = 0;
 
                         for (
@@ -804,11 +857,6 @@ public class PossessionScreen extends Screen {
                                         relativeY
                                 );
                     }
-
-                    /*
-                     * 拖回自己 / 拖到卡片外：
-                     * 什么都不做。
-                     */
                 }
             }
 
@@ -2204,6 +2252,38 @@ public class PossessionScreen extends Screen {
                 && mouseX < x + width
                 && mouseY >= y
                 && mouseY < y + height;
+    }
+
+    private boolean canSuppress(
+            ResourceLocation sourceGhost,
+            ResourceLocation targetGhost
+    ) {
+
+        if (sourceGhost == null || targetGhost == null) {
+            return false;
+        }
+
+        if (sourceGhost.equals(targetGhost)) {
+            return false;
+        }
+
+        PossessedGhostAbility sourceAbility =
+                GhostAbilityRegistry.get(
+                        sourceGhost
+                );
+
+        PossessedGhostAbility targetAbility =
+                GhostAbilityRegistry.get(
+                        targetGhost
+                );
+
+        if (sourceAbility == null || targetAbility == null) {
+            return false;
+        }
+
+        return sourceAbility.canSuppress(
+                targetAbility
+        );
     }
 
     @Override

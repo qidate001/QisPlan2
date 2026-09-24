@@ -1,6 +1,9 @@
 package com.qidate.qisplan2.ghost.possession.manager;
 
+import com.qidate.qisplan2.QisPlan2;
 import com.qidate.qisplan2.core.ModAttachments;
+import com.qidate.qisplan2.ghost.possession.ability.GhostAbilityRegistry;
+import com.qidate.qisplan2.ghost.possession.ability.PossessedGhostAbility;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.player.Player;
 
@@ -113,11 +116,45 @@ public final class GhostSuppressionAllocationHandler {
             return false;
         }
 
-        if (isSlotAllocated(
-                player,
-                sourceGhost,
-                slotIndex
-        )) {
+        /*
+         * 服务端最终验证：
+         *
+         * 来源鬼的灵异必须能够压制目标鬼。
+         */
+        PossessedGhostAbility sourceAbility =
+                GhostAbilityRegistry.get(
+                        sourceGhost
+                );
+
+        PossessedGhostAbility targetAbility =
+                GhostAbilityRegistry.get(
+                        targetGhost
+                );
+
+        if (
+                sourceAbility == null
+                        || targetAbility == null
+                        || !sourceAbility.canSuppress(
+                        targetAbility
+                )
+        ) {
+
+            QisPlan2.LOGGER.info(
+                    "[灵异配平] 服务端拒绝分配：{} 无法压制 {}",
+                    sourceGhost,
+                    targetGhost
+            );
+
+            return false;
+        }
+
+        if (
+                isSlotAllocated(
+                        player,
+                        sourceGhost,
+                        slotIndex
+                )
+        ) {
             return false;
         }
 
@@ -252,6 +289,38 @@ public final class GhostSuppressionAllocationHandler {
     ) {
 
         if (sourceGhost.equals(newTargetGhost)) {
+            return false;
+        }
+
+        /*
+         * 服务端最终验证：
+         *
+         * 来源鬼必须能够压制新的目标鬼。
+         */
+        PossessedGhostAbility sourceAbility =
+                GhostAbilityRegistry.get(
+                        sourceGhost
+                );
+
+        PossessedGhostAbility targetAbility =
+                GhostAbilityRegistry.get(
+                        newTargetGhost
+                );
+
+        if (
+                sourceAbility == null
+                        || targetAbility == null
+                        || !sourceAbility.canSuppress(
+                        targetAbility
+                )
+        ) {
+
+            QisPlan2.LOGGER.info(
+                    "[灵异配平] 服务端拒绝移动：{} 无法压制 {}",
+                    sourceGhost,
+                    newTargetGhost
+            );
+
             return false;
         }
 

@@ -57,6 +57,14 @@ public final class GhostEyeAbility
     }
 
     @Override
+    public GhostClassification suppressionTargets() {
+
+        return GhostClassification.of(
+                GhostTag.ENTITY
+        );
+    }
+
+    @Override
     public int suppressionUnits() {
         return 10;
     }
