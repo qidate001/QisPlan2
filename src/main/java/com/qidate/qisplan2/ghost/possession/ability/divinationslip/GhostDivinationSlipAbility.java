@@ -41,6 +41,14 @@ public final class GhostDivinationSlipAbility
         return CORROSION;
     }
 
+    @Override
+    public ResourceLocation iconTexture() {
+        return ResourceLocation.fromNamespaceAndPath(
+                QisPlan2.MODID,
+                "textures/item/ghost_divination_slip.png"
+        );
+    }
+
     /**
      * 主动技能
      */
