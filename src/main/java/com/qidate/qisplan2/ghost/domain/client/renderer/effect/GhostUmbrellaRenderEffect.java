@@ -129,7 +129,7 @@ public final class GhostUmbrellaRenderEffect
         shader.getUniform(
                 "GhostUmbrellaDomainRadius"
         ).set(
-                (float) domain.getRadius()
+                (float) domain.getRenderRadius()
         );
 
         /*

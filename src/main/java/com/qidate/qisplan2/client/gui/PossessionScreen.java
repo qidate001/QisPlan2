@@ -12,6 +12,7 @@ import com.qidate.qisplan2.ghost.possession.ability.PossessedGhostAbility;
 import com.qidate.qisplan2.ghost.corrosion.CorrosionMatrix;
 import com.qidate.qisplan2.ghost.corrosion.CorrosionType;
 import com.qidate.qisplan2.ghost.possession.manager.SuppressionAllocation;
+import com.qidate.qisplan2.ghost.possession.suppression.GhostSuppressionSystem;
 import com.qidate.qisplan2.network.possession.GhostPossessionNetwork;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
@@ -1317,6 +1318,12 @@ public class PossessionScreen extends Screen {
             int y
     ) {
 
+        Minecraft minecraft = Minecraft.getInstance();
+
+        if (minecraft.player == null) {
+            return;
+        }
+
         // 背景
         graphics.fill(
                 x,
@@ -1353,22 +1360,31 @@ public class PossessionScreen extends Screen {
                 0xFFFFFFFF
         );
 
-        // ===== 可用压制资源 =====
+        // ===== 当前压制 =====
 
-        PossessedGhostAbility ability =
-                GhostAbilityRegistry.get(ghostId);
-
-        int units =
-                ability == null
-                        ? 0
-                        : ability.suppressionUnits();
+        double suppression =
+                GhostSuppressionSystem.getSuppression(
+                        minecraft.player,
+                        ghostId
+                );
 
         graphics.drawString(
                 this.font,
-                "资源 " + units,
+                "压制",
                 x + 28,
                 y + 44,
                 0xFFAAAAAA
+        );
+
+        graphics.drawString(
+                this.font,
+                String.format(
+                        "%.1f%%",
+                        suppression * 100.0D
+                ),
+                x + 114,
+                y + 41,
+                0xFFFFFFFF
         );
 
         // ===== 复苏 =====

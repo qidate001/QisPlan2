@@ -125,7 +125,7 @@ public final class GhostEyeRenderEffect
         shader.getUniform(
                 "GhostEyeDomainRadius"
         ).set(
-                (float) ghostEyeDomain.getRadius()
+                (float) ghostEyeDomain.getRenderRadius()
         );
 
         /*
