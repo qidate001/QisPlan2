@@ -243,6 +243,15 @@ public interface PossessedGhostAbility {
     }
 
     /**
+     * 这只鬼拥有多少个压制额度。
+     *
+     * 每一个额度都是一个可独立分配的灵异单位。
+     */
+    default int suppressionSlots() {
+        return 1;
+    }
+
+    /**
      * 每单位压制资源对应多少基础灵异强度。
      *
      * 默认100。

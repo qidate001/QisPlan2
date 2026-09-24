@@ -31,6 +31,9 @@ public class PossessionScreen extends Screen {
     private static final int CARD_WIDTH = 145;
     private static final int CARD_HEIGHT = 50;
 
+    private static final int GHOST_WORKBENCH_CARD_WIDTH = 172;
+    private static final int GHOST_WORKBENCH_CARD_HEIGHT = 76;
+
     private static final int ICON_SIZE = 18;
 
     private static final int SHALLOW_STUN_COLOR = 0xFF6AA6FF;
@@ -446,21 +449,61 @@ public class PossessionScreen extends Screen {
             GuiGraphics graphics
     ) {
 
-        graphics.drawCenteredString(
-                this.font,
-                "灵异配平",
-                PANEL_WIDTH / 2,
-                70,
-                0xFFFFFFFF
-        );
+        Minecraft minecraft = Minecraft.getInstance();
 
-        graphics.drawCenteredString(
-                this.font,
-                "灵异配置界面",
-                PANEL_WIDTH / 2,
-                90,
-                0xFF888888
-        );
+        if (minecraft.player == null) {
+            return;
+        }
+
+        Map<ResourceLocation, PossessedGhostState> ghosts =
+                minecraft.player.getData(
+                        ModAttachments.POSSESSED_GHOSTS
+                );
+
+        int columns = 3;
+
+        int gapX = 18;
+        int gapY = 12;
+
+        int totalWidth =
+                columns * GHOST_WORKBENCH_CARD_WIDTH
+                        + (columns - 1) * gapX;
+
+        int startX =
+                (PANEL_WIDTH - totalWidth) / 2;
+
+        int startY = 52;
+
+        int index = 0;
+
+        for (var entry : ghosts.entrySet()) {
+
+            int column =
+                    index % columns;
+
+            int row =
+                    index / columns;
+
+            int x =
+                    startX
+                            + column
+                            * (GHOST_WORKBENCH_CARD_WIDTH + gapX);
+
+            int y =
+                    startY
+                            + row
+                            * (GHOST_WORKBENCH_CARD_HEIGHT + gapY);
+
+            drawWorkbenchGhostCard(
+                    graphics,
+                    entry.getKey(),
+                    entry.getValue(),
+                    x,
+                    y
+            );
+
+            index++;
+        }
     }
 
     private void drawStatusPage(GuiGraphics graphics) {
@@ -567,11 +610,8 @@ public class PossessionScreen extends Screen {
         int bodyWidth = 168;
         int bodyHeight = 278;
 
-        int bodyX =
-                panelX + (PANEL_WIDTH - bodyWidth) / 2;
-
-        int bodyY =
-                panelY + 26;
+        int bodyX = (PANEL_WIDTH - bodyWidth) / 2;
+        int bodyY = 26;
 
         CorrosionMatrix matrix =
                 PossessionHandler.getCorrosionMatrix(player);
@@ -672,8 +712,8 @@ public class PossessionScreen extends Screen {
         // 右侧：驾驭的鬼
         // =========================
 
-        int rightX = panelX + PANEL_WIDTH - CARD_WIDTH - 12;
-        int rightY = panelY + 36;
+        int rightX = PANEL_WIDTH - CARD_WIDTH - 12;
+        int rightY = 36;
 
         for (var entry : ghosts.entrySet()) {
 
@@ -841,6 +881,78 @@ public class PossessionScreen extends Screen {
         );
     }
 
+    private void drawWorkbenchGhostCard(
+            GuiGraphics graphics,
+            ResourceLocation ghostId,
+            PossessedGhostState state,
+            int x,
+            int y
+    ) {
+
+        graphics.fill(
+                x,
+                y,
+                x + GHOST_WORKBENCH_CARD_WIDTH,
+                y + GHOST_WORKBENCH_CARD_HEIGHT,
+                0xD0181820
+        );
+
+        graphics.fill(
+                x + 6,
+                y + 1,
+                x + GHOST_WORKBENCH_CARD_WIDTH - 6,
+                y + 2,
+                0x40FFFFFF
+        );
+
+        graphics.fill(
+                x + 6,
+                y + 6,
+                x + 24,
+                y + 24,
+                0xFF555565
+        );
+
+        PossessedGhostAbility ability =
+                GhostAbilityRegistry.get(ghostId);
+
+        graphics.drawString(
+                this.font,
+                getGhostName(ghostId),
+                x + 30,
+                y + 6,
+                0xFFFFFFFF
+        );
+
+        graphics.drawString(
+                this.font,
+                String.format(
+                        "%.0f",
+                        state.intrinsicStrength()
+                ),
+                x + 132,
+                y + 6,
+                0xFFCCCCCC
+        );
+
+        graphics.drawString(
+                this.font,
+                "压制额度",
+                x + 8,
+                y + 34,
+                0xFFAAAAAA
+        );
+
+        drawSuppressionSlots(
+                graphics,
+                x + 8,
+                y + 50,
+                ability == null
+                        ? 1
+                        : ability.suppressionUnits()
+        );
+    }
+
     private void drawProgressBar(
             GuiGraphics graphics,
             int x,
@@ -871,6 +983,45 @@ public class PossessionScreen extends Screen {
                     x + filled,
                     y + height,
                     fillColor
+            );
+        }
+    }
+
+    private void drawSuppressionSlots(
+            GuiGraphics graphics,
+            int x,
+            int y,
+            int slots
+    ) {
+
+        int size = 10;
+        int gap = 4;
+
+        for (int i = 0; i < slots; i++) {
+
+            int column = i % 5;
+            int row = i / 5;
+
+            int sx =
+                    x + column * (size + gap);
+
+            int sy =
+                    y + row * (size + gap);
+
+            graphics.fill(
+                    sx,
+                    sy,
+                    sx + size,
+                    sy + size,
+                    0xFF2A2A34
+            );
+
+            graphics.fill(
+                    sx + 1,
+                    sy + 1,
+                    sx + size - 1,
+                    sy + size - 1,
+                    0xFF6A6A78
             );
         }
     }
