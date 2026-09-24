@@ -65,6 +65,10 @@ public final class ClientGhostDomainManager {
         for (ClientGhostDomain domain : DOMAINS.values()) {
             domain.tick();
         }
+
+        DOMAINS.values().removeIf(
+                ClientGhostDomain::isAnimationFinished
+        );
     }
 
     public static void add(
@@ -100,7 +104,15 @@ public final class ClientGhostDomainManager {
     }
 
     public static void remove(UUID id) {
-        DOMAINS.remove(id);
+
+        ClientGhostDomain domain =
+                DOMAINS.get(id);
+
+        if (domain == null) {
+            return;
+        }
+
+        domain.startClosing();
     }
 
     public static ClientGhostDomain get(UUID id) {

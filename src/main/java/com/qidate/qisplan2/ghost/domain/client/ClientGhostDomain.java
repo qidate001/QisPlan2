@@ -29,6 +29,40 @@ public final class ClientGhostDomain {
     private int layer;
     private double radius;
 
+    /**
+     * 鬼域视觉动画状态。
+     */
+    private AnimationState animationState =
+            AnimationState.OPENING;
+
+    /**
+     * 鬼域视觉展开进度。
+     *
+     * 0.0 = 完全收起
+     * 1.0 = 完全展开
+     */
+    private float animationProgress = 0.0F;
+
+    /**
+     * 展开/收回动画持续时间。
+     */
+    private static final int OPENING_TICKS = 12;
+    private static final int CLOSING_TICKS = 10;
+
+    /**
+     * 当前动画已经进行的 tick。
+     */
+    private int animationTicks = 0;
+
+
+
+    private enum AnimationState {
+        OPENING,
+        OPEN,
+        CLOSING,
+        CLOSED
+    }
+
     public ClientGhostDomain(
             UUID id,
             UUID sourceUUID,
@@ -112,6 +146,19 @@ public final class ClientGhostDomain {
         return radius;
     }
 
+    /**
+     * 获取当前视觉动画使用的鬼域半径。
+     *
+     * <p>不会影响鬼域本身的实际逻辑半径。</p>
+     */
+    public double getRenderRadius() {
+        return radius * animationProgress;
+    }
+
+    public boolean isAnimationFinished() {
+        return animationState == AnimationState.CLOSED;
+    }
+
     public void setStrength(double strength) {
         this.strength = strength;
     }
@@ -171,6 +218,7 @@ public final class ClientGhostDomain {
     public void tick() {
 
         moveAxis();
+        tickAnimation();
     }
 
     private void moveAxis() {
@@ -180,6 +228,69 @@ public final class ClientGhostDomain {
         x = moveTowards(x, targetX, speed);
         y = moveTowards(y, targetY, speed);
         z = moveTowards(z, targetZ, speed);
+    }
+
+    private void tickAnimation() {
+
+        switch (animationState) {
+
+            case OPENING -> {
+
+                animationTicks++;
+
+                animationProgress =
+                        Math.min(
+                                1.0F,
+                                (float) animationTicks
+                                        / OPENING_TICKS
+                        );
+
+                if (animationProgress >= 1.0F) {
+                    animationProgress = 1.0F;
+                    animationState = AnimationState.OPEN;
+                }
+            }
+
+            case OPEN -> {
+                animationProgress = 1.0F;
+            }
+
+            case CLOSING -> {
+
+                animationTicks++;
+
+                animationProgress =
+                        Math.max(
+                                0.0F,
+                                1.0F
+                                        - (float) animationTicks
+                                        / CLOSING_TICKS
+                        );
+
+                if (animationProgress <= 0.0F) {
+                    animationProgress = 0.0F;
+                    animationState = AnimationState.CLOSED;
+                }
+            }
+
+            case CLOSED -> {
+                animationProgress = 0.0F;
+            }
+        }
+    }
+
+    public void startClosing() {
+
+        if (
+                animationState == AnimationState.CLOSING
+                        || animationState == AnimationState.CLOSED
+        ) {
+            return;
+        }
+
+        animationState = AnimationState.CLOSING;
+
+        animationTicks = 0;
     }
 
     private static double moveTowards(
