@@ -5,11 +5,13 @@ import com.qidate.qisplan2.client.key.ModKeyMappings;
 import com.qidate.qisplan2.core.ModAttachments;
 import com.qidate.qisplan2.core.QisConfig;
 import com.qidate.qisplan2.ghost.possession.data.PossessedGhostState;
+import com.qidate.qisplan2.ghost.possession.manager.GhostSuppressionAllocationHandler;
 import com.qidate.qisplan2.ghost.possession.manager.PossessionHandler;
 import com.qidate.qisplan2.ghost.possession.ability.GhostAbilityRegistry;
 import com.qidate.qisplan2.ghost.possession.ability.PossessedGhostAbility;
 import com.qidate.qisplan2.ghost.corrosion.CorrosionMatrix;
 import com.qidate.qisplan2.ghost.corrosion.CorrosionType;
+import com.qidate.qisplan2.ghost.possession.manager.SuppressionAllocation;
 import com.qidate.qisplan2.network.possession.GhostPossessionNetwork;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
@@ -17,6 +19,7 @@ import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 
+import java.util.List;
 import java.util.Map;
 
 public class PossessionScreen extends Screen {
@@ -47,6 +50,8 @@ public class PossessionScreen extends Screen {
     private boolean draggingSuppression = false;
 
     private ResourceLocation draggingSourceGhost = null;
+
+    private ResourceLocation draggingOriginalTargetGhost = null;
 
     private int draggingSlotIndex = -1;
 
@@ -171,6 +176,12 @@ public class PossessionScreen extends Screen {
             new OrganAnchor(CorrosionType.BONE, 205, 278, 151, 278),       // 骨 (逆)
             new OrganAnchor(CorrosionType.FOOT, 193, 380, 155, 380),       // 足 (逆)
     };
+
+    private static final ResourceLocation DEFAULT_SUPPRESSION_ICON =
+            ResourceLocation.fromNamespaceAndPath(
+                    QisPlan2.MODID,
+                    "textures/gui/suppression.png"
+            );
 
 
 
@@ -310,6 +321,46 @@ public class PossessionScreen extends Screen {
                     int cardY =
                             getWorkbenchCardY(index);
 
+                    /*
+                     * 先检查已经分配出去的眼睛。
+                     *
+                     * 已经被拖走的 slot 不能再次从原槽位取出，
+                     * 但可以从目标鬼卡片上重新抓起。
+                     */
+                    SuppressionAllocationHit allocated =
+                            getAllocatedSuppressionAt(
+                                    localX,
+                                    localY,
+                                    ghostId,
+                                    cardX,
+                                    cardY
+                            );
+
+                    if (allocated != null) {
+
+                        draggingSuppression = true;
+
+                        draggingSourceGhost =
+                                allocated.sourceGhost();
+
+                        draggingOriginalTargetGhost =
+                                allocated.targetGhost();
+
+                        draggingSlotIndex =
+                                allocated.allocation().slotIndex();
+
+                        draggingMouseX =
+                                (int) localX;
+
+                        draggingMouseY =
+                                (int) localY;
+
+                        return true;
+                    }
+
+                    /*
+                     * 再检查 Ghost Eye 自己的压制槽位。
+                     */
                     int slot =
                             getSuppressionSlotAt(
                                     localX,
@@ -321,7 +372,24 @@ public class PossessionScreen extends Screen {
 
                     if (slot >= 0) {
 
+                        /*
+                         * 已经被分配出去的 slot
+                         * 不能再次使用。
+                         */
+                        if (
+                                GhostSuppressionAllocationHandler.isSlotAllocated(
+                                        minecraft.player,
+                                        ghostId,
+                                        slot
+                                )
+                        ) {
+                            return true;
+                        }
+
                         draggingSuppression = true;
+
+                        draggingOriginalTargetGhost =
+                                null;
 
                         draggingSourceGhost =
                                 ghostId;
@@ -518,7 +586,11 @@ public class PossessionScreen extends Screen {
             }
 
             draggingSuppression = false;
+
             draggingSourceGhost = null;
+
+            draggingOriginalTargetGhost = null;
+
             draggingSlotIndex = -1;
 
             return true;
@@ -1175,6 +1247,13 @@ public class PossessionScreen extends Screen {
                 y + 50,
                 ability
         );
+
+        drawAllocatedSuppression(
+                graphics,
+                ghostId,
+                x,
+                y
+        );
     }
 
     private void drawDraggingSuppression(
@@ -1197,6 +1276,10 @@ public class PossessionScreen extends Screen {
         ResourceLocation texture =
                 ability.suppressionIconTexture();
 
+        if (texture == null) {
+            texture = DEFAULT_SUPPRESSION_ICON;
+        }
+
         int size = 14;
 
         int x =
@@ -1207,29 +1290,65 @@ public class PossessionScreen extends Screen {
                 draggingMouseY
                         - size / 2;
 
-        if (texture == null) {
+        graphics.blit(
+                texture,
+                x,
+                y,
+                0,
+                0,
+                size,
+                size,
+                size,
+                size
+        );
+    }
 
-            graphics.fill(
-                    x,
-                    y,
-                    x + size,
-                    y + size,
-                    0xFFE02020
-            );
+    private void drawAllocatedSuppression(
+            GuiGraphics graphics,
+            ResourceLocation targetGhost,
+            int cardX,
+            int cardY
+    ) {
+        Minecraft minecraft =
+                Minecraft.getInstance();
 
-        } else {
+        if (minecraft.player == null) {
+            return;
+        }
 
-            graphics.blit(
-                    texture,
-                    x,
-                    y,
-                    0,
-                    0,
-                    size,
-                    size,
-                    size,
-                    size
-            );
+        Map<
+                ResourceLocation,
+                Map<ResourceLocation, List<SuppressionAllocation>>
+                > allocations =
+                GhostSuppressionAllocationHandler
+                        .getAllocations(
+                                minecraft.player
+                        );
+
+        int size = 14;
+
+        /*
+         * 遍历所有“来源鬼 → 当前目标鬼”的压制分配。
+         */
+        for (
+                Map<ResourceLocation, List<SuppressionAllocation>>
+                        targets
+                : allocations.values()
+        ) {
+
+            List<SuppressionAllocation> list =
+                    targets.get(targetGhost);
+
+            if (list == null) {
+                continue;
+            }
+
+            /*
+             * 当前这个 targets 来自某一个 sourceGhost。
+             *
+             * 这里需要找到 sourceGhost，
+             * 因此下面这个写法暂时不能直接使用 values()。
+             */
         }
     }
 
@@ -1298,38 +1417,20 @@ public class PossessionScreen extends Screen {
                     ability.suppressionIconTexture();
 
             if (texture == null) {
-
-                // 默认压制额度图标
-                graphics.fill(
-                        sx,
-                        sy,
-                        sx + size,
-                        sy + size,
-                        0xFF2A2A34
-                );
-
-                graphics.fill(
-                        sx + 1,
-                        sy + 1,
-                        sx + size - 1,
-                        sy + size - 1,
-                        0xFFE02020
-                );
-
-            } else {
-
-                graphics.blit(
-                        texture,
-                        sx,
-                        sy,
-                        0,
-                        0,
-                        size,
-                        size,
-                        size,
-                        size
-                );
+                texture = DEFAULT_SUPPRESSION_ICON;
             }
+
+            graphics.blit(
+                    texture,
+                    sx,
+                    sy,
+                    0,
+                    0,
+                    size,
+                    size,
+                    size,
+                    size
+            );
         }
     }
 
@@ -1662,6 +1763,89 @@ public class PossessionScreen extends Screen {
         return -1;
     }
 
+    private SuppressionAllocationHit getAllocatedSuppressionAt(
+            double mouseX,
+            double mouseY,
+            ResourceLocation targetGhost,
+            int cardX,
+            int cardY
+    ) {
+        Minecraft minecraft =
+                Minecraft.getInstance();
+
+        if (minecraft.player == null) {
+            return null;
+        }
+
+        Map<
+                ResourceLocation,
+                Map<ResourceLocation, List<SuppressionAllocation>>
+                > allocations =
+                GhostSuppressionAllocationHandler
+                        .getAllocations(
+                                minecraft.player
+                        );
+
+        int size = 14;
+
+        /*
+         * sourceGhost
+         *     ↓
+         * targetGhost
+         *     ↓
+         * allocation
+         */
+        for (
+                Map.Entry<
+                        ResourceLocation,
+                        Map<ResourceLocation, List<SuppressionAllocation>>
+                        > sourceEntry
+                : allocations.entrySet()
+        ) {
+
+            ResourceLocation sourceGhost =
+                    sourceEntry.getKey();
+
+            List<SuppressionAllocation> list =
+                    sourceEntry
+                            .getValue()
+                            .get(targetGhost);
+
+            if (list == null) {
+                continue;
+            }
+
+            for (SuppressionAllocation allocation : list) {
+
+                int x =
+                        cardX
+                                + (int) allocation.x()
+                                - size / 2;
+
+                int y =
+                        cardY
+                                + (int) allocation.y()
+                                - size / 2;
+
+                if (
+                        mouseX >= x
+                                && mouseX < x + size
+                                && mouseY >= y
+                                && mouseY < y + size
+                ) {
+
+                    return new SuppressionAllocationHit(
+                            sourceGhost,
+                            targetGhost,
+                            allocation
+                    );
+                }
+            }
+        }
+
+        return null;
+    }
+
     private boolean isInside(
             double mouseX,
             double mouseY,
@@ -1710,4 +1894,10 @@ public class PossessionScreen extends Screen {
                 modifiers
         );
     }
+
+    private record SuppressionAllocationHit(
+            ResourceLocation sourceGhost,
+            ResourceLocation targetGhost,
+            SuppressionAllocation allocation
+    ) {}
 }

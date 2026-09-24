@@ -119,29 +119,84 @@ public final class GhostSuppressionAllocationHandler {
             return false;
         }
 
+        /*
+         * Attachment 中的 Map 可能是不可修改的。
+         *
+         * 因此不能直接对 getAllocations(player)
+         * 返回的 Map 调用 computeIfAbsent()。
+         *
+         * 这里创建一份完整的可修改副本。
+         */
         Map<
                 ResourceLocation,
                 Map<ResourceLocation, List<SuppressionAllocation>>
-                > allocations = getAllocations(player);
+                > oldAllocations =
+                getAllocations(player);
 
-        Map<ResourceLocation, List<SuppressionAllocation>> targets =
+        Map<
+                ResourceLocation,
+                Map<ResourceLocation, List<SuppressionAllocation>>
+                > allocations =
+                new HashMap<>();
+
+        for (var sourceEntry : oldAllocations.entrySet()) {
+
+            Map<ResourceLocation, List<SuppressionAllocation>>
+                    targets =
+                    new HashMap<>();
+
+            for (var targetEntry : sourceEntry.getValue().entrySet()) {
+
+                targets.put(
+                        targetEntry.getKey(),
+                        new ArrayList<>(
+                                targetEntry.getValue()
+                        )
+                );
+            }
+
+            allocations.put(
+                    sourceEntry.getKey(),
+                    targets
+            );
+        }
+
+        /*
+         * 获取来源鬼的分配表。
+         */
+        Map<ResourceLocation, List<SuppressionAllocation>>
+                targets =
                 allocations.computeIfAbsent(
                         sourceGhost,
                         ignored -> new HashMap<>()
                 );
 
+        /*
+         * 获取目标鬼的分配列表。
+         */
         List<SuppressionAllocation> list =
                 targets.computeIfAbsent(
                         targetGhost,
                         ignored -> new ArrayList<>()
                 );
 
+        /*
+         * 写入新的分配。
+         */
         list.add(
                 new SuppressionAllocation(
                         slotIndex,
                         x,
                         y
                 )
+        );
+
+        /*
+         * 将新的可修改 Map 重新写回 Attachment。
+         */
+        player.setData(
+                ModAttachments.GHOST_SUPPRESSION_ALLOCATION,
+                allocations
         );
 
         return true;
