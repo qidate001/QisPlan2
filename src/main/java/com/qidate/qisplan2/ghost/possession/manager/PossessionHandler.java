@@ -680,7 +680,7 @@ public final class PossessionHandler {
      * 获取某只鬼的状态。
      */
     public static PossessedGhostState getState(
-            ServerPlayer player,
+            Player player,
             ResourceLocation ghost
     ) {
 
@@ -700,7 +700,7 @@ public final class PossessionHandler {
             ResourceLocation,
             PossessedGhostState
             > getAllStates(
-            ServerPlayer player
+            Player player
     ) {
 
         return new HashMap<>(
@@ -916,7 +916,7 @@ public final class PossessionHandler {
      * “当前鬼有多强”的统一入口。
      */
     public static double getEffectiveStrength(
-            ServerPlayer player,
+            Player player,
             ResourceLocation ghost
     ) {
 

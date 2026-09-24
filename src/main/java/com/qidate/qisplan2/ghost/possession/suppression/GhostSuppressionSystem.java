@@ -9,7 +9,7 @@ import com.qidate.qisplan2.ghost.possession.manager.GhostSuppressionAllocationHa
 import com.qidate.qisplan2.ghost.possession.manager.PossessionHandler;
 import com.qidate.qisplan2.ghost.possession.manager.SuppressionAllocation;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.entity.player.Player;
 
 import java.util.List;
 
@@ -96,7 +96,7 @@ public final class GhostSuppressionSystem {
      * 才会转化为压制力量。
      */
     public static double getSuppression(
-            ServerPlayer player,
+            Player player,
             ResourceLocation targetGhost
     ) {
 

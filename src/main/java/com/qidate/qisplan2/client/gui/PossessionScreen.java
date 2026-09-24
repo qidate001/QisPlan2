@@ -34,7 +34,7 @@ public class PossessionScreen extends Screen {
     private int panelY;
 
     private static final int CARD_WIDTH = 145;
-    private static final int CARD_HEIGHT = 50;
+    private static final int CARD_HEIGHT = 64;
 
     private static final int GHOST_WORKBENCH_CARD_WIDTH = 172;
     private static final int GHOST_WORKBENCH_CARD_HEIGHT = 76;
@@ -1324,7 +1324,10 @@ public class PossessionScreen extends Screen {
             return;
         }
 
+        // =========================
         // 背景
+        // =========================
+
         graphics.fill(
                 x,
                 y,
@@ -1342,7 +1345,10 @@ public class PossessionScreen extends Screen {
                 0x40FFFFFF
         );
 
-        // 图标占位
+        // =========================
+        // 图标
+        // =========================
+
         graphics.fill(
                 x + 5,
                 y + 5,
@@ -1351,7 +1357,10 @@ public class PossessionScreen extends Screen {
                 0xFF555565
         );
 
+        // =========================
         // 名称
+        // =========================
+
         graphics.drawString(
                 this.font,
                 getGhostName(ghostId),
@@ -1360,47 +1369,22 @@ public class PossessionScreen extends Screen {
                 0xFFFFFFFF
         );
 
-        // ===== 当前压制 =====
-
-        double suppression =
-                GhostSuppressionSystem.getSuppression(
-                        minecraft.player,
-                        ghostId
-                );
-
-        graphics.drawString(
-                this.font,
-                "压制",
-                x + 28,
-                y + 44,
-                0xFFAAAAAA
-        );
-
-        graphics.drawString(
-                this.font,
-                String.format(
-                        "%.1f%%",
-                        suppression * 100.0D
-                ),
-                x + 114,
-                y + 41,
-                0xFFFFFFFF
-        );
-
-        // ===== 复苏 =====
+        // =========================================================
+        // 复苏
+        // =========================================================
 
         graphics.drawString(
                 this.font,
                 "复苏",
                 x + 28,
-                y + 18,
+                y + 20,
                 0xFFCCCCCC
         );
 
         drawProgressBar(
                 graphics,
                 x + 52,
-                y + 20,
+                y + 22,
                 58,
                 3,
                 state.revival(),
@@ -1409,13 +1393,18 @@ public class PossessionScreen extends Screen {
 
         graphics.drawString(
                 this.font,
-                String.format("%.0f%%", state.revival() * 100),
+                String.format(
+                        "%.0f%%",
+                        state.revival() * 100
+                ),
                 x + 114,
                 y + 17,
                 0xFFFFFFFF
         );
 
-        // ===== 死机 =====
+        // =========================================================
+        // 死机
+        // =========================================================
 
         double progress;
         int color;
@@ -1429,35 +1418,53 @@ public class PossessionScreen extends Screen {
 
         } else if (state.isStunned()) {
 
-            double sec = state.stunTicks() / 20.0D;
+            double sec =
+                    state.stunTicks() / 20.0D;
 
-            progress = Math.min(1.0D, sec / 10.0D);
+            progress =
+                    Math.min(
+                            1.0D,
+                            sec / 10.0D
+                    );
+
             color = STUN_COLOR;
-            value = String.format("%.1fs", sec);
+
+            value =
+                    String.format(
+                            "%.1fs",
+                            sec
+                    );
 
         } else {
 
-            progress = Math.min(
-                    1.0D,
-                    state.shallowStun() / MAX_SHALLOW_STUN
-            );
+            progress =
+                    Math.min(
+                            1.0D,
+                            state.shallowStun()
+                                    / MAX_SHALLOW_STUN
+                    );
 
             color = SHALLOW_STUN_COLOR;
-            value = String.format("%.0f", state.shallowStun());
+
+            value =
+                    String.format(
+                            "%.0f",
+                            state.shallowStun()
+                    );
         }
 
         graphics.drawString(
                 this.font,
                 "死机",
                 x + 28,
-                y + 32,
+                y + 35,
                 0xFFCCCCCC
         );
 
         drawProgressBar(
                 graphics,
                 x + 52,
-                y + 34,
+                y + 37,
                 58,
                 3,
                 progress,
@@ -1468,7 +1475,47 @@ public class PossessionScreen extends Screen {
                 this.font,
                 value,
                 x + 114,
-                y + 31,
+                y + 32,
+                0xFFFFFFFF
+        );
+
+        // =========================================================
+        // 当前压制
+        // =========================================================
+
+        double suppression =
+                GhostSuppressionSystem.getSuppression(
+                        minecraft.player,
+                        ghostId
+                );
+
+        graphics.drawString(
+                this.font,
+                "压制",
+                x + 28,
+                y + 50,
+                0xFFCCCCCC
+        );
+
+        // 压制进度条
+        drawProgressBar(
+                graphics,
+                x + 52,
+                y + 52,
+                58,
+                3,
+                suppression,
+                0xFF8E6BFF
+        );
+
+        graphics.drawString(
+                this.font,
+                String.format(
+                        "%.1f%%",
+                        suppression * 100.0D
+                ),
+                x + 114,
+                y + 47,
                 0xFFFFFFFF
         );
     }
