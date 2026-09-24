@@ -59,6 +59,25 @@ public class PossessionScreen extends Screen {
     private int draggingMouseX = 0;
     private int draggingMouseY = 0;
 
+
+
+    private double ghostCardScroll = 0.0D;
+
+    private boolean draggingGhostScrollbar = false;
+
+    private double draggingGhostScrollbarOffset = 0.0D;
+
+    private static final int GHOST_CARD_AREA_X =
+            PANEL_WIDTH - CARD_WIDTH - 20;
+
+    private static final int GHOST_CARD_AREA_Y = 36;
+
+    private static final int GHOST_CARD_AREA_WIDTH =
+            CARD_WIDTH + 8;
+
+    private static final int GHOST_CARD_AREA_HEIGHT =
+            PANEL_HEIGHT - GHOST_CARD_AREA_Y - 12;
+
     private static final ResourceLocation HUMAN_BODY = body("human_body");
 
     private static final ResourceLocation BRAIN = body("brain");
@@ -284,6 +303,57 @@ public class PossessionScreen extends Screen {
         double localY =
                 (mouseY - panelY) / panelScale;
 
+        if (currentPage == 0 && button == 0) {
+
+            int contentHeight =
+                    getGhostCardContentHeight();
+
+            if (
+                    contentHeight >
+                            GHOST_CARD_AREA_HEIGHT
+            ) {
+
+                int scrollbarX =
+                        GHOST_CARD_AREA_X
+                                + GHOST_CARD_AREA_WIDTH
+                                - 4;
+
+                int scrollbarY =
+                        GHOST_CARD_AREA_Y;
+
+                int thumbHeight =
+                        getGhostScrollbarThumbHeight(
+                                contentHeight
+                        );
+
+                int thumbOffset =
+                        getGhostScrollbarThumbOffset(
+                                contentHeight
+                        );
+
+                int thumbY =
+                        scrollbarY
+                                + thumbOffset;
+
+                if (
+                        localX >= scrollbarX - 4
+                                && localX <= scrollbarX + 7
+                                && localY >= thumbY
+                                && localY <= thumbY + thumbHeight
+                ) {
+
+                    draggingGhostScrollbar = true;
+
+                    draggingGhostScrollbarOffset =
+                            localY - thumbY;
+
+                    return true;
+                }
+            }
+        }
+
+
+
         if (
                 currentPage == 1
                         && button == 0
@@ -460,6 +530,64 @@ public class PossessionScreen extends Screen {
     }
 
     @Override
+    public boolean mouseScrolled(
+            double mouseX,
+            double mouseY,
+            double scrollX,
+            double scrollY
+    ) {
+
+        if (currentPage == 0) {
+
+            double localMouseX =
+                    (mouseX - panelX) / panelScale;
+
+            double localMouseY =
+                    (mouseY - panelY) / panelScale;
+
+            boolean insideGhostArea =
+                    localMouseX >= GHOST_CARD_AREA_X
+                            && localMouseX <=
+                            GHOST_CARD_AREA_X
+                                    + GHOST_CARD_AREA_WIDTH
+                            && localMouseY >= GHOST_CARD_AREA_Y
+                            && localMouseY <=
+                            GHOST_CARD_AREA_Y
+                                    + GHOST_CARD_AREA_HEIGHT;
+
+            if (insideGhostArea) {
+
+                int contentHeight =
+                        getGhostCardContentHeight();
+
+                int maxScroll =
+                        Math.max(
+                                0,
+                                contentHeight
+                                        - GHOST_CARD_AREA_HEIGHT
+                        );
+
+                ghostCardScroll =
+                        Math.clamp(
+                                ghostCardScroll
+                                        - scrollY * 20.0D,
+                                0.0D,
+                                (double) maxScroll
+                        );
+
+                return true;
+            }
+        }
+
+        return super.mouseScrolled(
+                mouseX,
+                mouseY,
+                scrollX,
+                scrollY
+        );
+    }
+
+    @Override
     public boolean mouseDragged(
             double mouseX,
             double mouseY,
@@ -467,6 +595,72 @@ public class PossessionScreen extends Screen {
             double dragX,
             double dragY
     ) {
+
+        // =========================================================
+        // 滚动条拖动
+        // =========================================================
+
+        if (
+                draggingGhostScrollbar
+                        && button == 0
+        ) {
+
+            double localX =
+                    (mouseX - panelX)
+                            / panelScale;
+
+            double localY =
+                    (mouseY - panelY)
+                            / panelScale;
+
+            int contentHeight =
+                    getGhostCardContentHeight();
+
+            int thumbHeight =
+                    getGhostScrollbarThumbHeight(
+                            contentHeight
+                    );
+
+            int maxThumbOffset =
+                    GHOST_CARD_AREA_HEIGHT
+                            - thumbHeight;
+
+            int maxScroll =
+                    Math.max(
+                            0,
+                            contentHeight
+                                    - GHOST_CARD_AREA_HEIGHT
+                    );
+
+            if (
+                    maxThumbOffset > 0
+                            && maxScroll > 0
+            ) {
+
+                double thumbOffset =
+                        localY
+                                - GHOST_CARD_AREA_Y
+                                - draggingGhostScrollbarOffset;
+
+                thumbOffset =
+                        Math.clamp(
+                                thumbOffset,
+                                0.0D,
+                                (double) maxThumbOffset
+                        );
+
+                ghostCardScroll =
+                        thumbOffset
+                                / maxThumbOffset
+                                * maxScroll;
+            }
+
+            return true;
+        }
+
+        // =========================================================
+        // 原来的压制拖动
+        // =========================================================
 
         if (
                 draggingSuppression
@@ -505,6 +699,17 @@ public class PossessionScreen extends Screen {
             double mouseY,
             int button
     ) {
+
+        if (
+                draggingGhostScrollbar
+                        && button == 0
+        ) {
+
+            draggingGhostScrollbar = false;
+            draggingGhostScrollbarOffset = 0.0D;
+
+            return true;
+        }
 
         if (
                 draggingSuppression
@@ -1290,7 +1495,39 @@ public class PossessionScreen extends Screen {
         // =========================
 
         int rightX = PANEL_WIDTH - CARD_WIDTH - 12;
-        int rightY = 36;
+
+        int cardStep = CARD_HEIGHT + 8;
+
+        int contentHeight =
+                ghosts.size() * cardStep - 8;
+
+        int maxScroll =
+                Math.max(
+                        0,
+                        contentHeight - GHOST_CARD_AREA_HEIGHT
+                );
+
+        ghostCardScroll =
+                Math.clamp(
+                        ghostCardScroll,
+                        0.0D,
+                        (double) maxScroll
+                );
+
+        // =========================
+        // 裁剪鬼卡片区域
+        // =========================
+
+        graphics.enableScissor(
+                panelX + (int) (GHOST_CARD_AREA_X * panelScale),
+                panelY + (int) (GHOST_CARD_AREA_Y * panelScale),
+                panelX + (int) ((GHOST_CARD_AREA_X + GHOST_CARD_AREA_WIDTH) * panelScale),
+                panelY + (int) ((GHOST_CARD_AREA_Y + GHOST_CARD_AREA_HEIGHT) * panelScale)
+        );
+
+        int rightY =
+                GHOST_CARD_AREA_Y
+                        - (int) ghostCardScroll;
 
         for (var entry : ghosts.entrySet()) {
 
@@ -1302,12 +1539,19 @@ public class PossessionScreen extends Screen {
                     rightY
             );
 
-            rightY += CARD_HEIGHT + 8;
-
-            if (rightY > PANEL_HEIGHT - CARD_HEIGHT) {
-                break;
-            }
+            rightY += cardStep;
         }
+
+        graphics.disableScissor();
+
+        // =========================
+        // 滚动条
+        // =========================
+
+        drawGhostCardScrollbar(
+                graphics,
+                contentHeight
+        );
     }
 
     private void drawGhostCard(
@@ -1790,6 +2034,145 @@ public class PossessionScreen extends Screen {
                     fillColor
             );
         }
+    }
+
+    private void drawGhostCardScrollbar(
+            GuiGraphics graphics,
+            int contentHeight
+    ) {
+
+        if (
+                contentHeight <=
+                        GHOST_CARD_AREA_HEIGHT
+        ) {
+            return;
+        }
+
+        int scrollbarX =
+                GHOST_CARD_AREA_X
+                        + GHOST_CARD_AREA_WIDTH
+                        - 4;
+
+        int scrollbarY =
+                GHOST_CARD_AREA_Y;
+
+        int scrollbarHeight =
+                GHOST_CARD_AREA_HEIGHT;
+
+        // =========================
+        // 滚动槽
+        // =========================
+
+        graphics.fill(
+                scrollbarX,
+                scrollbarY,
+                scrollbarX + 3,
+                scrollbarY + scrollbarHeight,
+                0x5533333D
+        );
+
+        // =========================
+        // 滑块
+        // =========================
+
+        int thumbHeight =
+                getGhostScrollbarThumbHeight(
+                        contentHeight
+                );
+
+        int thumbOffset =
+                getGhostScrollbarThumbOffset(
+                        contentHeight
+                );
+
+        graphics.fill(
+                scrollbarX,
+                scrollbarY + thumbOffset,
+                scrollbarX + 3,
+                scrollbarY
+                        + thumbOffset
+                        + thumbHeight,
+                0xFF9999A8
+        );
+    }
+
+    private int getGhostCardContentHeight() {
+
+        Minecraft minecraft =
+                Minecraft.getInstance();
+
+        if (minecraft.player == null) {
+            return 0;
+        }
+
+        int cardStep =
+                CARD_HEIGHT + 8;
+
+        return Math.max(
+                0,
+                minecraft.player
+                        .getData(
+                                ModAttachments.POSSESSED_GHOSTS
+                        )
+                        .size()
+                        * cardStep
+                        - 8
+        );
+    }
+
+    private int getGhostScrollbarThumbHeight(
+            int contentHeight
+    ) {
+
+        if (
+                contentHeight <=
+                        GHOST_CARD_AREA_HEIGHT
+        ) {
+            return GHOST_CARD_AREA_HEIGHT;
+        }
+
+        double visibleRatio =
+                (double) GHOST_CARD_AREA_HEIGHT
+                        / contentHeight;
+
+        return Math.max(
+                18,
+                (int) (
+                        GHOST_CARD_AREA_HEIGHT
+                                * visibleRatio
+                )
+        );
+    }
+
+    private int getGhostScrollbarThumbOffset(
+            int contentHeight
+    ) {
+
+        int thumbHeight =
+                getGhostScrollbarThumbHeight(
+                        contentHeight
+                );
+
+        int maxThumbOffset =
+                GHOST_CARD_AREA_HEIGHT
+                        - thumbHeight;
+
+        int maxScroll =
+                Math.max(
+                        0,
+                        contentHeight
+                                - GHOST_CARD_AREA_HEIGHT
+                );
+
+        if (maxScroll <= 0) {
+            return 0;
+        }
+
+        return (int) (
+                ghostCardScroll
+                        / maxScroll
+                        * maxThumbOffset
+        );
     }
 
     private void drawSuppressionSlots(
