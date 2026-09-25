@@ -2,6 +2,8 @@ package com.qidate.qisplan2.core;
 
 import com.mojang.serialization.Codec;
 import com.qidate.qisplan2.item.*;
+import com.qidate.qisplan2.item.candle.RedGhostCandleItem;
+import com.qidate.qisplan2.item.candle.WhiteGhostCandleItem;
 import net.minecraft.Util;
 import net.minecraft.core.component.DataComponentType;
 import net.minecraft.network.codec.ByteBufCodecs;
@@ -15,7 +17,6 @@ import net.neoforged.neoforge.registries.DeferredItem;
 
 import java.util.EnumMap;
 import java.util.List;
-import java.util.function.Supplier;
 
 import static com.qidate.qisplan2.QisPlan2.MODID;
 import static com.qidate.qisplan2.core.ModEntities.*;

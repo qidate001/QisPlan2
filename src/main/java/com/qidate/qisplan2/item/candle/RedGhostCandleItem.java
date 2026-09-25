@@ -1,4 +1,4 @@
-package com.qidate.qisplan2.item;
+package com.qidate.qisplan2.item.candle;
 
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.world.InteractionHand;
@@ -10,20 +10,18 @@ import net.minecraft.world.item.component.CustomModelData;
 import net.minecraft.world.level.Level;
 
 /**
- * 白色鬼烛。
+ * 红色鬼烛。
  *
  * <p>
- * 点燃后用于产生避鬼效果。
+ * 点燃后用于吸引附近厉鬼。
  *
  * <p>
  * 当前负责维护鬼烛自身的点燃状态以及基础燃烧。
- * 具体避鬼效果由后续鬼烛系统负责。
+ * 具体吸引厉鬼的效果由后续鬼烛系统负责。
  */
-public class WhiteGhostCandleItem extends Item {
+public class RedGhostCandleItem extends Item {
 
-    private static final int BURN_INTERVAL = 20;
-
-    public WhiteGhostCandleItem(Properties properties) {
+    public RedGhostCandleItem(Properties properties) {
         super(properties);
     }
 
@@ -66,19 +64,42 @@ public class WhiteGhostCandleItem extends Item {
             return;
         }
 
-        if (entity.tickCount % BURN_INTERVAL != 0) {
+        if (!(entity instanceof Player player)) {
             return;
         }
 
-        int damage = stack.getDamageValue();
+        double burnDamage =
+                GhostCandleSystem.getBurnDamagePerTick(
+                        player
+                );
 
-        if (damage + 1 >= stack.getMaxDamage()) {
-            stack.setDamageValue(stack.getMaxDamage());
+        int damage =
+                GhostCandleSystem.rollBurnDamage(
+                        player,
+                        burnDamage
+                );
+
+        if (damage <= 0) {
+            return;
+        }
+
+        int currentDamage =
+                stack.getDamageValue();
+
+        if (currentDamage + damage
+                >= stack.getMaxDamage()) {
+
+            stack.setDamageValue(
+                    stack.getMaxDamage()
+            );
+
             extinguish(stack);
             return;
         }
 
-        stack.setDamageValue(damage + 1);
+        stack.setDamageValue(
+                currentDamage + damage
+        );
     }
 
     public static boolean isLit(ItemStack stack) {

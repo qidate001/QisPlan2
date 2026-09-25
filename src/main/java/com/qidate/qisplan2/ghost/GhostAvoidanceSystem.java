@@ -1,12 +1,11 @@
 package com.qidate.qisplan2.ghost;
 
 import com.qidate.qisplan2.entity.AbstractGhostEntity;
-import com.qidate.qisplan2.item.RedGhostCandleItem;
-import com.qidate.qisplan2.item.WhiteGhostCandleItem;
+import com.qidate.qisplan2.item.candle.RedGhostCandleItem;
+import com.qidate.qisplan2.item.candle.WhiteGhostCandleItem;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.component.CustomModelData;
 
 /**
  * 管理厉鬼与玩家之间的基础灵异关系。
