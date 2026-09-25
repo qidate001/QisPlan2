@@ -1,24 +1,18 @@
 package com.qidate.qisplan2.entity;
 
 import com.qidate.qisplan2.QisPlan2;
-import com.qidate.qisplan2.core.ModItems;
 import com.qidate.qisplan2.death.SupernaturalCombatHandler;
 import com.qidate.qisplan2.death.SupernaturalEntity;
 import com.qidate.qisplan2.entity.ai.GhostWanderGoal;
-import com.qidate.qisplan2.ghost.possession.target.EntityGhostPossessionTarget;
-import com.qidate.qisplan2.ghost.possession.manager.GhostPossessionManager;
-import com.qidate.qisplan2.ghost.possession.manager.PossessionHandler;
+import com.qidate.qisplan2.ghost.possession.GhostPossessionInteractionSystem;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.PathfinderMob;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 
 /**
@@ -484,161 +478,10 @@ public abstract class AbstractGhostEntity
             InteractionHand hand
     ) {
 
-        /*
-         * ========================================================
-         * 只允许主手
-         * ========================================================
-         */
-        if (hand != InteractionHand.MAIN_HAND) {
-
-            return super.mobInteract(
-                    player,
-                    hand
-            );
-        }
-
-        /*
-         * ========================================================
-         * Shift + 右键
-         * ========================================================
-         *
-         * 棺材钉的拔出操作：
-         *
-         * 不要求玩家手里拿着任何东西。
-         *
-         * 空手 + Shift + 右键
-         * 就可以拔出。
-         */
-        if (player.isShiftKeyDown()) {
-
-            if (isCoffinNailed()) {
-
-
-                /*
-                 * 必须服务端修改状态。
-                 */
-                if (!level().isClientSide()
-                        && player instanceof ServerPlayer serverPlayer) {
-
-                    /*
-                     * 拔出棺材钉。
-                     */
-                    setCoffinNailed(
-                            false
-                    );
-
-                    /*
-                     * 解除棺材钉提供的普通死机。
-                     */
-                    setSupernaturalStunTicks(
-                            0
-                    );
-
-                    /*
-                     * 返还一根棺材钉。
-                     */
-                    ItemStack nail =
-                            new ItemStack(
-                                    ModItems.COFFIN_NAIL.get()
-                            );
-
-                    if (!serverPlayer.isCreative()) {
-
-                        if (!serverPlayer.getInventory().add(
-                                nail
-                        )) {
-
-                            serverPlayer.drop(
-                                    nail,
-                                    false
-                            );
-                        }
-                    }
-
-                    return InteractionResult.CONSUME;
-                }
-
-                /*
-                 * 客户端预测成功。
-                 */
-                return InteractionResult.SUCCESS;
-            }
-
-            /*
-             * Shift + 右键，但没有棺材钉：
-             *
-             * 不进入驾驭小游戏。
-             */
-            return InteractionResult.PASS;
-        }
-
-        /*
-         * ========================================================
-         * 非 Shift：
-         *
-         * 必须空手才能驾驭。
-         * ========================================================
-         */
-
-        if (!player.getItemInHand(hand).isEmpty()) {
-
-            return super.mobInteract(
-                    player,
-                    hand
-            );
-        }
-
-        /*
-         * ========================================================
-         * 必须处于死机状态才能驾驭
-         * ========================================================
-         */
-
-        if (!isSupernaturallyStunned()) {
-
-            return InteractionResult.PASS;
-        }
-
-        /*
-         * ========================================================
-         * 服务端真正开始驾驭
-         * ========================================================
-         */
-
-        if (!level().isClientSide()
-                && player instanceof ServerPlayer serverPlayer) {
-
-            /*
-             * 已经驾驭了这只鬼。
-             */
-            if (PossessionHandler.hasGhost(
-                    serverPlayer,
-                    getGhostId()
-            )) {
-
-                serverPlayer.displayClientMessage(
-                        Component.literal("已经驾驭了这只鬼。"),
-                        true
-                );
-
-                return InteractionResult.CONSUME;
-            }
-
-            boolean started =
-                    GhostPossessionManager.start(
-                            serverPlayer,
-                            new EntityGhostPossessionTarget(
-                                    this
-                            )
-                    );
-
-            if (started) {
-                return InteractionResult.CONSUME;
-            }
-        }
-
-        return InteractionResult.sidedSuccess(
-                level().isClientSide()
+        return GhostPossessionInteractionSystem.handle(
+                this,
+                player,
+                hand
         );
     }
 
