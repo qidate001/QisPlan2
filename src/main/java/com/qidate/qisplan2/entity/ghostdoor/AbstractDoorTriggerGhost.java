@@ -1,8 +1,8 @@
-package com.qidate.qisplan2.entity;
+package com.qidate.qisplan2.entity.ghostdoor;
 
-import com.qidate.qisplan2.death.ModDamageTypes;
 import com.qidate.qisplan2.death.SupernaturalDeathHandler;
 
+import com.qidate.qisplan2.entity.AbstractGhostEntity;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerLevel;

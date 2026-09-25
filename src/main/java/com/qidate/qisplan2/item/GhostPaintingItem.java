@@ -1,9 +1,9 @@
 package com.qidate.qisplan2.item;
 
 import com.qidate.qisplan2.core.ModEntities;
-import com.qidate.qisplan2.entity.GhostPaintingEntity;
-import com.qidate.qisplan2.entity.GhostPaintingVariant;
-import com.qidate.qisplan2.entity.GhostPaintingVariants;
+import com.qidate.qisplan2.entity.painting.GhostPaintingEntity;
+import com.qidate.qisplan2.entity.painting.GhostPaintingVariant;
+import com.qidate.qisplan2.entity.painting.GhostPaintingVariants;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.component.DataComponents;

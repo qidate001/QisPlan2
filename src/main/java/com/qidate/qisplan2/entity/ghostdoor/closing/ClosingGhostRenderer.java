@@ -1,30 +1,31 @@
-package com.qidate.qisplan2.client.renderer;
+package com.qidate.qisplan2.entity.ghostdoor.closing;
 
-import com.qidate.qisplan2.client.model.NightWandererModel;
-import com.qidate.qisplan2.entity.NightWanderer;
+import net.minecraft.client.model.HumanoidModel;
+import net.minecraft.client.model.geom.ModelLayers;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.client.renderer.entity.HumanoidMobRenderer;
 import net.minecraft.resources.ResourceLocation;
 
-public class NightWandererRenderer
+public class ClosingGhostRenderer
         extends HumanoidMobRenderer<
-        NightWanderer,
-        NightWandererModel> {
+        ClosingGhost,
+        HumanoidModel<ClosingGhost>
+        > {
 
     private static final ResourceLocation TEXTURE =
             ResourceLocation.fromNamespaceAndPath(
                     "qisplan2",
-                    "textures/entity/night_wanderer.png"
+                    "textures/entity/invisible_ghost.png"
             );
 
-    public NightWandererRenderer(
+    public ClosingGhostRenderer(
             EntityRendererProvider.Context context
     ) {
         super(
                 context,
-                new NightWandererModel(
+                new HumanoidModel<>(
                         context.bakeLayer(
-                                NightWandererModel.LAYER
+                                ModelLayers.PLAYER
                         )
                 ),
                 0.5F
@@ -33,7 +34,7 @@ public class NightWandererRenderer
 
     @Override
     public ResourceLocation getTextureLocation(
-            NightWanderer entity
+            ClosingGhost entity
     ) {
         return TEXTURE;
     }

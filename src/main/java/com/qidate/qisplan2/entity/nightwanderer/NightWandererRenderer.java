@@ -1,32 +1,29 @@
-package com.qidate.qisplan2.client.renderer;
+package com.qidate.qisplan2.entity.nightwanderer;
 
-import com.qidate.qisplan2.entity.OpeningGhost;
-import net.minecraft.client.model.HumanoidModel;
-import net.minecraft.client.model.geom.ModelLayers;
+import com.qidate.qisplan2.client.model.NightWandererModel;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.client.renderer.entity.HumanoidMobRenderer;
 import net.minecraft.resources.ResourceLocation;
 
-public class OpeningGhostRenderer
+public class NightWandererRenderer
         extends HumanoidMobRenderer<
-        OpeningGhost,
-        HumanoidModel<OpeningGhost>
-        > {
+        NightWanderer,
+        NightWandererModel> {
 
     private static final ResourceLocation TEXTURE =
             ResourceLocation.fromNamespaceAndPath(
                     "qisplan2",
-                    "textures/entity/invisible_ghost.png"
+                    "textures/entity/night_wanderer.png"
             );
 
-    public OpeningGhostRenderer(
+    public NightWandererRenderer(
             EntityRendererProvider.Context context
     ) {
         super(
                 context,
-                new HumanoidModel<>(
+                new NightWandererModel(
                         context.bakeLayer(
-                                ModelLayers.PLAYER
+                                NightWandererModel.LAYER
                         )
                 ),
                 0.5F
@@ -35,7 +32,7 @@ public class OpeningGhostRenderer
 
     @Override
     public ResourceLocation getTextureLocation(
-            OpeningGhost entity
+            NightWanderer entity
     ) {
         return TEXTURE;
     }

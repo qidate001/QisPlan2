@@ -1,13 +1,12 @@
-package com.qidate.qisplan2.entity;
+package com.qidate.qisplan2.entity.calling;
 
 import com.qidate.qisplan2.QisPlan2;
 import com.qidate.qisplan2.core.ModBlocks;
 import com.qidate.qisplan2.death.ModDamageTypes;
 import com.qidate.qisplan2.death.SupernaturalDeathHandler;
+import com.qidate.qisplan2.entity.AbstractGhostEntity;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvent;

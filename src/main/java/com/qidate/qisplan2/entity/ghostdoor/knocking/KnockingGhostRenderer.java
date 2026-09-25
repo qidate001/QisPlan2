@@ -1,16 +1,15 @@
-package com.qidate.qisplan2.client.renderer;
+package com.qidate.qisplan2.entity.ghostdoor.knocking;
 
-import com.qidate.qisplan2.entity.InvisibleGhost;
 import net.minecraft.client.model.HumanoidModel;
 import net.minecraft.client.model.geom.ModelLayers;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.client.renderer.entity.HumanoidMobRenderer;
 import net.minecraft.resources.ResourceLocation;
 
-public class InvisibleGhostRenderer
+public class KnockingGhostRenderer
         extends HumanoidMobRenderer<
-        InvisibleGhost,
-        HumanoidModel<InvisibleGhost>
+        KnockingGhost,
+        HumanoidModel<KnockingGhost>
         > {
 
     private static final ResourceLocation TEXTURE =
@@ -19,7 +18,7 @@ public class InvisibleGhostRenderer
                     "textures/entity/invisible_ghost.png"
             );
 
-    public InvisibleGhostRenderer(
+    public KnockingGhostRenderer(
             EntityRendererProvider.Context context
     ) {
         super(
@@ -35,7 +34,7 @@ public class InvisibleGhostRenderer
 
     @Override
     public ResourceLocation getTextureLocation(
-            InvisibleGhost entity
+            KnockingGhost entity
     ) {
         return TEXTURE;
     }

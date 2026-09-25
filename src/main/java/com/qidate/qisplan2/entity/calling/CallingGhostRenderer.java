@@ -1,6 +1,5 @@
-package com.qidate.qisplan2.client.renderer;
+package com.qidate.qisplan2.entity.calling;
 
-import com.qidate.qisplan2.entity.CallingGhost;
 import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.entity.EntityRenderer;

@@ -1,8 +1,9 @@
-package com.qidate.qisplan2.entity;
+package com.qidate.qisplan2.entity.ghostdoor.open;
 
 import com.qidate.qisplan2.death.ModDamageTypes;
 
-import com.qidate.qisplan2.ghost.possession.ability.ghostdoor.ClosingGhostAbility;
+import com.qidate.qisplan2.entity.ghostdoor.AbstractDoorTriggerGhost;
+import com.qidate.qisplan2.ghost.possession.ability.ghostdoor.OpeningGhostAbility;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.Entity;
@@ -12,14 +13,14 @@ import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.level.Level;
 
-public class ClosingGhost
+public class OpeningGhost
         extends AbstractDoorTriggerGhost {
 
     private static final double SUPERNATURAL_DEFENSE =
             6.0D;
 
-    public ClosingGhost(
-            EntityType<? extends ClosingGhost> entityType,
+    public OpeningGhost(
+            EntityType<? extends OpeningGhost> entityType,
             Level level
     ) {
         super(
@@ -30,7 +31,7 @@ public class ClosingGhost
 
     @Override
     public ResourceLocation getGhostId() {
-        return ClosingGhostAbility.ID;
+        return OpeningGhostAbility.ID;
     }
 
     @Override
@@ -42,7 +43,7 @@ public class ClosingGhost
     protected DamageSource getAttackDamageSource(
             Entity source
     ) {
-        return ModDamageTypes.closingGhost(
+        return ModDamageTypes.openingGhost(
                 this
         );
     }

@@ -1,4 +1,4 @@
-package com.qidate.qisplan2.entity;
+package com.qidate.qisplan2.entity.painting;
 
 import net.minecraft.resources.ResourceLocation;
 

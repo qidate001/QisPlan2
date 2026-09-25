@@ -4,7 +4,7 @@ import net.minecraft.client.model.HumanoidModel;
 import net.minecraft.client.model.geom.ModelPart;
 import net.minecraft.client.model.geom.ModelLayerLocation;
 import net.minecraft.resources.ResourceLocation;
-import com.qidate.qisplan2.entity.NightWanderer;
+import com.qidate.qisplan2.entity.nightwanderer.NightWanderer;
 
 public class NightWandererModel
         extends HumanoidModel<NightWanderer> {

@@ -1,6 +1,5 @@
 package com.qidate.qisplan2.mixin;
 
-import com.qidate.qisplan2.QisPlan2;
 import com.qidate.qisplan2.event.DoorGhostTriggerHandler;
 
 import net.minecraft.core.BlockPos;

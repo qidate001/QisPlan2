@@ -1,5 +1,6 @@
-package com.qidate.qisplan2.entity;
+package com.qidate.qisplan2.entity.ghostdoor.knocking;
 
+import com.qidate.qisplan2.entity.AbstractGhostEntity;
 import com.qidate.qisplan2.entity.ai.GhostWanderGoal;
 import com.qidate.qisplan2.ghost.possession.ability.knockingghost.KnockingGhostAbility;
 import com.qidate.qisplan2.ghost.possession.ability.knockingghost.KnockingGhostDoorSystem;

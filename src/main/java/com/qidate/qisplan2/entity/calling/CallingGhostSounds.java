@@ -1,4 +1,4 @@
-package com.qidate.qisplan2.entity;
+package com.qidate.qisplan2.entity.calling;
 
 import com.qidate.qisplan2.core.ModSounds;
 import net.minecraft.server.level.ServerPlayer;

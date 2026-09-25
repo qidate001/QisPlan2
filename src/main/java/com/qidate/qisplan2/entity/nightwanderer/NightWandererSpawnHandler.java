@@ -1,9 +1,8 @@
-package com.qidate.qisplan2.event;
+package com.qidate.qisplan2.entity.nightwanderer;
 
 import com.qidate.qisplan2.QisPlan2;
 import com.qidate.qisplan2.core.ModEntities;
 import com.qidate.qisplan2.data.NightWandererSpawnData;
-import com.qidate.qisplan2.entity.NightWanderer;
 import com.qidate.qisplan2.ghost.possession.manager.PossessionHandler;
 import com.qidate.qisplan2.ghost.possession.ability.nightwanderer.NightWandererAbility;
 import net.minecraft.core.BlockPos;

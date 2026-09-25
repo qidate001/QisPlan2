@@ -1,11 +1,8 @@
-package com.qidate.qisplan2.client.renderer;
+package com.qidate.qisplan2.entity.painting;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.math.Axis;
-import com.qidate.qisplan2.QisPlan2;
-import com.qidate.qisplan2.entity.GhostPaintingEntity;
-import com.qidate.qisplan2.entity.GhostPaintingVariant;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.entity.EntityRenderer;

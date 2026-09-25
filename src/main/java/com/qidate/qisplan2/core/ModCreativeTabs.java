@@ -1,6 +1,6 @@
 package com.qidate.qisplan2.core;
 
-import com.qidate.qisplan2.entity.GhostPaintingVariants;
+import com.qidate.qisplan2.entity.painting.GhostPaintingVariants;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;

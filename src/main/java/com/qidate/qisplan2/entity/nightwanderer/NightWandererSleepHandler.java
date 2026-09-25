@@ -1,7 +1,6 @@
-package com.qidate.qisplan2.event;
+package com.qidate.qisplan2.entity.nightwanderer;
 
 import com.qidate.qisplan2.QisPlan2;
-import com.qidate.qisplan2.entity.NightWanderer;
 import net.minecraft.server.level.ServerLevel;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
