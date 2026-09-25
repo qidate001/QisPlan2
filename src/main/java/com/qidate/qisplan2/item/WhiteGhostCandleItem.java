@@ -16,10 +16,12 @@ import net.minecraft.world.level.Level;
  * 点燃后用于产生避鬼效果。
  *
  * <p>
- * 当前阶段负责维护鬼烛自身的点燃状态。
- * 具体避鬼效果由后续系统负责。
+ * 当前负责维护鬼烛自身的点燃状态以及基础燃烧。
+ * 具体避鬼效果由后续鬼烛系统负责。
  */
 public class WhiteGhostCandleItem extends Item {
+
+    private static final int BURN_INTERVAL = 20;
 
     public WhiteGhostCandleItem(Properties properties) {
         super(properties);
@@ -33,16 +35,60 @@ public class WhiteGhostCandleItem extends Item {
     ) {
         ItemStack stack = player.getItemInHand(hand);
 
-        if (!level.isClientSide()) {
-            stack.set(
-                    DataComponents.CUSTOM_MODEL_DATA,
-                    new CustomModelData(1)
-            );
+        if (!isLit(stack)) {
+            if (!level.isClientSide()) {
+                stack.set(
+                        DataComponents.CUSTOM_MODEL_DATA,
+                        new CustomModelData(1)
+                );
+            }
         }
 
         return InteractionResultHolder.sidedSuccess(
                 stack,
                 level.isClientSide()
         );
+    }
+
+    @Override
+    public void inventoryTick(
+            ItemStack stack,
+            Level level,
+            net.minecraft.world.entity.Entity entity,
+            int slot,
+            boolean selected
+    ) {
+        if (level.isClientSide()) {
+            return;
+        }
+
+        if (!isLit(stack)) {
+            return;
+        }
+
+        if (entity.tickCount % BURN_INTERVAL != 0) {
+            return;
+        }
+
+        int damage = stack.getDamageValue();
+
+        if (damage + 1 >= stack.getMaxDamage()) {
+            stack.setDamageValue(stack.getMaxDamage());
+            extinguish(stack);
+            return;
+        }
+
+        stack.setDamageValue(damage + 1);
+    }
+
+    public static boolean isLit(ItemStack stack) {
+        CustomModelData customModelData =
+                stack.get(DataComponents.CUSTOM_MODEL_DATA);
+
+        return customModelData != null;
+    }
+
+    private static void extinguish(ItemStack stack) {
+        stack.remove(DataComponents.CUSTOM_MODEL_DATA);
     }
 }
