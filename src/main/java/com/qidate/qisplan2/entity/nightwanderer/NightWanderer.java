@@ -194,6 +194,21 @@ public class NightWanderer
     }
 
     /**
+     * 当前灵异攻击是否已经可以再次发动。
+     */
+    public boolean isSupernaturalAttackReady() {
+        return supernaturalAttackCooldown <= 0;
+    }
+
+    /**
+     * 发动一次灵异攻击后，开始新的冷却。
+     */
+    public void startSupernaturalAttackCooldown() {
+        supernaturalAttackCooldown =
+                getSupernaturalAttackCooldown();
+    }
+
+    /**
      * 是否已经解锁猎杀能力。
      */
     public boolean hasHuntAbility() {
@@ -218,7 +233,7 @@ public class NightWanderer
 
         this.goalSelector.addGoal(
                 1,
-                new SupernaturalAttackGoal(
+                new NightWandererSupernaturalAttackGoal(
                         this,
                         1.2D,
                         3.0D
@@ -976,176 +991,6 @@ public class NightWanderer
                         Attributes.FOLLOW_RANGE,
                         32.0D
                 );
-    }
-
-    /**
-     * 自定义灵异攻击 Goal。
-     */
-    private static class SupernaturalAttackGoal
-            extends Goal {
-
-        private final NightWanderer mob;
-
-        private final double speedModifier;
-
-        private final double attackRangeSqr;
-
-        public SupernaturalAttackGoal(
-                NightWanderer mob,
-                double speedModifier,
-                double attackRange
-        ) {
-
-            this.mob = mob;
-
-            this.speedModifier =
-                    speedModifier;
-
-            this.attackRangeSqr =
-                    attackRange * attackRange;
-
-            this.setFlags(
-                    EnumSet.of(
-                            Goal.Flag.MOVE,
-                            Goal.Flag.LOOK
-                    )
-            );
-        }
-
-        /**
-         * 冷却结束并且存在有效目标时开始 Goal。
-         */
-        @Override
-        public boolean canUse() {
-
-            /*
-             * 白天禁止移动。
-             */
-            if (mob.level().isDay()) {
-                return false;
-            }
-
-            LivingEntity target =
-                    mob.getTarget();
-
-            return !mob.isSupernaturallyStunned()
-                    && mob.supernaturalAttackCooldown <= 0
-                    && target != null
-                    && target.isAlive();
-        }
-
-        /**
-         * 冷却开始或者目标消失时结束 Goal。
-         */
-        @Override
-        public boolean canContinueToUse() {
-
-            /*
-             * 白天禁止移动。
-             */
-            if (mob.level().isDay()) {
-                return false;
-            }
-
-            LivingEntity target =
-                    mob.getTarget();
-
-            return !mob.isSupernaturallyStunned()
-                    && mob.supernaturalAttackCooldown <= 0
-                    && target != null
-                    && target.isAlive();
-        }
-
-        @Override
-        public void start() {
-
-            LivingEntity target =
-                    mob.getTarget();
-
-            if (target != null) {
-
-                mob.getNavigation().moveTo(
-                        target,
-                        speedModifier
-                );
-            }
-        }
-
-        @Override
-        public void stop() {
-            mob.getNavigation().stop();
-        }
-
-        @Override
-        public void tick() {
-
-            LivingEntity target =
-                    mob.getTarget();
-
-            if (target == null
-                    || !target.isAlive()) {
-
-                return;
-            }
-
-            /*
-             * 一直看向目标。
-             */
-            mob.getLookControl().setLookAt(
-                    target,
-                    30.0F,
-                    30.0F
-            );
-
-            double distanceSqr =
-                    mob.distanceToSqr(target);
-
-            /*
-             * ========================================
-             * 还没进入攻击距离
-             * ========================================
-             */
-            if (distanceSqr > attackRangeSqr) {
-
-                mob.getNavigation().moveTo(
-                        target,
-                        speedModifier
-                );
-
-                return;
-            }
-
-            /*
-             * ========================================
-             * 灵异攻击
-             * ========================================
-             */
-
-            mob.getNavigation().stop();
-
-            mob.swing(
-                    InteractionHand.MAIN_HAND
-            );
-
-            boolean killed =
-                    SupernaturalDeathHandler.tryKill(
-                            target,
-                            ModDamageTypes.ghostNightWanderer(mob),
-                            mob.getSupernaturalStrength()
-                    );
-
-            if (killed) {
-                mob.onKillEntity();
-            }
-
-            /*
-             * ========================================
-             * 攻击结束，进入休息时间
-             * ========================================
-             */
-            mob.supernaturalAttackCooldown =
-                    mob.getSupernaturalAttackCooldown();
-        }
     }
 
     @Override
