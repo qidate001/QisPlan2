@@ -391,6 +391,13 @@ public final class NightWandererHuntSystem {
         LivingEntity bestTarget = null;
 
         /*
+         * 当前最佳目标的灵异目标优先级。
+         *
+         * 数值越高，越应该优先选择。
+         */
+        int bestPriority = Integer.MIN_VALUE;
+
+        /*
          * 当前最佳目标是否处于黑暗。
          */
         boolean bestIsDark = false;
@@ -403,6 +410,19 @@ public final class NightWandererHuntSystem {
         double bestDistance = Double.MAX_VALUE;
 
         for (LivingEntity entity : entities) {
+
+            /*
+             * 获取目标的灵异优先级。
+             *
+             * 普通实体默认为 0。
+             * 玩家则由 GhostAvoidanceSystem 决定。
+             */
+            int priority = 0;
+
+            if (entity instanceof Player player) {
+                priority =
+                        ghost.getPlayerTargetPriority(player);
+            }
 
             boolean dark =
                     isDarkEntity(
@@ -421,9 +441,38 @@ public final class NightWandererHuntSystem {
             if (bestTarget == null) {
 
                 bestTarget = entity;
+                bestPriority = priority;
                 bestIsDark = dark;
                 bestDistance = distance;
 
+                continue;
+            }
+
+            /*
+             * ========================================
+             * 灵异目标优先级
+             * ========================================
+             *
+             * 优先级越高，越应该优先选择。
+             *
+             * 例如：
+             * 红色鬼烛会让玩家获得很高的目标优先级。
+             */
+            if (priority > bestPriority) {
+
+                bestTarget = entity;
+                bestPriority = priority;
+                bestIsDark = dark;
+                bestDistance = distance;
+
+                continue;
+            }
+
+            /*
+             * 当前目标优先级更低，
+             * 即使处于黑暗中，也不能覆盖高优先级目标。
+             */
+            if (priority < bestPriority) {
                 continue;
             }
 
@@ -438,6 +487,7 @@ public final class NightWandererHuntSystem {
             if (dark && !bestIsDark) {
 
                 bestTarget = entity;
+                bestPriority = priority;
                 bestIsDark = true;
                 bestDistance = distance;
 
@@ -464,6 +514,7 @@ public final class NightWandererHuntSystem {
             if (distance < bestDistance) {
 
                 bestTarget = entity;
+                bestPriority = priority;
                 bestIsDark = dark;
                 bestDistance = distance;
             }
