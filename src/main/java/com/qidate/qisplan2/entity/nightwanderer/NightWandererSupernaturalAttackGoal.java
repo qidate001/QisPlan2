@@ -70,7 +70,8 @@ public class NightWandererSupernaturalAttackGoal
         return !mob.isSupernaturallyStunned()
                 && mob.isSupernaturalAttackReady()
                 && target != null
-                && target.isAlive();
+                && target.isAlive()
+                && canAttackTarget(target);
     }
 
     /**
@@ -92,7 +93,8 @@ public class NightWandererSupernaturalAttackGoal
         return !mob.isSupernaturallyStunned()
                 && mob.isSupernaturalAttackReady()
                 && target != null
-                && target.isAlive();
+                && target.isAlive()
+                && canAttackTarget(target);
     }
 
     @Override
@@ -162,6 +164,11 @@ public class NightWandererSupernaturalAttackGoal
 
         mob.getNavigation().stop();
 
+        if (!canAttackTarget(target)) {
+            mob.getNavigation().stop();
+            return;
+        }
+
         mob.swing(
                 InteractionHand.MAIN_HAND
         );
@@ -183,5 +190,18 @@ public class NightWandererSupernaturalAttackGoal
          * ========================================
          */
         mob.startSupernaturalAttackCooldown();
+    }
+
+    /**
+     * 判断当前目标是否允许被夜游鬼攻击。
+     */
+    private boolean canAttackTarget(
+            LivingEntity target
+    ) {
+        if (target instanceof net.minecraft.world.entity.player.Player player) {
+            return mob.canAttackPlayer(player);
+        }
+
+        return true;
     }
 }

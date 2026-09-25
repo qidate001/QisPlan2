@@ -149,7 +149,8 @@ public final class NightWandererHuntSystem {
          */
         if (target != null
                 && target.isAlive()
-                && !target.isRemoved()) {
+                && !target.isRemoved()
+                && canContinueHuntingTarget(ghost, target)) {
 
             ghost.resetHuntNoTargetTicks();
 
@@ -368,8 +369,12 @@ public final class NightWandererHuntSystem {
                              * 创造和旁观玩家不属于有效猎杀目标。
                              */
                             if (entity instanceof Player player) {
-                                return !player.isCreative()
-                                        && !player.isSpectator();
+                                if (player.isCreative()
+                                        || player.isSpectator()) {
+                                    return false;
+                                }
+
+                                return ghost.canDetectPlayer(player);
                             }
 
                             /*
@@ -465,6 +470,25 @@ public final class NightWandererHuntSystem {
         }
 
         return bestTarget;
+    }
+
+    /**
+     * 判断当前猎杀目标是否仍然符合夜游鬼的攻击规则。
+     *
+     * <p>
+     * 目标可能在被锁定之后才进入白色鬼烛的保护状态，
+     * 因此不能只在寻找目标时检查一次。
+     */
+    private static boolean canContinueHuntingTarget(
+            NightWanderer ghost,
+            LivingEntity target
+    ) {
+        if (target instanceof Player player) {
+            return ghost.canDetectPlayer(player)
+                    && ghost.canAttackPlayer(player);
+        }
+
+        return true;
     }
 
     /**
