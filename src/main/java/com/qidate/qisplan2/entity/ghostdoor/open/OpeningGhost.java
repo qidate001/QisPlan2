@@ -1,7 +1,7 @@
 package com.qidate.qisplan2.entity.ghostdoor.open;
 
 import com.qidate.qisplan2.death.ModDamageTypes;
-
+import com.qidate.qisplan2.entity.GhostAttributeSystem;
 import com.qidate.qisplan2.entity.ghostdoor.AbstractDoorTriggerGhost;
 import com.qidate.qisplan2.ghost.possession.ability.ghostdoor.OpeningGhostAbility;
 import net.minecraft.resources.ResourceLocation;
@@ -16,9 +16,6 @@ import net.minecraft.world.level.Level;
 public class OpeningGhost
         extends AbstractDoorTriggerGhost {
 
-    private static final double SUPERNATURAL_DEFENSE =
-            6.0D;
-
     public OpeningGhost(
             EntityType<? extends OpeningGhost> entityType,
             Level level
@@ -27,16 +24,16 @@ public class OpeningGhost
                 entityType,
                 level
         );
+
+        GhostAttributeSystem.setSupernaturalDefense(
+                this,
+                6.0D
+        );
     }
 
     @Override
     public ResourceLocation getGhostId() {
         return OpeningGhostAbility.ID;
-    }
-
-    @Override
-    public double getSupernaturalDefense() {
-        return SUPERNATURAL_DEFENSE;
     }
 
     @Override
