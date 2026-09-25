@@ -4,6 +4,7 @@ import com.qidate.qisplan2.QisPlan2;
 import com.qidate.qisplan2.death.SupernaturalCombatHandler;
 import com.qidate.qisplan2.death.SupernaturalEntity;
 import com.qidate.qisplan2.entity.ai.GhostWanderGoal;
+import com.qidate.qisplan2.ghost.GhostAvoidanceSystem;
 import com.qidate.qisplan2.ghost.possession.GhostPossessionInteractionSystem;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.resources.ResourceLocation;
@@ -459,6 +460,43 @@ public abstract class AbstractGhostEntity
     }
 
     protected void tickGhostAI() {}
+
+
+    /*
+     * ========================================
+     * 袭击条件
+     * ========================================
+     */
+
+    /**
+     * 判断当前厉鬼是否能够发现指定玩家。
+     */
+    public boolean canDetectPlayer(Player player) {
+        return GhostAvoidanceSystem.canDetect(
+                this,
+                player
+        );
+    }
+
+    /**
+     * 判断当前厉鬼是否能够攻击指定玩家。
+     */
+    public boolean canAttackPlayer(Player player) {
+        return GhostAvoidanceSystem.canAttack(
+                this,
+                player
+        );
+    }
+
+    /**
+     * 获取指定玩家对于当前厉鬼的目标优先级。
+     */
+    public int getPlayerTargetPriority(Player player) {
+        return GhostAvoidanceSystem.getTargetPriority(
+                this,
+                player
+        );
+    }
 
 
     /*
