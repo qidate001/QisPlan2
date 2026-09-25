@@ -4,19 +4,16 @@ import com.qidate.qisplan2.QisPlan2;
 import com.qidate.qisplan2.death.ModDamageTypes;
 import com.qidate.qisplan2.death.SupernaturalDeathHandler;
 import com.qidate.qisplan2.entity.AbstractGhostEntity;
-import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundSource;
-import net.minecraft.util.Mth;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.PathfinderMob;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
 
 import java.util.UUID;
@@ -42,23 +39,6 @@ public class CallingGhost extends AbstractGhostEntity {
      * 最近一次袭击目标的冷却时间。
      */
     int attackTargetCooldown = 0;
-
-
-    /*
-     * ========================================
-     * 跟随参数
-     * ========================================
-     */
-
-    /**
-     * 鬼在玩家身后的距离。
-     */
-    private static final double FOLLOW_DISTANCE = 2.5D;
-
-    /**
-     * 鬼在玩家身后的高度。
-     */
-    private static final double FOLLOW_HEIGHT = 1.0D;
 
 
     /*
@@ -95,20 +75,14 @@ public class CallingGhost extends AbstractGhostEntity {
      */
 
     /**
-     * 玩家一次 Tick 内至少旋转这么多度，
-     * 才认为玩家进行了回头。
-     */
-    private static final float TURN_THRESHOLD = 45.0F;
-
-    /**
      * 上一次记录的玩家水平朝向。
      */
-    private float lastPlayerYRot;
+    float lastPlayerYRot;
 
     /**
      * 是否已经拥有上一 Tick 的朝向。
      */
-    private boolean hasLastPlayerRotation = false;
+    boolean hasLastPlayerRotation = false;
 
 
     /*
@@ -178,44 +152,23 @@ public class CallingGhost extends AbstractGhostEntity {
 
         super.tick();
 
-        /*
-         * 只由服务端控制。
-         */
         if (level().isClientSide()) {
             return;
         }
 
-        /*
-         * 死机以后停止行为。
-         */
         if (isSupernaturallyStunned()) {
             return;
         }
 
-        /*
-         * ========================================
-         * 目标系统
-         * ========================================
-         */
-
         CallingGhostTargetSystem.tick(this);
 
         ServerPlayer player =
-                CallingGhostTargetSystem.getTargetPlayer(
-                        this
-                );
+                CallingGhostTargetSystem.getTargetPlayer(this);
 
-        /*
-         * 附近没有玩家。
-         */
         if (player == null) {
             return;
         }
 
-        /*
-         * 当前玩家暂时被鬼石砖 /
-         * 关闭鬼门隔绝。
-         */
         if (!CallingGhostTargetSystem.canTrackPlayer(
                 this,
                 player
@@ -223,53 +176,13 @@ public class CallingGhost extends AbstractGhostEntity {
             return;
         }
 
-        /*
-         * ========================================
-         * 玩家回头检测
-         * ========================================
-         */
-
-        if (hasLastPlayerRotation) {
-
-            float currentYRot =
-                    player.getYRot();
-
-            float rotationDelta =
-                    Math.abs(
-                            net.minecraft.util.Mth.wrapDegrees(
-                                    currentYRot - lastPlayerYRot
-                            )
-                    );
-
-            if (rotationDelta >= TURN_THRESHOLD) {
-
-                onPlayerTurnAround(player);
-
-                return;
-            }
+        if (CallingGhostMovementSystem.tick(
+                this,
+                player
+        )) {
+            onPlayerTurnAround(player);
+            return;
         }
-
-        /*
-         * 记录本 Tick 玩家朝向。
-         */
-        lastPlayerYRot =
-                player.getYRot();
-
-        hasLastPlayerRotation = true;
-
-        /*
-         * ========================================
-         * 跟随玩家
-         * ========================================
-         */
-
-        followPlayer(player);
-
-        /*
-         * ========================================
-         * 喊名计时
-         * ========================================
-         */
 
         tickCalling(player);
     }
@@ -290,20 +203,12 @@ public class CallingGhost extends AbstractGhostEntity {
         );
 
         callCount = 0;
+        callCooldown = CALL_COOLDOWN_TICKS;
 
-        callCooldown =
-                CALL_COOLDOWN_TICKS;
-
-        /*
-         * 绑定玩家时立即记录当前朝向。
-         *
-         * 防止刚找到玩家的第一 tick
-         * 因为没有历史朝向而误判。
-         */
-        lastPlayerYRot =
-                player.getYRot();
-
-        hasLastPlayerRotation = true;
+        CallingGhostMovementSystem.startFollowing(
+                this,
+                player
+        );
     }
 
 
@@ -326,85 +231,14 @@ public class CallingGhost extends AbstractGhostEntity {
         );
 
         callCount = 0;
+        callCooldown = CALL_COOLDOWN_TICKS;
 
-        callCooldown =
-                CALL_COOLDOWN_TICKS;
+        CallingGhostMovementSystem.stopFollowing(
+                this
+        );
 
-        hasLastPlayerRotation = false;
-
-        /*
-         * 没有目标以后立即停止移动。
-         */
         getNavigation().stop();
         setDeltaMovement(Vec3.ZERO);
-    }
-
-
-    /*
-     * ========================================
-     * 跟随玩家
-     * ========================================
-     */
-
-    private void followPlayer(
-            ServerPlayer player
-    ) {
-
-        /*
-         * 玩家的视线方向。
-         */
-        Vec3 look =
-                player.getLookAngle();
-
-        /*
-         * 只取水平面。
-         */
-        Vec3 horizontalLook =
-                new Vec3(
-                        look.x,
-                        0.0D,
-                        look.z
-                );
-
-        /*
-         * 防止 normalize 出问题。
-         */
-        if (horizontalLook.lengthSqr()
-                < 1.0E-6D) {
-
-            return;
-        }
-
-        horizontalLook =
-                horizontalLook.normalize();
-
-        /*
-         * 玩家视线反方向 = 玩家身后。
-         */
-        Vec3 behind =
-                horizontalLook.scale(
-                        -FOLLOW_DISTANCE
-                );
-
-        /*
-         * 设置鬼的位置。
-         */
-        setPos(
-                player.getX() + behind.x,
-                player.getY() + FOLLOW_HEIGHT,
-                player.getZ() + behind.z
-        );
-
-        /*
-         * 鬼和玩家保持相同朝向。
-         */
-        setYRot(
-                player.getYRot()
-        );
-
-        setXRot(
-                0.0F
-        );
     }
 
 
