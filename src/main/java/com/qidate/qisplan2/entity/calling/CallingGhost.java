@@ -1,13 +1,11 @@
 package com.qidate.qisplan2.entity.calling;
 
 import com.qidate.qisplan2.QisPlan2;
-import com.qidate.qisplan2.core.ModBlocks;
 import com.qidate.qisplan2.death.ModDamageTypes;
 import com.qidate.qisplan2.death.SupernaturalDeathHandler;
 import com.qidate.qisplan2.entity.AbstractGhostEntity;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundSource;
@@ -17,9 +15,7 @@ import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.PathfinderMob;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
-import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.block.DoorBlock;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
 
@@ -33,26 +29,19 @@ public class CallingGhost extends AbstractGhostEntity {
      * ========================================
      */
 
-    private UUID targetPlayerUUID;
+    UUID targetPlayerUUID;
 
     /**
      * 最近一次被袭击的玩家。
      *
      * 短时间内不会再次选择这个玩家。
      */
-    private UUID recentlyAttackedPlayerUUID;
+    UUID recentlyAttackedPlayerUUID;
 
     /**
      * 最近一次袭击目标的冷却时间。
      */
-    private int attackTargetCooldown = 0;
-
-    /**
-     * 同一个玩家被袭击后的目标冷却。
-     *
-     * 这里暂时设置为 30 秒。
-     */
-    private static final int ATTACK_TARGET_COOLDOWN_TICKS = 20 * 30;
+    int attackTargetCooldown = 0;
 
 
     /*
@@ -128,9 +117,6 @@ public class CallingGhost extends AbstractGhostEntity {
      * ========================================
      */
 
-    private static final String NBT_TARGET_PLAYER =
-            "QisPlan2CallingGhostTarget";
-
     private static final String NBT_CALL_COOLDOWN =
             "QisPlan2CallingGhostCallCooldown";
 
@@ -200,22 +186,6 @@ public class CallingGhost extends AbstractGhostEntity {
         }
 
         /*
-         * ========================================
-         * 最近袭击目标冷却
-         * ========================================
-         */
-
-        if (attackTargetCooldown > 0) {
-
-            attackTargetCooldown--;
-
-            if (attackTargetCooldown <= 0) {
-
-                recentlyAttackedPlayerUUID = null;
-            }
-        }
-
-        /*
          * 死机以后停止行为。
          */
         if (isSupernaturallyStunned()) {
@@ -223,27 +193,17 @@ public class CallingGhost extends AbstractGhostEntity {
         }
 
         /*
-         * 尝试获取已经绑定的玩家。
+         * ========================================
+         * 目标系统
+         * ========================================
          */
+
+        CallingGhostTargetSystem.tick(this);
+
         ServerPlayer player =
-                getTargetPlayer();
-
-        /*
-         * 没有目标时寻找新的玩家。
-         */
-        if (player == null) {
-
-            clearTarget();
-
-            player = findNearestPlayer();
-
-            if (player != null) {
-
-                setTargetPlayer(player);
-
-                followPlayer(player);
-            }
-        }
+                CallingGhostTargetSystem.getTargetPlayer(
+                        this
+                );
 
         /*
          * 附近没有玩家。
@@ -253,22 +213,13 @@ public class CallingGhost extends AbstractGhostEntity {
         }
 
         /*
-         * 玩家死亡。
+         * 当前玩家暂时被鬼石砖 /
+         * 关闭鬼门隔绝。
          */
-        if (!player.isAlive()) {
-
-            clearTarget();
-
-            return;
-        }
-
-        if (!canTrackPlayer(player)) {
-
-            /*
-             * 鬼石砖 / 关闭鬼门隔绝。
-             *
-             * 当前玩家暂时无法被喊人鬼追踪。
-             */
+        if (!CallingGhostTargetSystem.canTrackPlayer(
+                this,
+                player
+        )) {
             return;
         }
 
@@ -306,7 +257,6 @@ public class CallingGhost extends AbstractGhostEntity {
 
         hasLastPlayerRotation = true;
 
-
         /*
          * ========================================
          * 跟随玩家
@@ -314,7 +264,6 @@ public class CallingGhost extends AbstractGhostEntity {
          */
 
         followPlayer(player);
-
 
         /*
          * ========================================
@@ -328,154 +277,6 @@ public class CallingGhost extends AbstractGhostEntity {
 
     /*
      * ========================================
-     * 获取目标玩家
-     * ========================================
-     */
-
-    private ServerPlayer getTargetPlayer() {
-
-        if (!(level()
-                instanceof ServerLevel serverLevel)) {
-
-            return null;
-        }
-
-        if (targetPlayerUUID == null) {
-            return null;
-        }
-
-        Player player =
-                serverLevel.getPlayerByUUID(
-                        targetPlayerUUID
-                );
-
-        if (player instanceof ServerPlayer serverPlayer) {
-
-            /*
-             * 如果玩家已经跨维度，
-             * 当前实体不能继续跟随。
-             */
-            if (serverPlayer.level() != level()) {
-                return null;
-            }
-
-            return serverPlayer;
-        }
-
-        return null;
-    }
-
-    private boolean canTargetPlayer(
-            ServerPlayer player
-    ) {
-
-        /*
-         * 创造模式不追踪。
-         */
-        if (player.isCreative()) {
-            return false;
-        }
-
-        /*
-         * 旁观模式不追踪。
-         */
-        if (player.isSpectator()) {
-            return false;
-        }
-
-        /*
-         * 必须存活。
-         */
-        if (!player.isAlive()) {
-            return false;
-        }
-
-        /*
-         * 鬼石砖 / 关闭鬼门
-         * 可以隔绝喊人鬼。
-         */
-        if (!canTrackPlayer(player)) {
-            return false;
-        }
-
-        /*
-         * 最近刚刚袭击过的玩家，
-         * 暂时不能再次成为目标。
-         */
-        if (recentlyAttackedPlayerUUID != null
-                && player.getUUID().equals(
-                recentlyAttackedPlayerUUID
-        )) {
-
-            return false;
-        }
-
-        return true;
-    }
-
-
-    private ServerPlayer findNearestPlayer() {
-
-        if (!(level()
-                instanceof ServerLevel serverLevel)) {
-
-            return null;
-        }
-
-        double maxDistanceSqr =
-                64.0D * 64.0D;
-
-        ServerPlayer nearestPlayer = null;
-
-        double nearestDistanceSqr =
-                Double.MAX_VALUE;
-
-        for (ServerPlayer player
-                : serverLevel.players()) {
-
-            double distanceSqr =
-                    distanceToSqr(player);
-
-            if (distanceSqr > maxDistanceSqr) {
-                continue;
-            }
-
-            if (!canTargetPlayer(player)) {
-                continue;
-            }
-
-            if (recentlyAttackedPlayerUUID != null
-                    && player.getUUID().equals(
-                    recentlyAttackedPlayerUUID
-            )) {
-
-                continue;
-            }
-
-            if (distanceSqr < nearestDistanceSqr) {
-
-                nearestDistanceSqr =
-                        distanceSqr;
-
-                nearestPlayer =
-                        player;
-            }
-        }
-
-        if (nearestPlayer != null) {
-
-            QisPlan2.LOGGER.info(
-                    "[QisPlan2] 喊人鬼找到新目标：{}",
-                    nearestPlayer.getGameProfile().getName()
-            );
-        }
-
-        return nearestPlayer;
-    }
-
-
-    /*
-     * ========================================
      * 设置目标玩家
      * ========================================
      */
@@ -483,9 +284,10 @@ public class CallingGhost extends AbstractGhostEntity {
     public void setTargetPlayer(
             ServerPlayer player
     ) {
-
-        targetPlayerUUID =
-                player.getUUID();
+        CallingGhostTargetSystem.setTargetPlayer(
+                this,
+                player
+        );
 
         callCount = 0;
 
@@ -517,9 +319,11 @@ public class CallingGhost extends AbstractGhostEntity {
      * ========================================
      */
 
-    private void clearTarget() {
+    public void clearTarget() {
 
-        targetPlayerUUID = null;
+        CallingGhostTargetSystem.clearTarget(
+                this
+        );
 
         callCount = 0;
 
@@ -625,11 +429,10 @@ public class CallingGhost extends AbstractGhostEntity {
          * ========================================
          */
 
-        recentlyAttackedPlayerUUID =
-                player.getUUID();
-
-        attackTargetCooldown =
-                ATTACK_TARGET_COOLDOWN_TICKS;
+        CallingGhostTargetSystem.markRecentlyAttacked(
+                this,
+                player
+        );
 
         /*
          * ========================================
@@ -665,7 +468,7 @@ public class CallingGhost extends AbstractGhostEntity {
         if (callCount >= MAX_CALL_COUNT) {
 
             /*
-             * 已经喊满十次。
+             * 已经喊满七次。
              *
              * 放弃当前玩家。
              */
@@ -698,7 +501,7 @@ public class CallingGhost extends AbstractGhostEntity {
 
         /*
          * ========================================
-         * 是否已经喊满十次
+         * 是否已经喊满七次
          * ========================================
          */
 
@@ -747,120 +550,6 @@ public class CallingGhost extends AbstractGhostEntity {
     }
 
 
-
-    /*
-     * ========================================
-     * 灵异阻隔
-     * ========================================
-     */
-
-    private boolean canTrackPlayer(
-            ServerPlayer player
-    ) {
-
-        Vec3 start =
-                position().add(
-                        0.0D,
-                        0.8D,
-                        0.0D
-                );
-
-        Vec3 end =
-                player.getEyePosition();
-
-        double distance =
-                start.distanceTo(end);
-
-        int steps =
-                Math.max(
-                        1,
-                        (int) Math.ceil(
-                                distance / 0.5D
-                        )
-                );
-
-        for (int i = 1; i < steps; i++) {
-
-            double t =
-                    (double) i / steps;
-
-            double x =
-                    Mth.lerp(
-                            t,
-                            start.x,
-                            end.x
-                    );
-
-            double y =
-                    Mth.lerp(
-                            t,
-                            start.y,
-                            end.y
-                    );
-
-            double z =
-                    Mth.lerp(
-                            t,
-                            start.z,
-                            end.z
-                    );
-
-            BlockPos checkPos =
-                    BlockPos.containing(
-                            x,
-                            y,
-                            z
-                    );
-
-            BlockState state =
-                    level().getBlockState(
-                            checkPos
-                    );
-
-            if (isCallingGhostBlocker(state)) {
-                return false;
-            }
-        }
-
-        return true;
-    }
-
-
-    private boolean isCallingGhostBlocker(
-            BlockState state
-    ) {
-
-        /*
-         * 鬼石砖：
-         *
-         * 永久阻挡。
-         */
-        if (state.is(
-                ModBlocks.GHOST_STONE_BRICKS.get()
-        )) {
-
-            return true;
-        }
-
-        /*
-         * 鬼门：
-         *
-         * 关闭 → 阻挡
-         * 打开 → 不阻挡
-         */
-        if (state.is(
-                ModBlocks.GHOST_DOOR.get()
-        )) {
-
-            return !state.getValue(
-                    DoorBlock.OPEN
-            );
-        }
-
-        return false;
-    }
-
-
     /*
      * ========================================
      * NBT
@@ -871,18 +560,14 @@ public class CallingGhost extends AbstractGhostEntity {
     public void addAdditionalSaveData(
             CompoundTag tag
     ) {
-
         super.addAdditionalSaveData(
                 tag
         );
 
-        if (targetPlayerUUID != null) {
-
-            tag.putUUID(
-                    NBT_TARGET_PLAYER,
-                    targetPlayerUUID
-            );
-        }
+        CallingGhostTargetSystem.save(
+                this,
+                tag
+        );
 
         tag.putInt(
                 NBT_CALL_COOLDOWN,
@@ -900,20 +585,14 @@ public class CallingGhost extends AbstractGhostEntity {
     public void readAdditionalSaveData(
             CompoundTag tag
     ) {
-
         super.readAdditionalSaveData(
                 tag
         );
 
-        if (tag.hasUUID(
-                NBT_TARGET_PLAYER
-        )) {
-
-            targetPlayerUUID =
-                    tag.getUUID(
-                            NBT_TARGET_PLAYER
-                    );
-        }
+        CallingGhostTargetSystem.load(
+                this,
+                tag
+        );
 
         callCooldown =
                 Math.max(
@@ -947,9 +626,5 @@ public class CallingGhost extends AbstractGhostEntity {
          * 它的位置完全由 followPlayer()
          * 控制。
          */
-
-        QisPlan2.LOGGER.info(
-                "[QisPlan2] CallingGhost.registerGoals()"
-        );
     }
 }
