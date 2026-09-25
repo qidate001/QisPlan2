@@ -53,6 +53,22 @@ public abstract class AbstractGhostEntity
      */
     protected boolean permanentSupernaturalStun = false;
 
+    /*
+     * ========================================
+     * 公共灵异属性
+     * ========================================
+     */
+
+    /**
+     * 灵异强度。
+     */
+    private double supernaturalStrength = 0.0D;
+
+    /**
+     * 灵异防御。
+     */
+    private double supernaturalDefense = 0.0D;
+
 
     /*
      * ========================================
@@ -93,6 +109,12 @@ public abstract class AbstractGhostEntity
 
     private static final String COFFIN_NAIL_KEY =
             "QisPlan2CoffinNailed";
+
+    private static final String NBT_SUPERNATURAL_STRENGTH =
+            "QisPlan2SupernaturalStrength";
+
+    private static final String NBT_SUPERNATURAL_DEFENSE =
+            "QisPlan2SupernaturalDefense";
 
 
     protected AbstractGhostEntity(
@@ -233,17 +255,77 @@ public abstract class AbstractGhostEntity
                 || supernaturalStunTicks > 0;
     }
 
+    /**
+     * 获取内部保存的灵异强度。
+     */
+    protected double getSupernaturalStrengthValue() {
+        return supernaturalStrength;
+    }
+
+    /**
+     * 设置内部保存的灵异强度。
+     *
+     * @param value 灵异强度
+     */
+    protected void setSupernaturalStrengthValue(
+            double value
+    ) {
+        supernaturalStrength = Math.max(
+                0.0D,
+                value
+        );
+    }
+
+    /**
+     * 获取内部保存的灵异防御。
+     */
+    protected double getSupernaturalDefenseValue() {
+        return supernaturalDefense;
+    }
+
+    /**
+     * 设置内部保存的灵异防御。
+     *
+     * @param value 灵异防御
+     */
+    protected void setSupernaturalDefenseValue(
+            double value
+    ) {
+        supernaturalDefense = Math.max(
+                0.0D,
+                value
+        );
+    }
+
 
     /*
      * ========================================
-     * 灵异防御
+     * 灵异属性
      * ========================================
+     */
+
+    /**
+     * 获取当前灵异强度。
      *
-     * 子类可以 override。
+     * <p>
+     * 所有实体鬼统一通过 {@link GhostAttributeSystem}
+     * 管理该属性。
+     */
+    @Override
+    public double getSupernaturalStrength() {
+        return GhostAttributeSystem.getSupernaturalStrength(this);
+    }
+
+    /**
+     * 获取当前灵异防御。
+     *
+     * <p>
+     * 所有实体鬼统一通过 {@link GhostAttributeSystem}
+     * 管理该属性。
      */
     @Override
     public double getSupernaturalDefense() {
-        return 0.0D;
+        return GhostAttributeSystem.getSupernaturalDefense(this);
     }
 
 
@@ -385,6 +467,16 @@ public abstract class AbstractGhostEntity
                 NBT_PERMANENT_STUN,
                 permanentSupernaturalStun
         );
+
+        tag.putDouble(
+                NBT_SUPERNATURAL_STRENGTH,
+                supernaturalStrength
+        );
+
+        tag.putDouble(
+                NBT_SUPERNATURAL_DEFENSE,
+                supernaturalDefense
+        );
     }
 
     @Override
@@ -412,6 +504,22 @@ public abstract class AbstractGhostEntity
         permanentSupernaturalStun =
                 tag.getBoolean(
                         NBT_PERMANENT_STUN
+                );
+
+        supernaturalStrength =
+                Math.max(
+                        0.0D,
+                        tag.getDouble(
+                                NBT_SUPERNATURAL_STRENGTH
+                        )
+                );
+
+        supernaturalDefense =
+                Math.max(
+                        0.0D,
+                        tag.getDouble(
+                                NBT_SUPERNATURAL_DEFENSE
+                        )
                 );
 
         /*
