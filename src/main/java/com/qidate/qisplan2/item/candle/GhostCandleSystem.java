@@ -26,6 +26,9 @@ import net.minecraft.world.entity.player.Player;
  */
 public final class GhostCandleSystem {
 
+    private GhostCandleSystem() {
+    }
+
     /**
      * 距离影响开始生效的范围。
      *
@@ -224,8 +227,5 @@ public final class GhostCandleSystem {
                 0,
                 guaranteedDamage
         );
-    }
-
-    private GhostCandleSystem() {
     }
 }

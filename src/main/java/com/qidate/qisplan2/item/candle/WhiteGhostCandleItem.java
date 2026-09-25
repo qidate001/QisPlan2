@@ -33,8 +33,14 @@ public class WhiteGhostCandleItem extends Item {
     ) {
         ItemStack stack = player.getItemInHand(hand);
 
-        if (!isLit(stack)) {
-            if (!level.isClientSide()) {
+        if (!level.isClientSide()) {
+
+            if (isLit(stack)) {
+
+                stack.remove(DataComponents.CUSTOM_MODEL_DATA);
+
+            } else {
+
                 stack.set(
                         DataComponents.CUSTOM_MODEL_DATA,
                         new CustomModelData(1)
@@ -86,14 +92,9 @@ public class WhiteGhostCandleItem extends Item {
         int currentDamage =
                 stack.getDamageValue();
 
-        if (currentDamage + damage
-                >= stack.getMaxDamage()) {
+        if (damage + 1 >= stack.getMaxDamage()) {
 
-            stack.setDamageValue(
-                    stack.getMaxDamage()
-            );
-
-            extinguish(stack);
+            stack.shrink(1);
             return;
         }
 
@@ -107,9 +108,5 @@ public class WhiteGhostCandleItem extends Item {
                 stack.get(DataComponents.CUSTOM_MODEL_DATA);
 
         return customModelData != null;
-    }
-
-    private static void extinguish(ItemStack stack) {
-        stack.remove(DataComponents.CUSTOM_MODEL_DATA);
     }
 }

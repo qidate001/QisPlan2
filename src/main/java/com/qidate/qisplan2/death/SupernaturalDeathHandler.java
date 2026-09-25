@@ -6,6 +6,7 @@ import com.qidate.qisplan2.core.ModMobEffects;
 import com.qidate.qisplan2.death.SupernaturalEntity;
 import com.qidate.qisplan2.ghost.layer.GhostLayerHandler;
 import com.qidate.qisplan2.item.GhostShroudItem;
+import com.qidate.qisplan2.item.candle.WhiteGhostCandleSystem;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
@@ -110,6 +111,28 @@ public class SupernaturalDeathHandler {
         // 防溢出
         supernaturalIntensity =
                 Math.max(0.0D, supernaturalIntensity);
+
+        /*
+         * ========================================
+         * 白鬼烛抵挡
+         * ========================================
+         *
+         * 1 灵异强度 = 10 耐久。
+         * 即使耐久不足，
+         * 也会尽可能削弱本次袭击。
+         */
+        if (entity instanceof ServerPlayer player) {
+
+            supernaturalIntensity =
+                    WhiteGhostCandleSystem.absorbAttack(
+                            player,
+                            supernaturalIntensity
+                    );
+
+            if (supernaturalIntensity <= 0.0D) {
+                return false;
+            }
+        }
 
         // 记录本次袭击
         double recentIntensity =
