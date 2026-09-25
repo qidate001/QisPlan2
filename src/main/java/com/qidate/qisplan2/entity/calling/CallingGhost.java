@@ -6,8 +6,6 @@ import com.qidate.qisplan2.death.SupernaturalDeathHandler;
 import com.qidate.qisplan2.entity.AbstractGhostEntity;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.sounds.SoundEvent;
-import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.PathfinderMob;
@@ -48,24 +46,14 @@ public class CallingGhost extends AbstractGhostEntity {
      */
 
     /**
-     * 两次喊名之间的最小冷却。
-     */
-    private static final int CALL_COOLDOWN_TICKS = 100;
-
-    /**
-     * 喊名次数上限。
-     */
-    private static final int MAX_CALL_COUNT = 7;
-
-    /**
      * 当前距离下一次喊名还有多少 tick。
      */
-    private int callCooldown = CALL_COOLDOWN_TICKS;
+    int callCooldown = 0;
 
     /**
      * 当前已经喊了多少次。
      */
-    private int callCount = 0;
+    int callCount = 0;
 
 
     /*
@@ -184,7 +172,10 @@ public class CallingGhost extends AbstractGhostEntity {
             return;
         }
 
-        tickCalling(player);
+        CallingGhostCallSystem.tick(
+                this,
+                player
+        );
     }
 
 
@@ -202,12 +193,13 @@ public class CallingGhost extends AbstractGhostEntity {
                 player
         );
 
-        callCount = 0;
-        callCooldown = CALL_COOLDOWN_TICKS;
-
         CallingGhostMovementSystem.startFollowing(
                 this,
                 player
+        );
+
+        CallingGhostCallSystem.startCalling(
+                this
         );
     }
 
@@ -229,9 +221,6 @@ public class CallingGhost extends AbstractGhostEntity {
         CallingGhostTargetSystem.clearTarget(
                 this
         );
-
-        callCount = 0;
-        callCooldown = CALL_COOLDOWN_TICKS;
 
         CallingGhostMovementSystem.stopFollowing(
                 this
@@ -291,101 +280,6 @@ public class CallingGhost extends AbstractGhostEntity {
 
     /*
      * ========================================
-     * 喊名
-     * ========================================
-     */
-
-    private void tickCalling(
-            ServerPlayer player
-    ) {
-
-        if (callCount >= MAX_CALL_COUNT) {
-
-            /*
-             * 已经喊满七次。
-             *
-             * 放弃当前玩家。
-             */
-            clearTarget();
-
-            return;
-        }
-
-
-        if (callCooldown > 0) {
-
-            callCooldown--;
-
-            return;
-        }
-
-
-        /*
-         * ========================================
-         * 喊一次
-         * ========================================
-         */
-
-        callPlayerName(
-                player
-        );
-
-        callCount++;
-
-
-        /*
-         * ========================================
-         * 是否已经喊满七次
-         * ========================================
-         */
-
-        if (callCount >= MAX_CALL_COUNT) {
-
-            clearTarget();
-
-            return;
-        }
-
-
-        /*
-         * 下一次喊名。
-         */
-        callCooldown =
-                CALL_COOLDOWN_TICKS;
-    }
-
-
-    private void callPlayerName(
-            ServerPlayer player
-    ) {
-
-        SoundEvent sound =
-                CallingGhostSounds.getSound(
-                        player
-                );
-
-        QisPlan2.LOGGER.info(
-                "[QisPlan2] 喊人鬼喊 {}：第 {} 次，音效={}",
-                player.getGameProfile().getName(),
-                callCount + 1,
-                sound.getLocation()
-        );
-
-        player.level().playSound(
-                null,
-                player.getX(),
-                player.getY(),
-                player.getZ(),
-                sound,
-                SoundSource.HOSTILE,
-                1.0F,
-                1.0F
-        );
-    }
-
-
-    /*
-     * ========================================
      * NBT
      * ========================================
      */
@@ -394,23 +288,16 @@ public class CallingGhost extends AbstractGhostEntity {
     public void addAdditionalSaveData(
             CompoundTag tag
     ) {
-        super.addAdditionalSaveData(
-                tag
-        );
+        super.addAdditionalSaveData(tag);
 
         CallingGhostTargetSystem.save(
                 this,
                 tag
         );
 
-        tag.putInt(
-                NBT_CALL_COOLDOWN,
-                callCooldown
-        );
-
-        tag.putInt(
-                NBT_CALL_COUNT,
-                callCount
+        CallingGhostCallSystem.save(
+                this,
+                tag
         );
     }
 
@@ -419,30 +306,17 @@ public class CallingGhost extends AbstractGhostEntity {
     public void readAdditionalSaveData(
             CompoundTag tag
     ) {
-        super.readAdditionalSaveData(
-                tag
-        );
+        super.readAdditionalSaveData(tag);
 
         CallingGhostTargetSystem.load(
                 this,
                 tag
         );
 
-        callCooldown =
-                Math.max(
-                        0,
-                        tag.getInt(
-                                NBT_CALL_COOLDOWN
-                        )
-                );
-
-        callCount =
-                Math.max(
-                        0,
-                        tag.getInt(
-                                NBT_CALL_COUNT
-                        )
-                );
+        CallingGhostCallSystem.load(
+                this,
+                tag
+        );
     }
 
 
