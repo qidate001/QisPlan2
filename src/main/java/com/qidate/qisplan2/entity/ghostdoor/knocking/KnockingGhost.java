@@ -1,6 +1,7 @@
 package com.qidate.qisplan2.entity.ghostdoor.knocking;
 
 import com.qidate.qisplan2.entity.AbstractGhostEntity;
+import com.qidate.qisplan2.entity.GhostAttributeSystem;
 import com.qidate.qisplan2.entity.ai.GhostWanderGoal;
 import com.qidate.qisplan2.ghost.possession.ability.knockingghost.KnockingGhostAbility;
 import com.qidate.qisplan2.ghost.possession.ability.knockingghost.KnockingGhostDoorSystem;
@@ -20,19 +21,6 @@ import java.util.EnumSet;
 
 public class KnockingGhost
         extends AbstractGhostEntity {
-
-    /*
-     * ============================================================
-     * 灵异防御
-     * ============================================================
-     */
-
-    private static final double SUPERNATURAL_DEFENSE = 6.0D;
-
-    @Override
-    public double getSupernaturalDefense() {
-        return SUPERNATURAL_DEFENSE;
-    }
 
     /*
      * ============================================================
@@ -74,6 +62,11 @@ public class KnockingGhost
         super(
                 entityType,
                 level
+        );
+
+        GhostAttributeSystem.setSupernaturalDefense(
+                this,
+                6.0D
         );
     }
 
