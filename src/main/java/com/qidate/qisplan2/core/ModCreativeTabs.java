@@ -56,6 +56,8 @@ public class ModCreativeTabs {
                         output.accept(COFFIN_NAIL);
                         output.accept(COFFIN_NAIL_PICKAXE);
                         output.accept(GHOST_DIVINATION_SLIP);
+                        output.accept(WHITE_GHOST_CANDLE);
+                        output.accept(RED_GHOST_CANDLE);
 
                         // 鬼画
                         output.accept(GHOST_PAINTING);

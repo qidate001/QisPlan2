@@ -282,6 +282,30 @@ public class ModItems {
                     )
             );
 
+    // 白色鬼烛
+    public static final DeferredItem<WhiteGhostCandleItem>
+            WHITE_GHOST_CANDLE =
+            ITEMS.register(
+                    "white_ghost_candle",
+                    () -> new WhiteGhostCandleItem(
+                            new Item.Properties()
+                                    .stacksTo(1)
+                                    .durability(1200)
+                    )
+            );
+
+    // 红色鬼烛
+    public static final DeferredItem<RedGhostCandleItem>
+            RED_GHOST_CANDLE =
+            ITEMS.register(
+                    "red_ghost_candle",
+                    () -> new RedGhostCandleItem(
+                            new Item.Properties()
+                                    .stacksTo(1)
+                                    .durability(1200)
+                    )
+            );
+
     // 夜游鬼刷怪蛋
     public static final DeferredItem<SpawnEggItem> NIGHT_WANDERER_SPAWN_EGG =
             ITEMS.register(

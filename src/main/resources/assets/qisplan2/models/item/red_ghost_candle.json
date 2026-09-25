@@ -1,0 +1,14 @@
+{
+  "parent": "minecraft:item/generated",
+  "textures": {
+    "layer0": "qisplan2:item/red_ghost_candle"
+  },
+  "overrides": [
+    {
+      "predicate": {
+        "custom_model_data": 1
+      },
+      "model": "qisplan2:item/red_ghost_candle_lit"
+    }
+  ]
+}
