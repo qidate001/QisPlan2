@@ -135,14 +135,14 @@ public abstract class AbstractGhostEntity
      */
 
     public double getRevival() {
-        return revival;
+        return GhostStateSystem.getRevival(this);
     }
 
     public void setRevival(
             double value
     ) {
-        revival = Math.max(
-                0.0D,
+        GhostStateSystem.setRevival(
+                this,
                 value
         );
     }
@@ -150,8 +150,33 @@ public abstract class AbstractGhostEntity
     public void addRevival(
             double value
     ) {
-        setRevival(
-                revival + value
+        GhostStateSystem.addRevival(
+                this,
+                value
+        );
+    }
+
+    /**
+     * 获取内部保存的复苏值。
+     *
+     * <p>
+     * 仅供 {@link GhostStateSystem} 使用。
+     */
+    double getRevivalValue() {
+        return revival;
+    }
+
+    /**
+     * 设置内部保存的复苏值。
+     *
+     * @param value 新的复苏值
+     */
+    void setRevivalValue(
+            double value
+    ) {
+        revival = Math.max(
+                0.0D,
+                value
         );
     }
 
@@ -163,31 +188,85 @@ public abstract class AbstractGhostEntity
      */
 
     public int getSupernaturalStunTicks() {
-        return supernaturalStunTicks;
+        return GhostStateSystem.getSupernaturalStunTicks(
+                this
+        );
     }
 
     public void setSupernaturalStunTicks(
             int ticks
     ) {
-        supernaturalStunTicks =
-                Math.max(
-                        0,
-                        ticks
-                );
+        GhostStateSystem.setSupernaturalStunTicks(
+                this,
+                ticks
+        );
     }
 
     public void addSupernaturalStunTicks(
             int ticks
     ) {
-        long result =
-                (long) supernaturalStunTicks
-                        + ticks;
+        GhostStateSystem.addSupernaturalStunTicks(
+                this,
+                ticks
+        );
+    }
 
-        supernaturalStunTicks =
-                (int) Math.clamp(
-                        result,
-                        0L,
-                        Integer.MAX_VALUE);
+    /**
+     * 获取内部保存的普通死机时间。
+     */
+    int getSupernaturalStunTicksValue() {
+        return supernaturalStunTicks;
+    }
+
+    /**
+     * 设置内部保存的普通死机时间。
+     *
+     * @param ticks 死机时间
+     */
+    void setSupernaturalStunTicksValue(
+            int ticks
+    ) {
+        supernaturalStunTicks = ticks;
+    }
+
+
+    /*
+     * ========================================
+     * 永久死机
+     * ========================================
+     */
+
+    @Override
+    public boolean isPermanentlySupernaturallyStunned() {
+        return GhostStateSystem
+                .isPermanentlySupernaturallyStunned(this);
+    }
+
+    public void setPermanentSupernaturalStun(
+            boolean value
+    ) {
+        GhostStateSystem.setPermanentSupernaturalStun(
+                this,
+                value
+        );
+    }
+
+    /**
+     * 获取内部保存的永久死机状态。
+     */
+    boolean isPermanentlySupernaturallyStunnedValue() {
+        return permanentSupernaturalStun;
+    }
+
+    /**
+     * 设置内部保存的永久死机状态。
+     *
+     * @param value 是否永久死机
+     */
+    void setPermanentSupernaturalStunValue(
+            boolean value
+    ) {
+        permanentSupernaturalStun = value;
     }
 
 
@@ -223,36 +302,15 @@ public abstract class AbstractGhostEntity
 
     /*
      * ========================================
-     * 永久死机
-     * ========================================
-     */
-
-    @Override
-    public boolean isPermanentlySupernaturallyStunned() {
-        return permanentSupernaturalStun;
-    }
-
-    public void setPermanentSupernaturalStun(
-            boolean value
-    ) {
-        permanentSupernaturalStun = value;
-
-        if (value) {
-            supernaturalStunTicks = 0;
-        }
-    }
-
-
-    /*
-     * ========================================
      * 当前是否死机
      * ========================================
      */
 
     @Override
     public boolean isSupernaturallyStunned() {
-        return permanentSupernaturalStun
-                || supernaturalStunTicks > 0;
+        return GhostStateSystem.isSupernaturallyStunned(
+                this
+        );
     }
 
     /**
@@ -339,11 +397,12 @@ public abstract class AbstractGhostEntity
     public void onSupernaturalAttack(
             int ticks
     ) {
-        if (permanentSupernaturalStun) {
+        if (GhostStateSystem.isPermanentlySupernaturallyStunned(this)) {
             return;
         }
 
-        addSupernaturalStunTicks(
+        GhostStateSystem.addSupernaturalStunTicks(
+                this,
                 ticks
         );
 
@@ -362,9 +421,7 @@ public abstract class AbstractGhostEntity
     @Override
     public void onPermanentSupernaturalAttack() {
 
-        permanentSupernaturalStun = true;
-
-        supernaturalStunTicks = 0;
+        GhostStateSystem.permanentlyStun(this);
 
         getNavigation().stop();
         setTarget(null);
@@ -384,44 +441,7 @@ public abstract class AbstractGhostEntity
 
         super.aiStep();
 
-        /*
-         * ========================================================
-         * 永久死机
-         * ========================================================
-         */
-        if (permanentSupernaturalStun) {
-
-            getNavigation().stop();
-            setTarget(null);
-            setAggressive(false);
-
-            return;
-        }
-
-        /*
-         * ========================================================
-         * 普通死机倒计时
-         * ========================================================
-         */
-        if (supernaturalStunTicks > 0) {
-            supernaturalStunTicks--;
-        }
-
-        /*
-         * ========================================================
-         * 棺材钉
-         * ========================================================
-         */
-        if (isCoffinNailed()) {
-            supernaturalStunTicks = 20;
-        }
-
-        /*
-         * ========================================================
-         * 当前仍然死机
-         * ========================================================
-         */
-        if (supernaturalStunTicks > 0) {
+        if (GhostStateSystem.tick(this)) {
 
             getNavigation().stop();
             setTarget(null);
@@ -563,8 +583,9 @@ public abstract class AbstractGhostEntity
      */
     @Override
     public void clearSupernaturalStun() {
-
-        supernaturalStunTicks = 0;
+        GhostStateSystem.clearSupernaturalStun(
+                this
+        );
     }
 
     /*
