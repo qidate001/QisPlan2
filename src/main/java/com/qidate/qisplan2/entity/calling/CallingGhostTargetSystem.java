@@ -108,6 +108,15 @@ public final class CallingGhostTargetSystem {
         }
 
         /*
+         * 玩家进入白色鬼烛保护后，
+         * 当前主动目标失效。
+         */
+        if (!ghost.canDetectPlayer(player)) {
+            ghost.clearTarget();
+            return;
+        }
+
+        /*
          * 鬼石砖或关闭鬼门
          * 会暂时隔绝喊人鬼。
          */
@@ -202,6 +211,14 @@ public final class CallingGhostTargetSystem {
         }
 
         /*
+         * 玩家点燃白色鬼烛后，
+         * 喊人鬼无法发现该玩家。
+         */
+        if (!ghost.canDetectPlayer(player)) {
+            return false;
+        }
+
+        /*
          * 鬼石砖 / 关闭鬼门
          * 可以隔绝喊人鬼。
          */
@@ -257,6 +274,14 @@ public final class CallingGhostTargetSystem {
 
         ServerPlayer nearestPlayer = null;
 
+        /*
+         * 当前最佳目标的灵异目标优先级。
+         *
+         * 数值越高，越应该优先锁定。
+         */
+        int nearestPriority =
+                Integer.MIN_VALUE;
+
         double nearestDistanceSqr =
                 Double.MAX_VALUE;
 
@@ -277,22 +302,44 @@ public final class CallingGhostTargetSystem {
                 continue;
             }
 
-            if (distanceSqr < nearestDistanceSqr) {
+            int priority =
+                    ghost.getPlayerTargetPriority(player);
+
+            /*
+             * ========================================
+             * 目标优先级
+             * ========================================
+             *
+             * 红色鬼烛玩家拥有更高优先级，
+             * 因此会优先成为喊人鬼的目标。
+             */
+            if (priority > nearestPriority) {
+
+                nearestPriority =
+                        priority;
+
+                nearestDistanceSqr =
+                        distanceSqr;
+
+                nearestPlayer =
+                        player;
+
+                continue;
+            }
+
+            /*
+             * 优先级相同的情况下，
+             * 距离更近的玩家优先。
+             */
+            if (priority == nearestPriority
+                    && distanceSqr < nearestDistanceSqr) {
+
                 nearestDistanceSqr =
                         distanceSqr;
 
                 nearestPlayer =
                         player;
             }
-        }
-
-        if (nearestPlayer != null) {
-            QisPlan2.LOGGER.info(
-                    "[QisPlan2] 喊人鬼找到新目标：{}",
-                    nearestPlayer
-                            .getGameProfile()
-                            .getName()
-            );
         }
 
         return nearestPlayer;
