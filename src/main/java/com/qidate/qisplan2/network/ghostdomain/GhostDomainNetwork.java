@@ -4,6 +4,7 @@ import com.qidate.qisplan2.ghost.domain.GhostDomain;
 import com.qidate.qisplan2.ghost.domain.GhostDomainLayerHandler;
 import com.qidate.qisplan2.ghost.domain.GhostDomainTeleportHandler;
 import com.qidate.qisplan2.ghost.domain.client.ClientGhostDomainManager;
+import com.qidate.qisplan2.ghost.domain.client.ClientGhostDomainVisionSystem;
 import com.qidate.qisplan2.network.payload.*;
 
 import net.minecraft.server.level.ServerLevel;
@@ -12,10 +13,7 @@ import net.neoforged.neoforge.network.PacketDistributor;
 import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent;
 import net.neoforged.neoforge.network.handling.IPayloadContext;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 
 public final class GhostDomainNetwork {
 
@@ -119,12 +117,21 @@ public final class GhostDomainNetwork {
 
                     context.enqueueWork(() -> {
 
-                        /*
-                         * 客户端处理暂时留空。
-                         *
-                         * 下一步会交给专门的
-                         * ClientGhostDomainVisionSystem。
-                         */
+                        Map<UUID, Integer> entities =
+                                new LinkedHashMap<>();
+
+                        for (GhostDomainVisionPayload.VisionEntry entry :
+                                payload.entries()) {
+
+                            entities.put(
+                                    entry.entityUUID(),
+                                    entry.color()
+                            );
+                        }
+
+                        ClientGhostDomainVisionSystem.update(
+                                entities
+                        );
                     });
                 }
         );

@@ -370,13 +370,73 @@ public final class GhostDomainManager {
             }
 
             /*
-             * 鬼域自身行为
+             * ========================================================
+             * 鬼域行为
+             * ========================================================
              */
+
             domain.getBehavior().tick(
                     level,
                     domain
             );
+
+            /*
+             * ========================================================
+             * 鬼域主人视觉
+             * ========================================================
+             */
+
+            updateVision(domain);
         }
+    }
+
+
+    /**
+     * 更新指定鬼域主人的视觉状态。
+     *
+     * <p>
+     * 只有鬼域来源实体是玩家时，
+     * 才会向对应客户端发送视觉数据。
+     *
+     * @param domain 鬼域
+     */
+    private void updateVision(
+            GhostDomain domain
+    ) {
+
+        Entity source =
+                level.getEntity(
+                        domain.getSourceUUID()
+                );
+
+        /*
+         * 当前只有玩家拥有客户端，
+         * 因此非玩家来源的鬼域不需要视觉同步。
+         */
+        if (!(source instanceof ServerPlayer player)) {
+            return;
+        }
+
+        /*
+         * 鬼域主人已经离开当前世界。
+         */
+        if (!player.isAlive()
+                || player.isRemoved()) {
+            return;
+        }
+
+        Map<UUID, Integer> visibleEntities =
+                GhostDomainVisionSystem
+                        .collectVisibleEntities(
+                                level,
+                                domain
+                        );
+
+        GhostDomainNetwork.sendVision(
+                player,
+                domain,
+                visibleEntities
+        );
     }
 
 
