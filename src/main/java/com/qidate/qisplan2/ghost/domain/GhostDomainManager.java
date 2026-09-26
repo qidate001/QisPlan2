@@ -461,7 +461,16 @@ public final class GhostDomainManager {
                 continue;
             }
 
-            if (domain.getLayer() >= 2) {
+            int unlockLayer =
+                    domain.getBehavior().getFlightUnlockLayer();
+
+            /*
+             * 解锁层数为 0：
+             * 该鬼域不提供飞行能力。
+             */
+            if (unlockLayer > 0
+                    && domain.getLayer() >= unlockLayer) {
+
                 canFly = true;
                 break;
             }

@@ -176,4 +176,21 @@ public interface GhostDomainBehavior {
     ) {
         return true;
     }
+
+    /**
+     * 获取鬼域主人飞行能力的解锁层数。
+     *
+     * <p>
+     * 当鬼域层数达到该层数时，
+     * 鬼域主人获得 Minecraft 原版飞行能力。
+     *
+     * <p>
+     * 默认第二层解锁。
+     *
+     * <p>
+     * 返回 {@code 0} 表示该鬼域不提供飞行能力。
+     */
+    default int getFlightUnlockLayer() {
+        return 2;
+    }
 }
