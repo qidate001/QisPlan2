@@ -159,4 +159,21 @@ public interface GhostDomainBehavior {
 
         return true;
     }
+
+    /**
+     * 是否启用鬼域视觉描边。
+     *
+     * <p>
+     * 默认启用。
+     *
+     * <p>
+     * 鬼域主人可以看到鬼域范围内的实体，
+     * 并根据实体类型显示对应颜色。
+     */
+    default boolean hasEntityVision(
+            ServerLevel level,
+            GhostDomain domain
+    ) {
+        return true;
+    }
 }

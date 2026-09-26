@@ -292,4 +292,15 @@ public final class GhostUmbrellaDomainBehavior
     ) {
         return false;
     }
+
+    /**
+     * 禁用鬼域视觉描边。
+     */
+    @Override
+    public boolean hasEntityVision(
+            ServerLevel level,
+            GhostDomain domain
+    ) {
+        return false;
+    }
 }

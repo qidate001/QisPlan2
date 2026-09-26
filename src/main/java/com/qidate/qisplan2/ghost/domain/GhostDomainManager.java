@@ -415,6 +415,14 @@ public final class GhostDomainManager {
             GhostDomain domain
     ) {
 
+        if (!domain.getBehavior().hasEntityVision(
+                level,
+                domain
+        )) {
+
+            return;
+        }
+
         Entity source =
                 level.getEntity(
                         domain.getSourceUUID()
