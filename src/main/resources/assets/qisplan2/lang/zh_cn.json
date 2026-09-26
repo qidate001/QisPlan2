@@ -114,14 +114,39 @@
   "death.attack.ghost_door_plate": "%1$s 被撕成了两半",
   "death.attack.calling_ghost": "%1$s 丧失了灵魂",
 
+
+
+
+
+
+  "command.qisplan2.player_only": "§c这个命令必须由玩家执行。",
+  "command.qisplan2.entity_only": "§c这个命令必须由实体执行。",
+
+
+
   "qisplan2.death_curse.triggered": "☠ §4死亡诅咒§r触发！§4死亡诅咒之剑§r已损坏！",
   "qisplan2.death_curse.reflection": "☠ §4死亡诅咒§r反噬！",
   "qisplan2.death_curse.infected": "☠ 你沾染了一道§4死亡诅咒§r！当前层数：%1$d/10",
 
+  "command.qisplan2.kill.default": "已清除附近 §e%s§r 个灵异实体。",
+  "command.qisplan2.kill.radius": "已清除 §e%s§r 格内的 §e%s§r 个灵异实体。",
 
+  "command.qisplan2.split_structure.success": "结构拆分完成：§e%s§r\n共生成 §e%s§r 个区块结构。",
+  "command.qisplan2.split_structure.failure": "结构拆分失败：§c%s§r\n错误：%s",
 
+  "command.qisplan2.generate_ghost_manor.busy": "§c现在已经有一个鬼庄园正在生成。",
+  "command.qisplan2.generate_ghost_manor.success": "§a已开始生成鬼庄园。",
 
-  "command.qisplan2.player_only": "这个命令必须由玩家执行。",
+  "command.qisplan2.generate_ghost_lake.busy": "§c现在已经有一个鬼湖正在生成。",
+  "command.qisplan2.generate_ghost_lake.success": "§a已开始生成鬼湖。",
+
+  "command.qisplan2.debug_domain.create.success": "已创建 Debug 鬼域（半径 §e%s§r，层数 §e%s§r，强度 §e%s§r）。",
+  "command.qisplan2.debug_domain.remove.success": "§a已删除 Debug 鬼域。",
+
+  "command.qisplan2.isay.disabled": "§c/isay 功能已被管理员禁用。",
+  "command.qisplan2.isay.api_key_missing": "§c错误：请先在模组配置中设置 API Key！",
+  "command.qisplan2.isay.thinking": "§e正在思考，请稍候...",
+  "command.qisplan2.isay.error": "§c处理请求时发生错误：%s",
   "command.qisplan2.ghost_not_found": "不存在可驾驭的鬼：%s",
   "command.qisplan2.already_possessed": "你已经驾驭了：%s",
   "command.qisplan2.possess.success": "成功驾驭：%s",

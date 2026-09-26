@@ -15,6 +15,7 @@ import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.network.chat.Component;
 
+import net.minecraft.server.level.ServerPlayer;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.RegisterCommandsEvent;
@@ -104,14 +105,14 @@ public final class ModCommands {
         /*
          * 检查是否由玩家执行。
          */
-        var level =
-                source.getLevel();
+        ServerPlayer player =
+                source.getPlayer();
 
-        if (level == null) {
+        if (player == null) {
 
             source.sendFailure(
-                    Component.literal(
-                            "§c该命令只能由玩家执行。"
+                    Component.translatable(
+                            "command.qisplan2.player_only"
                     )
             );
 
@@ -121,14 +122,15 @@ public final class ModCommands {
         /*
          * 检查游戏规则。
          */
-        if (!level.getGameRules()
+        if (!source.getLevel()
+                .getGameRules()
                 .getBoolean(
                         ModGameRules.ISAY_ENABLED
                 )) {
 
             source.sendFailure(
-                    Component.literal(
-                            "§c/isay 功能已被管理员禁用。"
+                    Component.translatable(
+                            "command.qisplan2.isay.disabled"
                     )
             );
 
@@ -148,8 +150,8 @@ public final class ModCommands {
                 || apiKey.isEmpty()) {
 
             source.sendFailure(
-                    Component.literal(
-                            "§c错误：请先在模组配置中设置 API Key！"
+                    Component.translatable(
+                            "command.qisplan2.isay.api_key_missing"
                     )
             );
 
@@ -157,8 +159,8 @@ public final class ModCommands {
         }
 
         source.sendSuccess(
-                () -> Component.literal(
-                        "§e正在思考，请稍候..."
+                () -> Component.translatable(
+                        "command.qisplan2.isay.thinking"
                 ),
                 false
         );
@@ -184,9 +186,9 @@ public final class ModCommands {
                 throwable -> {
 
                     source.sendFailure(
-                            Component.literal(
-                                    "§c处理请求时发生错误："
-                                            + throwable.getMessage()
+                            Component.translatable(
+                                    "command.qisplan2.isay.error",
+                                    throwable.getMessage()
                             )
                     );
 

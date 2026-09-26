@@ -117,9 +117,12 @@
 
 
 
+  "command.qisplan2.isay.disabled": "§cThe /isay feature has been disabled by an administrator.",
+  "command.qisplan2.isay.api_key_missing": "§cError: Please set the API Key in the mod configuration first!",
+  "command.qisplan2.isay.thinking": "§eThinking, please wait...",
+  "command.qisplan2.isay.error": "§cAn error occurred while processing the request: %s",
 
-
-  "command.qisplan2.player_only": "This command must be executed by a player.",
+  "command.qisplan2.player_only": "§cThis command must be executed by a player.",
   "command.qisplan2.ghost_not_found": "No possessable ghost exists: %s",
   "command.qisplan2.already_possessed": "You have already possessed: %s",
   "command.qisplan2.possess.success": "Successfully possessed: %s",

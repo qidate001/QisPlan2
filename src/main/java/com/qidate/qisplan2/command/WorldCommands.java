@@ -77,21 +77,35 @@ public final class WorldCommands {
                                         .then(
                                                 Commands.argument(
                                                                 "radius",
-                                                                DoubleArgumentType.doubleArg(1.0D, 512.0D)
+                                                                DoubleArgumentType.doubleArg(
+                                                                        1.0D,
+                                                                        512.0D
+                                                                )
                                                         )
-                                                        .executes(WorldCommands::createDebugDomain)
+                                                        .executes(
+                                                                WorldCommands::createDebugDomain
+                                                        )
                                                         .then(
                                                                 Commands.argument(
                                                                                 "layer",
-                                                                                IntegerArgumentType.integer(1, 10)
+                                                                                IntegerArgumentType.integer(
+                                                                                        1,
+                                                                                        10
+                                                                                )
                                                                         )
-                                                                        .executes(WorldCommands::createDebugDomain)
+                                                                        .executes(
+                                                                                WorldCommands::createDebugDomain
+                                                                        )
                                                                         .then(
                                                                                 Commands.argument(
                                                                                                 "strength",
-                                                                                                DoubleArgumentType.doubleArg(0.0D)
+                                                                                                DoubleArgumentType.doubleArg(
+                                                                                                        0.0D
+                                                                                                )
                                                                                         )
-                                                                                        .executes(WorldCommands::createDebugDomain)
+                                                                                        .executes(
+                                                                                                WorldCommands::createDebugDomain
+                                                                                        )
                                                                         )
                                                         )
                                         )
@@ -195,8 +209,8 @@ public final class WorldCommands {
         if (source.getEntity() == null) {
 
             source.sendFailure(
-                    Component.literal(
-                            "这个命令必须由实体执行。"
+                    Component.translatable(
+                            "command.qisplan2.entity_only"
                     )
             );
 
@@ -231,16 +245,12 @@ public final class WorldCommands {
         final int finalCount = count;
 
         source.sendSuccess(
-                () -> Component.literal(
+                () -> Component.translatable(
                         radius == 32.0D
-                                ? "已清除附近 "
-                                + finalCount
-                                + " 个灵异实体。"
-                                : "已清除 "
-                                + radius
-                                + " 格内的 "
-                                + finalCount
-                                + " 个灵异实体。"
+                                ? "command.qisplan2.kill.default"
+                                : "command.qisplan2.kill.radius",
+                        finalCount,
+                        radius
                 ),
                 true
         );
@@ -285,13 +295,10 @@ public final class WorldCommands {
                     );
 
             source.sendSuccess(
-                    () -> Component.literal(
-                            "结构拆分完成："
-                                    + sourceId
-                                    + "\n"
-                                    + "共生成 "
-                                    + count
-                                    + " 个区块结构。"
+                    () -> Component.translatable(
+                            "command.qisplan2.split_structure.success",
+                            sourceId,
+                            count
                     ),
                     true
             );
@@ -307,9 +314,10 @@ public final class WorldCommands {
             );
 
             source.sendFailure(
-                    Component.literal(
-                            "结构拆分失败："
-                                    + e.getMessage()
+                    Component.translatable(
+                            "command.qisplan2.split_structure.failure",
+                            sourceId,
+                            e.getMessage()
                     )
             );
 
@@ -332,11 +340,11 @@ public final class WorldCommands {
                 context.getSource();
 
         if (!(source.getEntity()
-                instanceof net.minecraft.server.level.ServerPlayer player)) {
+                instanceof ServerPlayer player)) {
 
             source.sendFailure(
-                    Component.literal(
-                            "这个命令必须由玩家执行。"
+                    Component.translatable(
+                            "command.qisplan2.player_only"
                     )
             );
 
@@ -352,8 +360,8 @@ public final class WorldCommands {
         if (!success) {
 
             source.sendFailure(
-                    Component.literal(
-                            "现在已经有一个鬼庄园正在生成。"
+                    Component.translatable(
+                            "command.qisplan2.generate_ghost_manor.busy"
                     )
             );
 
@@ -361,8 +369,8 @@ public final class WorldCommands {
         }
 
         source.sendSuccess(
-                () -> Component.literal(
-                        "已开始生成鬼庄园。"
+                () -> Component.translatable(
+                        "command.qisplan2.generate_ghost_manor.success"
                 ),
                 true
         );
@@ -370,6 +378,12 @@ public final class WorldCommands {
         return 1;
     }
 
+
+    /*
+     * ============================================================
+     * 生成鬼湖
+     * ============================================================
+     */
 
     private static int generateGhostLake(
             CommandContext<CommandSourceStack> context
@@ -379,11 +393,11 @@ public final class WorldCommands {
                 context.getSource();
 
         if (!(source.getEntity()
-                instanceof net.minecraft.server.level.ServerPlayer player)) {
+                instanceof ServerPlayer player)) {
 
             source.sendFailure(
-                    Component.literal(
-                            "这个命令必须由玩家执行。"
+                    Component.translatable(
+                            "command.qisplan2.player_only"
                     )
             );
 
@@ -399,8 +413,8 @@ public final class WorldCommands {
         if (!success) {
 
             source.sendFailure(
-                    Component.literal(
-                            "现在已经有一个鬼湖正在生成。"
+                    Component.translatable(
+                            "command.qisplan2.generate_ghost_lake.busy"
                     )
             );
 
@@ -408,14 +422,21 @@ public final class WorldCommands {
         }
 
         source.sendSuccess(
-                () -> Component.literal(
-                        "已开始生成鬼湖。"
+                () -> Component.translatable(
+                        "command.qisplan2.generate_ghost_lake.success"
                 ),
                 true
         );
 
         return 1;
     }
+
+
+    /*
+     * ============================================================
+     * 创建 Debug 鬼域
+     * ============================================================
+     */
 
     private static int createDebugDomain(
             CommandContext<CommandSourceStack> context
@@ -428,8 +449,8 @@ public final class WorldCommands {
                 instanceof ServerPlayer player)) {
 
             source.sendFailure(
-                    Component.literal(
-                            "这个命令必须由玩家执行。"
+                    Component.translatable(
+                            "command.qisplan2.player_only"
                     )
             );
 
@@ -445,10 +466,13 @@ public final class WorldCommands {
         int layer = 1;
 
         try {
-            layer = IntegerArgumentType.getInteger(
-                    context,
-                    "layer"
-            );
+
+            layer =
+                    IntegerArgumentType.getInteger(
+                            context,
+                            "layer"
+                    );
+
         } catch (IllegalArgumentException ignored) {
             // 未提供层数，使用默认值 1
         }
@@ -456,10 +480,13 @@ public final class WorldCommands {
         double strength = 1.0D;
 
         try {
-            strength = DoubleArgumentType.getDouble(
-                    context,
-                    "strength"
-            );
+
+            strength =
+                    DoubleArgumentType.getDouble(
+                            context,
+                            "strength"
+                    );
+
         } catch (IllegalArgumentException ignored) {
             // 未提供强度，使用默认值 1
         }
@@ -475,20 +502,24 @@ public final class WorldCommands {
         final double finalStrength = strength;
 
         source.sendSuccess(
-                () -> Component.literal(
-                        "已创建 Debug 鬼域（半径 "
-                                + radius
-                                + "，层数 "
-                                + finalLayer
-                                + "，强度 "
-                                + finalStrength
-                                + "）。"
+                () -> Component.translatable(
+                        "command.qisplan2.debug_domain.create.success",
+                        radius,
+                        finalLayer,
+                        finalStrength
                 ),
                 true
         );
 
         return 1;
     }
+
+
+    /*
+     * ============================================================
+     * 删除 Debug 鬼域
+     * ============================================================
+     */
 
     private static int removeDebugDomain(
             CommandContext<CommandSourceStack> context
@@ -501,8 +532,8 @@ public final class WorldCommands {
                 instanceof ServerPlayer player)) {
 
             source.sendFailure(
-                    Component.literal(
-                            "这个命令必须由玩家执行。"
+                    Component.translatable(
+                            "command.qisplan2.player_only"
                     )
             );
 
@@ -514,8 +545,8 @@ public final class WorldCommands {
         );
 
         source.sendSuccess(
-                () -> Component.literal(
-                        "已删除 Debug 鬼域。"
+                () -> Component.translatable(
+                        "command.qisplan2.debug_domain.remove.success"
                 ),
                 true
         );
@@ -523,8 +554,3 @@ public final class WorldCommands {
         return 1;
     }
 }
-
-
-
-
-
