@@ -3,8 +3,8 @@ package com.qidate.qisplan2.entity.ghostdoor.knocking;
 import com.qidate.qisplan2.entity.AbstractGhostEntity;
 import com.qidate.qisplan2.entity.GhostAttributeSystem;
 import com.qidate.qisplan2.entity.ai.GhostWanderGoal;
-import com.qidate.qisplan2.ghost.possession.ability.knockingghost.KnockingGhostAbility;
-import com.qidate.qisplan2.ghost.possession.ability.knockingghost.KnockingGhostDoorSystem;
+import com.qidate.qisplan2.ghost.possession.ability.ghostdoor.knocking.KnockingGhostAbility;
+import com.qidate.qisplan2.ghost.possession.ability.ghostdoor.knocking.KnockingGhostDoorSystem;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;

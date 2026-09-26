@@ -1,9 +1,9 @@
-package com.qidate.qisplan2.entity.ghostdoor.open;
+package com.qidate.qisplan2.entity.ghostdoor.opening;
 
 import com.qidate.qisplan2.death.ModDamageTypes;
 import com.qidate.qisplan2.entity.GhostAttributeSystem;
 import com.qidate.qisplan2.entity.ghostdoor.AbstractDoorTriggerGhost;
-import com.qidate.qisplan2.ghost.possession.ability.ghostdoor.OpeningGhostAbility;
+import com.qidate.qisplan2.ghost.possession.ability.ghostdoor.opening.OpeningGhostAbility;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.Entity;

@@ -74,7 +74,7 @@ public class ModGameRules {
             GameRules.register(
                     "ghostRebootRestorePosition",
                     GameRules.Category.MISC,
-                    GameRules.BooleanValue.create(true)
+                    GameRules.BooleanValue.create(false)
             );
 
     /**

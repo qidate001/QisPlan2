@@ -4,7 +4,7 @@ import com.qidate.qisplan2.death.ModDamageTypes;
 
 import com.qidate.qisplan2.entity.GhostAttributeSystem;
 import com.qidate.qisplan2.entity.ghostdoor.AbstractDoorTriggerGhost;
-import com.qidate.qisplan2.ghost.possession.ability.ghostdoor.ClosingGhostAbility;
+import com.qidate.qisplan2.ghost.possession.ability.ghostdoor.closing.ClosingGhostAbility;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.Entity;

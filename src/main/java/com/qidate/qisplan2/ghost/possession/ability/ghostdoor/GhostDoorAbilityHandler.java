@@ -3,6 +3,8 @@ package com.qidate.qisplan2.ghost.possession.ability.ghostdoor;
 import com.qidate.qisplan2.QisPlan2;
 import com.qidate.qisplan2.death.ModDamageTypes;
 import com.qidate.qisplan2.death.SupernaturalDeathHandler;
+import com.qidate.qisplan2.ghost.possession.ability.ghostdoor.closing.ClosingGhostAbility;
+import com.qidate.qisplan2.ghost.possession.ability.ghostdoor.opening.OpeningGhostAbility;
 import com.qidate.qisplan2.ghost.possession.data.PossessedGhostState;
 import com.qidate.qisplan2.ghost.possession.manager.PossessionHandler;
 

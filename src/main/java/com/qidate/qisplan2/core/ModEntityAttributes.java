@@ -2,7 +2,7 @@ package com.qidate.qisplan2.core;
 
 import com.qidate.qisplan2.entity.calling.CallingGhost;
 import com.qidate.qisplan2.entity.ghostdoor.closing.ClosingGhost;
-import com.qidate.qisplan2.entity.ghostdoor.open.OpeningGhost;
+import com.qidate.qisplan2.entity.ghostdoor.opening.OpeningGhost;
 import com.qidate.qisplan2.entity.invisible.InvisibleGhost;
 import com.qidate.qisplan2.entity.ghostdoor.knocking.KnockingGhost;
 import com.qidate.qisplan2.entity.nightwanderer.NightWanderer;

@@ -3,7 +3,7 @@ package com.qidate.qisplan2.entity.invisible;
 import com.qidate.qisplan2.entity.AbstractGhostEntity;
 import com.qidate.qisplan2.entity.GhostAttributeSystem;
 import com.qidate.qisplan2.entity.ai.GhostWanderGoal;
-import com.qidate.qisplan2.ghost.possession.ability.knockingghost.KnockingGhostAbility;
+import com.qidate.qisplan2.ghost.possession.ability.ghostdoor.knocking.KnockingGhostAbility;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.Mob;

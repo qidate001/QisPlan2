@@ -4,7 +4,7 @@ import com.qidate.qisplan2.client.BlackRainParticle;
 import com.qidate.qisplan2.client.GhostUmbrellaClient;
 import com.qidate.qisplan2.entity.calling.CallingGhostRenderer;
 import com.qidate.qisplan2.entity.ghostdoor.closing.ClosingGhostRenderer;
-import com.qidate.qisplan2.entity.ghostdoor.open.OpeningGhostRenderer;
+import com.qidate.qisplan2.entity.ghostdoor.opening.OpeningGhostRenderer;
 import com.qidate.qisplan2.entity.invisible.InvisibleGhostRenderer;
 import com.qidate.qisplan2.entity.ghostdoor.knocking.KnockingGhostRenderer;
 import com.qidate.qisplan2.entity.nightwanderer.NightWandererRenderer;

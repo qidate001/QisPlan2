@@ -1,4 +1,4 @@
-package com.qidate.qisplan2.ghost.possession.ability.knockingghost;
+package com.qidate.qisplan2.ghost.possession.ability.ghostdoor.knocking;
 
 import com.qidate.qisplan2.block.GhostDoorBlock;
 import com.qidate.qisplan2.core.ModSounds;

@@ -1,4 +1,4 @@
-package com.qidate.qisplan2.ghost.possession.ability.ghostdoor;
+package com.qidate.qisplan2.ghost.possession.ability.ghostdoor.closing;
 
 import com.qidate.qisplan2.QisPlan2;
 import com.qidate.qisplan2.core.ModEntities;
@@ -39,7 +39,7 @@ public final class ClosingGhostAbility
 
     @Override
     public double initialIntrinsicStrength() {
-        return 5.0D;
+        return 20.0D;
     }
 
     @Override

@@ -1,4 +1,4 @@
-package com.qidate.qisplan2.entity.ghostdoor.open;
+package com.qidate.qisplan2.entity.ghostdoor.opening;
 
 import net.minecraft.client.model.HumanoidModel;
 import net.minecraft.client.model.geom.ModelLayers;

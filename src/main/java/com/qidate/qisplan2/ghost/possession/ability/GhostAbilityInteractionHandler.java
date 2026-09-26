@@ -1,6 +1,6 @@
 package com.qidate.qisplan2.ghost.possession.ability;
 
-import com.qidate.qisplan2.ghost.possession.ability.knockingghost.KnockingGhostAbility;
+import com.qidate.qisplan2.ghost.possession.ability.ghostdoor.knocking.KnockingGhostAbility;
 
 import com.qidate.qisplan2.ghost.possession.manager.PossessionHandler;
 import net.minecraft.server.level.ServerPlayer;

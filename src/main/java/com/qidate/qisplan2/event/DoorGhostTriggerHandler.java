@@ -2,7 +2,7 @@ package com.qidate.qisplan2.event;
 
 import com.qidate.qisplan2.entity.ghostdoor.AbstractDoorTriggerGhost;
 import com.qidate.qisplan2.entity.ghostdoor.closing.ClosingGhost;
-import com.qidate.qisplan2.entity.ghostdoor.open.OpeningGhost;
+import com.qidate.qisplan2.entity.ghostdoor.opening.OpeningGhost;
 import com.qidate.qisplan2.ghost.possession.ability.ghostdoor.GhostDoorAbilityHandler;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
