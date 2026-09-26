@@ -43,6 +43,7 @@ public abstract class LevelRendererMixin {
         );
     }
 
+
     @Inject(
             method = "renderLevel",
             at = @At("TAIL")
@@ -61,6 +62,25 @@ public abstract class LevelRendererMixin {
     }
 
 
+    /*
+     * ============================================================
+     * 鬼域视觉描边颜色
+     * ============================================================
+     *
+     * LevelRenderer 原版流程：
+     *
+     * entity.getTeamColor()
+     * ↓
+     * ARGB32.red / green / blue
+     * ↓
+     * OutlineBufferSource.setColor()
+     *
+     * 这里仅替换 renderLevel() 中这一处
+     * getTeamColor() 的返回值。
+     *
+     * 不修改 Entity.getTeamColor() 本身，
+     * 避免影响 Minecraft 其他使用队伍颜色的逻辑。
+     */
     @Redirect(
             method = "renderLevel",
             at = @At(
@@ -71,6 +91,11 @@ public abstract class LevelRendererMixin {
     private int qisplan2$redirectGhostDomainOutlineColor(
             Entity entity
     ) {
+        /*
+         * 鬼域视觉系统中存在颜色记录。
+         *
+         * 直接使用鬼域提供的颜色。
+         */
         Integer color =
                 ClientGhostDomainVisionSystem.getColor(
                         entity.getUUID()
@@ -80,6 +105,10 @@ public abstract class LevelRendererMixin {
             return color;
         }
 
+        /*
+         * 不属于鬼域视觉系统：
+         * 完全保留 Minecraft 原版队伍颜色。
+         */
         return entity.getTeamColor();
     }
 }

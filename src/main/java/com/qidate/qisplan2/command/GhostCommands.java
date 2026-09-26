@@ -12,13 +12,16 @@ import com.qidate.qisplan2.ghost.possession.ability.GhostAbilityRegistry;
 
 import com.qidate.qisplan2.ghost.corrosion.CorrosionMatrix;
 import com.qidate.qisplan2.ghost.corrosion.CorrosionType;
+import net.minecraft.ChatFormatting;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.commands.arguments.ResourceLocationArgument;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 
+import java.util.Locale;
 import java.util.Map;
 
 public final class GhostCommands {
@@ -244,8 +247,8 @@ public final class GhostCommands {
         if (player == null) {
             context.getSource()
                     .sendFailure(
-                            Component.literal(
-                                    "这个命令必须由玩家执行。"
+                            Component.translatable(
+                                    "command.qisplan2.player_only"
                             )
                     );
 
@@ -264,9 +267,9 @@ public final class GhostCommands {
 
             context.getSource()
                     .sendFailure(
-                            Component.literal(
-                                    "不存在可驾驭的鬼："
-                                            + ghost
+                            Component.translatable(
+                                    "command.qisplan2.ghost_not_found",
+                                    ghost
                             )
                     );
 
@@ -280,9 +283,9 @@ public final class GhostCommands {
 
             context.getSource()
                     .sendFailure(
-                            Component.literal(
-                                    "你已经驾驭了："
-                                            + ghost
+                            Component.translatable(
+                                    "command.qisplan2.already_possessed",
+                                    ghost
                             )
                     );
 
@@ -291,9 +294,9 @@ public final class GhostCommands {
 
         context.getSource()
                 .sendSuccess(
-                        () -> Component.literal(
-                                "成功驾驭："
-                                        + ghost
+                        () -> Component.translatable(
+                                "command.qisplan2.possess.success",
+                                ghost
                         ),
                         true
                 );
@@ -318,8 +321,8 @@ public final class GhostCommands {
         if (player == null) {
             context.getSource()
                     .sendFailure(
-                            Component.literal(
-                                    "这个命令必须由玩家执行。"
+                            Component.translatable(
+                                    "command.qisplan2.player_only"
                             )
                     );
 
@@ -339,9 +342,9 @@ public final class GhostCommands {
 
             context.getSource()
                     .sendFailure(
-                            Component.literal(
-                                    "你没有驾驭："
-                                            + ghost
+                            Component.translatable(
+                                    "command.qisplan2.not_possessed",
+                                    ghost
                             )
                     );
 
@@ -350,9 +353,9 @@ public final class GhostCommands {
 
         context.getSource()
                 .sendSuccess(
-                        () -> Component.literal(
-                                "已解除驾驭："
-                                        + ghost
+                        () -> Component.translatable(
+                                "command.qisplan2.release.success",
+                                ghost
                         ),
                         true
                 );
@@ -377,8 +380,8 @@ public final class GhostCommands {
         if (player == null) {
             context.getSource()
                     .sendFailure(
-                            Component.literal(
-                                    "这个命令必须由玩家执行。"
+                            Component.translatable(
+                                    "command.qisplan2.player_only"
                             )
                     );
 
@@ -394,8 +397,8 @@ public final class GhostCommands {
 
             context.getSource()
                     .sendSuccess(
-                            () -> Component.literal(
-                                    "当前没有驾驭任何鬼。"
+                            () -> Component.translatable(
+                                    "command.qisplan2.possessed.empty"
                             ),
                             false
                     );
@@ -403,9 +406,9 @@ public final class GhostCommands {
             return 0;
         }
 
-        StringBuilder message =
-                new StringBuilder(
-                        "当前驾驭："
+        MutableComponent message =
+                Component.translatable(
+                        "command.qisplan2.possessed.header"
                 );
 
         for (var entry :
@@ -417,15 +420,31 @@ public final class GhostCommands {
             PossessedGhostState state =
                     entry.getValue();
 
-            message.append("§e")
-                    .append(ghost)
-                    .append(" §f- 复苏值：")
+            String ghostName =
+                    Component.translatable(
+                            "ghost."
+                                    + ghost.getNamespace()
+                                    + "."
+                                    + ghost.getPath()
+                    ).getString();
+
+            message
+                    .append("\n")
                     .append(
-                            String.format(
-                                    "%.1f%%",
-                                    state.revival()
-                                            * 100.0D
-                            )
+                            Component.literal(
+                                            ghostName
+                                    )
+                                    .withStyle(ChatFormatting.YELLOW)
+                    )
+                    .append(
+                            Component.translatable(
+                                            "command.qisplan2.possessed.entry",
+                                            String.format(
+                                                    "%.1f%%",
+                                                    state.revival() * 100.0D
+                                            )
+                                    )
+                                    .withStyle(ChatFormatting.WHITE)
                     );
         }
 
@@ -457,8 +476,8 @@ public final class GhostCommands {
         if (player == null) {
             context.getSource()
                     .sendFailure(
-                            Component.literal(
-                                    "这个命令必须由玩家执行。"
+                            Component.translatable(
+                                    "command.qisplan2.player_only"
                             )
                     );
 
@@ -488,9 +507,9 @@ public final class GhostCommands {
 
             context.getSource()
                     .sendFailure(
-                            Component.literal(
-                                    "你没有驾驭："
-                                            + ghost
+                            Component.translatable(
+                                    "command.qisplan2.not_possessed",
+                                    ghost
                             )
                     );
 
@@ -499,11 +518,10 @@ public final class GhostCommands {
 
         context.getSource()
                 .sendSuccess(
-                        () -> Component.literal(
-                                ghost
-                                        + " 已进入普通死机 "
-                                        + seconds
-                                        + " 秒。"
+                        () -> Component.translatable(
+                                "command.qisplan2.stun.success",
+                                ghost,
+                                seconds
                         ),
                         true
                 );
@@ -528,8 +546,8 @@ public final class GhostCommands {
         if (player == null) {
             context.getSource()
                     .sendFailure(
-                            Component.literal(
-                                    "这个命令必须由玩家执行。"
+                            Component.translatable(
+                                    "command.qisplan2.player_only"
                             )
                     );
 
@@ -552,9 +570,9 @@ public final class GhostCommands {
 
             context.getSource()
                     .sendFailure(
-                            Component.literal(
-                                    "你没有驾驭："
-                                            + ghost
+                            Component.translatable(
+                                    "command.qisplan2.not_possessed",
+                                    ghost
                             )
                     );
 
@@ -563,9 +581,9 @@ public final class GhostCommands {
 
         context.getSource()
                 .sendSuccess(
-                        () -> Component.literal(
+                        () -> Component.translatable(
+                                "command.qisplan2.permanent_stun.success",
                                 ghost
-                                        + " 已进入永久死机。"
                         ),
                         true
                 );
@@ -590,8 +608,8 @@ public final class GhostCommands {
 
             context.getSource()
                     .sendFailure(
-                            Component.literal(
-                                    "这个命令必须由玩家执行。"
+                            Component.translatable(
+                                    "command.qisplan2.player_only"
                             )
                     );
 
@@ -627,12 +645,11 @@ public final class GhostCommands {
         }
 
 
-        StringBuilder message =
-                new StringBuilder();
-
-        message.append(
-                "§6========== 侵蚀系统 =========="
-        );
+        MutableComponent message =
+                Component.translatable(
+                                "command.qisplan2.corrosion.title"
+                        )
+                        .withStyle(ChatFormatting.GOLD);
 
 
         /*
@@ -647,13 +664,38 @@ public final class GhostCommands {
             int total =
                     matrix.total(type);
 
-            message.append("\n\n")
-                    .append("§e【")
-                    .append(getCorrosionName(type))
-                    .append("】")
+            message
+                    .append("\n\n")
+                    .append(
+                            Component.literal("【")
+                                    .withStyle(ChatFormatting.YELLOW)
+                    )
+                    .append(
+                            Component.translatable(
+                                            "corrosion.qisplan2." +
+                                                    type.name().toLowerCase(
+                                                            Locale.ROOT
+                                                    )
+                                    )
+                                    .withStyle(ChatFormatting.YELLOW)
+                    )
+                    .append(
+                            Component.literal("】")
+                                    .withStyle(ChatFormatting.YELLOW)
+                    )
                     .append("\n")
-                    .append("§f总侵蚀：")
-                    .append(total);
+                    .append(
+                            Component.translatable(
+                                            "command.qisplan2.corrosion.total"
+                                    )
+                                    .withStyle(ChatFormatting.WHITE)
+                    )
+                    .append(
+                            Component.literal(
+                                            String.valueOf(total)
+                                    )
+                                    .withStyle(ChatFormatting.WHITE)
+                    );
 
 
             appendGhostContributions(
@@ -665,30 +707,41 @@ public final class GhostCommands {
         }
 
 
-        message.append("\n\n")
+        message
+                .append("\n\n")
                 .append(
-                        "§6========== 侵蚀系统结束 =========="
+                        Component.translatable(
+                                        "command.qisplan2.corrosion.footer"
+                                )
+                                .withStyle(ChatFormatting.GOLD)
                 );
 
 
         if (baseGrowth > 0.0D) {
 
-            message.append("\n")
-                    .append("§7模拟基础增长：§f")
+            message
+                    .append("\n")
                     .append(
-                            String.format(
-                                    "%.2f",
-                                    baseGrowth
-                            )
+                            Component.translatable(
+                                            "command.qisplan2.corrosion.simulated_growth"
+                                    )
+                                    .withStyle(ChatFormatting.GRAY)
+                    )
+                    .append(
+                            Component.literal(
+                                            String.format(
+                                                    "%.2f",
+                                                    baseGrowth
+                                            )
+                                    )
+                                    .withStyle(ChatFormatting.WHITE)
                     );
         }
 
 
         context.getSource()
                 .sendSuccess(
-                        () -> Component.literal(
-                                message.toString()
-                        ),
+                        () -> message,
                         false
                 );
 
@@ -702,12 +755,14 @@ public final class GhostCommands {
      */
 
     private static void appendGhostContributions(
-            StringBuilder message,
+            MutableComponent message,
             CorrosionMatrix matrix,
             CorrosionType target,
             double baseGrowth
     ) {
-        int total = matrix.total(target);
+
+        int total =
+                matrix.total(target);
 
         if (total <= 0) {
             return;
@@ -716,23 +771,40 @@ public final class GhostCommands {
         Map<ResourceLocation, Integer> ghosts =
                 matrix.contributions(target);
 
-        message.append(" | ");
+        message.append(
+                Component.translatable(
+                                "command.qisplan2.corrosion.contribution_separator"
+                        )
+                        .withStyle(ChatFormatting.WHITE)
+        );
 
         boolean first = true;
 
-        for (ResourceLocation ghost : ghosts.keySet()) {
+        for (ResourceLocation ghost :
+                ghosts.keySet()) {
 
             int contribution =
-                    matrix.contribution(target, ghost);
+                    matrix.contribution(
+                            target,
+                            ghost
+                    );
 
             double ratio =
                     contribution / (double) total;
 
+
             if (!first) {
-                message.append(" | ");
+
+                message.append(
+                        Component.translatable(
+                                        "command.qisplan2.corrosion.contribution_separator"
+                                )
+                                .withStyle(ChatFormatting.WHITE)
+                );
             }
 
             first = false;
+
 
             String ghostName =
                     Component.translatable(
@@ -742,22 +814,34 @@ public final class GhostCommands {
                                     + ghost.getPath()
                     ).getString();
 
-            message.append(ghostName)
-                    .append(":")
-                    .append(contribution)
-                    .append("(")
-                    .append(String.format(
-                            "%.0f%%",
-                            ratio * 100.0D
-                    ))
-                    .append(")");
 
             if (baseGrowth > 0.0D) {
-                message.append("=")
-                        .append(String.format(
-                                "%.2f",
-                                baseGrowth * ratio
-                        ));
+
+                message.append(
+                        Component.translatable(
+                                        "command.qisplan2.corrosion.contribution_growth",
+                                        ghostName,
+                                        contribution,
+                                        ratio * 100.0D,
+                                        String.format(
+                                                "%.2f",
+                                                baseGrowth * ratio
+                                        )
+                                )
+                                .withStyle(ChatFormatting.WHITE)
+                );
+
+            } else {
+
+                message.append(
+                        Component.translatable(
+                                        "command.qisplan2.corrosion.contribution",
+                                        ghostName,
+                                        contribution,
+                                        ratio * 100.0D
+                                )
+                                .withStyle(ChatFormatting.WHITE)
+                );
             }
         }
     }
@@ -779,8 +863,8 @@ public final class GhostCommands {
 
             context.getSource()
                     .sendFailure(
-                            Component.literal(
-                                    "这个命令必须由玩家执行。"
+                            Component.translatable(
+                                    "command.qisplan2.player_only"
                             )
                     );
 
@@ -802,34 +886,86 @@ public final class GhostCommands {
                         player
                 );
 
-        String message =
-                "§6========== 肉身强化 ==========\n"
-                        + "§f肉身侵蚀：§e"
-                        + bodyCorrosion
-                        + "\n"
-                        + "§f减伤：§b"
-                        + String.format(
-                        "%.1f%%",
-                        reduction * 100.0D
-                )
-                        + "\n"
-                        + "§f生命加成：§c+"
-                        + String.format(
-                        "%.1f",
-                        healthBonus
-                )
-                        + "\n"
-                        + "§f当前最大生命：§a"
-                        + String.format(
-                        "%.1f",
-                        player.getMaxHealth()
-                )
-                        + "\n"
-                        + "§6========================";
+        Component message =
+                Component.translatable(
+                                "command.qisplan2.defense.title"
+                        )
+                        .withStyle(ChatFormatting.GOLD)
+                        .append("\n")
+                        .append(
+                                Component.translatable(
+                                                "command.qisplan2.defense.body_corrosion"
+                                        )
+                                        .withStyle(ChatFormatting.WHITE)
+                        )
+                        .append(
+                                Component.literal(
+                                                String.format(
+                                                        "%.1f",
+                                                        bodyCorrosion
+                                                )
+                                        )
+                                        .withStyle(ChatFormatting.YELLOW)
+                        )
+                        .append("\n")
+                        .append(
+                                Component.translatable(
+                                                "command.qisplan2.defense.damage_reduction"
+                                        )
+                                        .withStyle(ChatFormatting.WHITE)
+                        )
+                        .append(
+                                Component.literal(
+                                                String.format(
+                                                        "%.1f%%",
+                                                        reduction * 100.0D
+                                                )
+                                        )
+                                        .withStyle(ChatFormatting.AQUA)
+                        )
+                        .append("\n")
+                        .append(
+                                Component.translatable(
+                                                "command.qisplan2.defense.health_bonus"
+                                        )
+                                        .withStyle(ChatFormatting.WHITE)
+                        )
+                        .append(
+                                Component.literal(
+                                                String.format(
+                                                        "+%.1f",
+                                                        healthBonus
+                                                )
+                                        )
+                                        .withStyle(ChatFormatting.RED)
+                        )
+                        .append("\n")
+                        .append(
+                                Component.translatable(
+                                                "command.qisplan2.defense.max_health"
+                                        )
+                                        .withStyle(ChatFormatting.WHITE)
+                        )
+                        .append(
+                                Component.literal(
+                                                String.format(
+                                                        "%.1f",
+                                                        player.getMaxHealth()
+                                                )
+                                        )
+                                        .withStyle(ChatFormatting.GREEN)
+                        )
+                        .append("\n")
+                        .append(
+                                Component.translatable(
+                                                "command.qisplan2.defense.footer"
+                                        )
+                                        .withStyle(ChatFormatting.GOLD)
+                        );
 
         context.getSource()
                 .sendSuccess(
-                        () -> Component.literal(message),
+                        () -> message,
                         false
                 );
 
@@ -838,43 +974,16 @@ public final class GhostCommands {
 
     /*
      * ============================================================
-     * 中文名称
+     * 器官名称
      * ============================================================
      */
 
     private static String getCorrosionName(
             CorrosionType type
     ) {
-
-        return switch (type) {
-
-            case GLOBAL -> "全方位";
-
-            case BRAIN -> "大脑";
-            case HEART -> "心脏";
-            case LUNG -> "肺";
-            case STOMACH -> "胃";
-            case LIVER -> "肝";
-            case KIDNEY -> "肾";
-            case PANCREAS -> "胰";
-            case GALLBLADDER -> "胆";
-            case SPLEEN -> "脾";
-            case INTESTINE -> "肠";
-
-            case SKIN -> "皮肤";
-            case BLOOD -> "血液";
-            case BONE -> "骨骼";
-            case FLESH -> "血肉";
-
-            case EYE -> "眼";
-            case EAR -> "耳";
-            case NOSE -> "鼻";
-            case MOUTH -> "口";
-
-            case HAND -> "手";
-            case FOOT -> "脚";
-
-            case HAIR -> "发";
-        };
+        return Component.translatable(
+                "corrosion.qisplan2." +
+                        type.name().toLowerCase(Locale.ROOT)
+        ).getString();
     }
 }
