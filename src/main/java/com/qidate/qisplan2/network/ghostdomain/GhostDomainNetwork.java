@@ -4,12 +4,7 @@ import com.qidate.qisplan2.ghost.domain.GhostDomain;
 import com.qidate.qisplan2.ghost.domain.GhostDomainLayerHandler;
 import com.qidate.qisplan2.ghost.domain.GhostDomainTeleportHandler;
 import com.qidate.qisplan2.ghost.domain.client.ClientGhostDomainManager;
-import com.qidate.qisplan2.network.payload.GhostDomainAddPayload;
-import com.qidate.qisplan2.network.payload.GhostDomainLowerLayerPayload;
-import com.qidate.qisplan2.network.payload.GhostDomainRemovePayload;
-import com.qidate.qisplan2.network.payload.GhostDomainRaiseLayerPayload;
-import com.qidate.qisplan2.network.payload.GhostDomainTeleportPayload;
-import com.qidate.qisplan2.network.payload.GhostDomainUpdatePayload;
+import com.qidate.qisplan2.network.payload.*;
 
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -17,6 +12,9 @@ import net.neoforged.neoforge.network.PacketDistributor;
 import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent;
 import net.neoforged.neoforge.network.handling.IPayloadContext;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 public final class GhostDomainNetwork {
@@ -104,6 +102,29 @@ public final class GhostDomainNetwork {
                                 payload.radius(),
                                 payload.immediate()
                         );
+                    });
+                }
+        );
+
+        /*
+         * ========================================================
+         * S2C：鬼域视觉
+         * ========================================================
+         */
+
+        registrar.playToClient(
+                GhostDomainVisionPayload.TYPE,
+                GhostDomainVisionPayload.STREAM_CODEC,
+                (payload, context) -> {
+
+                    context.enqueueWork(() -> {
+
+                        /*
+                         * 客户端处理暂时留空。
+                         *
+                         * 下一步会交给专门的
+                         * ClientGhostDomainVisionSystem。
+                         */
                     });
                 }
         );
@@ -211,6 +232,43 @@ public final class GhostDomainNetwork {
                         domain.getLayer(),
                         domain.getRadius(),
                         immediate
+                )
+        );
+    }
+
+    /*
+     * ========================================================
+     * S2C：鬼域视觉
+     * ========================================================
+     */
+
+    public static void sendVision(
+            ServerPlayer player,
+            GhostDomain domain,
+            Map<UUID, Integer> visibleEntities
+    ) {
+
+        List<GhostDomainVisionPayload.VisionEntry> entries =
+                new ArrayList<>(
+                        visibleEntities.size()
+                );
+
+        for (Map.Entry<UUID, Integer> entry :
+                visibleEntities.entrySet()) {
+
+            entries.add(
+                    new GhostDomainVisionPayload.VisionEntry(
+                            entry.getKey(),
+                            entry.getValue()
+                    )
+            );
+        }
+
+        PacketDistributor.sendToPlayer(
+                player,
+                new GhostDomainVisionPayload(
+                        domain.getId(),
+                        entries
                 )
         );
     }
