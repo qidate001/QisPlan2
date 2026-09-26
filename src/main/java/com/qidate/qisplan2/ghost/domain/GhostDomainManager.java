@@ -20,6 +20,24 @@ public final class GhostDomainManager {
     private final Map<UUID, GhostDomain> domains =
             new LinkedHashMap<>();
 
+    /**
+     * 当前由鬼域系统授予飞行权限的玩家。
+     *
+     * <p>
+     * 用于区分：
+     *
+     * <ul>
+     *     <li>玩家本身就拥有的 Minecraft 飞行权限</li>
+     *     <li>鬼域系统额外授予的飞行权限</li>
+     * </ul>
+     *
+     * <p>
+     * 只有由鬼域系统授予的权限，
+     * 才允许由鬼域系统回收。
+     */
+    private final Set<UUID> flightOwners =
+            new HashSet<>();
+
     private GhostDomainManager(
             ServerLevel level
     ) {
@@ -428,12 +446,13 @@ public final class GhostDomainManager {
      * ============================================================
      *
      * <p>
-     * 当玩家拥有至少一个第二层及以上的鬼域时，
+     * 当玩家拥有至少一个达到指定层数的鬼域时，
      * 解锁 Minecraft 原版创造模式飞行。
      *
      * <p>
-     * 这里只维护“是否拥有飞行权限”，
-     * 不主动控制玩家进入飞行。
+     * 这里只维护鬼域系统自己授予的飞行权限。
+     * 玩家原本因为创造模式、旁观模式或其他系统
+     * 获得的飞行权限不会被鬼域系统错误取消。
      *
      * <p>
      * 玩家进入 / 退出飞行仍然由 Minecraft 原版
@@ -449,7 +468,7 @@ public final class GhostDomainManager {
 
         /*
          * ========================================================
-         * 检查玩家是否拥有第二层及以上的鬼域
+         * 检查玩家是否拥有能够解锁飞行的鬼域
          * ========================================================
          */
 
@@ -462,57 +481,103 @@ public final class GhostDomainManager {
             }
 
             int unlockLayer =
-                    domain.getBehavior().getFlightUnlockLayer();
+                    domain.getBehavior()
+                            .getFlightUnlockLayer();
 
             /*
              * 解锁层数为 0：
              * 该鬼域不提供飞行能力。
              */
-            if (unlockLayer > 0
-                    && domain.getLayer() >= unlockLayer) {
+            if (unlockLayer <= 0) {
+                continue;
+            }
 
+            /*
+             * 当前鬼域达到飞行解锁层数。
+             */
+            if (domain.getLayer() >= unlockLayer) {
                 canFly = true;
                 break;
             }
         }
 
+        UUID playerUUID =
+                player.getUUID();
+
         /*
          * ========================================================
-         * 只在飞行权限发生变化时同步
+         * 鬼域授予飞行
          * ========================================================
-         *
-         * mayfly 本身就是玩家当前的实际飞行权限状态，
-         * 因此不需要额外维护一份状态。
          */
-        if (player.getAbilities().mayfly == canFly) {
+
+        if (canFly) {
 
             /*
-             * 状态没有变化：
-             * 不需要发送任何数据包。
+             * 玩家已经拥有飞行权限：
+             * 不需要修改。
              */
+            if (player.getAbilities().mayfly) {
+                return;
+            }
+
+            /*
+             * 玩家原本不能飞，
+             * 现在由鬼域系统授予飞行权限。
+             */
+            player.getAbilities().mayfly = true;
+
+            flightOwners.add(playerUUID);
+
+            /*
+             * 同步 Minecraft 原版玩家能力。
+             */
+            player.onUpdateAbilities();
+
             return;
         }
 
         /*
-         * 更新 Minecraft 原版飞行权限。
+         * ========================================================
+         * 鬼域回收飞行
+         * ========================================================
+         *
+         * 只有曾经由鬼域系统授予飞行的玩家，
+         * 才允许在这里进行回收。
          */
-        player.getAbilities().mayfly = canFly;
-
-        /*
-         * 如果失去飞行权限，
-         * 同时退出当前飞行状态。
-         */
-        if (!canFly) {
-            player.getAbilities().flying = false;
+        if (!flightOwners.remove(playerUUID)) {
+            return;
         }
 
         /*
          * ========================================================
-         * 同步玩家能力
+         * 检查 Minecraft 原生飞行权限
          * ========================================================
          *
-         * 只有 mayfly 状态真正发生变化时，
-         * 才向客户端发送能力同步。
+         * 创造模式和旁观模式本身就拥有飞行能力。
+         *
+         * 鬼域系统不能因为鬼域消失，
+         * 而破坏 Minecraft 原版的飞行能力。
+         */
+        if (player.isCreative()
+                || player.isSpectator()) {
+
+            return;
+        }
+
+        /*
+         * 生存 / 冒险模式：
+         * 真正回收鬼域系统授予的飞行权限。
+         */
+        player.getAbilities().mayfly = false;
+
+        /*
+         * 如果玩家当前正在飞行，
+         * 失去鬼域飞行权限后立即退出飞行状态。
+         */
+        player.getAbilities().flying = false;
+
+        /*
+         * 同步 Minecraft 原版玩家能力。
          */
         player.onUpdateAbilities();
     }
