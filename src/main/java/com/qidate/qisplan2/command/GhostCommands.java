@@ -244,6 +244,7 @@ public final class GhostCommands {
         ServerPlayer player =
                 context.getSource().getPlayer();
 
+
         if (player == null) {
             context.getSource()
                     .sendFailure(
@@ -261,6 +262,20 @@ public final class GhostCommands {
                         "ghost"
                 );
 
+        /*
+         * 厉鬼名称
+         */
+        String ghostName =
+                Component.translatable(
+                        "ghost."
+                                + ghost.getNamespace()
+                                + "."
+                                + ghost.getPath()
+                ).getString();
+
+        /*
+         * 未知厉鬼
+         */
         if (!GhostAbilityRegistry.contains(
                 ghost
         )) {
@@ -269,13 +284,16 @@ public final class GhostCommands {
                     .sendFailure(
                             Component.translatable(
                                     "command.qisplan2.ghost_not_found",
-                                    ghost
+                                    ghostName
                             )
                     );
 
             return 0;
         }
 
+        /*
+         * 成功驾驭
+         */
         if (!PossessionHandler.possess(
                 player,
                 ghost
@@ -285,7 +303,7 @@ public final class GhostCommands {
                     .sendFailure(
                             Component.translatable(
                                     "command.qisplan2.already_possessed",
-                                    ghost
+                                    ghostName
                             )
                     );
 
@@ -296,7 +314,7 @@ public final class GhostCommands {
                 .sendSuccess(
                         () -> Component.translatable(
                                 "command.qisplan2.possess.success",
-                                ghost
+                                ghostName
                         ),
                         true
                 );
@@ -335,6 +353,14 @@ public final class GhostCommands {
                         "ghost"
                 );
 
+        String ghostName =
+                Component.translatable(
+                        "ghost."
+                                + ghost.getNamespace()
+                                + "."
+                                + ghost.getPath()
+                ).getString();
+
         if (!PossessionHandler.release(
                 player,
                 ghost
@@ -344,7 +370,7 @@ public final class GhostCommands {
                     .sendFailure(
                             Component.translatable(
                                     "command.qisplan2.not_possessed",
-                                    ghost
+                                    ghostName
                             )
                     );
 
@@ -355,7 +381,7 @@ public final class GhostCommands {
                 .sendSuccess(
                         () -> Component.translatable(
                                 "command.qisplan2.release.success",
-                                ghost
+                                ghostName
                         ),
                         true
                 );
@@ -490,6 +516,14 @@ public final class GhostCommands {
                         "ghost"
                 );
 
+        String ghostName =
+                Component.translatable(
+                        "ghost."
+                                + ghost.getNamespace()
+                                + "."
+                                + ghost.getPath()
+                ).getString();
+
         int seconds =
                 IntegerArgumentType.getInteger(
                         context,
@@ -509,7 +543,7 @@ public final class GhostCommands {
                     .sendFailure(
                             Component.translatable(
                                     "command.qisplan2.not_possessed",
-                                    ghost
+                                    ghostName
                             )
                     );
 
@@ -520,7 +554,7 @@ public final class GhostCommands {
                 .sendSuccess(
                         () -> Component.translatable(
                                 "command.qisplan2.stun.success",
-                                ghost,
+                                ghostName,
                                 seconds
                         ),
                         true
@@ -560,6 +594,14 @@ public final class GhostCommands {
                         "ghost"
                 );
 
+        String ghostName =
+                Component.translatable(
+                        "ghost."
+                                + ghost.getNamespace()
+                                + "."
+                                + ghost.getPath()
+                ).getString();
+
         boolean success =
                 PossessionHandler.testPermanentStun(
                         player,
@@ -572,7 +614,7 @@ public final class GhostCommands {
                     .sendFailure(
                             Component.translatable(
                                     "command.qisplan2.not_possessed",
-                                    ghost
+                                    ghostName
                             )
                     );
 
@@ -583,7 +625,7 @@ public final class GhostCommands {
                 .sendSuccess(
                         () -> Component.translatable(
                                 "command.qisplan2.permanent_stun.success",
-                                ghost
+                                ghostName
                         ),
                         true
                 );
@@ -647,9 +689,8 @@ public final class GhostCommands {
 
         MutableComponent message =
                 Component.translatable(
-                                "command.qisplan2.corrosion.title"
-                        )
-                        .withStyle(ChatFormatting.GOLD);
+                        "command.qisplan2.corrosion.title"
+                );
 
 
         /*
@@ -664,39 +705,13 @@ public final class GhostCommands {
             int total =
                     matrix.total(type);
 
-            message
-                    .append("\n\n")
-                    .append(
-                            Component.literal("【")
-                                    .withStyle(ChatFormatting.YELLOW)
+            message.append(
+                    Component.translatable(
+                            "command.qisplan2.corrosion.part",
+                            getCorrosionName(type),
+                            total
                     )
-                    .append(
-                            Component.translatable(
-                                            "corrosion.qisplan2." +
-                                                    type.name().toLowerCase(
-                                                            Locale.ROOT
-                                                    )
-                                    )
-                                    .withStyle(ChatFormatting.YELLOW)
-                    )
-                    .append(
-                            Component.literal("】")
-                                    .withStyle(ChatFormatting.YELLOW)
-                    )
-                    .append("\n")
-                    .append(
-                            Component.translatable(
-                                            "command.qisplan2.corrosion.total"
-                                    )
-                                    .withStyle(ChatFormatting.WHITE)
-                    )
-                    .append(
-                            Component.literal(
-                                            String.valueOf(total)
-                                    )
-                                    .withStyle(ChatFormatting.WHITE)
-                    );
-
+            );
 
             appendGhostContributions(
                     message,
@@ -707,35 +722,24 @@ public final class GhostCommands {
         }
 
 
-        message
-                .append("\n\n")
-                .append(
-                        Component.translatable(
-                                        "command.qisplan2.corrosion.footer"
-                                )
-                                .withStyle(ChatFormatting.GOLD)
-                );
+        message.append(
+                Component.translatable(
+                        "command.qisplan2.corrosion.footer"
+                )
+        );
 
 
         if (baseGrowth > 0.0D) {
 
-            message
-                    .append("\n")
-                    .append(
-                            Component.translatable(
-                                            "command.qisplan2.corrosion.simulated_growth"
-                                    )
-                                    .withStyle(ChatFormatting.GRAY)
+            message.append(
+                    Component.translatable(
+                            "command.qisplan2.corrosion.simulated_growth",
+                            String.format(
+                                    "%.2f",
+                                    baseGrowth
+                            )
                     )
-                    .append(
-                            Component.literal(
-                                            String.format(
-                                                    "%.2f",
-                                                    baseGrowth
-                                            )
-                                    )
-                                    .withStyle(ChatFormatting.WHITE)
-                    );
+            );
         }
 
 
@@ -773,9 +777,8 @@ public final class GhostCommands {
 
         message.append(
                 Component.translatable(
-                                "command.qisplan2.corrosion.contribution_separator"
-                        )
-                        .withStyle(ChatFormatting.WHITE)
+                        "command.qisplan2.corrosion.contribution_separator"
+                )
         );
 
         boolean first = true;
@@ -797,9 +800,8 @@ public final class GhostCommands {
 
                 message.append(
                         Component.translatable(
-                                        "command.qisplan2.corrosion.contribution_separator"
-                                )
-                                .withStyle(ChatFormatting.WHITE)
+                                "command.qisplan2.corrosion.contribution_separator"
+                        )
                 );
             }
 
@@ -819,28 +821,26 @@ public final class GhostCommands {
 
                 message.append(
                         Component.translatable(
-                                        "command.qisplan2.corrosion.contribution_growth",
-                                        ghostName,
-                                        contribution,
-                                        ratio * 100.0D,
-                                        String.format(
-                                                "%.2f",
-                                                baseGrowth * ratio
-                                        )
+                                "command.qisplan2.corrosion.contribution_growth",
+                                ghostName,
+                                contribution,
+                                ratio * 100.0D,
+                                String.format(
+                                        "%.2f",
+                                        baseGrowth * ratio
                                 )
-                                .withStyle(ChatFormatting.WHITE)
+                        )
                 );
 
             } else {
 
                 message.append(
                         Component.translatable(
-                                        "command.qisplan2.corrosion.contribution",
-                                        ghostName,
-                                        contribution,
-                                        ratio * 100.0D
-                                )
-                                .withStyle(ChatFormatting.WHITE)
+                                "command.qisplan2.corrosion.contribution",
+                                ghostName,
+                                contribution,
+                                ratio * 100.0D
+                        )
                 );
             }
         }
@@ -886,82 +886,53 @@ public final class GhostCommands {
                         player
                 );
 
+
         Component message =
                 Component.translatable(
                                 "command.qisplan2.defense.title"
                         )
-                        .withStyle(ChatFormatting.GOLD)
-                        .append("\n")
                         .append(
                                 Component.translatable(
-                                                "command.qisplan2.defense.body_corrosion"
+                                        "command.qisplan2.defense.body_corrosion",
+                                        String.format(
+                                                "%.1f",
+                                                bodyCorrosion
                                         )
-                                        .withStyle(ChatFormatting.WHITE)
+                                )
                         )
-                        .append(
-                                Component.literal(
-                                                String.format(
-                                                        "%.1f",
-                                                        bodyCorrosion
-                                                )
-                                        )
-                                        .withStyle(ChatFormatting.YELLOW)
-                        )
-                        .append("\n")
                         .append(
                                 Component.translatable(
-                                                "command.qisplan2.defense.damage_reduction"
+                                        "command.qisplan2.defense.damage_reduction",
+                                        String.format(
+                                                "%.1f%%",
+                                                reduction * 100.0D
                                         )
-                                        .withStyle(ChatFormatting.WHITE)
+                                )
                         )
-                        .append(
-                                Component.literal(
-                                                String.format(
-                                                        "%.1f%%",
-                                                        reduction * 100.0D
-                                                )
-                                        )
-                                        .withStyle(ChatFormatting.AQUA)
-                        )
-                        .append("\n")
                         .append(
                                 Component.translatable(
-                                                "command.qisplan2.defense.health_bonus"
+                                        "command.qisplan2.defense.health_bonus",
+                                        String.format(
+                                                "+%.1f",
+                                                healthBonus
                                         )
-                                        .withStyle(ChatFormatting.WHITE)
+                                )
                         )
-                        .append(
-                                Component.literal(
-                                                String.format(
-                                                        "+%.1f",
-                                                        healthBonus
-                                                )
-                                        )
-                                        .withStyle(ChatFormatting.RED)
-                        )
-                        .append("\n")
                         .append(
                                 Component.translatable(
-                                                "command.qisplan2.defense.max_health"
+                                        "command.qisplan2.defense.max_health",
+                                        String.format(
+                                                "%.1f",
+                                                player.getMaxHealth()
                                         )
-                                        .withStyle(ChatFormatting.WHITE)
+                                )
                         )
-                        .append(
-                                Component.literal(
-                                                String.format(
-                                                        "%.1f",
-                                                        player.getMaxHealth()
-                                                )
-                                        )
-                                        .withStyle(ChatFormatting.GREEN)
-                        )
-                        .append("\n")
                         .append(
                                 Component.translatable(
-                                                "command.qisplan2.defense.footer"
-                                        )
-                                        .withStyle(ChatFormatting.GOLD)
+                                        "command.qisplan2.defense.footer"
+                                )
                         );
+
 
         context.getSource()
                 .sendSuccess(
