@@ -1,6 +1,5 @@
 package com.qidate.qisplan2.mixin;
 
-import com.qidate.qisplan2.QisPlan2;
 import com.qidate.qisplan2.ghost.layer.GhostLayerHandler;
 import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.Minecraft;

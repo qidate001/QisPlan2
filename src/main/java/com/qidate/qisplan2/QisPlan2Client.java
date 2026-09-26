@@ -21,7 +21,6 @@ import com.qidate.qisplan2.event.DeathCurseHudOverlay;
 
 import com.qidate.qisplan2.ghost.domain.client.renderer.effect.GhostEyeRenderEffect;
 import com.qidate.qisplan2.ghost.domain.client.renderer.effect.GhostUmbrellaRenderEffect;
-import com.qidate.qisplan2.ghost.domain.client.vision.GhostDomainVisionRenderer;
 import net.minecraft.client.model.HumanoidModel;
 import net.minecraft.client.model.geom.builders.CubeDeformation;
 import net.minecraft.client.model.geom.builders.LayerDefinition;
@@ -111,11 +110,6 @@ public class QisPlan2Client {
         // 鬼域客户端平滑移动
         NeoForge.EVENT_BUS.addListener(
                 ClientGhostDomainManager::tick
-        );
-
-        // 鬼域实体视觉轮廓
-        NeoForge.EVENT_BUS.addListener(
-                GhostDomainVisionRenderer::render
         );
 
         // 鬼域客户端退出清理
