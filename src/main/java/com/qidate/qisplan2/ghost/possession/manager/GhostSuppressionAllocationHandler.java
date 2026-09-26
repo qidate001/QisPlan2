@@ -30,6 +30,54 @@ public final class GhostSuppressionAllocationHandler {
     }
 
     /**
+     * 深拷贝整个压制分配结构。
+     *
+     * Attachment 中的默认数据可能是不可变 Map/List，
+     * 所以所有修改都必须基于新的可变结构进行。
+     */
+    private static Map<
+            ResourceLocation,
+            Map<ResourceLocation, List<SuppressionAllocation>>
+            > deepCopy(
+            Map<
+                    ResourceLocation,
+                    Map<ResourceLocation, List<SuppressionAllocation>>
+                    > source
+    ) {
+
+        Map<
+                ResourceLocation,
+                Map<ResourceLocation, List<SuppressionAllocation>>
+                > result =
+                new HashMap<>();
+
+        for (var sourceEntry : source.entrySet()) {
+
+            Map<ResourceLocation, List<SuppressionAllocation>>
+                    targets =
+                    new HashMap<>();
+
+            for (var targetEntry
+                    : sourceEntry.getValue().entrySet()) {
+
+                targets.put(
+                        targetEntry.getKey(),
+                        new ArrayList<>(
+                                targetEntry.getValue()
+                        )
+                );
+            }
+
+            result.put(
+                    sourceEntry.getKey(),
+                    targets
+            );
+        }
+
+        return result;
+    }
+
+    /**
      * 获取指定“来源鬼 → 目标鬼”的全部分配。
      */
     public static List<SuppressionAllocation> getAllocations(
@@ -267,6 +315,99 @@ public final class GhostSuppressionAllocationHandler {
     }
 
     /**
+     * 清空玩家全部压制分配。
+     *
+     * <p>
+     * 用于玩家死亡、重置驾驭状态等
+     * 会导致全部压制关系失效的情况。
+     */
+    public static void clear(
+            Player player
+    ) {
+
+        player.setData(
+                ModAttachments.GHOST_SUPPRESSION_ALLOCATION,
+                Map.of()
+        );
+    }
+
+    /**
+     * 删除所有涉及指定鬼的压制分配。
+     *
+     * <p>
+     * 如果指定鬼是来源鬼，
+     * 则删除该鬼发出的全部压制。
+     *
+     * <p>
+     * 如果指定鬼是目标鬼，
+     * 则删除所有指向该鬼的压制。
+     *
+     * @param player 玩家
+     * @param ghost 被取消驾驭的鬼
+     */
+    public static void removeByGhost(
+            Player player,
+            ResourceLocation ghost
+    ) {
+
+        Map<
+                ResourceLocation,
+                Map<ResourceLocation, List<SuppressionAllocation>>
+                > oldAllocations =
+                getAllocations(player);
+
+        /*
+         * 没有任何分配时无需处理。
+         */
+        if (oldAllocations.isEmpty()) {
+            return;
+        }
+
+        Map<
+                ResourceLocation,
+                Map<ResourceLocation, List<SuppressionAllocation>>
+                > allocations =
+                deepCopy(oldAllocations);
+
+        /*
+         * ========================================================
+         * 删除该鬼作为来源鬼的全部压制
+         * ========================================================
+         */
+        allocations.remove(ghost);
+
+        /*
+         * ========================================================
+         * 删除该鬼作为目标鬼的全部压制
+         * ========================================================
+         */
+
+        for (
+                Map<ResourceLocation, List<SuppressionAllocation>>
+                        targets
+                : allocations.values()
+        ) {
+
+            targets.remove(ghost);
+        }
+
+        /*
+         * ========================================================
+         * 清理空容器
+         * ========================================================
+         */
+
+        allocations.entrySet().removeIf(
+                entry -> entry.getValue().isEmpty()
+        );
+
+        player.setData(
+                ModAttachments.GHOST_SUPPRESSION_ALLOCATION,
+                allocations
+        );
+    }
+
+    /**
      * 移动一个已经存在的压制额度。
      *
      * oldTargetGhost：
@@ -405,53 +546,5 @@ public final class GhostSuppressionAllocationHandler {
         );
 
         return true;
-    }
-
-    /**
-     * 深拷贝整个压制分配结构。
-     *
-     * Attachment 中的默认数据可能是不可变 Map/List，
-     * 所以所有修改都必须基于新的可变结构进行。
-     */
-    private static Map<
-            ResourceLocation,
-            Map<ResourceLocation, List<SuppressionAllocation>>
-            > deepCopy(
-            Map<
-                    ResourceLocation,
-                    Map<ResourceLocation, List<SuppressionAllocation>>
-                    > source
-    ) {
-
-        Map<
-                ResourceLocation,
-                Map<ResourceLocation, List<SuppressionAllocation>>
-                > result =
-                new HashMap<>();
-
-        for (var sourceEntry : source.entrySet()) {
-
-            Map<ResourceLocation, List<SuppressionAllocation>>
-                    targets =
-                    new HashMap<>();
-
-            for (var targetEntry
-                    : sourceEntry.getValue().entrySet()) {
-
-                targets.put(
-                        targetEntry.getKey(),
-                        new ArrayList<>(
-                                targetEntry.getValue()
-                        )
-                );
-            }
-
-            result.put(
-                    sourceEntry.getKey(),
-                    targets
-            );
-        }
-
-        return result;
     }
 }

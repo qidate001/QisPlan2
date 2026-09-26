@@ -1,6 +1,7 @@
 package com.qidate.qisplan2.death;
 
 import com.qidate.qisplan2.ghost.domain.type.eye.GhostEyeDomainController;
+import com.qidate.qisplan2.ghost.possession.manager.GhostSuppressionAllocationHandler;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.LivingEntity;
 
@@ -54,13 +55,20 @@ public final class QisDeathHandler {
     public static void cleanup(
             LivingEntity entity
     ) {
-
-        /*
-         * 玩家死亡时关闭鬼眼。
-         */
         if (entity instanceof ServerPlayer player) {
 
+            /*
+             * 玩家死亡时关闭鬼眼。
+             */
             GhostEyeDomainController.close(player);
+
+            /*
+             * 玩家死亡时，
+             * 所有灵异压制关系同时失效。
+             */
+            GhostSuppressionAllocationHandler.clear(
+                    player
+            );
         }
     }
 }

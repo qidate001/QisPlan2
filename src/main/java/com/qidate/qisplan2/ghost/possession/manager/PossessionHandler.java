@@ -650,6 +650,16 @@ public final class PossessionHandler {
         );
 
 
+        /*
+         * 解除该厉鬼驾驭后，
+         * 同时释放所有与该鬼有关的压制额度。
+         */
+        GhostSuppressionAllocationHandler.removeByGhost(
+                player,
+                ghost
+        );
+
+
         return true;
     }
 
