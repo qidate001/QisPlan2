@@ -84,6 +84,17 @@ public final class GhostDomainManager {
                 domain
         );
 
+        Entity source =
+                level.getEntity(domain.getSourceUUID());
+
+        if (source instanceof ServerPlayer player) {
+            GhostDomainNetwork.sendVision(
+                    player,
+                    domain,
+                    Map.of()
+            );
+        }
+
         GhostDomainNetwork.sendRemove(
                 level,
                 domain.getId()

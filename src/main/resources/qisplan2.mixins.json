@@ -6,7 +6,8 @@
   "client": [
     "HumanoidModelMixin",
     "LevelRendererMixin",
-    "EntityRenderDispatcherMixin"
+    "EntityRenderDispatcherMixin",
+    "MinecraftMixin"
   ],
 
   "mixins": [
