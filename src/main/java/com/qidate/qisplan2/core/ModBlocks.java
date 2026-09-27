@@ -343,4 +343,24 @@ public class ModBlocks {
                     GHOST_DOOR_PLATE,
                     new Item.Properties()
             );
+
+    // 鬼墓碑
+    public static final DeferredHolder<Block, GhostTombstoneBlock>
+            GHOST_TOMBSTONE =
+            BLOCKS.register(
+                    "ghost_tombstone",
+                    () -> new GhostTombstoneBlock(
+                            BlockBehaviour.Properties.of()
+                                    .strength(2.0F, 6.0F)
+                                    .sound(SoundType.DEEPSLATE)
+                                    .noOcclusion()
+                    )
+            );
+
+    public static final DeferredItem<BlockItem>
+            GHOST_TOMBSTONE_ITEM =
+            ITEMS.registerSimpleBlockItem(
+                    GHOST_TOMBSTONE,
+                    new Item.Properties()
+            );
 }

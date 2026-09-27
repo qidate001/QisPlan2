@@ -58,6 +58,7 @@ public class ModCreativeTabs {
                         output.accept(GHOST_DIVINATION_SLIP);
                         output.accept(WHITE_GHOST_CANDLE);
                         output.accept(RED_GHOST_CANDLE);
+                        output.accept(GHOST_TOMBSTONE_ITEM);
 
                         // 鬼画
                         output.accept(GHOST_PAINTING);

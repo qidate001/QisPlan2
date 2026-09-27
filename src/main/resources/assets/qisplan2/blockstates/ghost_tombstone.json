@@ -1,0 +1,35 @@
+{
+  "variants": {
+    "facing=north,part=lower": {
+      "model": "qisplan2:block/ghost_tombstone_lower"
+    },
+    "facing=east,part=lower": {
+      "model": "qisplan2:block/ghost_tombstone_lower",
+      "y": 90
+    },
+    "facing=south,part=lower": {
+      "model": "qisplan2:block/ghost_tombstone_lower",
+      "y": 180
+    },
+    "facing=west,part=lower": {
+      "model": "qisplan2:block/ghost_tombstone_lower",
+      "y": 270
+    },
+
+    "facing=north,part=upper": {
+      "model": "qisplan2:block/ghost_tombstone_upper"
+    },
+    "facing=east,part=upper": {
+      "model": "qisplan2:block/ghost_tombstone_upper",
+      "y": 90
+    },
+    "facing=south,part=upper": {
+      "model": "qisplan2:block/ghost_tombstone_upper",
+      "y": 180
+    },
+    "facing=west,part=upper": {
+      "model": "qisplan2:block/ghost_tombstone_upper",
+      "y": 270
+    }
+  }
+}
