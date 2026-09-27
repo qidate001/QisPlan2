@@ -66,7 +66,7 @@ public class ModItems {
 
     // 棺材钉镐子 Tier
     public static final Tier COFFIN_NAIL_TIER = new SimpleTier(
-            ModBlockTags.INCORRECT_FOR_COFFIN_NAIL_TOOL,
+            ModTags.Blocks.INCORRECT_FOR_COFFIN_NAIL_TOOL,
 
             // 耐久
             200,

@@ -7,6 +7,7 @@ import com.qidate.qisplan2.network.ghostdomain.GhostDomainNetwork;
 import com.qidate.qisplan2.network.ghostdoor.GhostDoorPlateNetwork;
 import com.qidate.qisplan2.network.ghosteye.GhostEyeNetwork;
 import com.qidate.qisplan2.network.ghostpiano.GhostPianoNetwork;
+import com.qidate.qisplan2.network.ghosttombstone.GhostTombstoneNetwork;
 import com.qidate.qisplan2.network.possession.GhostPossessionNetwork;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
@@ -53,6 +54,14 @@ public final class QisNetwork {
          */
 
         GhostDoorPlateNetwork.register(event);
+
+        /*
+         * ========================================================
+         * 鬼墓碑
+         * ========================================================
+         */
+
+        GhostTombstoneNetwork.register(event);
 
         /*
          * ========================================================

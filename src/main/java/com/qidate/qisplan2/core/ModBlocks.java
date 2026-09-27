@@ -357,6 +357,19 @@ public class ModBlocks {
                     )
             );
 
+    public static final DeferredHolder<
+            BlockEntityType<?>,
+            BlockEntityType<GhostTombstoneBlockEntity>
+            > GHOST_TOMBSTONE_BLOCK_ENTITY =
+            BLOCK_ENTITY_TYPES.register(
+                    "ghost_tombstone",
+                    () ->
+                            BlockEntityType.Builder.of(
+                                    GhostTombstoneBlockEntity::new,
+                                    GHOST_TOMBSTONE.get()
+                            ).build(null)
+            );
+
     public static final DeferredItem<BlockItem>
             GHOST_TOMBSTONE_ITEM =
             ITEMS.registerSimpleBlockItem(

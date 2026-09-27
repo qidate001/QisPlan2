@@ -1,8 +1,13 @@
 package com.qidate.qisplan2.block;
 
 import com.mojang.serialization.MapCodec;
+import com.qidate.qisplan2.block.entity.GhostTombstoneBlockEntity;
+import com.qidate.qisplan2.core.ModTags;
+import com.qidate.qisplan2.network.ghosttombstone.GhostTombstoneNetwork;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
@@ -10,7 +15,9 @@ import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.EntityBlock;
 import net.minecraft.world.level.block.HorizontalDirectionalBlock;
+import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
@@ -18,12 +25,14 @@ import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.world.level.block.state.properties.DirectionProperty;
 import net.minecraft.world.level.block.state.properties.EnumProperty;
 import net.minecraft.util.StringRepresentable;
+import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
 
 public class GhostTombstoneBlock
-        extends HorizontalDirectionalBlock {
+        extends HorizontalDirectionalBlock
+        implements EntityBlock {
 
     public static final MapCodec<GhostTombstoneBlock> CODEC =
             simpleCodec(GhostTombstoneBlock::new);
@@ -48,6 +57,17 @@ public class GhostTombstoneBlock
         }
     }
 
+    @Override
+    public BlockEntity newBlockEntity(
+            BlockPos pos,
+            BlockState state
+    ) {
+        return new GhostTombstoneBlockEntity(
+                pos,
+                state
+        );
+    }
+
     public static final EnumProperty<Part> PART =
             EnumProperty.create(
                     "part",
@@ -56,6 +76,9 @@ public class GhostTombstoneBlock
 
     /*
      * 下半部分碰撞箱。
+     *
+     * 模型厚度：
+     * Z = 2 ~ 4
      */
     private static final VoxelShape LOWER_NORTH_SHAPE =
             Shapes.box(
@@ -64,14 +87,14 @@ public class GhostTombstoneBlock
                     2.0 / 16.0,
                     14.0 / 16.0,
                     1.0,
-                    3.0 / 16.0
+                    4.0 / 16.0
             );
 
     private static final VoxelShape LOWER_SOUTH_SHAPE =
             Shapes.box(
                     2.0 / 16.0,
                     0.0,
-                    13.0 / 16.0,
+                    12.0 / 16.0,
                     14.0 / 16.0,
                     1.0,
                     14.0 / 16.0
@@ -82,14 +105,14 @@ public class GhostTombstoneBlock
                     2.0 / 16.0,
                     0.0,
                     2.0 / 16.0,
-                    3.0 / 16.0,
+                    4.0 / 16.0,
                     1.0,
                     14.0 / 16.0
             );
 
     private static final VoxelShape LOWER_EAST_SHAPE =
             Shapes.box(
-                    13.0 / 16.0,
+                    12.0 / 16.0,
                     0.0,
                     2.0 / 16.0,
                     14.0 / 16.0,
@@ -99,6 +122,11 @@ public class GhostTombstoneBlock
 
     /*
      * 上半部分碰撞箱。
+     *
+     * 模型主体：
+     * X = 2 ~ 14
+     * Y = 0 ~ 13
+     * Z = 2 ~ 4
      */
     private static final VoxelShape UPPER_NORTH_SHAPE =
             Shapes.box(
@@ -106,17 +134,17 @@ public class GhostTombstoneBlock
                     0.0,
                     2.0 / 16.0,
                     14.0 / 16.0,
-                    14.0 / 16.0,
-                    3.0 / 16.0
+                    13.0 / 16.0,
+                    4.0 / 16.0
             );
 
     private static final VoxelShape UPPER_SOUTH_SHAPE =
             Shapes.box(
                     2.0 / 16.0,
                     0.0,
+                    12.0 / 16.0,
+                    14.0 / 16.0,
                     13.0 / 16.0,
-                    14.0 / 16.0,
-                    14.0 / 16.0,
                     14.0 / 16.0
             );
 
@@ -125,18 +153,18 @@ public class GhostTombstoneBlock
                     2.0 / 16.0,
                     0.0,
                     2.0 / 16.0,
-                    3.0 / 16.0,
-                    14.0 / 16.0,
+                    4.0 / 16.0,
+                    13.0 / 16.0,
                     14.0 / 16.0
             );
 
     private static final VoxelShape UPPER_EAST_SHAPE =
             Shapes.box(
-                    13.0 / 16.0,
+                    12.0 / 16.0,
                     0.0,
                     2.0 / 16.0,
                     14.0 / 16.0,
-                    14.0 / 16.0,
+                    13.0 / 16.0,
                     14.0 / 16.0
             );
 
@@ -156,6 +184,128 @@ public class GhostTombstoneBlock
                                 Part.LOWER
                         )
         );
+    }
+
+    /**
+     * 获取鬼墓碑数据实际存储的位置。
+     *
+     * 上半部分的 BlockEntity 不单独存数据，
+     * 所有刻字统一存放在下半部分。
+     */
+    private static BlockPos getDataPos(
+            BlockPos pos,
+            BlockState state
+    ) {
+
+        if (state.getValue(PART)
+                == Part.UPPER) {
+
+            return pos.below();
+        }
+
+        return pos;
+    }
+
+    /**
+     * 右键鬼墓碑。
+     *
+     * 只有手持可以刻字的灵异物品时，
+     * 才会打开刻字界面。
+     */
+    @Override
+    protected InteractionResult useWithoutItem(
+            BlockState state,
+            Level level,
+            BlockPos pos,
+            Player player,
+            BlockHitResult hit
+    ) {
+
+        /*
+         * ========================================================
+         * 检查手中的物品
+         * ========================================================
+         */
+
+        ItemStack stack =
+                player.getMainHandItem();
+
+        if (!stack.is(
+                ModTags.Items.GHOST_TOMBSTONE_INSCRIBABLE
+        )) {
+
+            return InteractionResult.PASS;
+        }
+
+
+        /*
+         * ========================================================
+         * 客户端
+         * ========================================================
+         *
+         * 客户端只告诉 Minecraft：
+         * 这个右键交互已经被处理。
+         *
+         * 真正打开 GUI 由服务器发包。
+         */
+
+        if (level.isClientSide()) {
+            return InteractionResult.SUCCESS;
+        }
+
+
+        /*
+         * ========================================================
+         * 必须是服务器玩家
+         * ========================================================
+         */
+
+        if (!(player instanceof ServerPlayer serverPlayer)) {
+            return InteractionResult.PASS;
+        }
+
+
+        /*
+         * ========================================================
+         * 获取真正保存数据的墓碑位置
+         * ========================================================
+         *
+         * 上半部分没有单独保存刻字，
+         * 所以需要找到下面的 BlockEntity。
+         */
+
+        BlockPos dataPos =
+                getDataPos(
+                        pos,
+                        state
+                );
+
+
+        /*
+         * ========================================================
+         * 检查墓碑 BlockEntity
+         * ========================================================
+         */
+
+        if (!(level.getBlockEntity(dataPos)
+                instanceof GhostTombstoneBlockEntity)) {
+
+            return InteractionResult.PASS;
+        }
+
+
+        /*
+         * ========================================================
+         * 打开刻字界面
+         * ========================================================
+         */
+
+        GhostTombstoneNetwork.sendOpenScreen(
+                serverPlayer,
+                dataPos
+        );
+
+        return InteractionResult.SUCCESS;
     }
 
     @Override
