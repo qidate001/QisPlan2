@@ -101,7 +101,45 @@ public final class GhostTombstoneNetwork {
             }
 
             /*
-             * 保存刻字。
+             * ========================================================
+             * 先移除这块墓碑原本产生的诅咒。
+             * ========================================================
+             *
+             * 无论新刻的是：
+             *
+             * 1. 原来的名字
+             * 2. 另一个玩家的名字
+             * 3. 空白
+             * 4. 无效名字
+             *
+             * 都先清理旧诅咒。
+             *
+             * 这样可以保证：
+             *
+             * 一块墓碑最多只有一个诅咒。
+             */
+            CurseManager.removeBySource(
+                    curse -> {
+
+                        if (!(curse.getSource()
+                                instanceof GhostTombstoneCurseSource source)) {
+
+                            return false;
+                        }
+
+                        return source.dimension().equals(
+                                player.level().dimension()
+                        )
+                                && source.pos().equals(
+                                payload.pos()
+                        );
+                    }
+            );
+
+            /*
+             * ========================================================
+             * 保存新的刻字。
+             * ========================================================
              */
             blockEntity.setInscription(
                     payload.inscription()
@@ -109,11 +147,11 @@ public final class GhostTombstoneNetwork {
 
             /*
              * ========================================================
-             * 鬼墓碑诅咒
+             * 根据新的名字创建诅咒。
              * ========================================================
              *
-             * 如果刻下的内容正好是一个在线玩家的名字，
-             * 就以这块鬼墓碑作为诅咒来源，创建一个鬼墓碑诅咒。
+             * 只有当刻下的名字对应一个在线玩家时，
+             * 才会产生新的鬼墓碑诅咒。
              */
             ServerPlayer target =
                     player.server
@@ -122,30 +160,32 @@ public final class GhostTombstoneNetwork {
                                     payload.inscription()
                             );
 
-            if (target != null) {
-
-                CurseType curseType =
-                        CurseRegistry.get(
-                                GhostTombstoneCurseType.ID
-                        );
-
-                if (curseType != null) {
-
-                    GhostTombstoneCurseSource source =
-                            new GhostTombstoneCurseSource(
-                                    player.level().dimension(),
-                                    payload.pos()
-                            );
-
-                    Curse curse =
-                            curseType.create(
-                                    target.getUUID(),
-                                    source
-                            );
-
-                    CurseManager.add(curse);
-                }
+            if (target == null) {
+                return;
             }
+
+            CurseType curseType =
+                    CurseRegistry.get(
+                            GhostTombstoneCurseType.ID
+                    );
+
+            if (curseType == null) {
+                return;
+            }
+
+            GhostTombstoneCurseSource source =
+                    new GhostTombstoneCurseSource(
+                            player.level().dimension(),
+                            payload.pos()
+                    );
+
+            Curse curse =
+                    curseType.create(
+                            target.getUUID(),
+                            source
+                    );
+
+            CurseManager.add(curse);
         });
     }
 

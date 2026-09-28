@@ -94,6 +94,25 @@ public final class CurseManager {
     }
 
     /**
+     * 通过来源来注销一个诅咒。
+     */
+    public static void removeBySource(
+            java.util.function.Predicate<Curse> predicate
+    ) {
+        List<UUID> removeIds = new ArrayList<>();
+
+        for (Curse curse : CURSES.values()) {
+            if (predicate.test(curse)) {
+                removeIds.add(curse.getId());
+            }
+        }
+
+        for (UUID id : removeIds) {
+            remove(id);
+        }
+    }
+
+    /**
      * 将诅咒加入运行时管理器。
      *
      * 仅用于从 SavedData 恢复诅咒。

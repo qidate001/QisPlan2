@@ -9,13 +9,9 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.world.entity.MoverType;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.AABB;
-import net.minecraft.world.entity.Entity;
-import net.minecraft.world.phys.Vec3;
-
 import java.util.UUID;
 
 /**
@@ -53,13 +49,6 @@ public class GhostTombstoneCurse implements Curse {
     private final UUID id;
     private final UUID target;
     private final GhostTombstoneCurseSource source;
-
-    /**
-     * 当前是否正在被拉入地下。
-     *
-     * 这是运行时状态，不需要保存到存档。
-     */
-    private boolean sinking;
 
     /**
      * 传送冷却。
@@ -154,16 +143,15 @@ public class GhostTombstoneCurse implements Curse {
                 player.level()
                         .getBlockState(below);
 
-        QisPlan2.LOGGER.info(
-                "[鬼墓碑诅咒] 目标 {} 脚下方块：{}，Y：{}，玩家Y：{}",
-                player.getGameProfile().getName(),
-                belowState.getBlock(),
-                below.getY(),
-                player.getY()
-        );
+//        QisPlan2.LOGGER.info(
+//                "[鬼墓碑诅咒] 目标 {} 脚下方块：{}，Y：{}，玩家Y：{}",
+//                player.getGameProfile().getName(),
+//                belowState.getBlock(),
+//                below.getY(),
+//                player.getY()
+//        );
 
         if (!isNaturalBurialBlock(belowState)) {
-            sinking = false;
             player.noPhysics = false;
             return;
         }
@@ -176,7 +164,6 @@ public class GhostTombstoneCurse implements Curse {
          */
         if (isCompletelyBuried(player)) {
 
-            sinking = false;
             player.noPhysics = false;
 
             teleportIntoTomb(
@@ -190,8 +177,6 @@ public class GhostTombstoneCurse implements Curse {
         /*
          * 开始向地下下沉。
          */
-        sinking = true;
-
         player.noPhysics = true;
 
         player.connection.teleport(
@@ -379,10 +364,6 @@ public class GhostTombstoneCurse implements Curse {
          */
         teleportCooldown =
                 TELEPORT_COOLDOWN_TICKS;
-    }
-
-    public boolean isSinking() {
-        return sinking;
     }
 
     @Override
