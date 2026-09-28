@@ -2,10 +2,10 @@ package com.qidate.qisplan2.network.ghosttombstone;
 
 import com.qidate.qisplan2.block.entity.GhostTombstoneBlockEntity;
 import com.qidate.qisplan2.client.screen.GhostTombstoneScreen;
+import com.qidate.qisplan2.ghost.curse.Curse;
 import com.qidate.qisplan2.ghost.curse.CurseManager;
 import com.qidate.qisplan2.ghost.curse.CurseRegistry;
 import com.qidate.qisplan2.ghost.curse.CurseType;
-import com.qidate.qisplan2.ghost.curse.type.ghosttombstone.GhostTombstoneCurse;
 import com.qidate.qisplan2.ghost.curse.type.ghosttombstone.GhostTombstoneCurseSource;
 import com.qidate.qisplan2.ghost.curse.type.ghosttombstone.GhostTombstoneCurseType;
 import com.qidate.qisplan2.network.payload.OpenGhostTombstoneScreenPayload;
@@ -129,7 +129,7 @@ public final class GhostTombstoneNetwork {
                                 GhostTombstoneCurseType.ID
                         );
 
-                if (curseType instanceof GhostTombstoneCurseType tombstoneCurseType) {
+                if (curseType != null) {
 
                     GhostTombstoneCurseSource source =
                             new GhostTombstoneCurseSource(
@@ -137,8 +137,8 @@ public final class GhostTombstoneNetwork {
                                     payload.pos()
                             );
 
-                    GhostTombstoneCurse curse =
-                            tombstoneCurseType.create(
+                    Curse curse =
+                            curseType.create(
                                     target.getUUID(),
                                     source
                             );
