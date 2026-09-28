@@ -4,7 +4,7 @@
 	"texture_size": [32, 32],
 	"textures": {
 		"0": "qisplan2:block/ghost_tombstone_lower",
-		"particle": "qisplan2:block/ghost_tombstone_upper"
+		"particle": "qisplan2:block/ghost_tombstone_lower"
 	},
 	"elements": [
 		{
