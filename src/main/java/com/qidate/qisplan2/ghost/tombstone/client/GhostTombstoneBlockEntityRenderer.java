@@ -108,6 +108,12 @@ public class GhostTombstoneBlockEntityRenderer
                     )
             );
 
+            poseStack.scale(
+                    glyph.scale(),
+                    glyph.scale(),
+                    glyph.scale()
+            );
+
             int width =
                     font.width(glyph.text());
 

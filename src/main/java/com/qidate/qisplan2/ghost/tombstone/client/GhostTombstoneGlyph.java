@@ -7,6 +7,8 @@ public record GhostTombstoneGlyph(
         float x,
         float y,
 
-        float rotation
+        float rotation,
+
+        float scale
 ) {
 }
