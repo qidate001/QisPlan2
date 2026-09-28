@@ -2,6 +2,7 @@ package com.qidate.qisplan2.event;
 
 import com.qidate.qisplan2.QisPlan2;
 import com.qidate.qisplan2.ghost.GhostServerManager;
+import com.qidate.qisplan2.ghost.curse.CurseManager;
 import com.qidate.qisplan2.ghost.possession.ability.ghostdoor.knocking.KnockingGhostDoorSystem;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
@@ -18,6 +19,11 @@ public final class GhostServerTickHandler {
     ) {
         // 鬼域 & 驭鬼者
         GhostServerManager.tick(
+                event.getServer()
+        );
+
+        // 诅咒系统
+        CurseManager.tick(
                 event.getServer()
         );
 
