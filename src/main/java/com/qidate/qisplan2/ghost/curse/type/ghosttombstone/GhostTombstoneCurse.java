@@ -1,35 +1,36 @@
 package com.qidate.qisplan2.ghost.curse.type.ghosttombstone;
 
+import com.qidate.qisplan2.QisPlan2;
 import com.qidate.qisplan2.ghost.curse.Curse;
 import com.qidate.qisplan2.ghost.curse.CurseSource;
+import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.entity.MoverType;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.AABB;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.phys.Vec3;
 
 import java.util.UUID;
 
 /**
  * 鬼墓碑诅咒。
  *
- * 当前阶段：
+ * 当前能力：
  *
- * - 记录一个具体的鬼墓碑诅咒实例
- * - 暂时没有实际诅咒效果
+ * 当诅咒目标站在自然土质方块上时，
+ * 会被逐渐拉入地下。
  *
- * 后续再逐步增加：
- *
- * - Tick 效果
- * - 玩家状态
- * - 诅咒阶段
- * - 灵异规则
- * 等。
+ * 当玩家整个身体都进入土壤之后，
+ * 会被传送到诅咒来源墓碑的下方。
  */
-public class GhostTombstoneCurse
-        implements Curse {
+public class GhostTombstoneCurse implements Curse {
 
-    /**
-     * 鬼墓碑诅咒类型 ID。
-     */
     public static final ResourceLocation ID =
             ResourceLocation.fromNamespaceAndPath(
                     "qisplan2",
@@ -37,25 +38,36 @@ public class GhostTombstoneCurse
             );
 
     /**
-     * 当前诅咒实例自己的唯一 ID。
+     * 玩家每 Tick 下沉的距离。
      */
+    private static final double SINK_SPEED = 0.08D;
+
+    /**
+     * 传送后暂时无法再次触发下沉的 Tick 数。
+     *
+     * 防止玩家传送到墓碑下方后，
+     * 因为那里同样是土壤而立即再次触发。
+     */
+    private static final int TELEPORT_COOLDOWN_TICKS = 40;
+
     private final UUID id;
-
-    /**
-     * 被诅咒玩家。
-     */
     private final UUID target;
-
-    /**
-     * 鬼墓碑来源。
-     */
     private final GhostTombstoneCurseSource source;
 
     /**
-     * 创建一个新的鬼墓碑诅咒。
+     * 当前是否正在被拉入地下。
      *
-     * 新诅咒会自动生成新的实例 UUID。
+     * 这是运行时状态，不需要保存到存档。
      */
+    private boolean sinking;
+
+    /**
+     * 传送冷却。
+     *
+     * 这是运行时状态，不参与持久化。
+     */
+    private int teleportCooldown;
+
     public GhostTombstoneCurse(
             UUID target,
             GhostTombstoneCurseSource source
@@ -67,11 +79,6 @@ public class GhostTombstoneCurse
         );
     }
 
-    /**
-     * 创建一个指定 ID 的鬼墓碑诅咒。
-     *
-     * 主要用于从存档恢复。
-     */
     public GhostTombstoneCurse(
             UUID id,
             UUID target,
@@ -103,25 +110,281 @@ public class GhostTombstoneCurse
     }
 
     /**
-     * 每个服务器 Tick 执行一次。
-     *
-     * 当前阶段暂时没有实际效果。
+     * 每 Tick 执行鬼墓碑诅咒。
      */
     @Override
     public void tick(
             MinecraftServer server
     ) {
-        // 当前阶段暂时没有诅咒效果。
+
+        /*
+         * 找到诅咒目标。
+         */
+        ServerPlayer player =
+                server.getPlayerList()
+                        .getPlayer(target);
+
+        /*
+         * 玩家不在线时不处理。
+         */
+        if (player == null) {
+            return;
+        }
+
+        /*
+         * 传送冷却期间不触发。
+         */
+        if (teleportCooldown > 0) {
+            teleportCooldown--;
+            return;
+        }
+
+        /*
+         * 玩家脚下不是自然土质，
+         * 不会被拉入地下。
+         */
+        BlockPos below =
+                BlockPos.containing(
+                        player.getX(),
+                        player.getY() - 0.05D,
+                        player.getZ()
+                );
+
+        BlockState belowState =
+                player.level()
+                        .getBlockState(below);
+
+        QisPlan2.LOGGER.info(
+                "[鬼墓碑诅咒] 目标 {} 脚下方块：{}，Y：{}，玩家Y：{}",
+                player.getGameProfile().getName(),
+                belowState.getBlock(),
+                below.getY(),
+                player.getY()
+        );
+
+        if (!isNaturalBurialBlock(belowState)) {
+            sinking = false;
+            player.noPhysics = false;
+            return;
+        }
+
+        /*
+         * 玩家已经完全进入土壤。
+         *
+         * 先判断，再继续下沉，
+         * 避免已经完成埋入后继续移动。
+         */
+        if (isCompletelyBuried(player)) {
+
+            sinking = false;
+            player.noPhysics = false;
+
+            teleportIntoTomb(
+                    server,
+                    player
+            );
+
+            return;
+        }
+
+        /*
+         * 开始向地下下沉。
+         */
+        sinking = true;
+
+        player.noPhysics = true;
+
+        player.connection.teleport(
+                player.getX(),
+                player.getY() - SINK_SPEED,
+                player.getZ(),
+                player.getYRot(),
+                player.getXRot()
+        );
     }
 
     /**
-     * 判断诅咒是否仍然有效。
-     *
-     * 当前阶段：
-     *
-     * 只要诅咒存在，
-     * 就永久有效。
+     * 判断一个方块是否属于可以被诅咒拉入的自然土质。
      */
+    private static boolean isNaturalBurialBlock(
+            BlockState state
+    ) {
+
+        return state.is(
+                Blocks.DIRT
+        )
+                || state.is(
+                Blocks.GRASS_BLOCK
+        )
+                || state.is(
+                Blocks.COARSE_DIRT
+        )
+                || state.is(
+                Blocks.ROOTED_DIRT
+        )
+                || state.is(
+                Blocks.PODZOL
+        )
+                || state.is(
+                Blocks.MYCELIUM
+        )
+                || state.is(
+                Blocks.MUD
+        );
+    }
+
+    /**
+     * 判断玩家是否已经完全埋入土中。
+     *
+     * 使用玩家碰撞箱判断。
+     *
+     * 只要碰撞箱仍然有一部分位于空气等非土质方块中，
+     * 就不算完全埋入。
+     */
+    private static boolean isCompletelyBuried(
+            ServerPlayer player
+    ) {
+
+        AABB box =
+                player.getBoundingBox();
+
+        int minX =
+                BlockPos.containing(
+                        box.minX,
+                        0,
+                        0
+                ).getX();
+
+        int maxX =
+                BlockPos.containing(
+                        box.maxX - 0.0001D,
+                        0,
+                        0
+                ).getX();
+
+        int minY =
+                BlockPos.containing(
+                        0,
+                        box.minY,
+                        0
+                ).getY();
+
+        int maxY =
+                BlockPos.containing(
+                        0,
+                        box.maxY - 0.0001D,
+                        0
+                ).getY();
+
+        int minZ =
+                BlockPos.containing(
+                        0,
+                        0,
+                        box.minZ
+                ).getZ();
+
+        int maxZ =
+                BlockPos.containing(
+                        0,
+                        0,
+                        box.maxZ - 0.0001D
+                ).getZ();
+
+        /*
+         * 检查整个碰撞箱覆盖到的所有方块。
+         *
+         * 只要其中有一个不是自然土质，
+         * 就说明玩家还没有完全被土埋住。
+         */
+        for (int x = minX; x <= maxX; x++) {
+
+            for (int y = minY; y <= maxY; y++) {
+
+                for (int z = minZ; z <= maxZ; z++) {
+
+                    BlockState state =
+                            player.level()
+                                    .getBlockState(
+                                            new BlockPos(
+                                                    x,
+                                                    y,
+                                                    z
+                                            )
+                                    );
+
+                    if (!isNaturalBurialBlock(state)) {
+                        return false;
+                    }
+                }
+            }
+        }
+
+        return true;
+    }
+
+    /**
+     * 将玩家传送到鬼墓碑正下方的土中。
+     */
+    private void teleportIntoTomb(
+            MinecraftServer server,
+            ServerPlayer player
+    ) {
+
+        /*
+         * 获取墓碑所在维度。
+         */
+        ServerLevel targetLevel =
+                server.getLevel(
+                        source.dimension()
+                );
+
+        if (targetLevel == null) {
+            return;
+        }
+
+        BlockPos tombstonePos =
+                source.pos();
+
+        /*
+         * 鬼墓碑是两格高。
+         *
+         * tombstonePos 为下半部分，
+         * 因此墓碑正下方就是 Y - 1。
+         *
+         * 将玩家放进墓碑下面的土中。
+         */
+        double x =
+                tombstonePos.getX() + 0.5D;
+
+        double y =
+                tombstonePos.getY() - 1.0D + 0.05D;
+
+        double z =
+                tombstonePos.getZ() + 0.5D;
+
+        /*
+         * 跨维度 / 同维度统一使用 ServerPlayer.teleportTo。
+         */
+        player.teleportTo(
+                targetLevel,
+                x,
+                y,
+                z,
+                player.getYRot(),
+                player.getXRot()
+        );
+
+        /*
+         * 设置传送冷却。
+         */
+        teleportCooldown =
+                TELEPORT_COOLDOWN_TICKS;
+    }
+
+    public boolean isSinking() {
+        return sinking;
+    }
+
     @Override
     public boolean isValid(
             MinecraftServer server
@@ -129,51 +392,27 @@ public class GhostTombstoneCurse
         return true;
     }
 
-    /**
-     * 保存诅咒实例的完整数据。
-     *
-     * 这里暂时只有：
-     *
-     * Id
-     * Target
-     * Source
-     *
-     * 后续如果增加诅咒自身状态，
-     * 直接继续放进这里。
-     */
     @Override
     public CompoundTag save() {
 
         CompoundTag tag =
                 new CompoundTag();
 
-        /*
-         * 保存诅咒实例 UUID。
-         */
         tag.putUUID(
                 "Id",
                 id
         );
 
-        /*
-         * 保存被诅咒玩家 UUID。
-         */
         tag.putUUID(
                 "Target",
                 target
         );
 
-        /*
-         * 保存来源类型。
-         */
         tag.putString(
                 "SourceType",
                 source.getType().toString()
         );
 
-        /*
-         * 保存来源自己的数据。
-         */
         tag.put(
                 "Source",
                 source.save()
