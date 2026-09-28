@@ -55,6 +55,12 @@ public final class CurseManager {
                 curse.getId(),
                 curse.getTarget()
         );
+
+        /*
+         * 诅咒列表发生变化，
+         * 通知持久化系统。
+         */
+        CurseSavedData.markDirty();
     }
 
     /**
@@ -63,11 +69,45 @@ public final class CurseManager {
     public static void remove(
             UUID curseId
     ) {
-        CURSES.remove(curseId);
+
+        Curse removed =
+                CURSES.remove(curseId);
+
+        /*
+         * 只有真的删除了一个诅咒，
+         * 才需要更新 SavedData。
+         */
+        if (removed == null) {
+            return;
+        }
 
         QisPlan2.LOGGER.info(
                 "[诅咒系统] 注销诅咒：{}",
                 curseId
+        );
+
+        /*
+         * 诅咒列表发生变化，
+         * 通知持久化系统。
+         */
+        CurseSavedData.markDirty();
+    }
+
+    /**
+     * 将诅咒加入运行时管理器。
+     *
+     * 仅用于从 SavedData 恢复诅咒。
+     *
+     * 不触发 SavedData 更新，
+     * 因为当前正在读取 SavedData。
+     */
+    public static void restore(
+            Curse curse
+    ) {
+
+        CURSES.put(
+                curse.getId(),
+                curse
         );
     }
 
@@ -158,6 +198,12 @@ public final class CurseManager {
      * 清空所有诅咒。
      *
      * 主要用于服务器关闭或重新初始化时。
+     *
+     * 这里不能调用 markDirty()。
+     *
+     * 因为服务器关闭、重新加载存档时，
+     * clear() 只是清理运行时状态，
+     * 不能把 SavedData 改成“空诅咒列表”。
      */
     public static void clear() {
 
