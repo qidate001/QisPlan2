@@ -1,5 +1,6 @@
 package com.qidate.qisplan2.ghost.curse;
 
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
 
 import java.util.UUID;
@@ -7,14 +8,8 @@ import java.util.UUID;
 /**
  * 一个正在运行中的诅咒实例。
  *
- * Curse 表示的是“某一个具体的诅咒”，
- * 而不是诅咒类型本身。
- *
- * 例如：
- *
- * 某块鬼墓碑 → QiDate
- *
- * 就会产生一个具体的 Curse 实例。
+ * Curse 表示的是一个具体存在的诅咒，
+ * 而不是诅咒类型。
  */
 public interface Curse {
 
@@ -24,20 +19,34 @@ public interface Curse {
     UUID getId();
 
     /**
-     * 获取被诅咒的玩家 UUID。
+     * 获取诅咒类型 ID。
+     */
+    ResourceLocation getType();
+
+    /**
+     * 获取被诅咒的目标。
      */
     UUID getTarget();
 
     /**
-     * 每个服务器 Tick 执行一次。
+     * 获取诅咒来源。
      */
-    void tick(MinecraftServer server);
+    CurseSource getSource();
 
     /**
-     * 判断这个诅咒是否仍然有效。
+     * 每个服务器 Tick 执行一次。
+     */
+    void tick(
+            MinecraftServer server
+    );
+
+    /**
+     * 判断诅咒是否仍然有效。
      *
      * 返回 false 后，
-     * CurseManager 会自动将它注销。
+     * CurseManager 会自动注销。
      */
-    boolean isValid(MinecraftServer server);
+    boolean isValid(
+            MinecraftServer server
+    );
 }

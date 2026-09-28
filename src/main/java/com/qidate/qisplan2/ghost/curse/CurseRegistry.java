@@ -1,6 +1,6 @@
 package com.qidate.qisplan2.ghost.curse;
 
-import com.qidate.qisplan2.ghost.curse.type.TestCurse;
+import com.qidate.qisplan2.ghost.curse.type.ghosttombstone.GhostTombstoneCurseType;
 import net.minecraft.resources.ResourceLocation;
 
 import java.util.Collections;
@@ -12,7 +12,7 @@ public final class CurseRegistry {
 
     private static final Map<
             ResourceLocation,
-            CurseFactory
+            CurseType
             > CURSES =
             new HashMap<>();
 
@@ -21,38 +21,46 @@ public final class CurseRegistry {
     private CurseRegistry() {
     }
 
+    /**
+     * 注册一个诅咒类型。
+     */
     public static void register(
-            ResourceLocation id,
-            CurseFactory factory
+            CurseType curse
     ) {
+
         CURSES.put(
-                id,
-                factory
+                curse.id(),
+                curse
         );
     }
 
-    public static Curse create(
-            ResourceLocation id,
-            java.util.UUID target
+    /**
+     * 获取诅咒类型。
+     */
+    public static CurseType get(
+            ResourceLocation id
     ) {
 
-        CurseFactory factory =
-                CURSES.get(id);
-
-        if (factory == null) {
-            return null;
-        }
-
-        return factory.create(target);
+        return CURSES.get(id);
     }
 
+    /**
+     * 判断诅咒类型是否存在。
+     */
     public static boolean contains(
             ResourceLocation id
     ) {
+
         return CURSES.containsKey(id);
     }
 
+    /**
+     * 获取所有诅咒类型 ID。
+     *
+     * 用于命令自动补全。
+     */
     public static Set<ResourceLocation> ids() {
+
         return Collections.unmodifiableSet(
                 CURSES.keySet()
         );
@@ -70,8 +78,7 @@ public final class CurseRegistry {
         initialized = true;
 
         register(
-                TestCurse.ID,
-                TestCurse::new
+                new GhostTombstoneCurseType()
         );
     }
 }

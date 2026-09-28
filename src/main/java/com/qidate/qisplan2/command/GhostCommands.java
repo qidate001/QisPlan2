@@ -1062,8 +1062,8 @@ public final class GhostCommands {
             message.append(
                     Component.translatable(
                             "command.qisplan2.curse.entry",
-                            curse.getId(),
-                            curse.getTarget()
+                            curse.getId().toString(),
+                            curse.getTarget().toString()
                     )
             );
         }
@@ -1087,63 +1087,63 @@ public final class GhostCommands {
             CommandContext<CommandSourceStack> context
     ) throws CommandSyntaxException {
 
-        ResourceLocation curseType =
-                ResourceLocationArgument.getId(
-                        context,
-                        "curse"
-                );
-
-        ServerPlayer target =
-                EntityArgument.getPlayer(
-                        context,
-                        "target"
-                );
-
-        if (!CurseRegistry.contains(curseType)) {
-
-            context.getSource()
-                    .sendFailure(
-                            Component.literal(
-                                    "未知诅咒类型：" + curseType
-                            )
-                    );
-
-            return 0;
-        }
-
-        Curse curse =
-                CurseRegistry.create(
-                        curseType,
-                        target.getUUID()
-                );
-
-        if (curse == null) {
-
-            context.getSource()
-                    .sendFailure(
-                            Component.literal(
-                                    "创建诅咒失败：" + curseType
-                            )
-                    );
-
-            return 0;
-        }
-
-        CurseManager.add(curse);
-
-        context.getSource()
-                .sendSuccess(
-                        () -> Component.literal(
-                                "已添加诅咒 "
-                                        + curseType
-                                        + " -> "
-                                        + target.getGameProfile().getName()
-                                        + "（"
-                                        + curse.getId()
-                                        + "）"
-                        ),
-                        true
-                );
+//        ResourceLocation curseType =
+//                ResourceLocationArgument.getId(
+//                        context,
+//                        "curse"
+//                );
+//
+//        ServerPlayer target =
+//                EntityArgument.getPlayer(
+//                        context,
+//                        "target"
+//                );
+//
+//        if (!CurseRegistry.contains(curseType)) {
+//
+//            context.getSource()
+//                    .sendFailure(
+//                            Component.literal(
+//                                    "未知诅咒类型：" + curseType
+//                            )
+//                    );
+//
+//            return 0;
+//        }
+//
+//        Curse curse =
+//                CurseRegistry.create(
+//                        curseType,
+//                        target.getUUID()
+//                );
+//
+//        if (curse == null) {
+//
+//            context.getSource()
+//                    .sendFailure(
+//                            Component.literal(
+//                                    "创建诅咒失败：" + curseType
+//                            )
+//                    );
+//
+//            return 0;
+//        }
+//
+//        CurseManager.add(curse);
+//
+//        context.getSource()
+//                .sendSuccess(
+//                        () -> Component.literal(
+//                                "已添加诅咒 "
+//                                        + curseType
+//                                        + " -> "
+//                                        + target.getGameProfile().getName()
+//                                        + "（"
+//                                        + curse.getId()
+//                                        + "）"
+//                        ),
+//                        true
+//                );
 
         return 1;
     }

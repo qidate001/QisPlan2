@@ -2,6 +2,12 @@ package com.qidate.qisplan2.network.ghosttombstone;
 
 import com.qidate.qisplan2.block.entity.GhostTombstoneBlockEntity;
 import com.qidate.qisplan2.client.screen.GhostTombstoneScreen;
+import com.qidate.qisplan2.ghost.curse.CurseManager;
+import com.qidate.qisplan2.ghost.curse.CurseRegistry;
+import com.qidate.qisplan2.ghost.curse.CurseType;
+import com.qidate.qisplan2.ghost.curse.type.ghosttombstone.GhostTombstoneCurse;
+import com.qidate.qisplan2.ghost.curse.type.ghosttombstone.GhostTombstoneCurseSource;
+import com.qidate.qisplan2.ghost.curse.type.ghosttombstone.GhostTombstoneCurseType;
 import com.qidate.qisplan2.network.payload.OpenGhostTombstoneScreenPayload;
 import com.qidate.qisplan2.network.payload.SetGhostTombstoneInscriptionPayload;
 
@@ -100,6 +106,46 @@ public final class GhostTombstoneNetwork {
             blockEntity.setInscription(
                     payload.inscription()
             );
+
+            /*
+             * ========================================================
+             * 鬼墓碑诅咒
+             * ========================================================
+             *
+             * 如果刻下的内容正好是一个在线玩家的名字，
+             * 就以这块鬼墓碑作为诅咒来源，创建一个鬼墓碑诅咒。
+             */
+            ServerPlayer target =
+                    player.server
+                            .getPlayerList()
+                            .getPlayerByName(
+                                    payload.inscription()
+                            );
+
+            if (target != null) {
+
+                CurseType curseType =
+                        CurseRegistry.get(
+                                GhostTombstoneCurseType.ID
+                        );
+
+                if (curseType instanceof GhostTombstoneCurseType tombstoneCurseType) {
+
+                    GhostTombstoneCurseSource source =
+                            new GhostTombstoneCurseSource(
+                                    player.level().dimension(),
+                                    payload.pos()
+                            );
+
+                    GhostTombstoneCurse curse =
+                            tombstoneCurseType.create(
+                                    target.getUUID(),
+                                    source
+                            );
+
+                    CurseManager.add(curse);
+                }
+            }
         });
     }
 
