@@ -62,7 +62,7 @@ public class GhostTombstoneBlockEntityRenderer
         poseStack.translate(
                 0.5,
                 1.30,
-                0.126
+                0.726
         );
 
         poseStack.mulPose(
@@ -113,11 +113,22 @@ public class GhostTombstoneBlockEntityRenderer
 
             /*
              * 阴影。
+             *
+             * 向墓碑内部偏移一点，
+             * 让阴影和正文字不处于同一个深度。
              */
+            poseStack.pushPose();
+
+            poseStack.translate(
+                    0.0,
+                    0.0,
+                    -0.01
+            );
+
             font.drawInBatch(
                     glyph.text(),
-                    -width / 2F + 0.6F,
-                    0.6F,
+                    -width / 2F + 0.3F,
+                    0.3F,
                     0xFF5A5A5A,
                     false,
                     poseStack.last().pose(),
@@ -126,6 +137,8 @@ public class GhostTombstoneBlockEntityRenderer
                     0,
                     packedLight
             );
+
+            poseStack.popPose();
 
             /*
              * 正文字。

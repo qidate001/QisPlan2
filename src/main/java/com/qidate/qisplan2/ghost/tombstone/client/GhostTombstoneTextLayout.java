@@ -18,6 +18,13 @@ public final class GhostTombstoneTextLayout {
     private static final float ROW_HEIGHT = 8.0F;
 
     /*
+     * 第一行起始位置。
+     *
+     * 负值表示整体往上移动。
+     */
+    private static final float START_Y = -8.0F;
+
+    /*
      * 列宽。
      */
     private static final float COLUMN_WIDTH = 8.0F;
@@ -63,7 +70,7 @@ public final class GhostTombstoneTextLayout {
                         new GhostTombstoneGlyph(
                                 word,
                                 -column * COLUMN_WIDTH,
-                                row * ROW_HEIGHT,
+                                START_Y + row * ROW_HEIGHT,
                                 90.0F
                         )
                 );
@@ -76,7 +83,7 @@ public final class GhostTombstoneTextLayout {
                         new GhostTombstoneGlyph(
                                 String.valueOf(c),
                                 -column * COLUMN_WIDTH,
-                                row * ROW_HEIGHT,
+                                START_Y + row * ROW_HEIGHT,
                                 0.0F
                         )
                 );
