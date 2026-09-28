@@ -21,6 +21,7 @@ import com.qidate.qisplan2.event.DeathCurseHudOverlay;
 
 import com.qidate.qisplan2.ghost.domain.client.renderer.effect.GhostEyeRenderEffect;
 import com.qidate.qisplan2.ghost.domain.client.renderer.effect.GhostUmbrellaRenderEffect;
+import com.qidate.qisplan2.ghost.tombstone.client.GhostTombstoneBlockEntityRenderer;
 import net.minecraft.client.model.HumanoidModel;
 import net.minecraft.client.model.geom.builders.CubeDeformation;
 import net.minecraft.client.model.geom.builders.LayerDefinition;
@@ -289,6 +290,11 @@ public class QisPlan2Client {
         BlockEntityRenderers.register(
                 ModBlocks.GHOST_DOOR_PLATE_BLOCK_ENTITY.get(),
                 GhostDoorPlateBlockEntityRenderer::new
+        );
+
+        BlockEntityRenderers.register(
+                ModBlocks.GHOST_TOMBSTONE_BLOCK_ENTITY.get(),
+                GhostTombstoneBlockEntityRenderer::new
         );
     }
 
