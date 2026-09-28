@@ -116,7 +116,9 @@
   "qisplan2.death_curse.reflection": "☠ The §4Death Curse§r has rebounded!",
   "qisplan2.death_curse.infected": "☠ You have been infected with a §4Death Curse§r! Current stacks: %1$d/10",
 
-
+  "command.qisplan2.curse.empty": "There are currently no active curses.",
+  "command.qisplan2.curse.header": "Currently active curses:",
+  "command.qisplan2.curse.entry": "Curse ID: %s, Target: %s",
 
   "command.qisplan2.isay.disabled": "§cThe /isay feature has been disabled by an administrator.",
   "command.qisplan2.isay.api_key_missing": "§cError: Please set the API Key in the mod configuration first!",

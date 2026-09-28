@@ -144,6 +144,10 @@
   "command.qisplan2.debug_domain.create.success": "已创建 Debug 鬼域（半径 §e%s§r，层数 §e%s§r，强度 §e%s§r）。",
   "command.qisplan2.debug_domain.remove.success": "§a已删除 Debug 鬼域。",
 
+  "command.qisplan2.curse.empty": "当前没有正在运行的诅咒。",
+  "command.qisplan2.curse.header": "当前正在运行的诅咒：",
+  "command.qisplan2.curse.entry": "诅咒 ID：%s，目标：%s",
+
   "command.qisplan2.isay.disabled": "§c/isay 功能已被管理员禁用。",
   "command.qisplan2.isay.api_key_missing": "§c错误：请先在模组配置中设置 API Key！",
   "command.qisplan2.isay.thinking": "§e正在思考，请稍候...",

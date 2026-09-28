@@ -5,7 +5,11 @@ import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
 
+import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.qidate.qisplan2.core.ModAttachments;
+import com.qidate.qisplan2.ghost.curse.Curse;
+import com.qidate.qisplan2.ghost.curse.CurseManager;
+import com.qidate.qisplan2.ghost.curse.CurseRegistry;
 import com.qidate.qisplan2.ghost.possession.data.PossessedGhostState;
 import com.qidate.qisplan2.ghost.possession.manager.PossessionHandler;
 import com.qidate.qisplan2.ghost.possession.ability.GhostAbilityRegistry;
@@ -15,7 +19,9 @@ import com.qidate.qisplan2.ghost.corrosion.CorrosionType;
 import net.minecraft.ChatFormatting;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
+import net.minecraft.commands.arguments.EntityArgument;
 import net.minecraft.commands.arguments.ResourceLocationArgument;
+import net.minecraft.commands.arguments.UuidArgument;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.resources.ResourceLocation;
@@ -23,6 +29,7 @@ import net.minecraft.server.level.ServerPlayer;
 
 import java.util.Locale;
 import java.util.Map;
+import java.util.UUID;
 
 public final class GhostCommands {
 
@@ -225,6 +232,78 @@ public final class GhostCommands {
                                         )
                                         .executes(
                                                 GhostCommands::permanentStun
+                                        )
+                        )
+        );
+
+        /*
+         * ========================================================
+         * /qisplan2 curse
+         * ========================================================
+         */
+
+        root.then(
+                Commands.literal("curse")
+
+                        /*
+                         * /qisplan2 curse list
+                         */
+                        .then(
+                                Commands.literal("list")
+                                        .executes(
+                                                GhostCommands::curseList
+                                        )
+                        )
+
+                        /*
+                         * /qisplan2 curse add <curse> <target>
+                         */
+                        .then(
+                                Commands.literal("add")
+                                        .then(
+                                                Commands.argument(
+                                                                "curse",
+                                                                ResourceLocationArgument.id()
+                                                        )
+                                                        .suggests(
+                                                                (context, builder) -> {
+
+                                                                    for (ResourceLocation id :
+                                                                            CurseRegistry.ids()) {
+
+                                                                        builder.suggest(
+                                                                                id.toString()
+                                                                        );
+                                                                    }
+
+                                                                    return builder.buildFuture();
+                                                                }
+                                                        )
+                                                        .then(
+                                                                Commands.argument(
+                                                                                "target",
+                                                                                EntityArgument.player()
+                                                                        )
+                                                                        .executes(
+                                                                                GhostCommands::curseAdd
+                                                                        )
+                                                        )
+                                        )
+                        )
+
+                        /*
+                         * /qisplan2 curse remove <curseId>
+                         */
+                        .then(
+                                Commands.literal("remove")
+                                        .then(
+                                                Commands.argument(
+                                                                "curseId",
+                                                                UuidArgument.uuid()
+                                                        )
+                                                        .executes(
+                                                                GhostCommands::curseRemove
+                                                        )
                                         )
                         )
         );
@@ -938,6 +1017,176 @@ public final class GhostCommands {
                 .sendSuccess(
                         () -> message,
                         false
+                );
+
+        return 1;
+    }
+
+    /*
+     * ============================================================
+     * 查看当前所有诅咒
+     * ============================================================
+     */
+
+    private static int curseList(
+            CommandContext<CommandSourceStack> context
+    ) {
+
+        var curses =
+                com.qidate.qisplan2.ghost.curse.CurseManager.getAll();
+
+        if (curses.isEmpty()) {
+
+            context.getSource()
+                    .sendSuccess(
+                            () -> Component.translatable(
+                                    "command.qisplan2.curse.empty"
+                            ),
+                            false
+                    );
+
+            return 0;
+        }
+
+        MutableComponent message =
+                Component.translatable(
+                        "command.qisplan2.curse.header"
+                );
+
+        for (var curse : curses) {
+
+            message.append(
+                    "\n"
+            );
+
+            message.append(
+                    Component.translatable(
+                            "command.qisplan2.curse.entry",
+                            curse.getId(),
+                            curse.getTarget()
+                    )
+            );
+        }
+
+        context.getSource()
+                .sendSuccess(
+                        () -> message,
+                        false
+                );
+
+        return curses.size();
+    }
+
+    /*
+     * ============================================================
+     * 添加诅咒
+     * ============================================================
+     */
+
+    private static int curseAdd(
+            CommandContext<CommandSourceStack> context
+    ) throws CommandSyntaxException {
+
+        ResourceLocation curseType =
+                ResourceLocationArgument.getId(
+                        context,
+                        "curse"
+                );
+
+        ServerPlayer target =
+                EntityArgument.getPlayer(
+                        context,
+                        "target"
+                );
+
+        if (!CurseRegistry.contains(curseType)) {
+
+            context.getSource()
+                    .sendFailure(
+                            Component.literal(
+                                    "未知诅咒类型：" + curseType
+                            )
+                    );
+
+            return 0;
+        }
+
+        Curse curse =
+                CurseRegistry.create(
+                        curseType,
+                        target.getUUID()
+                );
+
+        if (curse == null) {
+
+            context.getSource()
+                    .sendFailure(
+                            Component.literal(
+                                    "创建诅咒失败：" + curseType
+                            )
+                    );
+
+            return 0;
+        }
+
+        CurseManager.add(curse);
+
+        context.getSource()
+                .sendSuccess(
+                        () -> Component.literal(
+                                "已添加诅咒 "
+                                        + curseType
+                                        + " -> "
+                                        + target.getGameProfile().getName()
+                                        + "（"
+                                        + curse.getId()
+                                        + "）"
+                        ),
+                        true
+                );
+
+        return 1;
+    }
+
+    /*
+     * ============================================================
+     * 移除诅咒
+     * ============================================================
+     */
+
+    private static int curseRemove(
+            CommandContext<CommandSourceStack> context
+    ) {
+
+        UUID curseId =
+                UuidArgument.getUuid(
+                        context,
+                        "curseId"
+                );
+
+        Curse curse =
+                CurseManager.get(curseId);
+
+        if (curse == null) {
+
+            context.getSource()
+                    .sendFailure(
+                            Component.literal(
+                                    "诅咒不存在：" + curseId
+                            )
+                    );
+
+            return 0;
+        }
+
+        CurseManager.remove(curseId);
+
+        context.getSource()
+                .sendSuccess(
+                        () -> Component.literal(
+                                "已移除诅咒：" + curseId
+                        ),
+                        true
                 );
 
         return 1;

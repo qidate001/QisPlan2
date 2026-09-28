@@ -1,5 +1,6 @@
 package com.qidate.qisplan2.ghost.curse;
 
+import com.qidate.qisplan2.QisPlan2;
 import net.minecraft.server.MinecraftServer;
 
 import java.util.ArrayList;
@@ -44,10 +45,15 @@ public final class CurseManager {
     public static void add(
             Curse curse
     ) {
-
         CURSES.put(
                 curse.getId(),
                 curse
+        );
+
+        QisPlan2.LOGGER.info(
+                "[诅咒系统] 注册诅咒：{}，目标：{}",
+                curse.getId(),
+                curse.getTarget()
         );
     }
 
@@ -57,8 +63,12 @@ public final class CurseManager {
     public static void remove(
             UUID curseId
     ) {
-
         CURSES.remove(curseId);
+
+        QisPlan2.LOGGER.info(
+                "[诅咒系统] 注销诅咒：{}",
+                curseId
+        );
     }
 
     /**

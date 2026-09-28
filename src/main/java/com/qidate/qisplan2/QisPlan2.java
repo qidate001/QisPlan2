@@ -2,6 +2,7 @@ package com.qidate.qisplan2;
 
 import com.mojang.blaze3d.vertex.DefaultVertexFormat;
 import com.mojang.logging.LogUtils;
+import com.qidate.qisplan2.ghost.curse.CurseRegistry;
 import com.qidate.qisplan2.ghost.domain.client.renderer.GhostDomainShaderRegistry;
 import com.qidate.qisplan2.core.ModEntityAttributes;
 import com.qidate.qisplan2.core.ModRegistries;
@@ -78,6 +79,9 @@ public class QisPlan2 {
 
         // 驭鬼注册表注册
         GhostAbilityRegistry.bootstrap();
+
+        // 诅咒注册表注册
+        CurseRegistry.bootstrap();
 
         // 驭鬼事件注册
         GhostAbilityInteractionHandler.register();
