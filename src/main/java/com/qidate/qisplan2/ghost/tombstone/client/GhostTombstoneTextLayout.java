@@ -1,5 +1,7 @@
 package com.qidate.qisplan2.ghost.tombstone.client;
 
+import net.minecraft.client.gui.Font;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -18,22 +20,21 @@ public final class GhostTombstoneTextLayout {
      * 宽：12 px
      * 高：20 px
      *
-     * 这里不把文字贴满模型，
-     * 而是留出一圈安全边距。
+     * 中文继续使用原来的竖排逻辑。
      */
 
     /*
-     * 文字区域最大宽度。
+     * 中文文字区域最大宽度。
      */
     private static final float MAX_WIDTH = 10.0F;
 
     /*
-     * 文字区域最大高度。
+     * 中文文字区域最大高度。
      */
     private static final float MAX_HEIGHT = 40.0F;
 
     /*
-     * 单个中文字符的基础宽度。
+     * 中文单个字符的基础宽度。
      */
     private static final float CHAR_WIDTH = 8.0F;
 
@@ -44,42 +45,74 @@ public final class GhostTombstoneTextLayout {
 
     /*
      * 最多允许两列。
-     *
-     * 12 px 宽的墓碑，
-     * 两列已经基本达到视觉极限。
      */
     private static final int MAX_COLUMNS = 2;
 
     /*
-     * 第一行的基础位置。
+     * 第一行基础位置。
      *
-     * 你之前已经调过这个位置，
-     * 所以这里继续保留 -8。
+     * 保留你目前已经调好的位置。
      */
     private static final float START_Y = -8.0F;
 
     /*
      * 最小文字缩放比例。
-     *
-     * 太小以后就会失去碑文的可读性，
-     * 所以不无限缩小。
      */
     private static final float MIN_SCALE = 0.55F;
+
+    /*
+     * ============================================================
+     * 英文排版参数
+     * ============================================================
+     *
+     * 英文和中文完全不同：
+     *
+     * 中文：
+     *     一个字一个 Glyph
+     *     纵向排列
+     *
+     * 英文：
+     *     整句话作为一个 Glyph
+     *     横向排列
+     *
+     * 这里的 18 px 是 Minecraft Font 坐标中的
+     * 目标最大宽度。
+     *
+     * 大约相当于：
+     *
+     *     两个中文字符 + 中间间距
+     *
+     * 因此视觉上不会比中文区域宽太多。
+     */
+    private static final float ENGLISH_MAX_WIDTH = 18.0F;
+
+    /*
+     * 英文最小缩放比例。
+     *
+     * 英文是横排文字，
+     * 为了保证较长的名字也能完整放进墓碑，
+     * 允许比中文缩得更小。
+     */
+    private static final float ENGLISH_MIN_SCALE = 0.25F;
+
+    /*
+     * 英文默认垂直位置。
+     *
+     * 先和当前中文第一行保持一致。
+     * 后续如果觉得英文需要上下微调，
+     * 只需要调整这里。
+     */
+    private static final float ENGLISH_Y = START_Y;
 
     /**
      * 对墓碑文字进行排版。
      *
-     * 规则：
-     *
-     * 1. 中文一个字符作为一个碑文单元。
-     * 2. 英文 / 数字连续字符串作为一个单元。
-     * 3. 超过一列高度后自动换列。
-     * 4. 最多两列。
-     * 5. 内容过长时整体缩小。
-     * 6. 最终整体水平居中。
+     * 英文需要 Font，
+     * 因为 Minecraft 的字体并不是每个字符固定 8 px。
      */
     public static List<GhostTombstoneGlyph> layout(
-            String text
+            String text,
+            Font font
     ) {
 
         List<GhostTombstoneGlyph> result =
@@ -88,6 +121,146 @@ public final class GhostTombstoneTextLayout {
         if (text == null || text.isEmpty()) {
             return result;
         }
+
+        /*
+         * ========================================================
+         * 纯英文 / 数字 / ASCII
+         * ========================================================
+         *
+         * 如果整个碑文都是 ASCII，
+         * 就直接走英文横排。
+         */
+        if (isAllAscii(text)) {
+
+            return layoutEnglish(
+                    text.trim(),
+                    font
+            );
+        }
+
+        /*
+         * ========================================================
+         * 中文 / 混合文本
+         * ========================================================
+         *
+         * 中文继续使用原来的竖排逻辑。
+         */
+        return layoutChinese(text);
+    }
+
+    /**
+     * ============================================================
+     * 英文横排
+     * ============================================================
+     *
+     * 整段英文作为一个 Glyph。
+     *
+     * 例如：
+     *
+     *     REST IN PEACE
+     *
+     * 会作为一个整体横向显示。
+     */
+    private static List<GhostTombstoneGlyph> layoutEnglish(
+            String text,
+            Font font
+    ) {
+
+        List<GhostTombstoneGlyph> result =
+                new ArrayList<>();
+
+        if (text.isEmpty()) {
+            return result;
+        }
+
+        /*
+         * Minecraft 实际字体宽度。
+         *
+         * 不能简单使用：
+         *
+         *     text.length() * 8
+         *
+         * 因为：
+         *
+         *     I
+         *     W
+         *     M
+         *     space
+         *
+         * 的宽度都不一样。
+         */
+        int fontWidth =
+                font.width(text);
+
+        if (fontWidth <= 0) {
+            return result;
+        }
+
+        /*
+         * 根据实际字体宽度计算缩放。
+         *
+         * 例如：
+         *
+         * 字体宽度 = 30
+         * 最大宽度 = 18
+         *
+         * 那么：
+         *
+         * scale = 18 / 30 = 0.6
+         */
+        float scale =
+                Math.min(
+                        1.0F,
+                        ENGLISH_MAX_WIDTH
+                                / fontWidth
+                );
+
+        /*
+         * 不允许无限缩小。
+         */
+        scale =
+                Math.max(
+                        ENGLISH_MIN_SCALE,
+                        scale
+                );
+
+        /*
+         * 英文：
+         *
+         * x = 0
+         *
+         * 因为 Renderer 会使用：
+         *
+         * -width / 2
+         *
+         * 来让文字自身水平居中。
+         */
+        result.add(
+                new GhostTombstoneGlyph(
+                        text,
+                        0.0F,
+                        ENGLISH_Y,
+                        0.0F,
+                        scale
+                )
+        );
+
+        return result;
+    }
+
+    /**
+     * ============================================================
+     * 中文竖排
+     * ============================================================
+     *
+     * 这里基本保持你之前已经调好的逻辑。
+     */
+    private static List<GhostTombstoneGlyph> layoutChinese(
+            String text
+    ) {
+
+        List<GhostTombstoneGlyph> result =
+                new ArrayList<>();
 
         /*
          * ========================================================
@@ -105,21 +278,13 @@ public final class GhostTombstoneTextLayout {
          * ========================================================
          * 第二步：确定基础布局
          * ========================================================
-         *
-         * 基础情况下：
-         *
-         * 18 px 高 / 8 px 行高
-         *
-         * 大约可以容纳两行。
-         *
-         * 但是为了避免中文上下拥挤，
-         * 我们实际采用两行作为一个基础列。
          */
         int rowsPerColumn =
                 Math.max(
                         1,
                         (int) Math.floor(
-                                MAX_HEIGHT / ROW_HEIGHT
+                                MAX_HEIGHT
+                                        / ROW_HEIGHT
                         )
                 );
 
@@ -130,16 +295,16 @@ public final class GhostTombstoneTextLayout {
                 rowsPerColumn * MAX_COLUMNS;
 
         /*
-         * 如果内容超过最大容量，
-         * 就尝试缩小文字。
+         * 默认不缩放。
          */
         float scale = 1.0F;
 
+        /*
+         * 如果内容太多，
+         * 根据需要的高度进行缩放。
+         */
         if (units.size() > maxUnits) {
 
-            /*
-             * 根据需要的列数计算缩放比例。
-             */
             int requiredRows =
                     (int) Math.ceil(
                             (double) units.size()
@@ -152,7 +317,8 @@ public final class GhostTombstoneTextLayout {
             scale =
                     Math.min(
                             1.0F,
-                            MAX_HEIGHT / requiredHeight
+                            MAX_HEIGHT
+                                    / requiredHeight
                     );
 
             scale =
@@ -163,11 +329,14 @@ public final class GhostTombstoneTextLayout {
         }
 
         /*
-         * 缩小之后重新计算每列能够容纳的行数。
+         * 缩放之后的行高。
          */
         float scaledRowHeight =
                 ROW_HEIGHT * scale;
 
+        /*
+         * 缩放之后每列可以放多少行。
+         */
         int scaledRowsPerColumn =
                 Math.max(
                         1,
@@ -178,7 +347,7 @@ public final class GhostTombstoneTextLayout {
                 );
 
         /*
-         * 最终使用的列数。
+         * 最终需要多少列。
          */
         int columnCount =
                 (int) Math.ceil(
@@ -187,7 +356,7 @@ public final class GhostTombstoneTextLayout {
                 );
 
         /*
-         * 不允许超过两列。
+         * 最多两列。
          */
         columnCount =
                 Math.min(
@@ -197,12 +366,8 @@ public final class GhostTombstoneTextLayout {
 
         /*
          * ========================================================
-         * 第三步：计算每列的实际宽度
+         * 第三步：计算每列宽度
          * ========================================================
-         *
-         * 中文一列大约 8 px。
-         *
-         * 两列之间留一点间距。
          */
         float scaledColumnWidth =
                 CHAR_WIDTH * scale;
@@ -211,7 +376,8 @@ public final class GhostTombstoneTextLayout {
                 2.0F * scale;
 
         float totalWidth =
-                columnCount * scaledColumnWidth
+                columnCount
+                        * scaledColumnWidth
                         + (columnCount - 1)
                         * columnSpacing;
 
@@ -219,7 +385,7 @@ public final class GhostTombstoneTextLayout {
          * 从中心开始排。
          */
         float firstColumnX =
-                (totalWidth / 2.0F)
+                totalWidth / 2.0F
                         - scaledColumnWidth / 2.0F;
 
         /*
@@ -232,15 +398,6 @@ public final class GhostTombstoneTextLayout {
 
         for (String unit : units) {
 
-            /*
-             * 当前列的 X。
-             *
-             * 原来的排版是向左增加列，
-             * 所以这里仍然保持：
-             *
-             * 第一列 → 右
-             * 第二列 → 左
-             */
             float x =
                     firstColumnX
                             - column
@@ -253,6 +410,17 @@ public final class GhostTombstoneTextLayout {
                     START_Y
                             + row * scaledRowHeight;
 
+            /*
+             * ASCII 单元：
+             *
+             *     英文
+             *     数字
+             *
+             * 目前在混合文本中仍然沿用原来的竖排方式。
+             *
+             * 纯英文则不会进入这里，
+             * 而是走 layoutEnglish()。
+             */
             float rotation =
                     isAsciiUnit(unit)
                             ? 90.0F
@@ -278,9 +446,6 @@ public final class GhostTombstoneTextLayout {
 
             /*
              * 达到两列以后停止。
-             *
-             * 正常情况下 scale 已经保证
-             * 内容应该能够容纳。
              */
             if (column >= MAX_COLUMNS) {
                 break;
@@ -288,6 +453,39 @@ public final class GhostTombstoneTextLayout {
         }
 
         return result;
+    }
+
+    /**
+     * ============================================================
+     * 判断整段文本是不是 ASCII
+     * ============================================================
+     *
+     * 注意：
+     *
+     * 空格也允许。
+     *
+     * 所以：
+     *
+     *     REST IN PEACE
+     *
+     * 会被识别成纯英文。
+     */
+    private static boolean isAllAscii(
+            String text
+    ) {
+
+        if (text.isEmpty()) {
+            return false;
+        }
+
+        for (int i = 0; i < text.length(); i++) {
+
+            if (text.charAt(i) > 127) {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     /**
@@ -354,7 +552,7 @@ public final class GhostTombstoneTextLayout {
             }
 
             /*
-             * 中文 / 其他 Unicode 字符：
+             * 中文 / 其他 Unicode：
              * 一个字符一个碑文单元。
              */
             int codePoint =
@@ -378,7 +576,7 @@ public final class GhostTombstoneTextLayout {
     }
 
     /**
-     * 判断一个碑文单元是不是英文 / 数字。
+     * 判断一个碑文单元是不是 ASCII。
      */
     private static boolean isAsciiUnit(
             String unit

@@ -90,7 +90,10 @@ public class GhostTombstoneBlockEntityRenderer
         );
 
         var glyphs =
-                GhostTombstoneTextLayout.layout(text);
+                GhostTombstoneTextLayout.layout(
+                        text,
+                        font
+                );
 
         for (var glyph : glyphs) {
 
