@@ -198,11 +198,19 @@ public final class GhostTombstoneNetwork {
             /*
              * 让 CurseType 创建诅咒实例
              */
+            CompoundTag initialState =
+                    new CompoundTag();
+
+            initialState.putInt(
+                    "Strength",
+                    1
+            );
+
             Curse curse =
                     curseType.create(
                             target.getUUID(),
                             source,
-                            new CompoundTag()
+                            initialState
                     );
 
             /*

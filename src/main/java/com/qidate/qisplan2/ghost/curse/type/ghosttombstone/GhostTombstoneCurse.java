@@ -51,6 +51,8 @@ public class GhostTombstoneCurse implements Curse {
     private final UUID target;
     private final GhostTombstoneCurseSource source;
 
+    private int strength;
+
     /**
      * 传送冷却。
      *
@@ -60,23 +62,27 @@ public class GhostTombstoneCurse implements Curse {
 
     public GhostTombstoneCurse(
             UUID target,
-            GhostTombstoneCurseSource source
+            GhostTombstoneCurseSource source,
+            int strength
     ) {
         this(
                 UUID.randomUUID(),
                 target,
-                source
+                source,
+                strength
         );
     }
 
     public GhostTombstoneCurse(
             UUID id,
             UUID target,
-            GhostTombstoneCurseSource source
+            GhostTombstoneCurseSource source,
+            int strength
     ) {
         this.id = id;
         this.target = target;
         this.source = source;
+        this.strength = strength;
     }
 
     @Override
@@ -97,6 +103,10 @@ public class GhostTombstoneCurse implements Curse {
     @Override
     public CurseSource getSource() {
         return source;
+    }
+
+    public int getStrength() {
+        return strength;
     }
 
     /**
@@ -386,6 +396,11 @@ public class GhostTombstoneCurse implements Curse {
         tag.put(
                 "Source",
                 source.save()
+        );
+
+        tag.putInt(
+                "Strength",
+                strength
         );
 
         return tag;

@@ -43,9 +43,14 @@ public class GhostTombstoneCurseType
             CurseSource source,
             CompoundTag initialState
     ) {
+
+        int strength =
+                initialState.getInt("Strength");
+
         return new GhostTombstoneCurse(
                 target,
-                (GhostTombstoneCurseSource) source
+                (GhostTombstoneCurseSource) source,
+                strength
         );
     }
 
@@ -86,12 +91,19 @@ public class GhostTombstoneCurseType
                 );
 
         /*
+         * 恢复强度状态数据。
+         */
+        int strength =
+                tag.getInt("Strength");
+
+        /*
          * 创建恢复后的诅咒实例。
          */
         return new GhostTombstoneCurse(
                 id,
                 target,
-                source
+                source,
+                strength
         );
     }
 }
