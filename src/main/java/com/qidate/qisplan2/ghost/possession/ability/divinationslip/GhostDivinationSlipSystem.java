@@ -1,14 +1,18 @@
 package com.qidate.qisplan2.ghost.possession.ability.divinationslip;
 
 import com.qidate.qisplan2.core.ModDataComponents;
-import com.qidate.qisplan2.core.ModMobEffects;
 import com.qidate.qisplan2.death.ModDamageTypes;
 import com.qidate.qisplan2.death.SupernaturalDeathHandler;
+import com.qidate.qisplan2.ghost.curse.Curse;
+import com.qidate.qisplan2.ghost.curse.CurseManager;
+import com.qidate.qisplan2.ghost.curse.type.ghostdivination.GhostDivinationCurse;
+import com.qidate.qisplan2.ghost.curse.type.ghostdivination.GhostDivinationCurseSource;
+import com.qidate.qisplan2.ghost.curse.type.ghostdivination.GhostDivinationCurseType;
 import com.qidate.qisplan2.ghost.possession.data.PossessedGhostState;
 import com.qidate.qisplan2.ghost.possession.manager.PossessionHandler;
 import com.qidate.qisplan2.network.divinationslip.GhostDivinationNetwork;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.item.ItemStack;
 
 public final class GhostDivinationSlipSystem {
@@ -29,14 +33,16 @@ public final class GhostDivinationSlipSystem {
             5 * 60 * 20;
 
     /**
-     * V级守护。
+     * 普通生签强度。
      */
-    private static final int LIFE_LEVEL_NORMAL = 4;
+    private static final int LIFE_STRENGTH =
+            GhostDivinationCurse.DEFAULT_STRENGTH;
 
     /**
-     * II级守护。
+     * 死机状态下的生签强度。
      */
-    private static final int LIFE_LEVEL_STUN = 1;
+    private static final int LIFE_STRENGTH_STUN =
+            GhostDivinationCurse.STUN_STRENGTH;
 
     /**
      * 普通死机时间。
@@ -66,23 +72,11 @@ public final class GhostDivinationSlipSystem {
                 0
         );
 
-        MobEffectInstance existing =
-                player.getEffect(
-                        ModMobEffects.LIFE_SIGN_PROTECTION
-                );
-
-        int duration =
-                existing == null
-                        ? LIFE_DURATION
-                        : existing.getDuration()
-                        + LIFE_DURATION;
-
         /*
-         * 判断是否已经驾驭鬼签，
-         * 且当前是否普通死机。
+         * 判断当前是否处于驾驭鬼签后的死机状态。
          */
-        int amplifier =
-                LIFE_LEVEL_NORMAL;
+        int strength =
+                LIFE_STRENGTH;
 
         PossessedGhostState state =
                 PossessionHandler.getState(
@@ -93,20 +87,108 @@ public final class GhostDivinationSlipSystem {
         if (state != null
                 && state.stunTicks() > 0) {
 
-            amplifier =
-                    LIFE_LEVEL_STUN;
+            strength =
+                    LIFE_STRENGTH_STUN;
         }
 
-        player.addEffect(
-                new MobEffectInstance(
-                        ModMobEffects.LIFE_SIGN_PROTECTION,
-                        duration,
-                        amplifier,
-                        false,
-                        false,
-                        true
-                )
+        /*
+         * 查找玩家当前已有的生签。
+         */
+        GhostDivinationCurse existing =
+                getLifeCurse(
+                        player.getUUID()
+                );
+
+        /*
+         * 已经有生签：
+         *
+         * 只增加持续时间。
+         *
+         * 不重新创建诅咒，
+         * 也不重置剩余时间。
+         */
+        if (existing != null) {
+
+            existing.addTime(
+                    LIFE_DURATION
+            );
+
+            /*
+             * 如果当前不是死机状态，
+             * 而重新抽到的生签强度应该恢复为普通强度，
+             * 则同步更新强度。
+             *
+             * 死机状态下则保持 II 级强度。
+             */
+            existing.setStrength(
+                    strength
+            );
+
+            CurseManager.markDirty();
+
+            return;
+        }
+
+        /*
+         * 第一次获得生签：
+         *
+         * 创建新的 Curse。
+         */
+        GhostDivinationCurseType curseType =
+                new GhostDivinationCurseType();
+
+        GhostDivinationCurseSource source =
+                new GhostDivinationCurseSource();
+
+        CompoundTag initialState =
+                new CompoundTag();
+
+        initialState.putInt(
+                "Strength",
+                strength
         );
+
+        initialState.putInt(
+                "RemainingTicks",
+                LIFE_DURATION
+        );
+
+        Curse curse =
+                curseType.create(
+                        player.getUUID(),
+                        source,
+                        initialState
+                );
+
+        CurseManager.add(
+                curse
+        );
+    }
+
+
+    /*
+     * ========================================
+     * 查找生签
+     * ========================================
+     */
+
+    /**
+     * 获取玩家当前的生签诅咒。
+     */
+    public static GhostDivinationCurse getLifeCurse(
+            java.util.UUID target
+    ) {
+
+        for (Curse curse :
+                CurseManager.getByTarget(target)
+        ) {
+
+            if (curse instanceof GhostDivinationCurse lifeCurse) {
+                return lifeCurse;
+            }
+        }
+
+        return null;
     }
 
 
@@ -147,14 +229,18 @@ public final class GhostDivinationSlipSystem {
         /*
          * 生签保护中：
          *
-         * 鬼签普通死机。
+         * 删除生签诅咒，
+         * 然后进入普通死机。
          */
-        if (player.hasEffect(
-                ModMobEffects.LIFE_SIGN_PROTECTION
-        )) {
+        GhostDivinationCurse lifeCurse =
+                getLifeCurse(
+                        player.getUUID()
+                );
 
-            player.removeEffect(
-                    ModMobEffects.LIFE_SIGN_PROTECTION
+        if (lifeCurse != null) {
+
+            CurseManager.remove(
+                    lifeCurse.getId()
             );
 
             PossessionHandler.testStun(
@@ -167,7 +253,7 @@ public final class GhostDivinationSlipSystem {
         }
 
         /*
-         * 没保护：
+         * 没有生签：
          *
          * 正常死签。
          */
@@ -197,12 +283,21 @@ public final class GhostDivinationSlipSystem {
                 1
         );
 
-        if (player.hasEffect(
-                ModMobEffects.LIFE_SIGN_PROTECTION
-        )) {
+        GhostDivinationCurse lifeCurse =
+                getLifeCurse(
+                        player.getUUID()
+                );
 
-            player.removeEffect(
-                    ModMobEffects.LIFE_SIGN_PROTECTION
+        /*
+         * 生签保护中：
+         *
+         * 删除生签诅咒，
+         * 然后写入物品 NBT 死机时间。
+         */
+        if (lifeCurse != null) {
+
+            CurseManager.remove(
+                    lifeCurse.getId()
             );
 
             stack.set(
@@ -214,6 +309,11 @@ public final class GhostDivinationSlipSystem {
             return;
         }
 
+        /*
+         * 没有生签：
+         *
+         * 正常死签。
+         */
         SupernaturalDeathHandler.tryKill(
                 player,
                 ModDamageTypes.ghostDivinationSlip(player),

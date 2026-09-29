@@ -4,7 +4,9 @@ import com.qidate.qisplan2.QisPlan2;
 import com.qidate.qisplan2.core.ModGameRules;
 import com.qidate.qisplan2.core.ModMobEffects;
 import com.qidate.qisplan2.death.SupernaturalEntity;
+import com.qidate.qisplan2.ghost.curse.type.ghostdivination.GhostDivinationCurse;
 import com.qidate.qisplan2.ghost.layer.GhostLayerHandler;
+import com.qidate.qisplan2.ghost.possession.ability.divinationslip.GhostDivinationSlipSystem;
 import com.qidate.qisplan2.item.GhostShroudItem;
 import com.qidate.qisplan2.item.candle.WhiteGhostCandleSystem;
 import net.minecraft.resources.ResourceLocation;
@@ -166,17 +168,17 @@ public class SupernaturalDeathHandler {
          * 达到或超过 50，
          * 本次袭击击穿。
          */
-        if (entity.hasEffect(ModMobEffects.LIFE_SIGN_PROTECTION)) {
+        GhostDivinationCurse lifeCurse =
+                GhostDivinationSlipSystem.getLifeCurse(
+                        entity.getUUID()
+                );
 
-            int amplifier =
-                    entity.getEffect(
-                            ModMobEffects.LIFE_SIGN_PROTECTION
-                    ).getAmplifier();
+        if (lifeCurse != null) {
 
-            double protectionPerSecond =
-                    (amplifier + 1) * 10.0D;
+            double protectionStrength =
+                    lifeCurse.getStrength();
 
-            if (recentIntensity < protectionPerSecond) {
+            if (recentIntensity < protectionStrength) {
                 return false;
             }
         }

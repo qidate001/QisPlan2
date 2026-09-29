@@ -131,6 +131,13 @@ public final class CurseManager {
     }
 
     /**
+     * 标记诅咒数据需要保存。
+     */
+    public static void markDirty() {
+        CurseSavedData.markDirty();
+    }
+
+    /**
      * 根据 ID 获取诅咒。
      */
     public static Curse get(

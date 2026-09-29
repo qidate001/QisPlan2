@@ -19,7 +19,12 @@ public class GhostDivinationCurse
     /**
      * 生签默认强度。
      */
-    public static final int DEFAULT_STRENGTH = 4;
+    public static final int DEFAULT_STRENGTH = 50;
+
+    /**
+     * 灵异冲突式死机状态下的生签强度。
+     */
+    public static final int STUN_STRENGTH = 20;
 
     /**
      * 生签持续时间。
@@ -98,6 +103,15 @@ public class GhostDivinationCurse
 
     public int getStrength() {
         return strength;
+    }
+
+    /**
+     * 设置当前生签强度。
+     */
+    public void setStrength(
+            int strength
+    ) {
+        this.strength = strength;
     }
 
     public int getRemainingTicks() {
