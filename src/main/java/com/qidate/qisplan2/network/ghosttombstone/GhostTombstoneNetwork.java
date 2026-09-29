@@ -164,6 +164,9 @@ public final class GhostTombstoneNetwork {
                 return;
             }
 
+            /*
+             * 从 CurseRegistry 中获取墓碑诅咒的具体ID
+             */
             CurseType curseType =
                     CurseRegistry.get(
                             GhostTombstoneCurseType.ID
@@ -173,18 +176,36 @@ public final class GhostTombstoneNetwork {
                 return;
             }
 
+            /*
+             * ========================================================
+             * 根据新的名字创建诅咒。
+             * ========================================================
+             *
+             * 只有当刻下的名字对应一个在线玩家时，
+             * 才会产生新的鬼墓碑诅咒。
+             */
+
+            /*
+             * 我要创建一个诅咒，将诅咒具体需要的数据包装一下
+             */
             GhostTombstoneCurseSource source =
                     new GhostTombstoneCurseSource(
                             player.level().dimension(),
                             payload.pos()
                     );
 
+            /*
+             * 让 CurseType 创建诅咒实例
+             */
             Curse curse =
                     curseType.create(
                             target.getUUID(),
                             source
                     );
 
+            /*
+             * 将诅咒实例提交给 CurseManager 运行管理
+             */
             CurseManager.add(curse);
         });
     }

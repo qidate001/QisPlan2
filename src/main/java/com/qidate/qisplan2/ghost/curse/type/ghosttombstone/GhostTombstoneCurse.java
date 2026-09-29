@@ -1,6 +1,7 @@
 package com.qidate.qisplan2.ghost.curse.type.ghosttombstone;
 
 import com.qidate.qisplan2.QisPlan2;
+import com.qidate.qisplan2.core.ModTags;
 import com.qidate.qisplan2.ghost.curse.Curse;
 import com.qidate.qisplan2.ghost.curse.CurseSource;
 import net.minecraft.core.BlockPos;
@@ -194,27 +195,8 @@ public class GhostTombstoneCurse implements Curse {
     private static boolean isNaturalBurialBlock(
             BlockState state
     ) {
-
         return state.is(
-                Blocks.DIRT
-        )
-                || state.is(
-                Blocks.GRASS_BLOCK
-        )
-                || state.is(
-                Blocks.COARSE_DIRT
-        )
-                || state.is(
-                Blocks.ROOTED_DIRT
-        )
-                || state.is(
-                Blocks.PODZOL
-        )
-                || state.is(
-                Blocks.MYCELIUM
-        )
-                || state.is(
-                Blocks.MUD
+                ModTags.Blocks.GHOST_TOMBSTONE_BURIAL
         );
     }
 

@@ -1,0 +1,21 @@
+{
+  "replace": false,
+  "values": [
+    "qisplan2:ghost_carpet",
+    "qisplan2:death_curse",
+    "qisplan2:ghost_stone_bricks",
+    "qisplan2:ghost_stove",
+    "qisplan2:ghost_grass",
+    "qisplan2:ghost_night_wanderer",
+    "qisplan2:invisible_ghost",
+    "qisplan2:ghost_umbrella",
+    "qisplan2:ghost_piano",
+    "qisplan2:knocking_ghost",
+    "qisplan2:opening_ghost",
+    "qisplan2:closing_ghost",
+    "qisplan2:ghost_lake_water",
+    "qisplan2:ghost_blood",
+    "qisplan2:ghost_door_plate",
+    "qisplan2:calling_ghost"
+  ]
+}
