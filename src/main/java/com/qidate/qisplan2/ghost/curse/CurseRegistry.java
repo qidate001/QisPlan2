@@ -1,5 +1,6 @@
 package com.qidate.qisplan2.ghost.curse;
 
+import com.qidate.qisplan2.ghost.curse.type.ghostdivination.GhostDivinationCurseType;
 import com.qidate.qisplan2.ghost.curse.type.ghosttombstone.GhostTombstoneCurseType;
 import net.minecraft.resources.ResourceLocation;
 
@@ -77,8 +78,10 @@ public final class CurseRegistry {
 
         initialized = true;
 
-        register(
-                new GhostTombstoneCurseType()
-        );
+        // 鬼墓碑
+        register(new GhostTombstoneCurseType());
+
+        // 鬼签（生签）
+        register(new GhostDivinationCurseType());
     }
 }

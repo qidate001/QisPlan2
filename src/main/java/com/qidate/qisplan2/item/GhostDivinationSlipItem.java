@@ -21,27 +21,6 @@ public class GhostDivinationSlipItem extends Item {
      * 30 秒 = 600 tick
      */
     private static final int COOLDOWN_TICKS = 30 * 20;
-//    private static final int COOLDOWN_TICKS = 10;
-
-    /**
-     * 生签每次增加：
-     *
-     * 5 分钟 = 6000 tick
-     */
-    private static final int LIFE_SIGN_DURATION = 5 * 60 * 20;
-
-    /**
-     * 死签灵异袭击强度。
-     */
-    private static final double DEATH_SIGN_STRENGTH = 50.0D;
-
-    /**
-     * 鬼签死机时间：
-     *
-     * 5 分钟 = 6000 tick
-     */
-    private static final long CRASH_DURATION =
-            5L * 60L * 20L;
 
     public GhostDivinationSlipItem(
             Properties properties
