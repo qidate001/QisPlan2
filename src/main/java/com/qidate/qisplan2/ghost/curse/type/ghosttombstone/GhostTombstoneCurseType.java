@@ -40,9 +40,9 @@ public class GhostTombstoneCurseType
     @Override
     public Curse create(
             UUID target,
-            CurseSource source
+            CurseSource source,
+            CompoundTag initialState
     ) {
-
         return new GhostTombstoneCurse(
                 target,
                 (GhostTombstoneCurseSource) source

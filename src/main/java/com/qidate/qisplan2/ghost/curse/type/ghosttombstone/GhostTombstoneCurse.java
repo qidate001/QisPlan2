@@ -144,13 +144,20 @@ public class GhostTombstoneCurse implements Curse {
                 player.level()
                         .getBlockState(below);
 
-//        QisPlan2.LOGGER.info(
-//                "[鬼墓碑诅咒] 目标 {} 脚下方块：{}，Y：{}，玩家Y：{}",
-//                player.getGameProfile().getName(),
-//                belowState.getBlock(),
-//                below.getY(),
-//                player.getY()
-//        );
+        /*
+        QisPlan2.LOGGER.info(
+                "[鬼墓碑诅咒] 目标 {} 脚下方块：{}，Y：{}，玩家Y：{}",
+                player.getGameProfile().getName(),
+                belowState.getBlock(),
+                below.getY(),
+                player.getY()
+        );
+
+        QisPlan2.LOGGER.info(
+                "[鬼墓碑诅咒] 方块状态 {}",
+                isNaturalBurialBlock(belowState)
+        );
+        */
 
         if (!isNaturalBurialBlock(belowState)) {
             player.noPhysics = false;

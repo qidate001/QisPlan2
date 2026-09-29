@@ -13,6 +13,7 @@ import com.qidate.qisplan2.network.payload.SetGhostTombstoneInscriptionPayload;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerPlayer;
 import net.neoforged.neoforge.network.PacketDistributor;
 import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent;
@@ -200,7 +201,8 @@ public final class GhostTombstoneNetwork {
             Curse curse =
                     curseType.create(
                             target.getUUID(),
-                            source
+                            source,
+                            new CompoundTag()
                     );
 
             /*
