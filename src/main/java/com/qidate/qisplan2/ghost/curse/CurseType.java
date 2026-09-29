@@ -17,25 +17,9 @@ import java.util.UUID;
 public interface CurseType {
 
     /**
-     * 诅咒类型 ID。
+     * 获取诅咒类型 ID。
      */
     ResourceLocation id();
-
-    /**
-     * 获取该诅咒在 HUD 中使用的图标。
-     */
-    ResourceLocation icon();
-
-    /**
-     * 目标自身是否能够察觉这个诅咒。
-     *
-     * <p>
-     * 当前阶段直接使用固定的 true / false。
-     * 后续如果需要复杂的统一判断机制，
-     * 再在这里扩展。
-     * </p>
-     */
-    boolean canDetect();
 
     /**
      * 创建一个新的诅咒实例。
@@ -51,7 +35,9 @@ public interface CurseType {
     );
 
     /**
-     * 从保存的数据中恢复诅咒实例。
+     * 从存档数据恢复一个诅咒实例。
      */
-    Curse load(CompoundTag tag);
+    Curse load(
+            CompoundTag tag
+    );
 }

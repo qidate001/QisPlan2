@@ -4,6 +4,8 @@ import com.qidate.qisplan2.QisPlan2;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.client.event.RenderGuiEvent;
@@ -12,43 +14,38 @@ import net.neoforged.neoforge.client.event.RenderGuiEvent;
  * 诅咒 HUD。
  *
  * <p>
- * 第一版只负责显示：
- * 图标 + 诅咒名称。
+ * 负责显示当前玩家能够察觉的诅咒。
+ * 这里只处理客户端显示，不参与诅咒实际逻辑。
  * </p>
  */
-@EventBusSubscriber(
-        modid = QisPlan2.MODID
-)
+@EventBusSubscriber(modid = QisPlan2.MODID)
 public final class CurseHudOverlay {
 
     private CurseHudOverlay() {
     }
 
-    /**
-     * 图标大小。
-     */
     private static final int ICON_SIZE = 16;
 
-    /**
-     * HUD 左下角基础位置。
-     */
     private static final int LEFT = 8;
+
     private static final int BOTTOM = 8;
 
-    /**
-     * 每个诅咒之间的垂直间距。
-     */
     private static final int SPACING = 4;
+
+    /**
+     * 未注册专属图标时使用的默认诅咒图标。
+     */
+    private static final ResourceLocation DEFAULT_SUPPRESSION_ICON =
+            ResourceLocation.fromNamespaceAndPath(
+                    QisPlan2.MODID,
+                    "textures/gui/suppression.png"
+            );
 
     @SubscribeEvent
     public static void onRenderGui(
             RenderGuiEvent.Post event
     ) {
 
-        /*
-         * 当前没有诅咒，
-         * 就不需要绘制任何东西。
-         */
         if (ClientCurseState.isEmpty()) {
             return;
         }
@@ -56,9 +53,6 @@ public final class CurseHudOverlay {
         Minecraft minecraft =
                 Minecraft.getInstance();
 
-        /*
-         * 没有玩家时不绘制。
-         */
         if (minecraft.player == null) {
             return;
         }
@@ -69,9 +63,6 @@ public final class CurseHudOverlay {
         Font font =
                 minecraft.font;
 
-        /*
-         * 从屏幕底部向上排列。
-         */
         int y =
                 guiGraphics.guiHeight()
                         - BOTTOM
@@ -82,33 +73,79 @@ public final class CurseHudOverlay {
         ) {
 
             /*
-             * 临时使用红色方块作为诅咒图标。
-             *
-             * 后续再替换成真正的诅咒图标。
+             * ========================================================
+             * 获取客户端显示定义
+             * ========================================================
              */
-            guiGraphics.fill(
+
+            CurseClientRegistry.CurseClientType clientType =
+                    CurseClientRegistry.get(
+                            curse.type()
+                    );
+
+            /*
+             * ========================================================
+             * 判断玩家是否能够察觉该诅咒
+             * ========================================================
+             *
+             * 没有注册客户端定义时，
+             * 默认允许显示，避免漏注册导致诅咒完全消失。
+             */
+
+            if (clientType != null
+                    && !clientType.canDetect()) {
+
+                continue;
+            }
+
+            /*
+             * ========================================================
+             * 获取图标
+             * ========================================================
+             */
+
+            ResourceLocation icon =
+                    DEFAULT_SUPPRESSION_ICON;
+
+            if (clientType != null
+                    && clientType.icon() != null) {
+
+                icon =
+                        clientType.icon();
+            }
+
+            /*
+             * ========================================================
+             * 绘制图标
+             * ========================================================
+             */
+
+            guiGraphics.blit(
+                    icon,
                     LEFT,
                     y,
-                    LEFT + ICON_SIZE,
-                    y + ICON_SIZE,
-                    0xFFFF0000
+                    0,
+                    0,
+                    ICON_SIZE,
+                    ICON_SIZE,
+                    ICON_SIZE,
+                    ICON_SIZE
             );
 
             /*
-             * 第一版暂时直接显示诅咒类型名称。
-             *
-             * 例如：
-             * ghost_divination
-             * ghost_tombstone
-             *
-             * 后续再接入语言文件。
+             * ========================================================
+             * 绘制名称
+             * ========================================================
              */
-            String name =
-                    curse.type().getPath();
 
-            /*
-             * 在图标右侧显示诅咒名称。
-             */
+            Component name =
+                    Component.translatable(
+                            "curse."
+                                    + curse.type().getNamespace()
+                                    + "."
+                                    + curse.type().getPath()
+                    );
+
             guiGraphics.drawString(
                     font,
                     name,
@@ -119,8 +156,11 @@ public final class CurseHudOverlay {
             );
 
             /*
-             * 下一个诅咒向上排列。
+             * ========================================================
+             * 下一个诅咒
+             * ========================================================
              */
+
             y -=
                     ICON_SIZE + SPACING;
         }

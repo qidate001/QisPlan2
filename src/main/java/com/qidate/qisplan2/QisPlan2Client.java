@@ -2,6 +2,7 @@ package com.qidate.qisplan2;
 
 import com.qidate.qisplan2.client.BlackRainParticle;
 import com.qidate.qisplan2.client.GhostUmbrellaClient;
+import com.qidate.qisplan2.client.curse.CurseClientBootstrap;
 import com.qidate.qisplan2.entity.calling.CallingGhostRenderer;
 import com.qidate.qisplan2.entity.ghostdoor.closing.ClosingGhostRenderer;
 import com.qidate.qisplan2.entity.ghostdoor.opening.OpeningGhostRenderer;
@@ -117,6 +118,9 @@ public class QisPlan2Client {
         NeoForge.EVENT_BUS.register(
                 ClientGhostDomainEvents.class
         );
+
+        // 注册客户端诅咒
+        CurseClientBootstrap.register();
 
         // 鬼域效果注册
         GhostEyeRenderEffect.register();
