@@ -54,6 +54,16 @@ public class GhostTombstoneCurseType
         );
     }
 
+    @Override
+    public ResourceLocation icon() {
+        return null;
+    }
+
+    @Override
+    public boolean canDetect() {
+        return true;
+    }
+
     /**
      * 从存档恢复鬼墓碑诅咒。
      *

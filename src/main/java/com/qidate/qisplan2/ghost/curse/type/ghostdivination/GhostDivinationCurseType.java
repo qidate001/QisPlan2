@@ -1,5 +1,6 @@
 package com.qidate.qisplan2.ghost.curse.type.ghostdivination;
 
+import com.qidate.qisplan2.QisPlan2;
 import com.qidate.qisplan2.ghost.curse.Curse;
 import com.qidate.qisplan2.ghost.curse.CurseSource;
 import com.qidate.qisplan2.ghost.curse.CurseType;
@@ -15,6 +16,12 @@ public class GhostDivinationCurseType
             ResourceLocation.fromNamespaceAndPath(
                     "qisplan2",
                     "ghost_divination"
+            );
+
+    public static final ResourceLocation ICON =
+            ResourceLocation.fromNamespaceAndPath(
+                    QisPlan2.MODID,
+                    "textures/item/ghost_divination_slip.png"
             );
 
     @Override
@@ -45,6 +52,16 @@ public class GhostDivinationCurseType
                 strength,
                 remainingTicks
         );
+    }
+
+    @Override
+    public ResourceLocation icon() {
+        return ICON;
+    }
+
+    @Override
+    public boolean canDetect() {
+        return true;
     }
 
     @Override
