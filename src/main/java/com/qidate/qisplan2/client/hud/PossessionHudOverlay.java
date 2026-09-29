@@ -1,4 +1,4 @@
-package com.qidate.qisplan2.event;
+package com.qidate.qisplan2.client.hud;
 
 import com.qidate.qisplan2.QisPlan2;
 import com.qidate.qisplan2.core.ModAttachments;

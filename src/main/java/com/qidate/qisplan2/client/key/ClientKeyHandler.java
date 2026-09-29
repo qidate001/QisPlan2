@@ -1,6 +1,6 @@
 package com.qidate.qisplan2.client.key;
 
-import com.qidate.qisplan2.client.gui.PossessionScreen;
+import com.qidate.qisplan2.client.screen.PossessionScreen;
 import com.qidate.qisplan2.network.divinationslip.GhostDivinationNetwork;
 import com.qidate.qisplan2.network.ghostdomain.GhostDomainNetwork;
 import com.qidate.qisplan2.network.ghosteye.GhostEyeNetwork;

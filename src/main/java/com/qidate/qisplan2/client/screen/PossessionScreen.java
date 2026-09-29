@@ -1,4 +1,4 @@
-package com.qidate.qisplan2.client.gui;
+package com.qidate.qisplan2.client.screen;
 
 import com.qidate.qisplan2.QisPlan2;
 import com.qidate.qisplan2.client.key.ModKeyMappings;

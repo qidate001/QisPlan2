@@ -1,6 +1,5 @@
 package com.qidate.qisplan2.menu;
 
-import com.qidate.qisplan2.QisPlan2;
 import com.qidate.qisplan2.block.entity.GhostStoveBlockEntity;
 import com.qidate.qisplan2.core.ModMenus;
 import net.minecraft.world.Container;

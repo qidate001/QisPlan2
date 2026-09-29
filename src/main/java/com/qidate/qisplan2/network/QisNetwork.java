@@ -1,6 +1,7 @@
 package com.qidate.qisplan2.network;
 
 import com.qidate.qisplan2.QisPlan2;
+import com.qidate.qisplan2.network.curse.CurseNetwork;
 import com.qidate.qisplan2.network.divinationslip.GhostDivinationNetwork;
 import com.qidate.qisplan2.network.ghostdoor.GhostDoorNetwork;
 import com.qidate.qisplan2.network.ghostdomain.GhostDomainNetwork;
@@ -23,13 +24,6 @@ public final class QisNetwork {
     public static void registerPayloads(
             RegisterPayloadHandlersEvent event
     ) {
-        /*
-         * ========================================================
-         * 鬼钢琴
-         * ========================================================
-         */
-
-        GhostPianoNetwork.register(event);
 
         /*
          * ========================================================
@@ -38,6 +32,38 @@ public final class QisNetwork {
          */
 
         GhostPossessionNetwork.register(event);
+
+        /*
+         * ========================================================
+         * 鬼域
+         * ========================================================
+         */
+
+        GhostDomainNetwork.register(event);
+
+        /*
+         * ========================================================
+         * 诅咒
+         * ========================================================
+         */
+
+        CurseNetwork.register(event);
+
+        /*
+         * ========================================================
+         * 鬼签
+         * ========================================================
+         */
+
+        GhostDivinationNetwork.register(event);
+
+        /*
+         * ========================================================
+         * 鬼眼
+         * ========================================================
+         */
+
+        GhostEyeNetwork.register(event);
 
         /*
          * ========================================================
@@ -65,26 +91,10 @@ public final class QisNetwork {
 
         /*
          * ========================================================
-         * 鬼域
+         * 鬼钢琴
          * ========================================================
          */
 
-        GhostDomainNetwork.register(event);
-
-        /*
-         * ========================================================
-         * 鬼签
-         * ========================================================
-         */
-
-        GhostDivinationNetwork.register(event);
-
-        /*
-         * ========================================================
-         * 鬼眼
-         * ========================================================
-         */
-
-        GhostEyeNetwork.register(event);
+        GhostPianoNetwork.register(event);
     }
 }

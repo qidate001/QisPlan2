@@ -17,7 +17,7 @@ import com.qidate.qisplan2.client.GhostUmbrellaDomainClient;
 import com.qidate.qisplan2.client.model.NightWandererModel;
 import com.qidate.qisplan2.client.renderer.*;
 import com.qidate.qisplan2.core.*;
-import com.qidate.qisplan2.event.DeathCurseHudOverlay;
+import com.qidate.qisplan2.client.hud.DeathCurseHudOverlay;
 
 import com.qidate.qisplan2.ghost.domain.client.renderer.effect.GhostEyeRenderEffect;
 import com.qidate.qisplan2.ghost.domain.client.renderer.effect.GhostUmbrellaRenderEffect;
