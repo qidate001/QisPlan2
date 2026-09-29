@@ -1,6 +1,7 @@
 package com.qidate.qisplan2.ghost.curse;
 
 import com.qidate.qisplan2.QisPlan2;
+import com.qidate.qisplan2.network.curse.CurseNetwork;
 import net.minecraft.server.MinecraftServer;
 
 import java.util.ArrayList;
@@ -43,6 +44,7 @@ public final class CurseManager {
      * 则覆盖原来的实例。
      */
     public static void add(
+            MinecraftServer server,
             Curse curse
     ) {
         CURSES.put(
@@ -61,12 +63,25 @@ public final class CurseManager {
          * 通知持久化系统。
          */
         CurseSavedData.markDirty();
+
+        /*
+         * 诅咒列表发生变化，
+         * 同步目标玩家的客户端状态。
+         */
+        syncTarget(
+                server,
+                curse.getTarget()
+        );
     }
 
     /**
      * 注销一个诅咒。
      */
+    /**
+     * 注销一个诅咒。
+     */
     public static void remove(
+            MinecraftServer server,
             UUID curseId
     ) {
 
@@ -91,12 +106,21 @@ public final class CurseManager {
          * 通知持久化系统。
          */
         CurseSavedData.markDirty();
+
+        /*
+         * 同步原诅咒目标玩家的客户端状态。
+         */
+        syncTarget(
+                server,
+                removed.getTarget()
+        );
     }
 
     /**
      * 通过来源来注销一个诅咒。
      */
     public static void removeBySource(
+            MinecraftServer server,
             java.util.function.Predicate<Curse> predicate
     ) {
         List<UUID> removeIds = new ArrayList<>();
@@ -108,7 +132,10 @@ public final class CurseManager {
         }
 
         for (UUID id : removeIds) {
-            remove(id);
+            remove(
+                    server,
+                    id
+            );
         }
     }
 
@@ -135,6 +162,29 @@ public final class CurseManager {
      */
     public static void markDirty() {
         CurseSavedData.markDirty();
+    }
+
+    /**
+     * 同步某个玩家当前受到的全部诅咒。
+     *
+     * <p>
+     * 如果目标玩家当前不在线，则不进行同步。
+     * </p>
+     */
+    private static void syncTarget(
+            MinecraftServer server,
+            UUID target
+    ) {
+
+        var player =
+                server.getPlayerList()
+                        .getPlayer(target);
+
+        if (player == null) {
+            return;
+        }
+
+        CurseNetwork.sync(player);
     }
 
     /**
@@ -207,6 +257,7 @@ public final class CurseManager {
             if (!curse.isValid(server)) {
 
                 remove(
+                        server,
                         curse.getId()
                 );
 

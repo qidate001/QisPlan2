@@ -120,6 +120,7 @@ public final class GhostTombstoneNetwork {
              * 一块墓碑最多只有一个诅咒。
              */
             CurseManager.removeBySource(
+                    player.server,
                     curse -> {
 
                         if (!(curse.getSource()
@@ -216,7 +217,10 @@ public final class GhostTombstoneNetwork {
             /*
              * 将诅咒实例提交给 CurseManager 运行管理
              */
-            CurseManager.add(curse);
+            CurseManager.add(
+                    player.server,
+                    curse
+            );
         });
     }
 

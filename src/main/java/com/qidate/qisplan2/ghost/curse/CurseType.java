@@ -13,16 +13,6 @@ import java.util.UUID;
  * 它代表：
  *
  * “这种诅咒应该如何创建，以及应该如何从存档恢复。”
- *
- * 例如：
- *
- * GhostTombstoneCurseType
- *
- * 就负责：
- *
- * qisplan2:ghost_tombstone
- *
- * 这种诅咒的创建与恢复。
  */
 public interface CurseType {
 

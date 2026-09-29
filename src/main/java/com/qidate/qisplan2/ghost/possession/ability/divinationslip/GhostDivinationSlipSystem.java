@@ -161,6 +161,7 @@ public final class GhostDivinationSlipSystem {
                 );
 
         CurseManager.add(
+                player.server,
                 curse
         );
     }
@@ -240,6 +241,7 @@ public final class GhostDivinationSlipSystem {
         if (lifeCurse != null) {
 
             CurseManager.remove(
+                    player.server,
                     lifeCurse.getId()
             );
 
@@ -297,6 +299,7 @@ public final class GhostDivinationSlipSystem {
         if (lifeCurse != null) {
 
             CurseManager.remove(
+                    player.server,
                     lifeCurse.getId()
             );
 

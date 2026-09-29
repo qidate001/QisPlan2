@@ -1179,7 +1179,7 @@ public final class GhostCommands {
             return 0;
         }
 
-        CurseManager.remove(curseId);
+//        CurseManager.remove(curseId);
 
         context.getSource()
                 .sendSuccess(
