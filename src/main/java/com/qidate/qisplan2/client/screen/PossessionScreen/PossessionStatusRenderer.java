@@ -26,23 +26,75 @@ import static com.qidate.qisplan2.client.screen.PossessionScreen.PossessionScree
  * 驭鬼者状态页渲染器。
  *
  * <p>
- * 负责状态页的全部视觉内容以及状态页滚动条。
+ * 负责状态页中的全部视觉内容，包括：
+ *
+ * <ul>
+ *     <li>基础状态信息</li>
+ *     <li>人体侵蚀图</li>
+ *     <li>诅咒卡片</li>
+ *     <li>已驾驭的鬼卡片</li>
+ *     <li>诅咒列表滚动条</li>
+ *     <li>驭鬼列表滚动条</li>
+ * </ul>
  *
  * <p>
- * 不负责 Screen 生命周期、页面切换以及其他页面的交互。
+ * 不负责 {@link PossessionScreen} 的生命周期、
+ * 页面切换以及其他页面的交互。
  */
 public class PossessionStatusRenderer {
 
+    // =========================================================
+    // 卡片尺寸
+    // =========================================================
 
+    /**
+     * 驭鬼卡片宽度。
+     */
     private static final int CARD_WIDTH = 145;
+
+    /**
+     * 驭鬼卡片高度。
+     */
     private static final int CARD_HEIGHT = 64;
 
+    /**
+     * 诅咒卡片宽度。
+     */
     private static final int CURSE_CARD_WIDTH = 150;
+
+    /**
+     * 诅咒卡片高度。
+     */
     private static final int CURSE_CARD_HEIGHT = 58;
+
+    /**
+     * 诅咒卡片之间的垂直间距。
+     */
     private static final int CURSE_CARD_GAP = 6;
 
+
+    // =========================================================
+    // 面板尺寸
+    // =========================================================
+
+    /**
+     * 状态面板宽度。
+     *
+     * <p>
+     * 当前状态页仍然沿用 PossessionScreen 的面板尺寸，
+     * 后续如果统一布局常量，可以再进一步抽取。
+     */
     private static final int PANEL_WIDTH = 600;
+
+    /**
+     * 状态面板高度。
+     */
     private static final int PANEL_HEIGHT = 320;
+
+
+    // =========================================================
+    // 诅咒卡片区域
+    // =========================================================
 
     /**
      * 诅咒卡片滚动区域的 X 坐标。
@@ -60,6 +112,10 @@ public class PossessionStatusRenderer {
 
     /**
      * 诅咒卡片滚动区域的宽度。
+     *
+     * <p>
+     * 比卡片本身稍宽，
+     * 为滚动条预留空间。
      */
     private static final int CURSE_CARD_AREA_WIDTH =
             CURSE_CARD_WIDTH + 8;
@@ -72,24 +128,77 @@ public class PossessionStatusRenderer {
                     - CURSE_CARD_AREA_Y
                     - 12;
 
+
+    // =========================================================
+    // 驭鬼卡片区域
+    // =========================================================
+
+    /**
+     * 驭鬼卡片滚动区域的 X 坐标。
+     *
+     * <p>
+     * 卡片区域位于面板右侧。
+     */
     private static final int GHOST_CARD_AREA_X =
             PANEL_WIDTH - CARD_WIDTH - 20;
 
+    /**
+     * 驭鬼卡片滚动区域的 Y 坐标。
+     */
     private static final int GHOST_CARD_AREA_Y = 36;
 
+    /**
+     * 驭鬼卡片滚动区域的宽度。
+     *
+     * <p>
+     * 比卡片本身稍宽，
+     * 为滚动条预留空间。
+     */
     private static final int GHOST_CARD_AREA_WIDTH =
             CARD_WIDTH + 8;
 
+    /**
+     * 驭鬼卡片滚动区域的高度。
+     */
     private static final int GHOST_CARD_AREA_HEIGHT =
-            PANEL_HEIGHT - GHOST_CARD_AREA_Y - 12;
+            PANEL_HEIGHT
+                    - GHOST_CARD_AREA_Y
+                    - 12;
 
+
+    // =========================================================
+    // 图标与状态颜色
+    // =========================================================
+
+    /**
+     * 状态图标尺寸。
+     */
     private static final int ICON_SIZE = 18;
 
+    /**
+     * 浅层死机状态颜色。
+     */
     private static final int SHALLOW_STUN_COLOR = 0xFF6AA6FF;
+
+    /**
+     * 普通死机状态颜色。
+     */
     private static final int STUN_COLOR = 0xFFE5484D;
+
+    /**
+     * 永久死机状态颜色。
+     */
     private static final int PERMANENT_STUN_COLOR = 0xFFFFC83D;
+
+    /**
+     * 浅层死机的最大显示值。
+     */
     private static final double MAX_SHALLOW_STUN = 100.0D;
 
+
+    // =========================================================
+    // 滚动条
+    // =========================================================
 
     /**
      * 驭鬼卡片滚动条。
@@ -125,6 +234,14 @@ public class PossessionStatusRenderer {
                     CURSE_CARD_AREA_HEIGHT
             );
 
+
+    // =========================================================
+    // 人体贴图
+    // =========================================================
+
+    /**
+     * 人体基础贴图。
+     */
     private static final ResourceLocation HUMAN_BODY = body("human_body");
 
     private static final ResourceLocation BRAIN = body("brain");
@@ -145,6 +262,15 @@ public class PossessionStatusRenderer {
     private static final ResourceLocation FOOT = body("foot");
     private static final ResourceLocation BONE = body("bone");
 
+
+
+    // =========================================================
+    // 白色人体贴图
+    // =========================================================
+
+    /**
+     * 白色模式下使用的人体基础贴图。
+     */
     private static final ResourceLocation HUMAN_BODY_WHITE = bodyWhite("human_body");
 
     private static final ResourceLocation BRAIN_WHITE = bodyWhite("brain");
@@ -165,12 +291,25 @@ public class PossessionStatusRenderer {
     private static final ResourceLocation FOOT_WHITE = bodyWhite("foot");
     private static final ResourceLocation BONE_WHITE = bodyWhite("bone");
 
+
+    /**
+     * 普通人体模式下的器官覆盖贴图。
+     *
+     * <p>
+     * 数组顺序必须与 {@link #ORGAN_TYPES} 保持一致。
+     */
     private static final ResourceLocation[] ORGAN_OVERLAYS = {
             BRAIN, HEART, LUNG, STOMACH, LIVER, KIDNEY,
             PANCREAS, GALLBLADDER, SPLEEN, INTESTINE,
             EYE, EAR, NOSE, MOUTH, HAND, FOOT, BONE
     };
 
+    /**
+     * 白色人体模式下的器官覆盖贴图。
+     *
+     * <p>
+     * 数组顺序必须与 {@link #ORGAN_TYPES} 保持一致。
+     */
     private static final ResourceLocation[] ORGAN_OVERLAYS_WHITE = {
             BRAIN_WHITE, HEART_WHITE, LUNG_WHITE, STOMACH_WHITE,
             LIVER_WHITE, KIDNEY_WHITE, PANCREAS_WHITE,
@@ -179,20 +318,43 @@ public class PossessionStatusRenderer {
             HAND_WHITE, FOOT_WHITE, BONE_WHITE
     };
 
-    private static ResourceLocation body(String name) {
+
+    /**
+     * 创建普通人体贴图的 ResourceLocation。
+     */
+    private static ResourceLocation body(
+            String name
+    ) {
         return ResourceLocation.fromNamespaceAndPath(
                 QisPlan2.MODID,
                 "textures/gui/body/" + name + ".png"
         );
     }
 
-    private static ResourceLocation bodyWhite(String name) {
+    /**
+     * 创建白色人体贴图的 ResourceLocation。
+     */
+    private static ResourceLocation bodyWhite(
+            String name
+    ) {
         return ResourceLocation.fromNamespaceAndPath(
                 QisPlan2.MODID,
                 "textures/gui/body_white/" + name + ".png"
         );
     }
 
+
+    // =========================================================
+    // 器官类型与引导线
+    // =========================================================
+
+    /**
+     * 人体贴图中各器官对应的侵蚀类型。
+     *
+     * <p>
+     * 顺序必须与 {@link #ORGAN_OVERLAYS}
+     * 以及 {@link #ORGAN_OVERLAYS_WHITE} 保持一致。
+     */
     private static final CorrosionType[] ORGAN_TYPES = {
             CorrosionType.BRAIN,
             CorrosionType.HEART,
@@ -213,6 +375,13 @@ public class PossessionStatusRenderer {
             CorrosionType.BONE
     };
 
+    /**
+     * 器官引导线的锚点。
+     *
+     * <p>
+     * x1/y1 为器官一侧的坐标，
+     * x2/y2 为数值文字一侧的坐标。
+     */
     private record OrganAnchor(
             CorrosionType type,
             int x1,
@@ -221,6 +390,14 @@ public class PossessionStatusRenderer {
             int y2
     ) {}
 
+    /**
+     * 各器官在人体图上的引导线位置。
+     *
+     * <p>
+     * 坐标基于人体原始尺寸，
+     * 实际绘制时会通过 {@link #scaleBodyX}
+     * 和 {@link #scaleBodyY} 缩放。
+     */
     private static final OrganAnchor[] ORGAN_ANCHORS = {
             new OrganAnchor(CorrosionType.BRAIN, 60, 19, 118, 19),         // 脑 (正)
 
@@ -244,8 +421,33 @@ public class PossessionStatusRenderer {
             new OrganAnchor(CorrosionType.FOOT, 193, 380, 155, 380),       // 足 (逆)
     };
 
+
+    // =========================================================
+    // 渲染器状态
+    // =========================================================
+
+    /**
+     * 当前使用的字体。
+     *
+     * <p>
+     * 在 render() 中从 Minecraft 客户端获取，
+     * 以避免手动管理 Font 生命周期。
+     */
     private Font font;
 
+
+    /**
+     * 渲染状态页。
+     *
+     * <p>
+     * PossessionScreen 负责面板变换，
+     * 本类只负责状态页自身的绘制。
+     *
+     * @param graphics    GUI 绘制上下文
+     * @param panelX      面板在屏幕上的 X 坐标
+     * @param panelY      面板在屏幕上的 Y 坐标
+     * @param panelScale  面板当前缩放比例
+     */
     public void render(
             GuiGraphics graphics,
             int panelX,
@@ -263,33 +465,77 @@ public class PossessionStatusRenderer {
         );
     }
 
+
+    /**
+     * 绘制状态页的全部内容。
+     *
+     * <p>
+     * 状态页由三个主要区域组成：
+     *
+     * <ul>
+     *     <li>左侧：基础状态与诅咒</li>
+     *     <li>中央：人体侵蚀图</li>
+     *     <li>右侧：已驾驭的鬼</li>
+     * </ul>
+     */
     private void drawStatusPage(
             GuiGraphics graphics,
             int panelX,
             int panelY,
             float panelScale
     ) {
-        Minecraft minecraft = Minecraft.getInstance();
-        if (minecraft.player == null) return;
+        Minecraft minecraft =
+                Minecraft.getInstance();
 
-        var player = minecraft.player;
+        if (minecraft.player == null) {
+            return;
+        }
+
+        var player =
+                minecraft.player;
 
         Map<ResourceLocation, PossessedGhostState> ghosts =
-                player.getData(ModAttachments.POSSESSED_GHOSTS);
+                player.getData(
+                        ModAttachments.POSSESSED_GHOSTS
+                );
+
+        // =====================================================
+        // 当前玩家状态
+        // =====================================================
 
         double bodyCorrosion =
-                PossessionHandler.getEffectiveBodyCorrosion(player);
+                PossessionHandler.getEffectiveBodyCorrosion(
+                        player
+                );
 
         double damageReduction =
-                1.0D - Math.pow(0.5D, bodyCorrosion / 20.0D);
-        damageReduction = Math.clamp(damageReduction, 0.0D, 0.90D);
+                1.0D
+                        - Math.pow(
+                        0.5D,
+                        bodyCorrosion / 20.0D
+                );
+
+        damageReduction =
+                Math.clamp(
+                        damageReduction,
+                        0.0D,
+                        0.90D
+                );
 
         double maxHealthBonus =
-                40.0D * (1.0D - Math.pow(0.5D, bodyCorrosion / 20.0D));
+                40.0D
+                        * (
+                        1.0D
+                                - Math.pow(
+                                0.5D,
+                                bodyCorrosion / 20.0D
+                        )
+                );
 
-        // =========================
+
+        // =====================================================
         // 左侧：基础状态
-        // =========================
+        // =====================================================
 
         int leftX = 14;
         int topY = 52;
@@ -322,7 +568,10 @@ public class PossessionStatusRenderer {
 
         graphics.drawString(
                 this.font,
-                String.format("%.1f", bodyCorrosion),
+                String.format(
+                        "%.1f",
+                        bodyCorrosion
+                ),
                 leftX + 110,
                 topY,
                 0xFFFFFFFF
@@ -340,7 +589,10 @@ public class PossessionStatusRenderer {
 
         graphics.drawString(
                 this.font,
-                String.format("%.1f%%", damageReduction * 100.0D),
+                String.format(
+                        "%.1f%%",
+                        damageReduction * 100.0D
+                ),
                 leftX + 110,
                 topY,
                 0xFFFFFFFF
@@ -358,14 +610,16 @@ public class PossessionStatusRenderer {
 
         graphics.drawString(
                 this.font,
-                String.format("+%.1f", maxHealthBonus),
+                String.format(
+                        "+%.1f",
+                        maxHealthBonus
+                ),
                 leftX + 110,
                 topY,
                 0xFFFFFFFF
         );
 
-        topY += 18;
-
+        // 左下方诅咒列表
         drawCurseCards(
                 graphics,
                 CURSE_CARD_AREA_X,
@@ -376,19 +630,27 @@ public class PossessionStatusRenderer {
         );
 
 
-        // =========================
-        // 中央：人体图
-        // =========================
+        // =====================================================
+        // 中央：人体侵蚀图
+        // =====================================================
 
         int bodyWidth = 168;
         int bodyHeight = 278;
 
-        int bodyX = (PANEL_WIDTH - bodyWidth) / 2;
+        int bodyX =
+                (PANEL_WIDTH - bodyWidth) / 2;
+
         int bodyY = 26;
 
         CorrosionMatrix matrix =
-                PossessionHandler.getCorrosionMatrix(player);
+                PossessionHandler.getCorrosionMatrix(
+                        player
+                );
 
+        /*
+         * 根据客户端配置决定使用普通人体贴图
+         * 还是白色人体贴图。
+         */
         boolean whiteMode =
                 QisConfig.CLIENT.WHITE_BODY_TEXTURE.get();
 
@@ -402,8 +664,10 @@ public class PossessionStatusRenderer {
                         ? ORGAN_OVERLAYS_WHITE
                         : ORGAN_OVERLAYS;
 
+
         /*
-         * 底图：受 GLOBAL 侵蚀影响
+         * 人体底图：
+         * 受到 GLOBAL 类型侵蚀影响。
          */
         drawCorrosionLayer(
                 graphics,
@@ -412,14 +676,21 @@ public class PossessionStatusRenderer {
                 bodyY,
                 bodyWidth,
                 bodyHeight,
-                matrix.total(CorrosionType.GLOBAL)
+                matrix.total(
+                        CorrosionType.GLOBAL
+                )
         );
 
-        /*
-         * 各器官：受自身侵蚀影响
-         */
-        for (int i = 0; i < organTextures.length; i++) {
 
+        /*
+         * 器官图层：
+         * 每个器官只受到对应类型侵蚀影响。
+         */
+        for (
+                int i = 0;
+                i < organTextures.length;
+                i++
+        ) {
             drawCorrosionLayer(
                     graphics,
                     organTextures[i],
@@ -427,17 +698,21 @@ public class PossessionStatusRenderer {
                     bodyY,
                     bodyWidth,
                     bodyHeight,
-                    matrix.total(ORGAN_TYPES[i])
+                    matrix.total(
+                            ORGAN_TYPES[i]
+                    )
             );
         }
 
-        /*
-         * =========================
-         * 器官引导线 + 侵蚀值
-         * =========================
-         */
 
-        for (OrganAnchor anchor : ORGAN_ANCHORS) {
+        // =====================================================
+        // 器官引导线与侵蚀值
+        // =====================================================
+
+        for (
+                OrganAnchor anchor
+                : ORGAN_ANCHORS
+        ) {
 
             int startX =
                     scaleBodyX(
@@ -468,7 +743,9 @@ public class PossessionStatusRenderer {
                     );
 
             int value =
-                    matrix.total(anchor.type());
+                    matrix.total(
+                            anchor.type()
+                    );
 
             drawLine(
                     graphics,
@@ -481,11 +758,14 @@ public class PossessionStatusRenderer {
         }
 
 
-        // =========================
-        // 右侧：驾驭的鬼
-        // =========================
+        // =====================================================
+        // 右侧：已驾驭的鬼
+        // =====================================================
 
-        int rightX = PANEL_WIDTH - CARD_WIDTH - 12;
+        int rightX =
+                PANEL_WIDTH
+                        - CARD_WIDTH
+                        - 12;
 
         int cardStep =
                 CARD_HEIGHT + 8;
@@ -493,26 +773,53 @@ public class PossessionStatusRenderer {
         int contentHeight =
                 ghosts.size() * cardStep - 8;
 
-        // =========================
+
+        // -----------------------------------------------------
         // 裁剪鬼卡片区域
-        // =========================
+        // -----------------------------------------------------
 
         graphics.enableScissor(
-                panelX + (int) (GHOST_CARD_AREA_X * panelScale),
-                panelY + (int) (GHOST_CARD_AREA_Y * panelScale),
-                panelX + (int) ((GHOST_CARD_AREA_X + GHOST_CARD_AREA_WIDTH) * panelScale),
-                panelY + (int) ((GHOST_CARD_AREA_Y + GHOST_CARD_AREA_HEIGHT) * panelScale)
+                panelX
+                        + (int) (
+                        GHOST_CARD_AREA_X
+                                * panelScale
+                ),
+                panelY
+                        + (int) (
+                        GHOST_CARD_AREA_Y
+                                * panelScale
+                ),
+                panelX
+                        + (int) (
+                        (
+                                GHOST_CARD_AREA_X
+                                        + GHOST_CARD_AREA_WIDTH
+                        )
+                                * panelScale
+                ),
+                panelY
+                        + (int) (
+                        (
+                                GHOST_CARD_AREA_Y
+                                        + GHOST_CARD_AREA_HEIGHT
+                        )
+                                * panelScale
+                )
         );
 
+
         /*
-         * 根据滚动条当前位置，
+         * 根据当前滚动位置，
          * 计算第一张鬼卡片的 Y 坐标。
          */
         int rightY =
                 GHOST_CARD_AREA_Y
                         - (int) ghostScrollbar.getScroll();
 
-        for (var entry : ghosts.entrySet()) {
+        for (
+                var entry
+                : ghosts.entrySet()
+        ) {
 
             drawGhostCard(
                     graphics,
@@ -527,11 +834,12 @@ public class PossessionStatusRenderer {
 
         graphics.disableScissor();
 
+
         /*
          * 绘制驭鬼卡片滚动条。
          *
          * <p>
-         * 当内容没有超出可视区域时，
+         * 当内容没有超过可视区域时，
          * 滚动条会自动隐藏。
          */
         ghostScrollbar.render(
@@ -540,6 +848,20 @@ public class PossessionStatusRenderer {
         );
     }
 
+
+    /**
+     * 绘制一张已驾驭的鬼卡片。
+     *
+     * <p>
+     * 卡片显示：
+     *
+     * <ul>
+     *     <li>鬼的名称</li>
+     *     <li>复苏进度</li>
+     *     <li>死机状态</li>
+     *     <li>当前压制程度</li>
+     * </ul>
+     */
     private void drawGhostCard(
             GuiGraphics graphics,
             ResourceLocation ghostId,
@@ -548,15 +870,17 @@ public class PossessionStatusRenderer {
             int y
     ) {
 
-        Minecraft minecraft = Minecraft.getInstance();
+        Minecraft minecraft =
+                Minecraft.getInstance();
 
         if (minecraft.player == null) {
             return;
         }
 
-        // =========================
-        // 背景
-        // =========================
+
+        // =====================================================
+        // 卡片背景
+        // =====================================================
 
         graphics.fill(
                 x,
@@ -575,9 +899,10 @@ public class PossessionStatusRenderer {
                 0x40FFFFFF
         );
 
-        // =========================
-        // 图标
-        // =========================
+
+        // =====================================================
+        // 鬼图标区域
+        // =====================================================
 
         graphics.fill(
                 x + 5,
@@ -587,9 +912,10 @@ public class PossessionStatusRenderer {
                 0xFF555565
         );
 
-        // =========================
-        // 名称
-        // =========================
+
+        // =====================================================
+        // 鬼名称
+        // =====================================================
 
         graphics.drawString(
                 this.font,
@@ -599,9 +925,10 @@ public class PossessionStatusRenderer {
                 0xFFFFFFFF
         );
 
-        // =========================================================
+
+        // =====================================================
         // 复苏
-        // =========================================================
+        // =====================================================
 
         graphics.drawString(
                 this.font,
@@ -632,14 +959,24 @@ public class PossessionStatusRenderer {
                 0xFFFFFFFF
         );
 
-        // =========================================================
+
+        // =====================================================
         // 死机
-        // =========================================================
+        // =====================================================
 
         double progress;
         int color;
         String value;
 
+        /*
+         * 死机状态按照优先级判断：
+         *
+         * 永久死机
+         *     ↓
+         * 普通死机
+         *     ↓
+         * 浅层死机
+         */
         if (state.isPermanentlyStunned()) {
 
             progress = 1.0D;
@@ -709,9 +1046,10 @@ public class PossessionStatusRenderer {
                 0xFFFFFFFF
         );
 
-        // =========================================================
+
+        // =====================================================
         // 当前压制
-        // =========================================================
+        // =====================================================
 
         double suppression =
                 GhostSuppressionSystem.getSuppression(
@@ -727,7 +1065,6 @@ public class PossessionStatusRenderer {
                 0xFFCCCCCC
         );
 
-        // 压制进度条
         drawProgressBar(
                 graphics,
                 x + 52,
@@ -750,6 +1087,15 @@ public class PossessionStatusRenderer {
         );
     }
 
+
+    /**
+     * 绘制通用进度条。
+     *
+     * <p>
+     * 进度值会被限制在 0～1 范围内。
+     * 进度为 0 时只绘制背景，
+     * 大于 0 时再绘制对应长度的填充部分。
+     */
     private void drawProgressBar(
             GuiGraphics graphics,
             int x,
@@ -760,8 +1106,14 @@ public class PossessionStatusRenderer {
             int fillColor
     ) {
 
-        progress = Math.clamp(progress, 0.0D, 1.0D);
+        progress =
+                Math.clamp(
+                        progress,
+                        0.0D,
+                        1.0D
+                );
 
+        // 背景
         graphics.fill(
                 x,
                 y,
@@ -770,7 +1122,10 @@ public class PossessionStatusRenderer {
                 0xFF202027
         );
 
-        int filled = (int)Math.round(width * progress);
+        int filled =
+                (int) Math.round(
+                        width * progress
+                );
 
         if (filled > 0) {
 
@@ -784,12 +1139,22 @@ public class PossessionStatusRenderer {
         }
     }
 
+
     /**
      * 绘制状态页中的诅咒卡片列表。
      *
      * <p>
      * 诅咒卡片拥有独立的滚动区域，
      * 不会影响右侧驭鬼卡片的滚动位置。
+     *
+     * <p>
+     * 同时负责：
+     * <ul>
+     *     <li>计算滚动范围</li>
+     *     <li>裁剪卡片区域</li>
+     *     <li>绘制诅咒卡片</li>
+     *     <li>绘制诅咒滚动条</li>
+     * </ul>
      */
     private void drawCurseCards(
             GuiGraphics graphics,
@@ -803,6 +1168,7 @@ public class PossessionStatusRenderer {
         int contentHeight =
                 getCurseCardContentHeight();
 
+
         /*
          * 防止诅咒数量减少后，
          * 滚动位置停留在已经不存在的位置。
@@ -812,28 +1178,32 @@ public class PossessionStatusRenderer {
                 contentHeight
         );
 
-        /*
-         * =========================
-         * 裁剪诅咒卡片区域
-         * =========================
-         */
+
+        // =====================================================
+        // 裁剪诅咒卡片区域
+        // =====================================================
+
         graphics.enableScissor(
-                panelX + (int) (
+                panelX
+                        + (int) (
                         CURSE_CARD_AREA_X
                                 * panelScale
                 ),
-                panelY + (int) (
+                panelY
+                        + (int) (
                         CURSE_CARD_AREA_Y
                                 * panelScale
                 ),
-                panelX + (int) (
+                panelX
+                        + (int) (
                         (
                                 CURSE_CARD_AREA_X
                                         + CURSE_CARD_AREA_WIDTH
                         )
                                 * panelScale
                 ),
-                panelY + (int) (
+                panelY
+                        + (int) (
                         (
                                 CURSE_CARD_AREA_Y
                                         + CURSE_CARD_AREA_HEIGHT
@@ -842,6 +1212,7 @@ public class PossessionStatusRenderer {
                 )
         );
 
+
         /*
          * 根据当前滚动位置，
          * 计算第一张卡片的 Y 坐标。
@@ -849,6 +1220,7 @@ public class PossessionStatusRenderer {
         int cardY =
                 CURSE_CARD_AREA_Y
                         - (int) curseScrollbar.getScroll();
+
 
         for (
                 ClientCurseState.CurseData curse
@@ -860,6 +1232,7 @@ public class PossessionStatusRenderer {
                             curse.type()
                     );
 
+
             /*
              * 已注册但禁止检测的诅咒不显示。
              */
@@ -870,12 +1243,25 @@ public class PossessionStatusRenderer {
                 continue;
             }
 
+
+            /*
+             * 如果诅咒没有注册图标，
+             * 则使用默认的压制图标。
+             */
             ResourceLocation icon =
                     clientType != null
                             && clientType.icon() != null
                             ? clientType.icon()
                             : DEFAULT_SUPPRESSION_ICON;
 
+
+            /*
+             * 诅咒名称使用统一的：
+             *
+             * curse.<namespace>.<path>
+             *
+             * 翻译键。
+             */
             Component name =
                     Component.translatable(
                             "curse."
@@ -884,6 +1270,8 @@ public class PossessionStatusRenderer {
                                     + curse.type().getPath()
                     );
 
+
+            // 卡片背景
             graphics.fill(
                     x,
                     cardY,
@@ -892,6 +1280,7 @@ public class PossessionStatusRenderer {
                     0xD0181820
             );
 
+            // 顶部高光
             graphics.fill(
                     x + 6,
                     cardY + 1,
@@ -900,6 +1289,8 @@ public class PossessionStatusRenderer {
                     0x40FFFFFF
             );
 
+
+            // 诅咒图标
             graphics.blit(
                     icon,
                     x + 6,
@@ -912,6 +1303,8 @@ public class PossessionStatusRenderer {
                     ICON_SIZE
             );
 
+
+            // 诅咒名称
             graphics.drawString(
                     this.font,
                     name,
@@ -920,6 +1313,8 @@ public class PossessionStatusRenderer {
                     0xFFFFFFFF
             );
 
+
+            // 强度
             graphics.drawString(
                     this.font,
                     "强度",
@@ -938,6 +1333,8 @@ public class PossessionStatusRenderer {
                     0xFFFFFFFF
             );
 
+
+            // 持续时间
             graphics.drawString(
                     this.font,
                     "持续时间",
@@ -956,6 +1353,7 @@ public class PossessionStatusRenderer {
                     0xFFFFFFFF
             );
 
+
             cardY +=
                     CURSE_CARD_HEIGHT
                             + CURSE_CARD_GAP;
@@ -963,10 +1361,13 @@ public class PossessionStatusRenderer {
 
         graphics.disableScissor();
 
+
         /*
-         * =========================
-         * 绘制诅咒滚动条
-         * =========================
+         * 绘制诅咒列表滚动条。
+         *
+         * <p>
+         * 当内容没有超出可视区域时，
+         * 滚动条会自动隐藏。
          */
         curseScrollbar.render(
                 graphics,
@@ -975,6 +1376,13 @@ public class PossessionStatusRenderer {
     }
 
 
+    /**
+     * 绘制一个人体图层。
+     *
+     * <p>
+     * 根据侵蚀值计算图层亮度：
+     * 侵蚀越高，贴图越暗。
+     */
     private void drawCorrosionLayer(
             GuiGraphics graphics,
             ResourceLocation texture,
@@ -985,19 +1393,26 @@ public class PossessionStatusRenderer {
             double corrosion
     ) {
 
-        double ratio = Math.clamp(
-                corrosion / 100.0D,
-                0.0D,
-                1.0D
-        );
+        double ratio =
+                Math.clamp(
+                        corrosion / 100.0D,
+                        0.0D,
+                        1.0D
+                );
 
         /*
-         * 侵蚀越高越暗
+         * 使用非线性曲线控制亮度，
+         * 让低侵蚀阶段变化较缓，
+         * 高侵蚀阶段明显变暗。
          */
-        float brightness = (float) Math.max(
-                0.02D,
-                Math.pow(1.0D - ratio, 2.5D)
-        );
+        float brightness =
+                (float) Math.max(
+                        0.02D,
+                        Math.pow(
+                                1.0D - ratio,
+                                2.5D
+                        )
+                );
 
         graphics.setColor(
                 brightness,
@@ -1018,6 +1433,11 @@ public class PossessionStatusRenderer {
                 height
         );
 
+
+        /*
+         * GuiGraphics 的颜色状态会持续影响后续绘制，
+         * 因此绘制完成后必须恢复为默认颜色。
+         */
         graphics.setColor(
                 1.0F,
                 1.0F,
@@ -1026,6 +1446,14 @@ public class PossessionStatusRenderer {
         );
     }
 
+
+    /**
+     * 绘制器官引导线以及对应的侵蚀数值。
+     *
+     * <p>
+     * 根据起点和终点的相对位置，
+     * 自动决定数值应该显示在线段的左侧还是右侧。
+     */
     private void drawLine(
             GuiGraphics graphics,
             int x1,
@@ -1034,9 +1462,8 @@ public class PossessionStatusRenderer {
             int y2,
             String text
     ) {
-        /*
-         * 画横线
-         */
+
+        // 引导横线
         graphics.fill(
                 Math.min(x1, x2),
                 y1,
@@ -1045,32 +1472,39 @@ public class PossessionStatusRenderer {
                 0xFFFFFFFF
         );
 
+
         /*
-         * 判断方向
+         * 判断引导线方向：
          *
          * x1 < x2：
-         * 数字在左，器官在右
+         * 器官在右侧，数字显示在左侧。
          *
          * x1 > x2：
-         * 数字在右，器官在左
+         * 器官在左侧，数字显示在右侧。
          */
-        int textWidth = this.font.width(text);
+        int textWidth =
+                this.font.width(text);
 
         int textX;
 
         if (x1 < x2) {
-            // 数字在左侧
-            textX = x1 - textWidth - 4;
+
+            textX =
+                    x1
+                            - textWidth
+                            - 4;
+
         } else {
-            // 数字在右侧
-            textX = x1 + 4;
+
+            textX =
+                    x1 + 4;
         }
 
-        /*
-         * 让文字垂直居中在线上
-         */
+
+        // 让文字垂直居中于引导线上
         int textY =
-                y1 - this.font.lineHeight / 2;
+                y1
+                        - this.font.lineHeight / 2;
 
         graphics.drawString(
                 this.font,
@@ -1081,24 +1515,52 @@ public class PossessionStatusRenderer {
         );
     }
 
+
+    /**
+     * 将人体原始 X 坐标缩放到当前人体图尺寸。
+     *
+     * <p>
+     * 原始人体图宽度为 275。
+     */
     private int scaleBodyX(
             int originalX,
             int bodyX,
             int bodyWidth
     ) {
-        return bodyX + originalX * bodyWidth / 275;
+        return bodyX
+                + originalX * bodyWidth / 275;
     }
 
+
+    /**
+     * 将人体原始 Y 坐标缩放到当前人体图尺寸。
+     *
+     * <p>
+     * 原始人体图高度为 413。
+     */
     private int scaleBodyY(
             int originalY,
             int bodyY,
             int bodyHeight
     ) {
-        return bodyY + originalY * bodyHeight / 413;
+        return bodyY
+                + originalY * bodyHeight / 413;
     }
 
 
+    // =========================================================
+    // 状态页输入
+    // =========================================================
 
+    /**
+     * 处理状态页鼠标点击。
+     *
+     * <p>
+     * 当前状态页只有两个可交互区域：
+     * 左侧诅咒滚动条和右侧驭鬼滚动条。
+     *
+     * @return 是否由状态页处理了此次点击
+     */
     public boolean mouseClicked(
             double mouseX,
             double mouseY
@@ -1133,6 +1595,16 @@ public class PossessionStatusRenderer {
         return false;
     }
 
+
+    /**
+     * 处理状态页鼠标滚轮。
+     *
+     * <p>
+     * 根据鼠标所在区域，
+     * 将滚动事件交给对应的滚动条。
+     *
+     * @return 是否由状态页处理了此次滚动
+     */
     public boolean mouseScrolled(
             double mouseX,
             double mouseY,
@@ -1164,6 +1636,7 @@ public class PossessionStatusRenderer {
             }
         }
 
+
         boolean insideGhostArea =
                 mouseX >= GHOST_CARD_AREA_X
                         && mouseX <=
@@ -1192,6 +1665,15 @@ public class PossessionStatusRenderer {
         return false;
     }
 
+
+    /**
+     * 处理状态页鼠标拖动。
+     *
+     * <p>
+     * 将拖动事件交给当前正在拖动的滚动条。
+     *
+     * @return 是否由状态页处理了此次拖动
+     */
     public boolean mouseDragged(
             double mouseX,
             double mouseY
@@ -1226,6 +1708,15 @@ public class PossessionStatusRenderer {
         return false;
     }
 
+
+    /**
+     * 处理状态页鼠标释放。
+     *
+     * <p>
+     * 同时尝试释放两个滚动条的拖动状态。
+     *
+     * @return 是否由状态页处理了此次释放
+     */
     public boolean mouseReleased() {
 
         if (
@@ -1243,6 +1734,17 @@ public class PossessionStatusRenderer {
         return false;
     }
 
+
+    // =========================================================
+    // 列表高度计算
+    // =========================================================
+
+    /**
+     * 获取驭鬼卡片列表的完整内容高度。
+     *
+     * <p>
+     * 内容高度用于计算滚动条允许的最大滚动距离。
+     */
     private int getGhostCardContentHeight() {
 
         Minecraft minecraft =
@@ -1267,6 +1769,17 @@ public class PossessionStatusRenderer {
         );
     }
 
+
+    /**
+     * 将诅咒剩余 Tick 转换为显示用的时间。
+     *
+     * <p>
+     * 小于 0 表示无限持续时间，
+     * 使用 ∞ 显示。
+     *
+     * <p>
+     * 其他情况显示为 MM:SS。
+     */
     private String formatCurseDuration(
             int ticks
     ) {
@@ -1291,11 +1804,12 @@ public class PossessionStatusRenderer {
         );
     }
 
+
     /**
      * 获取诅咒卡片列表的完整内容高度。
      *
      * <p>
-     * 这个高度包含所有实际可显示的诅咒卡片，
+     * 只有实际能够显示的诅咒才会计入内容高度，
      * 用于计算最大滚动距离。
      */
     private int getCurseCardContentHeight() {
@@ -1314,6 +1828,7 @@ public class PossessionStatusRenderer {
         return count * cardStep
                 - CURSE_CARD_GAP;
     }
+
 
     /**
      * 获取当前状态页实际可显示的诅咒数量。
@@ -1354,14 +1869,24 @@ public class PossessionStatusRenderer {
         return count;
     }
 
+
+    /**
+     * 获取鬼的显示名称。
+     *
+     * <p>
+     * 如果鬼已经注册到 {@link GhostAbilityRegistry}，
+     * 则使用能力定义中的显示名称。
+     *
+     * <p>
+     * 如果没有注册，则直接显示 ResourceLocation，
+     * 方便调试和识别未知鬼类型。
+     */
     private String getGhostName(
             ResourceLocation id
     ) {
 
         PossessedGhostAbility ability =
-                GhostAbilityRegistry.get(
-                        id
-                );
+                GhostAbilityRegistry.get(id);
 
         if (ability != null) {
 
