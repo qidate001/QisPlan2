@@ -1,18 +1,14 @@
 package com.qidate.qisplan2.ghost.curse.type.ghosttombstone;
 
-import com.qidate.qisplan2.QisPlan2;
 import com.qidate.qisplan2.core.ModTags;
-import com.qidate.qisplan2.ghost.curse.Curse;
-import com.qidate.qisplan2.ghost.curse.CurseSource;
+import com.qidate.qisplan2.ghost.curse.AbstractCurse;
 import net.minecraft.core.BlockPos;
-import net.minecraft.nbt.CompoundTag;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.AABB;
+
 import java.util.UUID;
 
 /**
@@ -26,13 +22,8 @@ import java.util.UUID;
  * 当玩家整个身体都进入土壤之后，
  * 会被传送到诅咒来源墓碑的下方。
  */
-public class GhostTombstoneCurse implements Curse {
-
-    public static final ResourceLocation ID =
-            ResourceLocation.fromNamespaceAndPath(
-                    "qisplan2",
-                    "ghost_tombstone"
-            );
+public class GhostTombstoneCurse
+        extends AbstractCurse {
 
     /**
      * 玩家每 Tick 下沉的距离。
@@ -46,12 +37,6 @@ public class GhostTombstoneCurse implements Curse {
      * 因为那里同样是土壤而立即再次触发。
      */
     private static final int TELEPORT_COOLDOWN_TICKS = 40;
-
-    private final UUID id;
-    private final UUID target;
-    private final GhostTombstoneCurseSource source;
-
-    private int strength;
 
     /**
      * 传送冷却。
@@ -79,34 +64,14 @@ public class GhostTombstoneCurse implements Curse {
             GhostTombstoneCurseSource source,
             int strength
     ) {
-        this.id = id;
-        this.target = target;
-        this.source = source;
-        this.strength = strength;
-    }
-
-    @Override
-    public UUID getId() {
-        return id;
-    }
-
-    @Override
-    public ResourceLocation getType() {
-        return ID;
-    }
-
-    @Override
-    public UUID getTarget() {
-        return target;
-    }
-
-    @Override
-    public CurseSource getSource() {
-        return source;
-    }
-
-    public int getStrength() {
-        return strength;
+        super(
+                id,
+                GhostTombstoneCurseType.ID,
+                target,
+                source,
+                strength,
+                INFINITE_DURATION
+        );
     }
 
     /**
@@ -122,7 +87,7 @@ public class GhostTombstoneCurse implements Curse {
          */
         ServerPlayer player =
                 server.getPlayerList()
-                        .getPlayer(target);
+                        .getPlayer(getTarget());
 
         /*
          * 玩家不在线时不处理。
@@ -319,7 +284,7 @@ public class GhostTombstoneCurse implements Curse {
          */
         ServerLevel targetLevel =
                 server.getLevel(
-                        source.dimension()
+                        getSourceDimension()
                 );
 
         if (targetLevel == null) {
@@ -327,7 +292,7 @@ public class GhostTombstoneCurse implements Curse {
         }
 
         BlockPos tombstonePos =
-                source.pos();
+                getSourcePos();
 
         /*
          * 鬼墓碑是两格高。
@@ -365,44 +330,12 @@ public class GhostTombstoneCurse implements Curse {
                 TELEPORT_COOLDOWN_TICKS;
     }
 
-    @Override
-    public boolean isValid(
-            MinecraftServer server
-    ) {
-        return true;
+    private net.minecraft.resources.ResourceKey<net.minecraft.world.level.Level>
+    getSourceDimension() {
+        return ((GhostTombstoneCurseSource) getSource()).dimension();
     }
 
-    @Override
-    public CompoundTag save() {
-
-        CompoundTag tag =
-                new CompoundTag();
-
-        tag.putUUID(
-                "Id",
-                id
-        );
-
-        tag.putUUID(
-                "Target",
-                target
-        );
-
-        tag.putString(
-                "SourceType",
-                source.getType().toString()
-        );
-
-        tag.put(
-                "Source",
-                source.save()
-        );
-
-        tag.putInt(
-                "Strength",
-                strength
-        );
-
-        return tag;
+    private BlockPos getSourcePos() {
+        return ((GhostTombstoneCurseSource) getSource()).pos();
     }
 }

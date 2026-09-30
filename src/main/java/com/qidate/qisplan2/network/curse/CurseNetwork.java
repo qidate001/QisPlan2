@@ -102,8 +102,8 @@ public final class CurseNetwork {
                     new SyncCursePayload.CurseData(
                             curse.getId(),
                             curse.getType(),
-                            0,
-                            0
+                            curse.getStrength(),
+                            curse.getRemainingTicks()
                     )
             );
         }

@@ -1,14 +1,13 @@
 package com.qidate.qisplan2.ghost.curse.type.ghostdivination;
 
-import com.qidate.qisplan2.ghost.curse.Curse;
-import net.minecraft.nbt.CompoundTag;
+import com.qidate.qisplan2.ghost.curse.AbstractCurse;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
 
 import java.util.UUID;
 
 public class GhostDivinationCurse
-        implements Curse {
+        extends AbstractCurse {
 
     /**
      * 生签诅咒类型。
@@ -31,20 +30,6 @@ public class GhostDivinationCurse
      */
     public static final int DEFAULT_DURATION =
             5 * 60 * 20;
-
-    private final UUID id;
-    private final UUID target;
-    private final GhostDivinationCurseSource source;
-
-    /**
-     * 当前诅咒强度。
-     */
-    private int strength;
-
-    /**
-     * 剩余持续时间。
-     */
-    private int remainingTicks;
 
     /**
      * 创建新的生签诅咒。
@@ -74,48 +59,14 @@ public class GhostDivinationCurse
             int strength,
             int remainingTicks
     ) {
-        this.id = id;
-        this.target = target;
-        this.source = source;
-        this.strength = strength;
-        this.remainingTicks = remainingTicks;
-    }
-
-    @Override
-    public UUID getId() {
-        return id;
-    }
-
-    @Override
-    public ResourceLocation getType() {
-        return TYPE;
-    }
-
-    @Override
-    public UUID getTarget() {
-        return target;
-    }
-
-    @Override
-    public GhostDivinationCurseSource getSource() {
-        return source;
-    }
-
-    public int getStrength() {
-        return strength;
-    }
-
-    /**
-     * 设置当前生签强度。
-     */
-    public void setStrength(
-            int strength
-    ) {
-        this.strength = strength;
-    }
-
-    public int getRemainingTicks() {
-        return remainingTicks;
+        super(
+                id,
+                GhostDivinationCurseType.ID,
+                target,
+                source,
+                strength,
+                remainingTicks
+        );
     }
 
     /**
@@ -130,54 +81,15 @@ public class GhostDivinationCurse
             return;
         }
 
-        remainingTicks += ticks;
+        setRemainingTicks(
+                getRemainingTicks() + ticks
+        );
     }
 
     @Override
     public void tick(
             MinecraftServer server
     ) {
-        remainingTicks--;
-    }
-
-    @Override
-    public boolean isValid(
-            MinecraftServer server
-    ) {
-        return remainingTicks > 0;
-    }
-
-    @Override
-    public CompoundTag save() {
-
-        CompoundTag tag =
-                new CompoundTag();
-
-        tag.putUUID(
-                "Id",
-                id
-        );
-
-        tag.putUUID(
-                "Target",
-                target
-        );
-
-        tag.put(
-                "Source",
-                source.save()
-        );
-
-        tag.putInt(
-                "Strength",
-                strength
-        );
-
-        tag.putInt(
-                "RemainingTicks",
-                remainingTicks
-        );
-
-        return tag;
+        tickDuration();
     }
 }
