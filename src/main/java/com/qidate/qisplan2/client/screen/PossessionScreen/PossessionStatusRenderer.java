@@ -20,8 +20,6 @@ import net.minecraft.resources.ResourceLocation;
 
 import java.util.Map;
 
-import static com.qidate.qisplan2.client.screen.PossessionScreen.PossessionScreen.DEFAULT_SUPPRESSION_ICON;
-
 /**
  * 驭鬼者状态页渲染器。
  *
@@ -342,6 +340,19 @@ public class PossessionStatusRenderer {
                 "textures/gui/body_white/" + name + ".png"
         );
     }
+
+    /**
+     * 默认图标。
+     *
+     * <p>
+     * 当某个灵异没有提供专属图标时，
+     * 使用该图标作为回退显示。
+     */
+    private static final ResourceLocation DEFAULT_SUPPRESSION_ICON =
+            ResourceLocation.fromNamespaceAndPath(
+                    QisPlan2.MODID,
+                    "textures/gui/suppression.png"
+            );
 
 
     // =========================================================
