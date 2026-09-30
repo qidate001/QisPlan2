@@ -50,5 +50,13 @@
     "sounds": [
       "qisplan2:calling_ghost/special_uzjhf_836"
     ]
+  },
+
+
+
+  "ghost_tombstone.inscribe": {
+    "sounds": [
+      "qisplan2:ghost_tombstone/inscribe"
+    ]
   }
 }

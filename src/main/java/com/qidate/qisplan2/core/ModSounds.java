@@ -37,16 +37,25 @@ public class ModSounds {
             );
 
     // 鬼黑雨
-    public static final DeferredHolder<
-            SoundEvent,
-            SoundEvent
-            > GHOST_KNOCK =
+    public static final DeferredHolder<SoundEvent, SoundEvent> GHOST_KNOCK =
             SOUND_EVENTS.register(
                     "ghost_knock",
                     () -> SoundEvent.createVariableRangeEvent(
                             ResourceLocation.fromNamespaceAndPath(
                                     MODID,
                                     "ghost_knock"
+                            )
+                    )
+            );
+
+    // 鬼墓碑刻字
+    public static final DeferredHolder<SoundEvent, SoundEvent> GHOST_TOMBSTONE_INSCRIBE =
+            SOUND_EVENTS.register(
+                    "ghost_tombstone.inscribe",
+                    () -> SoundEvent.createVariableRangeEvent(
+                            ResourceLocation.fromNamespaceAndPath(
+                                    MODID,
+                                    "ghost_tombstone.inscribe"
                             )
                     )
             );

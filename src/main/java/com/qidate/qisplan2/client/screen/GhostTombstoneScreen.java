@@ -1,13 +1,16 @@
 package com.qidate.qisplan2.client.screen;
 
+import com.qidate.qisplan2.QisPlan2;
 import com.qidate.qisplan2.block.entity.GhostTombstoneBlockEntity;
 import com.qidate.qisplan2.network.ghosttombstone.GhostTombstoneNetwork;
+import com.qidate.qisplan2.core.ModSounds;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
+import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.level.block.entity.BlockEntity;
 
 public class GhostTombstoneScreen
@@ -16,6 +19,34 @@ public class GhostTombstoneScreen
     private final BlockPos blockPos;
 
     private EditBox inscriptionBox;
+
+
+    /*
+     * ========================================================
+     * 刻字进度
+     * ========================================================
+     */
+
+    /**
+     * 当前这次刻字所需的总时间。
+     */
+    private int inscriptionDuration = 0;
+
+    /**
+     * 每 0.6 秒播放一次音效。
+     */
+    private static final int INSCRIPTION_SOUND_INTERVAL =
+            12;
+
+    /**
+     * 当前已经刻字了多少 tick。
+     */
+    private int inscriptionTicks = 0;
+
+    /**
+     * 是否正在刻字。
+     */
+    private boolean inscribing = false;
 
 
     public GhostTombstoneScreen(
@@ -127,7 +158,7 @@ public class GhostTombstoneScreen
         addRenderableWidget(
                 Button.builder(
                         Component.literal("确定"),
-                        button -> confirm()
+                        button -> startInscription()
                 ).bounds(
                         buttonX,
                         buttonY,
@@ -139,9 +170,48 @@ public class GhostTombstoneScreen
 
 
     /**
-     * 确认刻字。
+     * 开始刻字。
      */
-    private void confirm() {
+    private void startInscription() {
+
+        if (inscribing) {
+            return;
+        }
+
+        String text =
+                inscriptionBox.getValue();
+
+        /*
+         * 根据刻字内容计算所需时间。
+         */
+        inscriptionDuration =
+                calculateInscriptionDuration(
+                        text
+                );
+
+        /*
+         * 从 0 开始计时。
+         */
+        inscriptionTicks = 0;
+
+        inscribing = true;
+
+        /*
+         * 刻字过程中禁止继续修改文字。
+         */
+        inscriptionBox.setEditable(false);
+
+        /*
+         * 取消输入框焦点。
+         */
+        inscriptionBox.setFocused(false);
+    }
+
+
+    /**
+     * 刻字完成。
+     */
+    private void finishInscription() {
 
         String text =
                 inscriptionBox.getValue();
@@ -162,7 +232,67 @@ public class GhostTombstoneScreen
 
 
     /**
-     * 按 Enter 也可以确定。
+     * 每一个客户端 Tick。
+     */
+    @Override
+    public void tick() {
+
+        super.tick();
+
+        if (!inscribing) {
+            return;
+        }
+
+        inscriptionTicks++;
+
+        /*
+         * ========================================================
+         * 刻字音效
+         * ========================================================
+         */
+        if (
+                inscriptionTicks
+                        % INSCRIPTION_SOUND_INTERVAL
+                        == 0
+        ) {
+
+            if (minecraft != null
+                    && minecraft.level != null) {
+
+                minecraft.level.playLocalSound(
+                        blockPos.getX() + 0.5,
+                        blockPos.getY() + 0.5,
+                        blockPos.getZ() + 0.5,
+                        ModSounds.GHOST_TOMBSTONE_INSCRIBE.get(),
+                        SoundSource.BLOCKS,
+                        1.0F,
+                        1.0F,
+                        false
+                );
+
+                QisPlan2.LOGGER.info("play");
+            }
+        }
+
+
+        /*
+         * ========================================================
+         * 完成
+         * ========================================================
+         */
+
+        if (
+                inscriptionTicks
+                        >= inscriptionDuration
+        ) {
+
+            finishInscription();
+        }
+    }
+
+
+    /**
+     * 按 Enter 确定。
      */
     @Override
     public boolean keyPressed(
@@ -171,10 +301,17 @@ public class GhostTombstoneScreen
             int modifiers
     ) {
 
+        /*
+         * 刻字过程中禁止再次确定。
+         */
+        if (inscribing) {
+            return true;
+        }
+
         if (keyCode == 257
                 || keyCode == 335) {
 
-            confirm();
+            startInscription();
 
             return true;
         }
@@ -211,6 +348,20 @@ public class GhostTombstoneScreen
 
         /*
          * ========================================================
+         * 输入框 + 按钮
+         * ========================================================
+         */
+
+        super.render(
+                graphics,
+                mouseX,
+                mouseY,
+                partialTick
+        );
+
+
+        /*
+         * ========================================================
          * 标题
          * ========================================================
          */
@@ -226,21 +377,209 @@ public class GhostTombstoneScreen
 
         /*
          * ========================================================
-         * 输入框 + 按钮
+         * 刻字进度
          * ========================================================
          */
 
-        super.render(
-                graphics,
-                mouseX,
-                mouseY,
-                partialTick
-        );
+        if (inscribing) {
+
+            int barWidth = 240;
+            int barHeight = 8;
+
+            int barX =
+                    this.width / 2
+                            - barWidth / 2;
+
+            int barY =
+                    this.height / 2 + 40;
+
+
+            /*
+             * 外框。
+             */
+            graphics.fill(
+                    barX - 1,
+                    barY - 1,
+                    barX + barWidth + 1,
+                    barY + barHeight + 1,
+                    0xFF555555
+            );
+
+
+            /*
+             * 背景。
+             */
+            graphics.fill(
+                    barX,
+                    barY,
+                    barX + barWidth,
+                    barY + barHeight,
+                    0xFF202020
+            );
+
+
+            /*
+             * 当前进度。
+             */
+            int progressWidth =
+                    Math.round(
+                            barWidth
+                                    * (
+                                    (float) inscriptionTicks
+                                            / inscriptionDuration
+                            )
+                    );
+
+            graphics.fill(
+                    barX,
+                    barY,
+                    barX + progressWidth,
+                    barY + barHeight,
+                    0xFFAAAAAA
+            );
+
+
+            /*
+             * 剩余时间。
+             */
+            int remainingTicks =
+                    Math.max(
+                            0,
+                            inscriptionDuration
+                                    - inscriptionTicks
+                    );
+
+            int remainingSeconds =
+                    (remainingTicks + 19) / 20;
+
+
+            graphics.drawCenteredString(
+                    this.font,
+                    "刻字中…… "
+                            + remainingSeconds
+                            + "s",
+                    this.width / 2,
+                    barY + 14,
+                    0xFFFFFFFF
+            );
+        }
     }
 
 
     @Override
     public boolean isPauseScreen() {
         return false;
+    }
+
+    /**
+     * 获取单个 Unicode 字符的刻字时间。
+     *
+     * @param codePoint Unicode Code Point
+     * @return 刻字所需 tick
+     */
+    private static int getInscriptionTicks(
+            int codePoint
+    ) {
+
+        /*
+         * 空格、制表符、换行等空白字符
+         * 不计入刻字时间。
+         */
+        if (Character.isWhitespace(codePoint)) {
+            return 0;
+        }
+
+
+        Character.UnicodeScript script =
+                Character.UnicodeScript.of(
+                        codePoint
+                );
+
+
+        /*
+         * ========================================================
+         * 英文字母
+         * ========================================================
+         *
+         * 暂时把 Latin 字母全部按照英文字母处理。
+         */
+        if (
+                script == Character.UnicodeScript.LATIN
+                        && Character.isLetter(codePoint)
+        ) {
+            return 30;
+        }
+
+
+        /*
+         * ========================================================
+         * 中文汉字
+         * ========================================================
+         */
+        if (
+                script == Character.UnicodeScript.HAN
+        ) {
+            return 120;
+        }
+
+
+        /*
+         * ========================================================
+         * 日文平假名
+         * ========================================================
+         */
+        if (
+                script == Character.UnicodeScript.HIRAGANA
+        ) {
+            return 60;
+        }
+
+
+        /*
+         * ========================================================
+         * 日文片假名
+         * ========================================================
+         */
+        if (
+                script == Character.UnicodeScript.KATAKANA
+        ) {
+            return 60;
+        }
+
+
+        /*
+         * ========================================================
+         * 下划线、标点符号以及其他字符
+         * ========================================================
+         */
+        return 10;
+    }
+
+    /**
+     * 计算整段文字的刻字时间。
+     */
+    private static int calculateInscriptionDuration(
+            String text
+    ) {
+
+        int ticks = 0;
+
+        for (int i = 0; i < text.length();) {
+
+            int codePoint =
+                    text.codePointAt(i);
+
+            ticks +=
+                    getInscriptionTicks(
+                            codePoint
+                    );
+
+            i +=
+                    Character.charCount(
+                            codePoint
+                    );
+        }
+
+        return ticks;
     }
 }
