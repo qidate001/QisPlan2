@@ -74,10 +74,10 @@ public final class CurseNetwork {
             }
         });
 
-        QisPlan2.LOGGER.info(
-                "[诅咒网络] 客户端收到诅咒同步：{} 个",
-                payload.curses().size()
-        );
+//        QisPlan2.LOGGER.info(
+//                "[诅咒网络] 客户端收到诅咒同步：{} 个",
+//                payload.curses().size()
+//        );
     }
 
     /**
