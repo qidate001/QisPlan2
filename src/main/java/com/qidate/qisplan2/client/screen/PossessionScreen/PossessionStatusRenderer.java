@@ -912,15 +912,20 @@ public class PossessionStatusRenderer {
 
 
         // =====================================================
-        // 鬼图标区域
+        // 鬼图标
         // =====================================================
 
-        graphics.fill(
+        PossessedGhostAbility ability =
+                GhostAbilityRegistry.get(
+                        ghostId
+                );
+
+        drawGhostIcon(
+                graphics,
+                ability,
                 x + 5,
                 y + 5,
-                x + 5 + ICON_SIZE,
-                y + 5 + ICON_SIZE,
-                0xFF555565
+                ICON_SIZE
         );
 
 
@@ -1095,6 +1100,70 @@ public class PossessionStatusRenderer {
                 x + 114,
                 y + 47,
                 0xFFFFFFFF
+        );
+    }
+
+
+    /**
+     * 绘制鬼的图标。
+     *
+     * <p>
+     * 根据鬼能力是否存在以及是否拥有自定义图标，
+     * 决定显示正常图标还是对应的占位图。
+     *
+     * @param graphics GUI 绘制上下文
+     * @param ability  鬼能力
+     * @param x        图标 X 坐标
+     * @param y        图标 Y 坐标
+     * @param size     图标尺寸
+     */
+    private void drawGhostIcon(
+            GuiGraphics graphics,
+            PossessedGhostAbility ability,
+            int x,
+            int y,
+            int size
+    ) {
+
+        if (ability == null) {
+
+            graphics.fill(
+                    x,
+                    y,
+                    x + size,
+                    y + size,
+                    0xFF555565
+            );
+
+            return;
+        }
+
+        ResourceLocation texture =
+                ability.iconTexture();
+
+        if (texture == null) {
+
+            graphics.fill(
+                    x,
+                    y,
+                    x + size,
+                    y + size,
+                    0xFF884444
+            );
+
+            return;
+        }
+
+        graphics.blit(
+                texture,
+                x,
+                y,
+                0,
+                0,
+                size,
+                size,
+                size,
+                size
         );
     }
 
