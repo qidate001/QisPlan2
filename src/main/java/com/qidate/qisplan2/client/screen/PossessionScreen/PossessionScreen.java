@@ -42,6 +42,34 @@ public class PossessionScreen extends Screen {
     private static final int CURSE_CARD_HEIGHT = 58;
     private static final int CURSE_CARD_GAP = 6;
 
+    /**
+     * 诅咒卡片滚动区域的 X 坐标。
+     */
+    private static final int CURSE_CARD_AREA_X = 14;
+
+    /**
+     * 诅咒卡片滚动区域的 Y 坐标。
+     *
+     * <p>
+     * 基础状态信息绘制完成后，
+     * 从这里开始显示诅咒卡片。
+     */
+    private static final int CURSE_CARD_AREA_Y = 124;
+
+    /**
+     * 诅咒卡片滚动区域的宽度。
+     */
+    private static final int CURSE_CARD_AREA_WIDTH =
+            CURSE_CARD_WIDTH + 8;
+
+    /**
+     * 诅咒卡片滚动区域的高度。
+     */
+    private static final int CURSE_CARD_AREA_HEIGHT =
+            PANEL_HEIGHT
+                    - CURSE_CARD_AREA_Y
+                    - 12;
+
     private static final int GHOST_WORKBENCH_CARD_WIDTH = 172;
     private static final int GHOST_WORKBENCH_CARD_HEIGHT = 76;
 
@@ -93,6 +121,25 @@ public class PossessionScreen extends Screen {
                             - 3,
                     GHOST_CARD_AREA_Y,
                     GHOST_CARD_AREA_HEIGHT
+            );
+
+    /**
+     * 诅咒卡片滚动条。
+     *
+     * <p>
+     * 负责控制左侧诅咒卡片列表的滚动位置。
+     *
+     * <p>
+     * 与右侧驭鬼卡片使用独立的滚动位置，
+     * 两者互不影响。
+     */
+    private final PossessionScrollbar curseScrollbar =
+            new PossessionScrollbar(
+                    CURSE_CARD_AREA_X
+                            + CURSE_CARD_AREA_WIDTH
+                            - 3,
+                    CURSE_CARD_AREA_Y,
+                    CURSE_CARD_AREA_HEIGHT
             );
 
     private static final ResourceLocation HUMAN_BODY = body("human_body");
@@ -321,18 +368,41 @@ public class PossessionScreen extends Screen {
                 (mouseY - panelY) / panelScale;
 
         /**
-         * 状态页的驭鬼卡片滚动条。
+         * 状态页的滚动条。
          */
         if (currentPage == 0) {
 
-            int contentHeight =
+            /*
+             * =========================
+             * 诅咒卡片滚动条
+             * =========================
+             */
+            int curseContentHeight =
+                    getCurseCardContentHeight();
+
+            if (
+                    curseScrollbar.mouseClicked(
+                            localX,
+                            localY,
+                            curseContentHeight
+                    )
+            ) {
+                return true;
+            }
+
+            /*
+             * =========================
+             * 驭鬼卡片滚动条
+             * =========================
+             */
+            int ghostContentHeight =
                     getGhostCardContentHeight();
 
             if (
                     ghostScrollbar.mouseClicked(
                             localX,
                             localY,
-                            contentHeight
+                            ghostContentHeight
                     )
             ) {
                 return true;
@@ -535,6 +605,41 @@ public class PossessionScreen extends Screen {
                     (mouseY - panelY)
                             / panelScale;
 
+            /*
+             * =========================
+             * 诅咒卡片滚动
+             * =========================
+             */
+            boolean insideCurseArea =
+                    localMouseX >= CURSE_CARD_AREA_X
+                            && localMouseX <=
+                            CURSE_CARD_AREA_X
+                                    + CURSE_CARD_AREA_WIDTH
+                            && localMouseY >= CURSE_CARD_AREA_Y
+                            && localMouseY <=
+                            CURSE_CARD_AREA_Y
+                                    + CURSE_CARD_AREA_HEIGHT;
+
+            if (insideCurseArea) {
+
+                int contentHeight =
+                        getCurseCardContentHeight();
+
+                if (
+                        curseScrollbar.scroll(
+                                scrollY,
+                                contentHeight
+                        )
+                ) {
+                    return true;
+                }
+            }
+
+            /*
+             * =========================
+             * 驭鬼卡片滚动
+             * =========================
+             */
             boolean insideGhostArea =
                     localMouseX >= GHOST_CARD_AREA_X
                             && localMouseX <=
@@ -591,27 +696,38 @@ public class PossessionScreen extends Screen {
 
         /*
          * =========================================================
-         * 驭鬼卡片滚动条拖动
+         * 滚动条拖动
          * =========================================================
-         *
-         * 滚动条自身负责计算：
-         *
-         * 滑块位置
-         *     ↓
-         * 滚动比例
-         *     ↓
-         * 实际内容滚动距离
          */
         if (button == 0) {
 
-            int contentHeight =
+            /*
+             * 诅咒卡片滚动条。
+             */
+            int curseContentHeight =
+                    getCurseCardContentHeight();
+
+            if (
+                    curseScrollbar.mouseDragged(
+                            localX,
+                            localY,
+                            curseContentHeight
+                    )
+            ) {
+                return true;
+            }
+
+            /*
+             * 驭鬼卡片滚动条。
+             */
+            int ghostContentHeight =
                     getGhostCardContentHeight();
 
             if (
                     ghostScrollbar.mouseDragged(
                             localX,
                             localY,
-                            contentHeight
+                            ghostContentHeight
                     )
             ) {
                 return true;
@@ -654,11 +770,23 @@ public class PossessionScreen extends Screen {
 
         /*
          * =========================================================
-         * 驭鬼卡片滚动条
+         * 状态页滚动条
          * =========================================================
          */
         if (button == 0) {
 
+            /*
+             * 诅咒卡片滚动条。
+             */
+            if (
+                    curseScrollbar.mouseReleased()
+            ) {
+                return true;
+            }
+
+            /*
+             * 驭鬼卡片滚动条。
+             */
             if (
                     ghostScrollbar.mouseReleased()
             ) {
@@ -1799,13 +1927,68 @@ public class PossessionScreen extends Screen {
         );
     }
 
+    /**
+     * 绘制状态页中的诅咒卡片列表。
+     *
+     * <p>
+     * 诅咒卡片拥有独立的滚动区域，
+     * 不会影响右侧驭鬼卡片的滚动位置。
+     */
     private void drawCurseCards(
             GuiGraphics graphics,
             int x,
             int y
     ) {
 
-        int cardY = y;
+        int contentHeight =
+                getCurseCardContentHeight();
+
+        /*
+         * 防止诅咒数量减少后，
+         * 滚动位置停留在已经不存在的位置。
+         */
+        curseScrollbar.setScroll(
+                curseScrollbar.getScroll(),
+                contentHeight
+        );
+
+        /*
+         * =========================
+         * 裁剪诅咒卡片区域
+         * =========================
+         */
+        graphics.enableScissor(
+                panelX + (int) (
+                        CURSE_CARD_AREA_X
+                                * panelScale
+                ),
+                panelY + (int) (
+                        CURSE_CARD_AREA_Y
+                                * panelScale
+                ),
+                panelX + (int) (
+                        (
+                                CURSE_CARD_AREA_X
+                                        + CURSE_CARD_AREA_WIDTH
+                        )
+                                * panelScale
+                ),
+                panelY + (int) (
+                        (
+                                CURSE_CARD_AREA_Y
+                                        + CURSE_CARD_AREA_HEIGHT
+                        )
+                                * panelScale
+                )
+        );
+
+        /*
+         * 根据当前滚动位置，
+         * 计算第一张卡片的 Y 坐标。
+         */
+        int cardY =
+                CURSE_CARD_AREA_Y
+                        - (int) curseScrollbar.getScroll();
 
         for (
                 ClientCurseState.CurseData curse
@@ -1818,22 +2001,21 @@ public class PossessionScreen extends Screen {
                     );
 
             /*
-             * 未注册的诅咒：
-             *
-             * 暂时仍然显示，
-             * 使用默认压制图标。
+             * 已注册但禁止检测的诅咒不显示。
              */
+            if (
+                    clientType != null
+                            && !clientType.canDetect()
+            ) {
+                continue;
+            }
+
             ResourceLocation icon =
                     clientType != null
                             && clientType.icon() != null
                             ? clientType.icon()
                             : DEFAULT_SUPPRESSION_ICON;
 
-            /*
-             * 诅咒名称：
-             *
-             * curse.<namespace>.<path>
-             */
             Component name =
                     Component.translatable(
                             "curse."
@@ -1841,10 +2023,6 @@ public class PossessionScreen extends Screen {
                                     + "."
                                     + curse.type().getPath()
                     );
-
-            // =========================
-            // 背景
-            // =========================
 
             graphics.fill(
                     x,
@@ -1854,7 +2032,6 @@ public class PossessionScreen extends Screen {
                     0xD0181820
             );
 
-            // 顶部高光
             graphics.fill(
                     x + 6,
                     cardY + 1,
@@ -1863,27 +2040,17 @@ public class PossessionScreen extends Screen {
                     0x40FFFFFF
             );
 
-            // =========================
-            // 图标
-            // =========================
-
-            int iconSize = 18;
-
             graphics.blit(
                     icon,
                     x + 6,
                     cardY + 6,
                     0,
                     0,
-                    iconSize,
-                    iconSize,
-                    iconSize,
-                    iconSize
+                    ICON_SIZE,
+                    ICON_SIZE,
+                    ICON_SIZE,
+                    ICON_SIZE
             );
-
-            // =========================
-            // 名称
-            // =========================
 
             graphics.drawString(
                     this.font,
@@ -1892,10 +2059,6 @@ public class PossessionScreen extends Screen {
                     cardY + 6,
                     0xFFFFFFFF
             );
-
-            // =========================
-            // 强度
-            // =========================
 
             graphics.drawString(
                     this.font,
@@ -1914,10 +2077,6 @@ public class PossessionScreen extends Screen {
                     cardY + 24,
                     0xFFFFFFFF
             );
-
-            // =========================
-            // 持续时间
-            // =========================
 
             graphics.drawString(
                     this.font,
@@ -1941,6 +2100,18 @@ public class PossessionScreen extends Screen {
                     CURSE_CARD_HEIGHT
                             + CURSE_CARD_GAP;
         }
+
+        graphics.disableScissor();
+
+        /*
+         * =========================
+         * 绘制诅咒滚动条
+         * =========================
+         */
+        curseScrollbar.render(
+                graphics,
+                contentHeight
+        );
     }
 
     private void drawDraggingSuppression(
@@ -2451,6 +2622,69 @@ public class PossessionScreen extends Screen {
     }
 
 
+
+    /**
+     * 获取当前状态页实际可显示的诅咒数量。
+     *
+     * <p>
+     * 未注册的诅咒默认显示。
+     *
+     * <p>
+     * 已注册但禁止检测的诅咒不会显示。
+     */
+    private int getVisibleCurseCount() {
+
+        int count = 0;
+
+        for (
+                ClientCurseState.CurseData curse
+                : ClientCurseState.getAll()
+        ) {
+
+            CurseClientRegistry.CurseClientType clientType =
+                    CurseClientRegistry.get(
+                            curse.type()
+                    );
+
+            /*
+             * 已注册且禁止检测的诅咒不显示。
+             */
+            if (
+                    clientType != null
+                            && !clientType.canDetect()
+            ) {
+                continue;
+            }
+
+            count++;
+        }
+
+        return count;
+    }
+
+    /**
+     * 获取诅咒卡片列表的完整内容高度。
+     *
+     * <p>
+     * 这个高度包含所有实际可显示的诅咒卡片，
+     * 用于计算最大滚动距离。
+     */
+    private int getCurseCardContentHeight() {
+
+        int count =
+                getVisibleCurseCount();
+
+        if (count <= 0) {
+            return 0;
+        }
+
+        int cardStep =
+                CURSE_CARD_HEIGHT
+                        + CURSE_CARD_GAP;
+
+        return count * cardStep
+                - CURSE_CARD_GAP;
+    }
 
     private int getWorkbenchCardX(int index) {
 
