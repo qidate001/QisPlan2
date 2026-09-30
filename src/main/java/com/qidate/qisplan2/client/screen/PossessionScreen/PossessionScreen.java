@@ -1,4 +1,4 @@
-package com.qidate.qisplan2.client.screen;
+package com.qidate.qisplan2.client.screen.PossessionScreen;
 
 import com.qidate.qisplan2.QisPlan2;
 import com.qidate.qisplan2.client.curse.ClientCurseState;
@@ -67,11 +67,6 @@ public class PossessionScreen extends Screen {
 
 
 
-    private double ghostCardScroll = 0.0D;
-
-    private boolean draggingGhostScrollbar = false;
-
-    private double draggingGhostScrollbarOffset = 0.0D;
 
     private static final int GHOST_CARD_AREA_X =
             PANEL_WIDTH - CARD_WIDTH - 20;
@@ -83,6 +78,22 @@ public class PossessionScreen extends Screen {
 
     private static final int GHOST_CARD_AREA_HEIGHT =
             PANEL_HEIGHT - GHOST_CARD_AREA_Y - 12;
+
+
+    /**
+     * 驭鬼卡片滚动条。
+     *
+     * <p>
+     * 负责控制右侧驭鬼卡片列表的滚动位置。
+     */
+    private final PossessionScrollbar ghostScrollbar =
+            new PossessionScrollbar(
+                    GHOST_CARD_AREA_X
+                            + GHOST_CARD_AREA_WIDTH
+                            - 3,
+                    GHOST_CARD_AREA_Y,
+                    GHOST_CARD_AREA_HEIGHT
+            );
 
     private static final ResourceLocation HUMAN_BODY = body("human_body");
 
@@ -309,57 +320,28 @@ public class PossessionScreen extends Screen {
         double localY =
                 (mouseY - panelY) / panelScale;
 
-        if (currentPage == 0 && button == 0) {
+        /**
+         * 状态页的驭鬼卡片滚动条。
+         */
+        if (currentPage == 0) {
 
             int contentHeight =
                     getGhostCardContentHeight();
 
             if (
-                    contentHeight >
-                            GHOST_CARD_AREA_HEIGHT
+                    ghostScrollbar.mouseClicked(
+                            localX,
+                            localY,
+                            contentHeight
+                    )
             ) {
-
-                int scrollbarX =
-                        GHOST_CARD_AREA_X
-                                + GHOST_CARD_AREA_WIDTH
-                                - 4;
-
-                int scrollbarY =
-                        GHOST_CARD_AREA_Y;
-
-                int thumbHeight =
-                        getGhostScrollbarThumbHeight(
-                                contentHeight
-                        );
-
-                int thumbOffset =
-                        getGhostScrollbarThumbOffset(
-                                contentHeight
-                        );
-
-                int thumbY =
-                        scrollbarY
-                                + thumbOffset;
-
-                if (
-                        localX >= scrollbarX - 4
-                                && localX <= scrollbarX + 7
-                                && localY >= thumbY
-                                && localY <= thumbY + thumbHeight
-                ) {
-
-                    draggingGhostScrollbar = true;
-
-                    draggingGhostScrollbarOffset =
-                            localY - thumbY;
-
-                    return true;
-                }
+                return true;
             }
         }
 
-
-
+        /*
+         * 灵异页的压制交互。
+         */
         if (
                 currentPage == 1
                         && button == 0
@@ -546,10 +528,12 @@ public class PossessionScreen extends Screen {
         if (currentPage == 0) {
 
             double localMouseX =
-                    (mouseX - panelX) / panelScale;
+                    (mouseX - panelX)
+                            / panelScale;
 
             double localMouseY =
-                    (mouseY - panelY) / panelScale;
+                    (mouseY - panelY)
+                            / panelScale;
 
             boolean insideGhostArea =
                     localMouseX >= GHOST_CARD_AREA_X
@@ -566,22 +550,14 @@ public class PossessionScreen extends Screen {
                 int contentHeight =
                         getGhostCardContentHeight();
 
-                int maxScroll =
-                        Math.max(
-                                0,
+                if (
+                        ghostScrollbar.scroll(
+                                scrollY,
                                 contentHeight
-                                        - GHOST_CARD_AREA_HEIGHT
-                        );
-
-                ghostCardScroll =
-                        Math.clamp(
-                                ghostCardScroll
-                                        - scrollY * 20.0D,
-                                0.0D,
-                                (double) maxScroll
-                        );
-
-                return true;
+                        )
+                ) {
+                    return true;
+                }
             }
         }
 
@@ -602,84 +578,54 @@ public class PossessionScreen extends Screen {
             double dragY
     ) {
 
-        // =========================================================
-        // 滚动条拖动
-        // =========================================================
+        /*
+         * 将屏幕坐标转换为面板局部坐标。
+         */
+        double localX =
+                (mouseX - panelX)
+                        / panelScale;
 
-        if (
-                draggingGhostScrollbar
-                        && button == 0
-        ) {
+        double localY =
+                (mouseY - panelY)
+                        / panelScale;
 
-            double localX =
-                    (mouseX - panelX)
-                            / panelScale;
-
-            double localY =
-                    (mouseY - panelY)
-                            / panelScale;
+        /*
+         * =========================================================
+         * 驭鬼卡片滚动条拖动
+         * =========================================================
+         *
+         * 滚动条自身负责计算：
+         *
+         * 滑块位置
+         *     ↓
+         * 滚动比例
+         *     ↓
+         * 实际内容滚动距离
+         */
+        if (button == 0) {
 
             int contentHeight =
                     getGhostCardContentHeight();
 
-            int thumbHeight =
-                    getGhostScrollbarThumbHeight(
-                            contentHeight
-                    );
-
-            int maxThumbOffset =
-                    GHOST_CARD_AREA_HEIGHT
-                            - thumbHeight;
-
-            int maxScroll =
-                    Math.max(
-                            0,
-                            contentHeight
-                                    - GHOST_CARD_AREA_HEIGHT
-                    );
-
             if (
-                    maxThumbOffset > 0
-                            && maxScroll > 0
+                    ghostScrollbar.mouseDragged(
+                            localX,
+                            localY,
+                            contentHeight
+                    )
             ) {
-
-                double thumbOffset =
-                        localY
-                                - GHOST_CARD_AREA_Y
-                                - draggingGhostScrollbarOffset;
-
-                thumbOffset =
-                        Math.clamp(
-                                thumbOffset,
-                                0.0D,
-                                (double) maxThumbOffset
-                        );
-
-                ghostCardScroll =
-                        thumbOffset
-                                / maxThumbOffset
-                                * maxScroll;
+                return true;
             }
-
-            return true;
         }
 
         // =========================================================
-        // 原来的压制拖动
+        // 压制拖动
         // =========================================================
 
         if (
                 draggingSuppression
                         && button == 0
         ) {
-
-            double localX =
-                    (mouseX - panelX)
-                            / panelScale;
-
-            double localY =
-                    (mouseY - panelY)
-                            / panelScale;
 
             draggingMouseX =
                     (int) localX;
@@ -706,15 +652,18 @@ public class PossessionScreen extends Screen {
             int button
     ) {
 
-        if (
-                draggingGhostScrollbar
-                        && button == 0
-        ) {
+        /*
+         * =========================================================
+         * 驭鬼卡片滚动条
+         * =========================================================
+         */
+        if (button == 0) {
 
-            draggingGhostScrollbar = false;
-            draggingGhostScrollbarOffset = 0.0D;
-
-            return true;
+            if (
+                    ghostScrollbar.mouseReleased()
+            ) {
+                return true;
+            }
         }
 
         if (
@@ -1510,23 +1459,11 @@ public class PossessionScreen extends Screen {
 
         int rightX = PANEL_WIDTH - CARD_WIDTH - 12;
 
-        int cardStep = CARD_HEIGHT + 8;
+        int cardStep =
+                CARD_HEIGHT + 8;
 
         int contentHeight =
                 ghosts.size() * cardStep - 8;
-
-        int maxScroll =
-                Math.max(
-                        0,
-                        contentHeight - GHOST_CARD_AREA_HEIGHT
-                );
-
-        ghostCardScroll =
-                Math.clamp(
-                        ghostCardScroll,
-                        0.0D,
-                        (double) maxScroll
-                );
 
         // =========================
         // 裁剪鬼卡片区域
@@ -1539,9 +1476,13 @@ public class PossessionScreen extends Screen {
                 panelY + (int) ((GHOST_CARD_AREA_Y + GHOST_CARD_AREA_HEIGHT) * panelScale)
         );
 
+        /*
+         * 根据滚动条当前位置，
+         * 计算第一张鬼卡片的 Y 坐标。
+         */
         int rightY =
                 GHOST_CARD_AREA_Y
-                        - (int) ghostCardScroll;
+                        - (int) ghostScrollbar.getScroll();
 
         for (var entry : ghosts.entrySet()) {
 
@@ -1558,11 +1499,14 @@ public class PossessionScreen extends Screen {
 
         graphics.disableScissor();
 
-        // =========================
-        // 滚动条
-        // =========================
-
-        drawGhostCardScrollbar(
+        /*
+         * 绘制驭鬼卡片滚动条。
+         *
+         * <p>
+         * 当内容没有超出可视区域时，
+         * 滚动条会自动隐藏。
+         */
+        ghostScrollbar.render(
                 graphics,
                 contentHeight
         );
@@ -2194,66 +2138,6 @@ public class PossessionScreen extends Screen {
         }
     }
 
-    private void drawGhostCardScrollbar(
-            GuiGraphics graphics,
-            int contentHeight
-    ) {
-
-        if (
-                contentHeight <=
-                        GHOST_CARD_AREA_HEIGHT
-        ) {
-            return;
-        }
-
-        int scrollbarX =
-                GHOST_CARD_AREA_X
-                        + GHOST_CARD_AREA_WIDTH
-                        - 4;
-
-        int scrollbarY =
-                GHOST_CARD_AREA_Y;
-
-        int scrollbarHeight =
-                GHOST_CARD_AREA_HEIGHT;
-
-        // =========================
-        // 滚动槽
-        // =========================
-
-        graphics.fill(
-                scrollbarX,
-                scrollbarY,
-                scrollbarX + 3,
-                scrollbarY + scrollbarHeight,
-                0x5533333D
-        );
-
-        // =========================
-        // 滑块
-        // =========================
-
-        int thumbHeight =
-                getGhostScrollbarThumbHeight(
-                        contentHeight
-                );
-
-        int thumbOffset =
-                getGhostScrollbarThumbOffset(
-                        contentHeight
-                );
-
-        graphics.fill(
-                scrollbarX,
-                scrollbarY + thumbOffset,
-                scrollbarX + 3,
-                scrollbarY
-                        + thumbOffset
-                        + thumbHeight,
-                0xFF9999A8
-        );
-    }
-
     private int getGhostCardContentHeight() {
 
         Minecraft minecraft =
@@ -2275,61 +2159,6 @@ public class PossessionScreen extends Screen {
                         .size()
                         * cardStep
                         - 8
-        );
-    }
-
-    private int getGhostScrollbarThumbHeight(
-            int contentHeight
-    ) {
-
-        if (
-                contentHeight <=
-                        GHOST_CARD_AREA_HEIGHT
-        ) {
-            return GHOST_CARD_AREA_HEIGHT;
-        }
-
-        double visibleRatio =
-                (double) GHOST_CARD_AREA_HEIGHT
-                        / contentHeight;
-
-        return Math.max(
-                18,
-                (int) (
-                        GHOST_CARD_AREA_HEIGHT
-                                * visibleRatio
-                )
-        );
-    }
-
-    private int getGhostScrollbarThumbOffset(
-            int contentHeight
-    ) {
-
-        int thumbHeight =
-                getGhostScrollbarThumbHeight(
-                        contentHeight
-                );
-
-        int maxThumbOffset =
-                GHOST_CARD_AREA_HEIGHT
-                        - thumbHeight;
-
-        int maxScroll =
-                Math.max(
-                        0,
-                        contentHeight
-                                - GHOST_CARD_AREA_HEIGHT
-                );
-
-        if (maxScroll <= 0) {
-            return 0;
-        }
-
-        return (int) (
-                ghostCardScroll
-                        / maxScroll
-                        * maxThumbOffset
         );
     }
 
