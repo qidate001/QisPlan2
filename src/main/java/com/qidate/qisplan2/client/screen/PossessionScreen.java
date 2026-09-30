@@ -1,6 +1,8 @@
 package com.qidate.qisplan2.client.screen;
 
 import com.qidate.qisplan2.QisPlan2;
+import com.qidate.qisplan2.client.curse.ClientCurseState;
+import com.qidate.qisplan2.client.curse.CurseClientRegistry;
 import com.qidate.qisplan2.client.key.ModKeyMappings;
 import com.qidate.qisplan2.core.ModAttachments;
 import com.qidate.qisplan2.core.QisConfig;
@@ -35,6 +37,10 @@ public class PossessionScreen extends Screen {
 
     private static final int CARD_WIDTH = 145;
     private static final int CARD_HEIGHT = 64;
+
+    private static final int CURSE_CARD_WIDTH = 150;
+    private static final int CURSE_CARD_HEIGHT = 58;
+    private static final int CURSE_CARD_GAP = 6;
 
     private static final int GHOST_WORKBENCH_CARD_WIDTH = 172;
     private static final int GHOST_WORKBENCH_CARD_HEIGHT = 76;
@@ -1384,6 +1390,14 @@ public class PossessionScreen extends Screen {
                 0xFFFFFFFF
         );
 
+        topY += 18;
+
+        drawCurseCards(
+                graphics,
+                leftX,
+                topY
+        );
+
 
         // =========================
         // 中央：人体图
@@ -1839,6 +1853,150 @@ public class PossessionScreen extends Screen {
                 x,
                 y
         );
+    }
+
+    private void drawCurseCards(
+            GuiGraphics graphics,
+            int x,
+            int y
+    ) {
+
+        int cardY = y;
+
+        for (
+                ClientCurseState.CurseData curse
+                : ClientCurseState.getAll()
+        ) {
+
+            CurseClientRegistry.CurseClientType clientType =
+                    CurseClientRegistry.get(
+                            curse.type()
+                    );
+
+            /*
+             * 未注册的诅咒：
+             *
+             * 暂时仍然显示，
+             * 使用默认压制图标。
+             */
+            ResourceLocation icon =
+                    clientType != null
+                            && clientType.icon() != null
+                            ? clientType.icon()
+                            : DEFAULT_SUPPRESSION_ICON;
+
+            /*
+             * 诅咒名称：
+             *
+             * curse.<namespace>.<path>
+             */
+            Component name =
+                    Component.translatable(
+                            "curse."
+                                    + curse.type().getNamespace()
+                                    + "."
+                                    + curse.type().getPath()
+                    );
+
+            // =========================
+            // 背景
+            // =========================
+
+            graphics.fill(
+                    x,
+                    cardY,
+                    x + CURSE_CARD_WIDTH,
+                    cardY + CURSE_CARD_HEIGHT,
+                    0xD0181820
+            );
+
+            // 顶部高光
+            graphics.fill(
+                    x + 6,
+                    cardY + 1,
+                    x + CURSE_CARD_WIDTH - 6,
+                    cardY + 2,
+                    0x40FFFFFF
+            );
+
+            // =========================
+            // 图标
+            // =========================
+
+            int iconSize = 18;
+
+            graphics.blit(
+                    icon,
+                    x + 6,
+                    cardY + 6,
+                    0,
+                    0,
+                    iconSize,
+                    iconSize,
+                    iconSize,
+                    iconSize
+            );
+
+            // =========================
+            // 名称
+            // =========================
+
+            graphics.drawString(
+                    this.font,
+                    name,
+                    x + 30,
+                    cardY + 6,
+                    0xFFFFFFFF
+            );
+
+            // =========================
+            // 强度
+            // =========================
+
+            graphics.drawString(
+                    this.font,
+                    "强度",
+                    x + 30,
+                    cardY + 24,
+                    0xFFAAAAAA
+            );
+
+            graphics.drawString(
+                    this.font,
+                    String.valueOf(
+                            curse.strength()
+                    ),
+                    x + 90,
+                    cardY + 24,
+                    0xFFFFFFFF
+            );
+
+            // =========================
+            // 持续时间
+            // =========================
+
+            graphics.drawString(
+                    this.font,
+                    "持续时间",
+                    x + 30,
+                    cardY + 39,
+                    0xFFAAAAAA
+            );
+
+            graphics.drawString(
+                    this.font,
+                    formatCurseDuration(
+                            curse.remainingTicks()
+                    ),
+                    x + 90,
+                    cardY + 39,
+                    0xFFFFFFFF
+            );
+
+            cardY +=
+                    CURSE_CARD_HEIGHT
+                            + CURSE_CARD_GAP;
+        }
     }
 
     private void drawDraggingSuppression(
@@ -2729,6 +2887,30 @@ public class PossessionScreen extends Screen {
 
         return sourceAbility.canSuppress(
                 targetAbility
+        );
+    }
+
+    private String formatCurseDuration(
+            int ticks
+    ) {
+
+        if (ticks < 0) {
+            return "∞";
+        }
+
+        int totalSeconds =
+                ticks / 20;
+
+        int minutes =
+                totalSeconds / 60;
+
+        int seconds =
+                totalSeconds % 60;
+
+        return String.format(
+                "%02d:%02d",
+                minutes,
+                seconds
         );
     }
 
