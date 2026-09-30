@@ -7,37 +7,38 @@ import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.resources.ResourceLocation;
 
-public record SetGhostTombstoneInscriptionPayload(
+public record StartGhostTombstoneInscriptionPayload(
         BlockPos pos,
         String inscription
 ) implements CustomPacketPayload {
 
     public static final Type<
-            SetGhostTombstoneInscriptionPayload
+            StartGhostTombstoneInscriptionPayload
             > TYPE =
             new Type<>(
                     ResourceLocation.fromNamespaceAndPath(
                             "qisplan2",
-                            "set_ghost_tombstone_inscription"
+                            "start_ghost_tombstone_inscription"
                     )
             );
 
     public static final StreamCodec<
             RegistryFriendlyByteBuf,
-            SetGhostTombstoneInscriptionPayload
+            StartGhostTombstoneInscriptionPayload
             > STREAM_CODEC =
             StreamCodec.composite(
                     BlockPos.STREAM_CODEC,
-                    SetGhostTombstoneInscriptionPayload::pos,
+                    StartGhostTombstoneInscriptionPayload::pos,
 
                     ByteBufCodecs.STRING_UTF8,
-                    SetGhostTombstoneInscriptionPayload::inscription,
+                    StartGhostTombstoneInscriptionPayload::inscription,
 
-                    SetGhostTombstoneInscriptionPayload::new
+                    StartGhostTombstoneInscriptionPayload::new
             );
 
     @Override
-    public Type<? extends SetGhostTombstoneInscriptionPayload> type() {
+    public Type<? extends StartGhostTombstoneInscriptionPayload>
+    type() {
         return TYPE;
     }
 }

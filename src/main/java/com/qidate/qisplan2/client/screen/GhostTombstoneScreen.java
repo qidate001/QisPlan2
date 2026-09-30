@@ -181,29 +181,36 @@ public class GhostTombstoneScreen
         String text =
                 inscriptionBox.getValue();
 
-        /*
-         * 根据刻字内容计算所需时间。
-         */
         inscriptionDuration =
                 calculateInscriptionDuration(
                         text
                 );
 
+        if (inscriptionDuration <= 0) {
+            return;
+        }
+
         /*
-         * 从 0 开始计时。
+         * ========================================================
+         * 通知服务器开始真正的刻字过程。
+         * ========================================================
+         */
+        GhostTombstoneNetwork.sendStartInscription(
+                blockPos,
+                text
+        );
+
+        /*
+         * ========================================================
+         * 客户端开始显示进度。
+         * ========================================================
          */
         inscriptionTicks = 0;
 
         inscribing = true;
 
-        /*
-         * 刻字过程中禁止继续修改文字。
-         */
         inscriptionBox.setEditable(false);
 
-        /*
-         * 取消输入框焦点。
-         */
         inscriptionBox.setFocused(false);
     }
 
@@ -213,19 +220,10 @@ public class GhostTombstoneScreen
      */
     private void finishInscription() {
 
-        String text =
-                inscriptionBox.getValue();
-
         /*
-         * 发送到服务器保存。
-         */
-        GhostTombstoneNetwork.sendSetInscription(
-                blockPos,
-                text
-        );
-
-        /*
-         * 关闭 GUI。
+         * 服务器负责真正保存刻字。
+         *
+         * 客户端这里只关闭 GUI。
          */
         onClose();
     }
@@ -247,44 +245,11 @@ public class GhostTombstoneScreen
 
         /*
          * ========================================================
-         * 刻字音效
-         * ========================================================
-         */
-        if (
-                inscriptionTicks
-                        % INSCRIPTION_SOUND_INTERVAL
-                        == 0
-        ) {
-
-            if (minecraft != null
-                    && minecraft.level != null) {
-
-                minecraft.level.playLocalSound(
-                        blockPos.getX() + 0.5,
-                        blockPos.getY() + 0.5,
-                        blockPos.getZ() + 0.5,
-                        ModSounds.GHOST_TOMBSTONE_INSCRIBE.get(),
-                        SoundSource.BLOCKS,
-                        1.0F,
-                        1.0F,
-                        false
-                );
-
-                QisPlan2.LOGGER.info("play");
-            }
-        }
-
-
-        /*
-         * ========================================================
          * 完成
          * ========================================================
          */
 
-        if (
-                inscriptionTicks
-                        >= inscriptionDuration
-        ) {
+        if (inscriptionTicks >= inscriptionDuration) {
 
             finishInscription();
         }

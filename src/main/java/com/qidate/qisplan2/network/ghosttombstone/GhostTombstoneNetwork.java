@@ -2,18 +2,12 @@ package com.qidate.qisplan2.network.ghosttombstone;
 
 import com.qidate.qisplan2.block.entity.GhostTombstoneBlockEntity;
 import com.qidate.qisplan2.client.screen.GhostTombstoneScreen;
-import com.qidate.qisplan2.ghost.curse.Curse;
-import com.qidate.qisplan2.ghost.curse.CurseManager;
-import com.qidate.qisplan2.ghost.curse.CurseRegistry;
-import com.qidate.qisplan2.ghost.curse.CurseType;
-import com.qidate.qisplan2.ghost.curse.type.ghosttombstone.GhostTombstoneCurseSource;
-import com.qidate.qisplan2.ghost.curse.type.ghosttombstone.GhostTombstoneCurseType;
+import com.qidate.qisplan2.ghost.tombstone.GhostTombstoneInscriptionSystem;
 import com.qidate.qisplan2.network.payload.OpenGhostTombstoneScreenPayload;
-import com.qidate.qisplan2.network.payload.SetGhostTombstoneInscriptionPayload;
 
+import com.qidate.qisplan2.network.payload.StartGhostTombstoneInscriptionPayload;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
-import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerPlayer;
 import net.neoforged.neoforge.network.PacketDistributor;
 import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent;
@@ -60,17 +54,17 @@ public final class GhostTombstoneNetwork {
          */
 
         registrar.playToServer(
-                SetGhostTombstoneInscriptionPayload.TYPE,
-                SetGhostTombstoneInscriptionPayload.STREAM_CODEC,
-                GhostTombstoneNetwork::handleSetInscription
+                StartGhostTombstoneInscriptionPayload.TYPE,
+                StartGhostTombstoneInscriptionPayload.STREAM_CODEC,
+                GhostTombstoneNetwork::handleStartInscription
         );
     }
 
     /**
      * 服务端处理刻字。
      */
-    private static void handleSetInscription(
-            SetGhostTombstoneInscriptionPayload payload,
+    private static void handleStartInscription(
+            StartGhostTombstoneInscriptionPayload payload,
             IPayloadContext context
     ) {
 
@@ -83,7 +77,9 @@ public final class GhostTombstoneNetwork {
             }
 
             if (!(player.level()
-                    .getBlockEntity(payload.pos())
+                    .getBlockEntity(
+                            payload.pos()
+                    )
                     instanceof GhostTombstoneBlockEntity blockEntity)) {
 
                 return;
@@ -102,124 +98,26 @@ public final class GhostTombstoneNetwork {
             }
 
             /*
-             * ========================================================
-             * 先移除这块墓碑原本产生的诅咒。
-             * ========================================================
-             *
-             * 无论新刻的是：
-             *
-             * 1. 原来的名字
-             * 2. 另一个玩家的名字
-             * 3. 空白
-             * 4. 无效名字
-             *
-             * 都先清理旧诅咒。
-             *
-             * 这样可以保证：
-             *
-             * 一块墓碑最多只有一个诅咒。
+             * 空白文字没有实际刻字内容。
              */
-            CurseManager.removeBySource(
-                    player.server,
-                    curse -> {
-
-                        if (!(curse.getSource()
-                                instanceof GhostTombstoneCurseSource source)) {
-
-                            return false;
-                        }
-
-                        return source.dimension().equals(
-                                player.level().dimension()
-                        )
-                                && source.pos().equals(
-                                payload.pos()
-                        );
-                    }
-            );
-
-            /*
-             * ========================================================
-             * 保存新的刻字。
-             * ========================================================
-             */
-            blockEntity.setInscription(
+            if (
                     payload.inscription()
-            );
+                            .isBlank()
+            ) {
 
-            /*
-             * ========================================================
-             * 根据新的名字创建诅咒。
-             * ========================================================
-             *
-             * 只有当刻下的名字对应一个在线玩家时，
-             * 才会产生新的鬼墓碑诅咒。
-             */
-            ServerPlayer target =
-                    player.server
-                            .getPlayerList()
-                            .getPlayerByName(
-                                    payload.inscription()
-                            );
-
-            if (target == null) {
-                return;
-            }
-
-            /*
-             * 从 CurseRegistry 中获取墓碑诅咒的具体ID
-             */
-            CurseType curseType =
-                    CurseRegistry.get(
-                            GhostTombstoneCurseType.ID
-                    );
-
-            if (curseType == null) {
                 return;
             }
 
             /*
              * ========================================================
-             * 根据新的名字创建诅咒。
+             * 开始服务器刻字过程
              * ========================================================
-             *
-             * 只有当刻下的名字对应一个在线玩家时，
-             * 才会产生新的鬼墓碑诅咒。
              */
-
-            /*
-             * 我要创建一个诅咒，将诅咒具体需要的数据包装一下
-             */
-            GhostTombstoneCurseSource source =
-                    new GhostTombstoneCurseSource(
-                            player.level().dimension(),
-                            payload.pos()
-                    );
-
-            /*
-             * 让 CurseType 创建诅咒实例
-             */
-            CompoundTag initialState =
-                    new CompoundTag();
-
-            initialState.putInt(
-                    "Strength",
-                    1
-            );
-
-            Curse curse =
-                    curseType.create(
-                            target.getUUID(),
-                            source,
-                            initialState
-                    );
-
-            /*
-             * 将诅咒实例提交给 CurseManager 运行管理
-             */
-            CurseManager.add(
+            GhostTombstoneInscriptionSystem.start(
                     player.server,
-                    curse
+                    player,
+                    blockEntity,
+                    payload.inscription()
             );
         });
     }
@@ -249,13 +147,13 @@ public final class GhostTombstoneNetwork {
      * ========================================================
      */
 
-    public static void sendSetInscription(
+    public static void sendStartInscription(
             BlockPos pos,
             String inscription
     ) {
 
         PacketDistributor.sendToServer(
-                new SetGhostTombstoneInscriptionPayload(
+                new StartGhostTombstoneInscriptionPayload(
                         pos,
                         inscription
                 )
