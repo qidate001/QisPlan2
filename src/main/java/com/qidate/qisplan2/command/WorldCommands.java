@@ -297,7 +297,7 @@ public final class WorldCommands {
             source.sendSuccess(
                     () -> Component.translatable(
                             "command.qisplan2.split_structure.success",
-                            sourceId,
+                            sourceId.toString(),
                             count
                     ),
                     true
@@ -316,7 +316,7 @@ public final class WorldCommands {
             source.sendFailure(
                     Component.translatable(
                             "command.qisplan2.split_structure.failure",
-                            sourceId,
+                            sourceId.toString(),
                             e.getMessage()
                     )
             );

@@ -85,6 +85,33 @@ public class ModBlocks {
                     ).build(null)
             );
 
+    // 鬼坟场生成占位符方块
+    public static final DeferredHolder<Block, GhostGraveyardMarkerBlock> GHOST_GRAVEYARD_MARKER =
+            BLOCKS.register(
+                    "ghost_graveyard_marker",
+                    () -> new GhostGraveyardMarkerBlock(
+                            BlockBehaviour.Properties.of()
+                                    .noLootTable()
+                                    .noOcclusion()
+                                    .strength(
+                                            -1.0F,
+                                            3600000.0F
+                                    )
+                    )
+            );
+
+    public static final DeferredHolder<
+            BlockEntityType<?>,
+            BlockEntityType<GhostGraveyardMarkerBlockEntity>
+            > GHOST_GRAVEYARD_MARKER_BLOCK_ENTITY =
+            BLOCK_ENTITY_TYPES.register(
+                    "ghost_graveyard_marker",
+                    () -> BlockEntityType.Builder.of(
+                            GhostGraveyardMarkerBlockEntity::new,
+                            GHOST_GRAVEYARD_MARKER.get()
+                    ).build(null)
+            );
+
     // 分割维度离开方块
     public static final DeferredBlock<PartitionExitBlock>
             PARTITION_EXIT =

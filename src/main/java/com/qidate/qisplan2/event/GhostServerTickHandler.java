@@ -6,6 +6,9 @@ import com.qidate.qisplan2.ghost.curse.CurseManager;
 import com.qidate.qisplan2.ghost.possession.ability.ghostdoor.knocking.KnockingGhostDoorSystem;
 import com.qidate.qisplan2.ghost.tombstone.GhostTombstoneInscriptionSystem;
 import com.qidate.qisplan2.network.curse.CurseNetwork;
+import com.qidate.qisplan2.structure.GhostGraveyardGenerationManager;
+import com.qidate.qisplan2.structure.GhostLakeGenerationManager;
+import com.qidate.qisplan2.structure.GhostManorGenerationManager;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.tick.ServerTickEvent;
@@ -71,5 +74,22 @@ public final class GhostServerTickHandler {
                 CurseNetwork.sync(player);
             }
         }
+
+
+
+        /*
+         * 鬼庄园生成任务。
+         */
+        GhostManorGenerationManager.tick();
+
+        /*
+         * 鬼湖生成任务。
+         */
+        GhostLakeGenerationManager.tick();
+
+        /*
+         * 鬼坟场生成任务。
+         */
+        GhostGraveyardGenerationManager.tick();
     }
 }
