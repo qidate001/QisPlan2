@@ -3,6 +3,8 @@ package com.qidate.qisplan2.block;
 import com.mojang.serialization.MapCodec;
 import com.qidate.qisplan2.block.entity.GhostTombstoneBlockEntity;
 import com.qidate.qisplan2.core.ModTags;
+import com.qidate.qisplan2.ghost.curse.CurseManager;
+import com.qidate.qisplan2.ghost.curse.type.ghosttombstone.GhostTombstoneCurseSource;
 import com.qidate.qisplan2.network.ghosttombstone.GhostTombstoneNetwork;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -390,45 +392,6 @@ public class GhostTombstoneBlock
         );
     }
 
-    @Override
-    public BlockState playerWillDestroy(
-            Level level,
-            BlockPos pos,
-            BlockState state,
-            Player player
-    ) {
-
-        if (!level.isClientSide()) {
-
-            if (state.getValue(PART)
-                    == Part.LOWER) {
-
-                destroyOtherHalf(
-                        level,
-                        pos,
-                        state,
-                        true
-                );
-
-            } else {
-
-                destroyOtherHalf(
-                        level,
-                        pos,
-                        state,
-                        false
-                );
-            }
-        }
-
-        return super.playerWillDestroy(
-                level,
-                pos,
-                state,
-                player
-        );
-    }
-
     private void destroyOtherHalf(
             Level level,
             BlockPos pos,
@@ -492,5 +455,80 @@ public class GhostTombstoneBlock
                             ? UPPER_NORTH_SHAPE
                             : LOWER_NORTH_SHAPE;
         };
+    }
+
+    @Override
+    public BlockState playerWillDestroy(
+            Level level,
+            BlockPos pos,
+            BlockState state,
+            Player player
+    ) {
+
+        if (!level.isClientSide()) {
+
+            /*
+             * ========================================================
+             * 清除对应的墓碑诅咒
+             * ========================================================
+             *
+             * 无论破坏的是上半部分还是下半部分，
+             * 都要找到真正保存墓碑数据的下半部分。
+             */
+            BlockPos dataPos =
+                    getDataPos(
+                            pos,
+                            state
+                    );
+
+            CurseManager.removeBySource(
+                    level.getServer(),
+                    curse -> {
+
+                        if (!(curse.getSource()
+                                instanceof GhostTombstoneCurseSource source)) {
+                            return false;
+                        }
+
+                        return source.dimension()
+                                .equals(level.dimension())
+                                && source.pos()
+                                .equals(dataPos);
+                    }
+            );
+
+            /*
+             * ========================================================
+             * 删除墓碑另一半
+             * ========================================================
+             */
+
+            if (state.getValue(PART)
+                    == Part.LOWER) {
+
+                destroyOtherHalf(
+                        level,
+                        pos,
+                        state,
+                        true
+                );
+
+            } else {
+
+                destroyOtherHalf(
+                        level,
+                        pos,
+                        state,
+                        false
+                );
+            }
+        }
+
+        return super.playerWillDestroy(
+                level,
+                pos,
+                state,
+                player
+        );
     }
 }
