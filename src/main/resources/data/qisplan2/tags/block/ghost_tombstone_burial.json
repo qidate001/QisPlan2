@@ -7,6 +7,7 @@
     "minecraft:rooted_dirt",
     "minecraft:podzol",
     "minecraft:mycelium",
-    "minecraft:mud"
+    "minecraft:mud",
+    "qisplan2:ghost_grave_soil"
   ]
 }

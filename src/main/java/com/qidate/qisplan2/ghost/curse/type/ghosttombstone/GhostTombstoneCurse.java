@@ -298,7 +298,7 @@ public class GhostTombstoneCurse
          * 鬼墓碑是两格高。
          *
          * tombstonePos 为下半部分，
-         * 因此墓碑正下方就是 Y - 1。
+         * 因此墓碑正下方就是 Y - 2。
          *
          * 将玩家放进墓碑下面的土中。
          */
@@ -306,7 +306,7 @@ public class GhostTombstoneCurse
                 tombstonePos.getX() + 0.5D;
 
         double y =
-                tombstonePos.getY() - 1.0D + 0.05D;
+                tombstonePos.getY() - 2.0D + 0.5D;
 
         double z =
                 tombstonePos.getZ() + 0.5D;
