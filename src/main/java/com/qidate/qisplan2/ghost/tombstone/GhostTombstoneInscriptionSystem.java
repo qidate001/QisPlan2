@@ -597,7 +597,7 @@ public final class GhostTombstoneInscriptionSystem {
          * 中文。
          */
         if (script == Character.UnicodeScript.HAN) {
-            return 3;
+            return 8;
         }
 
         /*
@@ -605,7 +605,7 @@ public final class GhostTombstoneInscriptionSystem {
          */
         if (script == Character.UnicodeScript.HIRAGANA
                 || script == Character.UnicodeScript.KATAKANA) {
-            return 3;
+            return 5;
         }
 
         /*
