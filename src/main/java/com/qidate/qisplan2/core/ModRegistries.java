@@ -1,5 +1,6 @@
 package com.qidate.qisplan2.core;
 
+import com.qidate.qisplan2.ghost.isolation.GhostIsolationBlockRegistry;
 import net.minecraft.core.component.DataComponentType;
 import net.minecraft.core.particles.ParticleType;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -139,6 +140,11 @@ public class ModRegistries {
         ModDimensions.init();
         ModGameRules.init();
         ModMobEffects.init();
+
+        /*
+         * 灵异方块隔绝注册表初始化
+         */
+        GhostIsolationBlockRegistry.init();
     }
 
     public static void registerAll(IEventBus bus) {

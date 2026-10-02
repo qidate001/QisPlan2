@@ -9,6 +9,7 @@ import com.qidate.qisplan2.core.ModRegistries;
 import com.qidate.qisplan2.core.QisConfig;
 import com.qidate.qisplan2.event.GhostLayerCombatHandler;
 import com.qidate.qisplan2.event.PossessionDamageHandler;
+import com.qidate.qisplan2.ghost.isolation.GhostIsolationBlockRegistry;
 import com.qidate.qisplan2.ghost.possession.ability.GhostAbilityInteractionHandler;
 import com.qidate.qisplan2.ghost.possession.ability.GhostAbilityRegistry;
 import com.qidate.qisplan2.ghost.domain.GhostDomainPlayerLogout;
