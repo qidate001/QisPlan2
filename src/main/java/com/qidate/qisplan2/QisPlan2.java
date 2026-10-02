@@ -126,6 +126,24 @@ public class QisPlan2 {
                     )
             );
 
+            ResourceLocation ghostIsolationStencilId =
+                    ResourceLocation.fromNamespaceAndPath(
+                            MODID,
+                            "ghost_isolation_stencil"
+                    );
+
+            event.registerShader(
+                    new ShaderInstance(
+                            event.getResourceProvider(),
+                            ghostIsolationStencilId,
+                            DefaultVertexFormat.POSITION
+                    ),
+                    shader -> GhostDomainShaderRegistry.register(
+                            ghostIsolationStencilId,
+                            shader
+                    )
+            );
+
             /*
              * ========================================================
              * 鬼眼 Shader

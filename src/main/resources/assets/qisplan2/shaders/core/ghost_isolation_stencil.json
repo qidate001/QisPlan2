@@ -1,0 +1,54 @@
+{
+  "vertex": "qisplan2:ghost_isolation_mask",
+  "fragment": "qisplan2:ghost_isolation_stencil",
+  "samplers": [
+    {
+      "name": "MainDepthSampler"
+    },
+    {
+      "name": "IsolationCuboidData"
+    }
+  ],
+  "uniforms": [
+    {
+      "name": "IsolationProjMat",
+      "type": "matrix4x4",
+      "count": 16,
+      "values": [
+        1.0, 0.0, 0.0, 0.0,
+        0.0, 1.0, 0.0, 0.0,
+        0.0, 0.0, 1.0, 0.0,
+        0.0, 0.0, 0.0, 1.0
+      ]
+    },
+    {
+      "name": "IsolationModelViewMat",
+      "type": "matrix4x4",
+      "count": 16,
+      "values": [
+        1.0, 0.0, 0.0, 0.0,
+        0.0, 1.0, 0.0, 0.0,
+        0.0, 0.0, 1.0, 0.0,
+        0.0, 0.0, 0.0, 1.0
+      ]
+    },
+    {
+      "name": "IsolationCameraPos",
+      "type": "float",
+      "count": 3,
+      "values": [
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "name": "IsolationCuboidCount",
+      "type": "float",
+      "count": 1,
+      "values": [
+        0.0
+      ]
+    }
+  ]
+}

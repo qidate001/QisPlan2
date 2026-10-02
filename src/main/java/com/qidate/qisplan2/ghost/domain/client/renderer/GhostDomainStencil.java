@@ -6,7 +6,11 @@ import com.mojang.blaze3d.vertex.BufferUploader;
 import com.mojang.blaze3d.vertex.DefaultVertexFormat;
 import com.mojang.blaze3d.vertex.Tesselator;
 import com.mojang.blaze3d.vertex.VertexFormat;
+import com.qidate.qisplan2.QisPlan2;
+import com.qidate.qisplan2.ghost.isolation.client.renderer.GhostIsolationGpuData;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.renderer.ShaderInstance;
+import net.minecraft.resources.ResourceLocation;
 import org.lwjgl.opengl.GL11;
 
 /**
@@ -18,6 +22,12 @@ import org.lwjgl.opengl.GL11;
  * </p>
  */
 public final class GhostDomainStencil {
+
+    private static final ResourceLocation SHADER_ID =
+            ResourceLocation.fromNamespaceAndPath(
+                    QisPlan2.MODID,
+                    "ghost_isolation_stencil"
+            );
 
     private GhostDomainStencil() {
     }
@@ -205,6 +215,306 @@ public final class GhostDomainStencil {
 
         BufferUploader.drawWithShader(
                 buffer.buildOrThrow()
+        );
+    }
+
+    public static void writeIsolationMask() {
+
+        Minecraft minecraft =
+                Minecraft.getInstance();
+
+        if (minecraft.level == null) {
+            return;
+        }
+
+        if (!GhostDomainShaderRegistry.isRegistered(SHADER_ID)) {
+            return;
+        }
+
+        ShaderInstance shader =
+                GhostDomainShaderRegistry.get(SHADER_ID);
+
+        if (shader == null) {
+            return;
+        }
+
+        var target =
+                minecraft.getMainRenderTarget();
+
+        /*
+         * ========================================================
+         * 确保 MainRenderTarget 有 Stencil。
+         * ========================================================
+         */
+        if (!target.isStencilEnabled()) {
+            target.enableStencil();
+        }
+
+        /*
+         * ========================================================
+         * 上传最新的 Cuboid GPU 数据。
+         * ========================================================
+         */
+        GhostIsolationGpuData.uploadIfNeeded();
+
+        /*
+         * ========================================================
+         * 设置 Stencil：
+         *
+         * 所有 Fragment 默认允许通过。
+         *
+         * 后面的 Shader：
+         *
+         *     return → REPLACE → Stencil = 1
+         *
+         *     discard → 不写入 Stencil
+         * ========================================================
+         */
+        GL11.glEnable(GL11.GL_STENCIL_TEST);
+
+        RenderSystem.stencilMask(0xFF);
+
+        RenderSystem.stencilFunc(
+                GL11.GL_ALWAYS,
+                1,
+                0xFF
+        );
+
+        RenderSystem.stencilOp(
+                GL11.GL_KEEP,
+                GL11.GL_KEEP,
+                GL11.GL_REPLACE
+        );
+
+        /*
+         * ========================================================
+         * 不修改颜色。
+         * ========================================================
+         */
+        RenderSystem.colorMask(
+                false,
+                false,
+                false,
+                false
+        );
+
+        /*
+         * 不参与深度测试。
+         */
+        RenderSystem.disableDepthTest();
+
+        /*
+         * 不修改 Depth。
+         */
+        RenderSystem.depthMask(false);
+
+        /*
+         * ========================================================
+         * 清空 Stencil。
+         * ========================================================
+         */
+        RenderSystem.clearStencil(0);
+
+        RenderSystem.clear(
+                GL11.GL_STENCIL_BUFFER_BIT,
+                Minecraft.ON_OSX
+        );
+
+        /*
+         * ========================================================
+         * 设置 Shader。
+         * ========================================================
+         */
+        RenderSystem.setShader(
+                () -> shader
+        );
+
+        shader.setSampler(
+                "IsolationCuboidData",
+                GhostIsolationGpuData.getTextureId()
+        );
+
+        shader.getUniform(
+                "IsolationCuboidCount"
+        ).set(
+                (float) GhostIsolationGpuData.getCuboidCount()
+        );
+
+        /*
+         * 使用共享 Depth。
+         */
+        shader.setSampler(
+                "MainDepthSampler",
+                GhostDomainDepthTarget
+                        .get()
+                        .getDepthTextureId()
+        );
+
+        /*
+         * Projection Matrix。
+         */
+        shader.getUniform(
+                "IsolationProjMat"
+        ).set(
+                RenderSystem.getProjectionMatrix()
+        );
+
+        /*
+         * ModelView Matrix。
+         */
+        shader.getUniform(
+                "IsolationModelViewMat"
+        ).set(
+                GhostDomainMatrices
+                        .getModelViewMatrix()
+        );
+
+        /*
+         * Camera Position。
+         */
+        var camera =
+                minecraft.gameRenderer
+                        .getMainCamera();
+
+        shader.getUniform(
+                "IsolationCameraPos"
+        ).set(
+                (float) camera.getPosition().x,
+                (float) camera.getPosition().y,
+                (float) camera.getPosition().z
+        );
+
+        /*
+         * ========================================================
+         * 绘制 Fullscreen Quad。
+         * ========================================================
+         */
+        target.bindWrite(false);
+
+        RenderSystem.viewport(
+                0,
+                0,
+                target.width,
+                target.height
+        );
+
+        drawFullscreenQuad();
+
+        /*
+         * ========================================================
+         * 恢复颜色 / Depth。
+         * ========================================================
+         */
+        RenderSystem.colorMask(
+                true,
+                true,
+                true,
+                true
+        );
+
+        RenderSystem.depthMask(true);
+
+        RenderSystem.enableDepthTest();
+
+        /*
+         * ========================================================
+         * 后续 GhostDomain Effect：
+         *
+         * Stencil = 0 → 允许
+         * Stencil = 1 → 禁止
+         * ========================================================
+         */
+        RenderSystem.stencilFunc(
+                GL11.GL_EQUAL,
+                0,
+                0xFF
+        );
+
+        /*
+         * 后续不再修改 Stencil。
+         */
+        RenderSystem.stencilMask(0x00);
+    }
+
+    /**
+     * 绘制一个覆盖整个屏幕的 Quad。
+     */
+    public static void drawFullscreenQuad() {
+
+        Minecraft minecraft =
+                Minecraft.getInstance();
+
+        var mainTarget =
+                minecraft.getMainRenderTarget();
+
+        /*
+         * 后处理不需要深度测试。
+         */
+        RenderSystem.disableDepthTest();
+
+        /*
+         * 后处理不会向深度缓冲写入内容。
+         */
+        RenderSystem.depthMask(false);
+
+        /*
+         * 确保当前 viewport 对应主渲染目标。
+         */
+        RenderSystem.viewport(
+                0,
+                0,
+                mainTarget.width,
+                mainTarget.height
+        );
+
+        Tesselator tesselator =
+                Tesselator.getInstance();
+
+        BufferBuilder buffer =
+                tesselator.begin(
+                        VertexFormat.Mode.QUADS,
+                        DefaultVertexFormat.POSITION
+                );
+
+        buffer.addVertex(
+                -1.0F,
+                1.0F,
+                0.0F
+        );
+
+        buffer.addVertex(
+                -1.0F,
+                -1.0F,
+                0.0F
+        );
+
+        buffer.addVertex(
+                1.0F,
+                -1.0F,
+                0.0F
+        );
+
+        buffer.addVertex(
+                1.0F,
+                1.0F,
+                0.0F
+        );
+
+        BufferUploader.drawWithShader(
+                buffer.buildOrThrow()
+        );
+
+        /*
+         * 恢复后续世界/第一人称渲染需要的状态。
+         */
+        RenderSystem.depthMask(true);
+        RenderSystem.enableDepthTest();
+
+        RenderSystem.setShaderColor(
+                1.0F,
+                1.0F,
+                1.0F,
+                1.0F
         );
     }
 

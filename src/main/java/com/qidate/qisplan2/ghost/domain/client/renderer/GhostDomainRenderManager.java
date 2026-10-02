@@ -1,6 +1,5 @@
 package com.qidate.qisplan2.ghost.domain.client.renderer;
 
-import com.qidate.qisplan2.ghost.isolation.client.renderer.GhostIsolationMaskRenderer;
 import net.minecraft.client.Minecraft;
 
 import java.util.ArrayList;
@@ -69,7 +68,7 @@ public final class GhostDomainRenderManager {
          */
         GhostDomainRenderPipeline.prepareDepth();
 
-        GhostDomainStencil.writeTestMask();
+        GhostDomainStencil.writeIsolationMask();
 
         /*
          * ====================================================
