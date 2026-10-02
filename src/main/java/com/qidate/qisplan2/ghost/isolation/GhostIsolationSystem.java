@@ -84,7 +84,7 @@ public final class GhostIsolationSystem {
         for (GhostIsolationRegion region :
                 data.getRegions()) {
 
-            if (!region.contains(
+            if (!region.containsExact(
                     level.dimension(),
                     pos
             )) {
@@ -191,6 +191,7 @@ public final class GhostIsolationSystem {
                         result.min(),
                         result.max(),
                         result.seed(),
+                        result.cuboids(),
                         IsolationState.ISOLATED
                 );
 
@@ -241,6 +242,7 @@ public final class GhostIsolationSystem {
                             result.min(),
                             result.max(),
                             result.seed(),
+                            result.cuboids(),
                             IsolationState.ISOLATED
                     );
 
