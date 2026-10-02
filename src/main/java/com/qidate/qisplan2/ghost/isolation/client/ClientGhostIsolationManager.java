@@ -1,6 +1,7 @@
 package com.qidate.qisplan2.ghost.isolation.client;
 
 import com.qidate.qisplan2.QisPlan2;
+import com.qidate.qisplan2.ghost.isolation.client.renderer.GhostIsolationGpuData;
 import net.minecraft.resources.ResourceLocation;
 
 import java.util.Collection;
@@ -56,6 +57,8 @@ public final class ClientGhostIsolationManager {
                 )
         );
 
+        GhostIsolationGpuData.rebuild();
+
         QisPlan2.LOGGER.info(
                 "[灵异隔绝客户端] ADD Region: id={}, dimension={}, cuboids={}",
                 id,
@@ -73,6 +76,8 @@ public final class ClientGhostIsolationManager {
             UUID id
     ) {
         REGIONS.remove(id);
+
+        GhostIsolationGpuData.rebuild();
 
         QisPlan2.LOGGER.info(
                 "[灵异隔绝客户端] REMOVE Region: {}",
@@ -143,6 +148,9 @@ public final class ClientGhostIsolationManager {
      * </p>
      */
     public static void clear() {
+
         REGIONS.clear();
+
+        GhostIsolationGpuData.rebuild();
     }
 }
