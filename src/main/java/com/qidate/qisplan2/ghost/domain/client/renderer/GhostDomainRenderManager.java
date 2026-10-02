@@ -1,5 +1,6 @@
 package com.qidate.qisplan2.ghost.domain.client.renderer;
 
+import com.qidate.qisplan2.ghost.isolation.client.renderer.GhostIsolationMaskRenderer;
 import net.minecraft.client.Minecraft;
 
 import java.util.ArrayList;
@@ -44,30 +45,33 @@ public final class GhostDomainRenderManager {
         }
 
         /*
-         * 当前没有任何鬼域后处理需要渲染。
+         * 没有任何后处理效果时，
+         * 当前帧不需要准备 Depth。
          */
         if (effects.isEmpty()) {
             return;
         }
 
         /*
-         * ========================================================
-         * 准备当前帧深度
-         * ========================================================
+         * ====================================================
+         * 1. 准备共享 Depth
+         * ====================================================
          *
-         * 所有鬼域后处理共享这一份深度副本。
+         * 所有后处理效果，包括：
          *
-         * 无论这一帧有多少个 Effect，
-         * 深度只复制一次。
+         * GhostEye
+         * GhostRain
+         * GhostIsolationMask
+         *
+         * 都使用这一份独立 Depth。
          */
         GhostDomainRenderPipeline.prepareDepth();
 
         /*
-         * ========================================================
-         * 依次执行所有鬼域后处理
-         * ========================================================
+         * ====================================================
+         * 3. 正常鬼域后处理
+         * ====================================================
          */
-
         for (GhostDomainRenderEffect effect :
                 effects) {
 
@@ -76,5 +80,15 @@ public final class GhostDomainRenderManager {
                     minecraft
             );
         }
+
+        /*
+         * ====================================================
+         * 2. 生成灵异隔绝 Mask
+         * ====================================================
+         *
+         * 当前阶段是 Debug 模式，
+         * Mask 会直接输出到屏幕。
+         */
+        GhostIsolationMaskRenderer.render();
     }
 }
