@@ -3,8 +3,13 @@ package com.qidate.qisplan2.ghost.isolation;
 import com.qidate.qisplan2.QisPlan2;
 import com.qidate.qisplan2.network.ghostdomain.GhostDomainNetwork;
 import net.minecraft.core.BlockPos;
+import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.level.Level;
 
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Map;
 import java.util.UUID;
 
 /**
@@ -36,6 +41,46 @@ import java.util.UUID;
  * 后续再加入 Chunk → Region 索引进行优化。
  */
 public final class GhostIsolationSystem {
+
+    /**
+     * 开放空间负缓存持续时间。
+     *
+     * <p>
+     * 当前只用于避免大型开放空间被反复 Flood Fill。
+     * </p>
+     *
+     * <p>
+     * 20 tick = 1 秒。
+     * </p>
+     */
+    private static final long OPEN_CACHE_TICKS = 20L;
+
+    /**
+     * 灵异隔绝负缓存。
+     *
+     * <p>
+     * Key：维度 + 方块位置
+     * Value：缓存失效时间（游戏 Tick）
+     * </p>
+     *
+     * <p>
+     * 注意：
+     * 这里不是永久缓存。
+     * 只是防止 UNKNOWN 结果在短时间内
+     * 被大量鬼实体重复触发 Flood Fill。
+     * </p>
+     */
+    private static final Map<NegativeCacheKey, Long> OPEN_CACHE =
+            new HashMap<>();
+
+    /**
+     * 灵异隔绝负缓存 Key。
+     */
+    private record NegativeCacheKey(
+            ResourceKey<Level> dimension,
+            BlockPos pos
+    ) {
+    }
 
     private GhostIsolationSystem() {
     }
@@ -79,7 +124,22 @@ public final class GhostIsolationSystem {
 
         /*
          * ========================================================
-         * 第一步：查询已经缓存的 Region
+         * 第一步：查询短时负缓存
+         * ========================================================
+         */
+        if (isOpenCacheHit(level, pos)) {
+
+            return new QueryResult(
+                    IsolationState.OPEN,
+                    true,
+                    false,
+                    false
+            );
+        }
+
+        /*
+         * ========================================================
+         * 第二步：查询已经缓存的 Region
          * ========================================================
          */
         for (GhostIsolationRegion region :
@@ -166,12 +226,25 @@ public final class GhostIsolationSystem {
                 );
 
         /*
-         * UNKNOWN 不进行缓存。
+         * ========================================================
+         * UNKNOWN
+         *
+         * 当前无法确认是否存在灵异隔绝空间。
+         *
+         * 不建立永久 Region，
+         * 但建立短时负缓存，
+         * 避免下一 tick 再次执行大型 Flood Fill。
+         * ========================================================
          */
         if (!result.isIsolated()) {
 
+            putOpenCache(
+                    level,
+                    pos
+            );
+
             return new QueryResult(
-                    result.state(),
+                    IsolationState.OPEN,
                     false,
                     false,
                     false
@@ -354,6 +427,15 @@ public final class GhostIsolationSystem {
             BlockPos pos
     ) {
 
+        /*
+         * 方块发生变化后，
+         * 立即清理附近的负缓存。
+         */
+        clearOpenCacheAround(
+                level,
+                pos
+        );
+
         GhostIsolationSavedData data =
                 GhostIsolationSavedData.get(level);
 
@@ -423,6 +505,161 @@ public final class GhostIsolationSystem {
     }
 
     /**
+     * 查询短时负缓存。
+     */
+    private static boolean isOpenCacheHit(
+            ServerLevel level,
+            BlockPos pos
+    ) {
+
+        NegativeCacheKey key =
+                new NegativeCacheKey(
+                        level.dimension(),
+                        pos.immutable()
+                );
+
+        Long expireTick =
+                OPEN_CACHE.get(key);
+
+        if (expireTick == null) {
+            return false;
+        }
+
+        long currentTick =
+                level.getGameTime();
+
+        /*
+         * 缓存已经过期。
+         */
+        if (currentTick >= expireTick) {
+
+            OPEN_CACHE.remove(key);
+
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
+     * 写入短时负缓存。
+     */
+    private static void putOpenCache(
+            ServerLevel level,
+            BlockPos pos
+    ) {
+
+        NegativeCacheKey key =
+                new NegativeCacheKey(
+                        level.dimension(),
+                        pos.immutable()
+                );
+
+        OPEN_CACHE.put(
+                key,
+                level.getGameTime()
+                        + OPEN_CACHE_TICKS
+        );
+    }
+
+    /**
+     * 清理方块变化位置附近的负缓存。
+     *
+     * <p>
+     * 当前采用一个小范围清理，
+     * 防止结构变化后继续使用旧的开放空间判断。
+     * </p>
+     */
+    private static void clearOpenCacheAround(
+            ServerLevel level,
+            BlockPos center
+    ) {
+
+        final int radius = 1;
+
+        Iterator<NegativeCacheKey> iterator =
+                OPEN_CACHE.keySet().iterator();
+
+        while (iterator.hasNext()) {
+
+            NegativeCacheKey key =
+                    iterator.next();
+
+            if (!key.dimension().equals(
+                    level.dimension()
+            )) {
+                continue;
+            }
+
+            BlockPos pos =
+                    key.pos();
+
+            if (Math.abs(
+                    pos.getX() - center.getX()
+            ) <= radius
+                    && Math.abs(
+                    pos.getY() - center.getY()
+            ) <= radius
+                    && Math.abs(
+                    pos.getZ() - center.getZ()
+            ) <= radius) {
+
+                iterator.remove();
+            }
+        }
+    }
+
+    /**
+     * 清理批量结构生成范围内的负缓存。
+     */
+    private static void clearOpenCacheInBatch(
+            ServerLevel level,
+            int minChunkX,
+            int maxChunkX,
+            int minChunkZ,
+            int maxChunkZ
+    ) {
+
+        int minBlockX =
+                minChunkX << 4;
+
+        int maxBlockX =
+                (maxChunkX << 4) + 15;
+
+        int minBlockZ =
+                minChunkZ << 4;
+
+        int maxBlockZ =
+                (maxChunkZ << 4) + 15;
+
+        Iterator<NegativeCacheKey> iterator =
+                OPEN_CACHE.keySet().iterator();
+
+        while (iterator.hasNext()) {
+
+            NegativeCacheKey key =
+                    iterator.next();
+
+            if (!key.dimension().equals(
+                    level.dimension()
+            )) {
+                continue;
+            }
+
+            BlockPos pos =
+                    key.pos();
+
+            if (pos.getX() >= minBlockX
+                    && pos.getX() <= maxBlockX
+                    && pos.getZ() >= minBlockZ
+                    && pos.getZ() <= maxBlockZ) {
+
+                iterator.remove();
+            }
+        }
+    }
+
+    /**
      * 一次性处理大型结构生成造成的空间变化。
      */
     public static void onBatchChanged(
@@ -432,6 +669,14 @@ public final class GhostIsolationSystem {
             int minChunkZ,
             int maxChunkZ
     ) {
+
+        clearOpenCacheInBatch(
+                level,
+                minChunkX,
+                maxChunkX,
+                minChunkZ,
+                maxChunkZ
+        );
 
         GhostIsolationSavedData data =
                 GhostIsolationSavedData.get(level);

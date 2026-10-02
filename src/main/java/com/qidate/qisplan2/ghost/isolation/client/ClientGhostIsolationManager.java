@@ -1,5 +1,6 @@
 package com.qidate.qisplan2.ghost.isolation.client;
 
+import com.qidate.qisplan2.QisPlan2;
 import net.minecraft.resources.ResourceLocation;
 
 import java.util.Collection;
@@ -23,10 +24,8 @@ import java.util.UUID;
  */
 public final class ClientGhostIsolationManager {
 
-    private static final Map<
-            UUID,
-            ClientGhostIsolationRegion
-            > REGIONS = new LinkedHashMap<>();
+    private static final Map<UUID, ClientGhostIsolationRegion> REGIONS =
+            new LinkedHashMap<>();
 
     private ClientGhostIsolationManager() {
     }
@@ -56,6 +55,13 @@ public final class ClientGhostIsolationManager {
                         cuboids
                 )
         );
+
+        QisPlan2.LOGGER.info(
+                "[灵异隔绝客户端] ADD Region: id={}, dimension={}, cuboids={}",
+                id,
+                dimension,
+                cuboids.size()
+        );
     }
 
     /**
@@ -67,6 +73,11 @@ public final class ClientGhostIsolationManager {
             UUID id
     ) {
         REGIONS.remove(id);
+
+        QisPlan2.LOGGER.info(
+                "[灵异隔绝客户端] REMOVE Region: {}",
+                id
+        );
     }
 
     /**

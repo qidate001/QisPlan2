@@ -21,14 +21,162 @@ out vec4 fragColor;
  * 判断一个世界坐标是否位于
  * 当前灵异隔绝 Cuboid 内。
  */
-bool isInsideCuboid(vec3 worldPos) {
+bool rayIntersectsCuboid(
+        vec3 rayOrigin,
+        vec3 rayEnd
+) {
+    vec3 direction =
+    rayEnd - rayOrigin;
 
-    return worldPos.x >= IsolationCuboidMin.x
-    && worldPos.x <= IsolationCuboidMax.x
-    && worldPos.y >= IsolationCuboidMin.y
-    && worldPos.y <= IsolationCuboidMax.y
-    && worldPos.z >= IsolationCuboidMin.z
-    && worldPos.z <= IsolationCuboidMax.z;
+    /*
+     * 射线与 Cuboid 的参数范围。
+     *
+     * t = 0：
+     * 摄像机位置
+     *
+     * t = 1：
+     * 当前像素对应的可见世界位置
+     */
+    float tMin = 0.0;
+    float tMax = 1.0;
+
+    /*
+     * ========================================================
+     * X 轴
+     * ========================================================
+     */
+    if (abs(direction.x) < 0.000001) {
+
+        /*
+         * 射线几乎平行于 X 轴。
+         *
+         * 如果当前 X 不在 Cuboid 内，
+         * 那么不可能穿过 Cuboid。
+         */
+        if (rayOrigin.x < IsolationCuboidMin.x
+            || rayOrigin.x > IsolationCuboidMax.x) {
+
+            return false;
+        }
+
+    } else {
+
+        float invDirection =
+        1.0 / direction.x;
+
+        float t1 =
+        (IsolationCuboidMin.x - rayOrigin.x)
+        * invDirection;
+
+        float t2 =
+        (IsolationCuboidMax.x - rayOrigin.x)
+        * invDirection;
+
+        if (t1 > t2) {
+            float temp = t1;
+            t1 = t2;
+            t2 = temp;
+        }
+
+        tMin = max(tMin, t1);
+        tMax = min(tMax, t2);
+
+        if (tMin > tMax) {
+            return false;
+        }
+    }
+
+    /*
+     * ========================================================
+     * Y 轴
+     * ========================================================
+     */
+    if (abs(direction.y) < 0.000001) {
+
+        if (rayOrigin.y < IsolationCuboidMin.y
+            || rayOrigin.y > IsolationCuboidMax.y) {
+
+            return false;
+        }
+
+    } else {
+
+        float invDirection =
+        1.0 / direction.y;
+
+        float t1 =
+        (IsolationCuboidMin.y - rayOrigin.y)
+        * invDirection;
+
+        float t2 =
+        (IsolationCuboidMax.y - rayOrigin.y)
+        * invDirection;
+
+        if (t1 > t2) {
+            float temp = t1;
+            t1 = t2;
+            t2 = temp;
+        }
+
+        tMin = max(tMin, t1);
+        tMax = min(tMax, t2);
+
+        if (tMin > tMax) {
+            return false;
+        }
+    }
+
+    /*
+     * ========================================================
+     * Z 轴
+     * ========================================================
+     */
+    if (abs(direction.z) < 0.000001) {
+
+        if (rayOrigin.z < IsolationCuboidMin.z
+            || rayOrigin.z > IsolationCuboidMax.z) {
+
+            return false;
+        }
+
+    } else {
+
+        float invDirection =
+        1.0 / direction.z;
+
+        float t1 =
+        (IsolationCuboidMin.z - rayOrigin.z)
+        * invDirection;
+
+        float t2 =
+        (IsolationCuboidMax.z - rayOrigin.z)
+        * invDirection;
+
+        if (t1 > t2) {
+            float temp = t1;
+            t1 = t2;
+            t2 = temp;
+        }
+
+        tMin = max(tMin, t1);
+        tMax = min(tMax, t2);
+
+        if (tMin > tMax) {
+            return false;
+        }
+    }
+
+    /*
+     * tMin / tMax 始终限制在：
+     *
+     * 0 ≤ t ≤ 1
+     *
+     * 因此这里只判断：
+     * 摄像机到当前可见表面之间，
+     * 是否经过了 Cuboid。
+     */
+    return tMax >= 0.0
+    && tMin <= 1.0;
 }
 
 
@@ -159,7 +307,10 @@ void main() {
      */
     if (IsolationCuboidActive > 0.5) {
 
-        if (isInsideCuboid(sceneWorldPos)) {
+        if (rayIntersectsCuboid(
+                rayStart,
+                sceneWorldPos
+        )) {
             isolated = 1.0;
         }
     }
@@ -172,10 +323,10 @@ void main() {
      * 黑色 = 非灵异隔绝空间
      */
     fragColor =
-    vec4(
+        vec4(
             isolated,
             isolated,
             isolated,
             1.0
-    );
+        );
 }
