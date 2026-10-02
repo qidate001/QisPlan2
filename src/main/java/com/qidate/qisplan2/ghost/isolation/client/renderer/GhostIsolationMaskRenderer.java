@@ -35,7 +35,7 @@ public final class GhostIsolationMaskRenderer {
                     "ghost_isolation_mask"
             );
 
-    private static final boolean DEBUG_OUTPUT_TO_SCREEN = true;
+    private static final boolean DEBUG_OUTPUT_TO_SCREEN = false;
 
     private GhostIsolationMaskRenderer() {
     }
