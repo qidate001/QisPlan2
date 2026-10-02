@@ -1,6 +1,7 @@
 package com.qidate.qisplan2.ghost.isolation;
 
 import com.qidate.qisplan2.QisPlan2;
+import com.qidate.qisplan2.network.ghostdomain.GhostDomainNetwork;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 
@@ -195,7 +196,24 @@ public final class GhostIsolationSystem {
                         IsolationState.ISOLATED
                 );
 
-        data.addRegion(region);
+        /*
+         * ========================================================
+         * 保存新的 Region。
+         * ========================================================
+         */
+        data.addRegion(
+                region
+        );
+
+        /*
+         * ========================================================
+         * 将新建立的 Region 同步到客户端。
+         * ========================================================
+         */
+        GhostDomainNetwork.sendIsolationAdd(
+                level,
+                region
+        );
 
         return new QueryResult(
                 IsolationState.ISOLATED,
@@ -209,8 +227,19 @@ public final class GhostIsolationSystem {
      * 重新检测一个已经失效的 Region。
      *
      * <p>
-     * 如果重新检测成功，则更新 Region 的范围和状态。
-     * 如果检测失败，则移除这个已经失效的 Region。
+     * 如果重新检测成功，则更新 Region 的范围和状态，
+     * 并同步新的空间数据到客户端。
+     * </p>
+     *
+     * <p>
+     * 如果检测失败，则移除这个已经失效的 Region，
+     * 同时通知客户端删除对应缓存。
+     * </p>
+     *
+     * @param level 当前服务端维度
+     * @param region 需要重新检测的 Region
+     * @param data 灵异隔绝 SavedData
+     * @return 如果重新确认空间仍然隔绝则返回 true
      */
     private static boolean recheckRegion(
             ServerLevel level,
@@ -233,7 +262,9 @@ public final class GhostIsolationSystem {
 
             /*
              * 目前 GhostIsolationRegion 的边界字段是 final，
-             * 因此重新检测后直接用新的 Region 替换旧 Region。
+             * 因此重新检测后直接使用新的 Region 替换旧 Region。
+             *
+             * UUID 保持不变。
              */
             GhostIsolationRegion updatedRegion =
                     new GhostIsolationRegion(
@@ -246,7 +277,36 @@ public final class GhostIsolationSystem {
                             IsolationState.ISOLATED
                     );
 
-            data.addRegion(updatedRegion);
+            /*
+             * ====================================================
+             * 客户端先删除旧的空间数据。
+             *
+             * 旧 Region 的 Cuboid 可能已经发生变化。
+             * ====================================================
+             */
+            GhostDomainNetwork.sendIsolationRemove(
+                    level,
+                    region.getId()
+            );
+
+            /*
+             * ====================================================
+             * 保存重新检测后的 Region。
+             * ====================================================
+             */
+            data.addRegion(
+                    updatedRegion
+            );
+
+            /*
+             * ====================================================
+             * 将新的空间数据同步给客户端。
+             * ====================================================
+             */
+            GhostDomainNetwork.sendIsolationAdd(
+                    level,
+                    updatedRegion
+            );
 
             return true;
         }
@@ -256,16 +316,27 @@ public final class GhostIsolationSystem {
          * 已经无法确认原来的空间仍然成立。
          *
          * 删除旧缓存。
-         *
-         * 下一次查询时，
-         * 如果当前位置仍然处于封闭空间，
-         * 系统会重新建立 Region。
          * ========================================================
          */
         data.removeRegion(
                 region.getId()
         );
 
+        /*
+         * ========================================================
+         * 同时通知客户端移除旧的 Region。
+         * ========================================================
+         */
+        GhostDomainNetwork.sendIsolationRemove(
+                level,
+                region.getId()
+        );
+
+        /*
+         * 下一次查询时，
+         * 如果当前位置仍然处于封闭空间，
+         * 系统会重新建立 Region。
+         */
         return false;
     }
 

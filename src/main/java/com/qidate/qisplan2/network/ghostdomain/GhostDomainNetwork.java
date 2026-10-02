@@ -6,6 +6,8 @@ import com.qidate.qisplan2.ghost.domain.GhostDomainTeleportHandler;
 import com.qidate.qisplan2.ghost.domain.client.ClientGhostDomainManager;
 import com.qidate.qisplan2.ghost.domain.client.ClientGhostDomainVisionSystem;
 import com.qidate.qisplan2.ghost.isolation.GhostIsolationRegion;
+import com.qidate.qisplan2.ghost.isolation.GhostIsolationSavedData;
+import com.qidate.qisplan2.ghost.isolation.IsolationState;
 import com.qidate.qisplan2.ghost.isolation.client.ClientGhostIsolationCuboid;
 import com.qidate.qisplan2.ghost.isolation.client.ClientGhostIsolationManager;
 import com.qidate.qisplan2.network.payload.*;
@@ -447,6 +449,49 @@ public final class GhostDomainNetwork {
                         regionId
                 )
         );
+    }
+
+    /**
+     * 将指定维度中当前已经确认隔绝的所有区域，
+     * 单独同步给指定玩家。
+     *
+     * <p>
+     * GhostIsolationSavedData 是跨维度保存的，
+     * 因此这里必须根据 Region 的 dimension
+     * 过滤出玩家当前所在维度。
+     * </p>
+     *
+     * @param player 目标玩家
+     */
+    public static void sendAllIsolationRegions(
+            ServerPlayer player
+    ) {
+        ServerLevel level = player.serverLevel();
+
+        GhostIsolationSavedData data =
+                GhostIsolationSavedData.get(level);
+
+        for (GhostIsolationRegion region : data.getRegions()) {
+
+            /*
+             * SavedData 中可能保存多个维度的 Region。
+             *
+             * 玩家只能收到当前维度的数据。
+             */
+            if (!region.getDimension().equals(level.dimension())) {
+                continue;
+            }
+
+            /*
+             * DIRTY 表示这个 Region 已经失效，
+             * 当前不能把它当成有效隔绝区域发送给客户端。
+             */
+            if (region.getState() != IsolationState.ISOLATED) {
+                continue;
+            }
+
+            sendIsolationAdd(player, region);
+        }
     }
 
     /*

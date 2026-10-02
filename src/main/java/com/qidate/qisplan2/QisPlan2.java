@@ -9,7 +9,7 @@ import com.qidate.qisplan2.core.ModRegistries;
 import com.qidate.qisplan2.core.QisConfig;
 import com.qidate.qisplan2.event.GhostLayerCombatHandler;
 import com.qidate.qisplan2.event.PossessionDamageHandler;
-import com.qidate.qisplan2.ghost.isolation.GhostIsolationBlockRegistry;
+import com.qidate.qisplan2.ghost.isolation.GhostIsolationPlayerSync;
 import com.qidate.qisplan2.ghost.possession.ability.GhostAbilityInteractionHandler;
 import com.qidate.qisplan2.ghost.possession.ability.GhostAbilityRegistry;
 import com.qidate.qisplan2.ghost.domain.GhostDomainPlayerLogout;
@@ -63,9 +63,14 @@ public class QisPlan2 {
                 GhostLayerCombatHandler.class
         );
 
-        // 鬼域异步
+        // 鬼域同步
         NeoForge.EVENT_BUS.register(
                 GhostDomainPlayerSync.class
+        );
+
+        // 灵异隔绝玩家同步
+        NeoForge.EVENT_BUS.register(
+                GhostIsolationPlayerSync.class
         );
 
         // 鬼域监听玩家退出
