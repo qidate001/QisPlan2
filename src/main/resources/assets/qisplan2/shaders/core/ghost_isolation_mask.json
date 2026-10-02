@@ -4,6 +4,9 @@
   "samplers": [
     {
       "name": "MainDepthSampler"
+    },
+    {
+      "name": "IsolationCuboidData"
     }
   ],
   "uniforms": [
@@ -40,27 +43,7 @@
       ]
     },
     {
-      "name": "IsolationCuboidMin",
-      "type": "float",
-      "count": 3,
-      "values": [
-        0.0,
-        0.0,
-        0.0
-      ]
-    },
-    {
-      "name": "IsolationCuboidMax",
-      "type": "float",
-      "count": 3,
-      "values": [
-        0.0,
-        0.0,
-        0.0
-      ]
-    },
-    {
-      "name": "IsolationCuboidActive",
+      "name": "IsolationCuboidCount",
       "type": "float",
       "count": 1,
       "values": [

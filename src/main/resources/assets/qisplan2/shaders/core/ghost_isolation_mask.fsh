@@ -2,15 +2,30 @@
 
 uniform sampler2D MainDepthSampler;
 
+/*
+ * 灵异隔绝 Cuboid GPU 数据。
+ *
+ * Texture：
+ *
+ * width  = 2
+ * height = MAX_CUBOIDS
+ *
+ * x = 0 → Min
+ * x = 1 → Max
+ *
+ * y = Cuboid index
+ */
+uniform sampler2D IsolationCuboidData;
+
+/*
+ * 当前有效 Cuboid 数量。
+ */
+uniform float IsolationCuboidCount;
+
 uniform mat4 IsolationProjMat;
 uniform mat4 IsolationModelViewMat;
 
 uniform vec3 IsolationCameraPos;
-
-uniform vec3 IsolationCuboidMin;
-uniform vec3 IsolationCuboidMax;
-
-uniform float IsolationCuboidActive;
 
 in vec2 texCoord;
 
@@ -18,18 +33,33 @@ out vec4 fragColor;
 
 
 /*
- * 判断一个世界坐标是否位于
- * 当前灵异隔绝 Cuboid 内。
+ * ============================================================
+ * 判断一条射线是否穿过指定 Cuboid。
+ * ============================================================
+ *
+ * rayOrigin：
+ *     摄像机附近的射线起点
+ *
+ * rayEnd：
+ *     当前像素对应的可见世界位置
+ *
+ * Cuboid：
+ *     [min, max)
+ *
+ * 如果摄像机到当前可见表面之间
+ * 穿过 Cuboid，则返回 true。
  */
 bool rayPassesThroughCuboid(
         vec3 rayOrigin,
-        vec3 rayEnd
+        vec3 rayEnd,
+        vec3 cuboidMin,
+        vec3 cuboidMax
 ) {
-    vec3 direction =
-    rayEnd - rayOrigin;
+
+    vec3 direction = rayEnd - rayOrigin;
 
     /*
-     * 射线与 Cuboid 的参数范围。
+     * 射线参数范围：
      *
      * t = 0：
      * 摄像机位置
@@ -39,6 +69,7 @@ bool rayPassesThroughCuboid(
      */
     float tMin = 0.0;
     float tMax = 1.0;
+
 
     /*
      * ========================================================
@@ -53,8 +84,8 @@ bool rayPassesThroughCuboid(
          * 如果当前 X 不在 Cuboid 内，
          * 那么不可能穿过 Cuboid。
          */
-        if (rayOrigin.x < IsolationCuboidMin.x
-            || rayOrigin.x > IsolationCuboidMax.x) {
+        if (rayOrigin.x < cuboidMin.x
+            || rayOrigin.x >= cuboidMax.x) {
 
             return false;
         }
@@ -62,15 +93,15 @@ bool rayPassesThroughCuboid(
     } else {
 
         float invDirection =
-        1.0 / direction.x;
+            1.0 / direction.x;
 
         float t1 =
-        (IsolationCuboidMin.x - rayOrigin.x)
-        * invDirection;
+            (cuboidMin.x - rayOrigin.x)
+            * invDirection;
 
         float t2 =
-        (IsolationCuboidMax.x - rayOrigin.x)
-        * invDirection;
+            (cuboidMax.x - rayOrigin.x)
+            * invDirection;
 
         if (t1 > t2) {
             float temp = t1;
@@ -85,6 +116,7 @@ bool rayPassesThroughCuboid(
             return false;
         }
     }
+
 
     /*
      * ========================================================
@@ -93,8 +125,8 @@ bool rayPassesThroughCuboid(
      */
     if (abs(direction.y) < 0.000001) {
 
-        if (rayOrigin.y < IsolationCuboidMin.y
-            || rayOrigin.y > IsolationCuboidMax.y) {
+        if (rayOrigin.y < cuboidMin.y
+            || rayOrigin.y >= cuboidMax.y) {
 
             return false;
         }
@@ -102,15 +134,15 @@ bool rayPassesThroughCuboid(
     } else {
 
         float invDirection =
-        1.0 / direction.y;
+            1.0 / direction.y;
 
         float t1 =
-        (IsolationCuboidMin.y - rayOrigin.y)
-        * invDirection;
+            (cuboidMin.y - rayOrigin.y)
+            * invDirection;
 
         float t2 =
-        (IsolationCuboidMax.y - rayOrigin.y)
-        * invDirection;
+            (cuboidMax.y - rayOrigin.y)
+            * invDirection;
 
         if (t1 > t2) {
             float temp = t1;
@@ -125,6 +157,7 @@ bool rayPassesThroughCuboid(
             return false;
         }
     }
+
 
     /*
      * ========================================================
@@ -133,8 +166,8 @@ bool rayPassesThroughCuboid(
      */
     if (abs(direction.z) < 0.000001) {
 
-        if (rayOrigin.z < IsolationCuboidMin.z
-            || rayOrigin.z > IsolationCuboidMax.z) {
+        if (rayOrigin.z < cuboidMin.z
+            || rayOrigin.z >= cuboidMax.z) {
 
             return false;
         }
@@ -142,15 +175,15 @@ bool rayPassesThroughCuboid(
     } else {
 
         float invDirection =
-        1.0 / direction.z;
+            1.0 / direction.z;
 
         float t1 =
-        (IsolationCuboidMin.z - rayOrigin.z)
-        * invDirection;
+            (cuboidMin.z - rayOrigin.z)
+            * invDirection;
 
         float t2 =
-        (IsolationCuboidMax.z - rayOrigin.z)
-        * invDirection;
+            (cuboidMax.z - rayOrigin.z)
+            * invDirection;
 
         if (t1 > t2) {
             float temp = t1;
@@ -166,86 +199,126 @@ bool rayPassesThroughCuboid(
         }
     }
 
+
     /*
-     * tMin / tMax 始终限制在：
+     * 因为 tMin / tMax 已经被限制在：
      *
      * 0 ≤ t ≤ 1
      *
-     * 因此这里只判断：
-     * 摄像机到当前可见表面之间，
-     * 是否经过了 Cuboid。
+     * 所以只要存在有效交集，
+     * 就说明摄像机到当前可见表面之间
+     * 穿过了这个 Cuboid。
      */
     return tMax >= 0.0
-    && tMin <= 1.0;
+        && tMin <= 1.0;
+}
+
+
+/*
+ * ============================================================
+ * 获取 Cuboid Min。
+ * ============================================================
+ */
+vec3 getCuboidMin(int index) {
+
+    return texelFetch(
+            IsolationCuboidData,
+            ivec2(0, index),
+            0
+    ).xyz;
+}
+
+
+/*
+ * ============================================================
+ * 获取 Cuboid Max。
+ * ============================================================
+ */
+vec3 getCuboidMax(int index) {
+
+    return texelFetch(
+            IsolationCuboidData,
+            ivec2(1, index),
+            0
+    ).xyz;
 }
 
 
 void main() {
 
     /*
+     * ========================================================
      * 当前像素对应的深度。
+     * ========================================================
      */
     float depth =
-    texture(
+        texture(
             MainDepthSampler,
             texCoord
-    ).r;
+        ).r;
 
 
     /*
-     * 屏幕坐标转换到 NDC。
+     * ========================================================
+     * 屏幕坐标 → NDC
+     * ========================================================
      */
-    vec2 ndcXY =
-    texCoord * 2.0 - 1.0;
+    vec2 ndcXY = texCoord * 2.0 - 1.0;
 
 
     /*
-     * 构造当前像素的近裁剪面和远裁剪面。
+     * ========================================================
+     * 构造近裁剪面 / 远裁剪面。
+     * ========================================================
      */
     vec4 nearNDC =
-    vec4(
+        vec4(
             ndcXY,
             -1.0,
             1.0
-    );
+        );
 
     vec4 farNDC =
-    vec4(
+        vec4(
             ndcXY,
             1.0,
             1.0
-    );
+        );
 
 
     /*
-     * NDC → View Space。
+     * ========================================================
+     * NDC → View Space
+     * ========================================================
      */
     vec4 nearView =
-    inverse(
+        inverse(
             IsolationProjMat
-    ) * nearNDC;
+        ) * nearNDC;
 
     vec4 farView =
-    inverse(
+        inverse(
             IsolationProjMat
-    ) * farNDC;
+        ) * farNDC;
 
     nearView /= nearView.w;
     farView /= farView.w;
 
 
     /*
-     * View Space → World Space。
+     * ========================================================
+     * View Space → World Space
+     * ========================================================
      */
     vec4 nearWorld =
-    inverse(
+        inverse(
             IsolationModelViewMat
-    ) * nearView;
+        ) * nearView;
 
     vec4 farWorld =
-    inverse(
+        inverse(
             IsolationModelViewMat
-    ) * farView;
+        ) * farView;
 
     nearWorld /= nearWorld.w;
     farWorld /= farWorld.w;
@@ -258,69 +331,117 @@ void main() {
      * 因此重新加回 Camera Position。
      */
     vec3 rayStart =
-    nearWorld.xyz
-    + IsolationCameraPos;
+        nearWorld.xyz
+        + IsolationCameraPos;
 
     vec3 rayEnd =
-    farWorld.xyz
-    + IsolationCameraPos;
+        farWorld.xyz
+        + IsolationCameraPos;
 
 
     /*
+     * ========================================================
      * 根据深度恢复当前像素真正对应的世界坐标。
+     * ========================================================
      */
     vec4 sceneNDC =
-    vec4(
+        vec4(
             ndcXY,
             depth * 2.0 - 1.0,
             1.0
-    );
+        );
 
     vec4 sceneView =
-    inverse(
+        inverse(
             IsolationProjMat
-    ) * sceneNDC;
+        ) * sceneNDC;
 
     sceneView /= sceneView.w;
 
     vec4 sceneWorld =
-    inverse(
+        inverse(
             IsolationModelViewMat
-    ) * sceneView;
+        ) * sceneView;
 
     sceneWorld /= sceneWorld.w;
 
     vec3 sceneWorldPos =
-    sceneWorld.xyz
-    + IsolationCameraPos;
+        sceneWorld.xyz
+        + IsolationCameraPos;
 
 
     /*
-     * 默认不是灵异隔绝空间。
+     * ========================================================
+     * 默认：
+     *
+     * 不是灵异隔绝空间。
+     * ========================================================
      */
     float isolated = 0.0;
 
 
     /*
-     * 当前 Cuboid 有效时，
-     * 判断世界坐标。
+     * ========================================================
+     * 遍历所有 Cuboid。
+     * ========================================================
+     *
+     * GPU 数据纹理最多有 MAX_CUBOIDS 个 Cuboid。
+     *
+     * 这里使用固定循环上限，
+     * 通过 IsolationCuboidCount 控制实际读取数量。
      */
-    if (IsolationCuboidActive > 0.5) {
+    int count =
+    int(IsolationCuboidCount);
 
+    const int MAX_CUBOIDS = 256;
+
+    for (int i = 0; i < MAX_CUBOIDS; i++) {
+
+        /*
+         * 已经超过当前实际 Cuboid 数量。
+         */
+        if (i >= count) {
+            break;
+        }
+
+
+        /*
+         * 从 GPU Texture 获取
+         * 当前 Cuboid 的 Min / Max。
+         */
+        vec3 cuboidMin = getCuboidMin(i);
+
+        vec3 cuboidMax = getCuboidMax(i);
+
+
+        /*
+         * 判断摄像机到当前可见表面
+         * 是否穿过这个 Cuboid。
+         */
         if (rayPassesThroughCuboid(
                 rayStart,
-                sceneWorldPos
+                sceneWorldPos,
+                cuboidMin,
+                cuboidMax
         )) {
+
             isolated = 1.0;
+
+            /*
+             * 一个 Cuboid 命中即可。
+             */
+            break;
         }
     }
 
 
     /*
+     * ========================================================
      * 调试阶段：
      *
      * 白色 = 灵异隔绝空间
      * 黑色 = 非灵异隔绝空间
+     * ========================================================
      */
     fragColor =
         vec4(

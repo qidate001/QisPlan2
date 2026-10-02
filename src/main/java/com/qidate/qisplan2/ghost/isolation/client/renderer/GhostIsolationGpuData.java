@@ -1,25 +1,44 @@
 package com.qidate.qisplan2.ghost.isolation.client.renderer;
 
+import com.mojang.blaze3d.platform.GlStateManager;
+import com.mojang.blaze3d.systems.RenderSystem;
 import com.qidate.qisplan2.QisPlan2;
 import com.qidate.qisplan2.ghost.isolation.client.ClientGhostIsolationCuboid;
 import com.qidate.qisplan2.ghost.isolation.client.ClientGhostIsolationManager;
 import com.qidate.qisplan2.ghost.isolation.client.ClientGhostIsolationRegion;
 import net.minecraft.client.Minecraft;
+import org.lwjgl.BufferUtils;
+import org.lwjgl.opengl.GL11;
+import org.lwjgl.opengl.GL12;
+import org.lwjgl.opengl.GL30;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import java.nio.FloatBuffer;
 
 /**
- * 灵异隔绝 Cuboid 的 GPU 数据管理器。
+ * 灵异隔绝 Cuboid 的 GPU 数据。
  *
  * <p>
- * 当前阶段负责将客户端的所有灵异隔绝 Cuboid
- * 展平为连续的 GPU 数据。
+ * 使用一张 RGBA32F 纹理保存所有 Cuboid 的空间数据。
+ *
+ * <pre>
+ * texture width  = 2
+ * texture height = MAX_CUBOIDS
+ *
+ * x = 0 → Min
+ * x = 1 → Max
+ *
+ * y = Cuboid index
+ * </pre>
  *
  * <p>
- * GPU 数据纹理的具体 OpenGL 实现暂时独立出来，
- * 防止客户端 Region 数据层和 OpenGL 生命周期耦合。
+ * 每个 Texel：
+ *
+ * <pre>
+ * R = X
+ * G = Y
+ * B = Z
+ * A = 1
+ * </pre>
  */
 public final class GhostIsolationGpuData {
 
@@ -29,48 +48,61 @@ public final class GhostIsolationGpuData {
     public static final int MAX_CUBOIDS = 256;
 
     /**
+     * 数据纹理宽度。
+     *
+     * <p>
+     * 0 = Min
+     * 1 = Max
+     */
+    private static final int TEXTURE_WIDTH = 2;
+
+    /**
+     * OpenGL 数据纹理。
+     *
+     * <p>
+     * 只能在 Render Thread 创建和操作。
+     */
+    private static int textureId = 0;
+
+    /**
      * 当前 Cuboid 数量。
+     *
+     * <p>
+     * 这个值属于客户端逻辑数据，
+     * 不依赖 GPU Texture。
      */
     private static int cuboidCount = 0;
 
     /**
-     * Cuboid 最小坐标。
+     * CPU 侧 Min 数据。
      *
      * <p>
      * 每三个 float 表示一个 Cuboid：
      *
      * <pre>
      * [x, y, z]
-     * [x, y, z]
-     * ...
      * </pre>
      */
     private static final float[] CUBOID_MINS =
             new float[MAX_CUBOIDS * 3];
 
     /**
-     * Cuboid 最大坐标。
+     * CPU 侧 Max 数据。
      *
      * <p>
-     * 注意这里保存的是：
+     * 注意：
      *
      * <pre>
-     * max + 1
+     * max = Minecraft max + 1
      * </pre>
      *
-     * 从而与 Shader 中的半开区间：
-     *
-     * <pre>
-     * min <= position < max
-     * </pre>
-     *
-     * 保持一致。
+     * 这样 GPU 中保存的是连续空间的半开区间。
      */
     private static final float[] CUBOID_MAXS =
             new float[MAX_CUBOIDS * 3];
 
     /**
-     * 当前 GPU 数据是否需要重新上传。
+     * GPU 是否需要重新上传。
      */
     private static boolean dirty = true;
 
@@ -78,11 +110,20 @@ public final class GhostIsolationGpuData {
     }
 
     /**
-     * 根据客户端当前的灵异隔绝区域，
-     * 重建 GPU 数据。
+     * 根据客户端当前 Region，
+     * 重建 CPU 侧 Cuboid 数据。
      *
      * <p>
-     * 这个方法运行在客户端线程。
+     * 注意：
+     *
+     * <strong>
+     * 这个方法只处理 CPU 数据，
+     * 不进行任何 OpenGL 操作。
+     * </strong>
+     *
+     * <p>
+     * 因此可以安全地在
+     * Client 网络工作线程中调用。
      */
     public static void rebuild() {
 
@@ -94,13 +135,13 @@ public final class GhostIsolationGpuData {
             return;
         }
 
-        clearData();
+        clearCpuData();
 
         int count = 0;
 
         /*
          * ====================================================
-         * 遍历客户端当前保存的 Region
+         * 遍历当前客户端所有 Region
          * ====================================================
          */
         for (ClientGhostIsolationRegion region :
@@ -116,9 +157,9 @@ public final class GhostIsolationGpuData {
             }
 
             /*
-             * ====================================================
+             * =================================================
              * 展开 Region 中的全部 Cuboid
-             * ====================================================
+             * =================================================
              */
             for (ClientGhostIsolationCuboid cuboid :
                     region.getCuboids()) {
@@ -131,12 +172,17 @@ public final class GhostIsolationGpuData {
                             MAX_CUBOIDS
                     );
 
-                    cuboidCount = count;
-                    dirty = true;
+                    cuboidCount =
+                            count;
+
+                    dirty =
+                            true;
+
                     return;
                 }
 
-                int offset = count * 3;
+                int offset =
+                        count * 3;
 
                 /*
                  * =================================================
@@ -156,13 +202,13 @@ public final class GhostIsolationGpuData {
                  * =================================================
                  * Max
                  *
-                 * Minecraft Cuboid 是包含 max 的。
+                 * Minecraft 的 Cuboid max 是包含边界。
                  *
                  * Shader 使用：
                  *
-                 *     min <= position < max
+                 * min <= position < max
                  *
-                 * 所以这里必须 +1。
+                 * 因此这里必须 +1。
                  * =================================================
                  */
                 CUBOID_MAXS[offset] =
@@ -178,9 +224,19 @@ public final class GhostIsolationGpuData {
             }
         }
 
-        cuboidCount = count;
+        cuboidCount =
+                count;
 
-        dirty = true;
+        /*
+         * CPU 数据发生变化。
+         *
+         * GPU 数据暂时不动。
+         *
+         * 等 Render Thread 调用
+         * uploadIfNeeded() 时再上传。
+         */
+        dirty =
+                true;
 
         QisPlan2.LOGGER.info(
                 "[灵异隔绝 GPU] 重建数据：Cuboid={}",
@@ -189,42 +245,203 @@ public final class GhostIsolationGpuData {
     }
 
     /**
-     * 清空所有 Cuboid 数据。
+     * 在 Render Thread 中上传当前数据。
+     *
+     * <p>
+     * 这是唯一负责 OpenGL Texture 上传的方法。
      */
-    private static void clearData() {
+    public static void uploadIfNeeded() {
 
-        java.util.Arrays.fill(
-                CUBOID_MINS,
-                0.0F
+        /*
+         * 防止错误线程调用。
+         */
+        RenderSystem.assertOnRenderThreadOrInit();
+
+        if (!dirty) {
+            return;
+        }
+
+        ensureTexture();
+
+        /*
+         * ====================================================
+         * 创建 FloatBuffer
+         *
+         * 每个 Cuboid：
+         *
+         * Min = 4 float
+         * Max = 4 float
+         *
+         * 总大小：
+         *
+         * 2 × MAX_CUBOIDS × 4
+         * ====================================================
+         */
+        FloatBuffer buffer =
+                BufferUtils.createFloatBuffer(
+                        TEXTURE_WIDTH
+                                * MAX_CUBOIDS
+                                * 4
+                );
+
+        for (int i = 0; i < MAX_CUBOIDS; i++) {
+
+            int offset =
+                    i * 3;
+
+            /*
+             * =================================================
+             * x = 0：Min
+             * =================================================
+             */
+            buffer.put(
+                    CUBOID_MINS[offset]
+            );
+
+            buffer.put(
+                    CUBOID_MINS[offset + 1]
+            );
+
+            buffer.put(
+                    CUBOID_MINS[offset + 2]
+            );
+
+            buffer.put(
+                    1.0F
+            );
+
+            /*
+             * =================================================
+             * x = 1：Max
+             * =================================================
+             */
+            buffer.put(
+                    CUBOID_MAXS[offset]
+            );
+
+            buffer.put(
+                    CUBOID_MAXS[offset + 1]
+            );
+
+            buffer.put(
+                    CUBOID_MAXS[offset + 2]
+            );
+
+            buffer.put(
+                    1.0F
+            );
+        }
+
+        buffer.flip();
+
+        /*
+         * ====================================================
+         * 绑定 Texture
+         * ====================================================
+         */
+        RenderSystem.bindTexture(
+                textureId
         );
 
-        java.util.Arrays.fill(
-                CUBOID_MAXS,
-                0.0F
+        /*
+         * ====================================================
+         * 上传 RGBA32F Texture
+         * ====================================================
+         *
+         * 这里不能使用 Minecraft 的
+         * GlStateManager._texImage2D，
+         * 因为你这个 1.21.1 映射的参数是 IntBuffer。
+         *
+         * 直接调用 LWJGL 的 GL11.glTexImage2D，
+         * 可以使用 FloatBuffer。
+         * ====================================================
+         */
+        GL11.glTexImage2D(
+                GL11.GL_TEXTURE_2D,
+                0,
+                GL30.GL_RGBA32F,
+                TEXTURE_WIDTH,
+                MAX_CUBOIDS,
+                0,
+                GL11.GL_RGBA,
+                GL11.GL_FLOAT,
+                buffer
         );
 
-        cuboidCount = 0;
+        /*
+         * ====================================================
+         * Texture 参数
+         * ====================================================
+         *
+         * Cuboid 数据绝对不能线性插值。
+         */
+        GlStateManager._texParameter(
+                GL11.GL_TEXTURE_2D,
+                GL11.GL_TEXTURE_MIN_FILTER,
+                GL11.GL_NEAREST
+        );
+
+        GlStateManager._texParameter(
+                GL11.GL_TEXTURE_2D,
+                GL11.GL_TEXTURE_MAG_FILTER,
+                GL11.GL_NEAREST
+        );
+
+        /*
+         * 不需要重复。
+         */
+        GlStateManager._texParameter(
+                GL11.GL_TEXTURE_2D,
+                GL11.GL_TEXTURE_WRAP_S,
+                GL12.GL_CLAMP_TO_EDGE
+        );
+
+        GlStateManager._texParameter(
+                GL11.GL_TEXTURE_2D,
+                GL11.GL_TEXTURE_WRAP_T,
+                GL12.GL_CLAMP_TO_EDGE
+        );
+
+        /*
+         * GPU 数据现在与 CPU 数据同步。
+         */
+        dirty =
+                false;
     }
 
     /**
-     * 清空客户端 GPU 数据状态。
+     * 创建 GPU Texture。
+     *
+     * <p>
+     * 只能在 Render Thread 中调用。
      */
-    public static void clear() {
+    private static void ensureTexture() {
 
-        clearData();
+        if (textureId != 0) {
+            return;
+        }
 
-        dirty = true;
+        textureId =
+                GlStateManager._genTexture();
 
         QisPlan2.LOGGER.info(
-                "[灵异隔绝 GPU] 数据已清空"
+                "[灵异隔绝 GPU] 创建数据纹理：id={}",
+                textureId
         );
     }
 
     /**
-     * 当前是否有 Cuboid 数据。
+     * 获取 GPU Texture ID。
+     *
+     * <p>
+     * 调用者必须确保此前已经执行：
+     *
+     * <pre>
+     * uploadIfNeeded()
+     * </pre>
      */
-    public static boolean hasData() {
-        return cuboidCount > 0;
+    public static int getTextureId() {
+        return textureId;
     }
 
     /**
@@ -235,66 +452,72 @@ public final class GhostIsolationGpuData {
     }
 
     /**
-     * 获取 Cuboid Min 数据。
+     * 清空客户端 CPU 数据。
      *
      * <p>
-     * 仅供 GPU 上传阶段使用。
+     * 不进行 OpenGL 操作。
      */
-    public static float[] getCuboidMins() {
-        return CUBOID_MINS;
+    public static void clear() {
+
+        clearCpuData();
+
+        cuboidCount =
+                0;
+
+        dirty =
+                true;
+
+        QisPlan2.LOGGER.info(
+                "[灵异隔绝 GPU] 数据已清空"
+        );
     }
 
     /**
-     * 获取 Cuboid Max 数据。
+     * 清空 CPU 数据。
+     */
+    private static void clearCpuData() {
+
+        java.util.Arrays.fill(
+                CUBOID_MINS,
+                0.0F
+        );
+
+        java.util.Arrays.fill(
+                CUBOID_MAXS,
+                0.0F
+        );
+    }
+
+    /**
+     * 销毁 GPU Texture。
      *
      * <p>
-     * 仅供 GPU 上传阶段使用。
+     * 必须在 Render Thread 调用。
      */
-    public static float[] getCuboidMaxs() {
-        return CUBOID_MAXS;
-    }
+    public static void destroy() {
 
-    /**
-     * GPU 数据是否发生变化。
-     */
-    public static boolean isDirty() {
-        return dirty;
-    }
+        RenderSystem.assertOnRenderThreadOrInit();
 
-    /**
-     * 标记 GPU 数据已经上传。
-     */
-    public static void markUploaded() {
-        dirty = false;
-    }
+        if (textureId != 0) {
 
-    /**
-     * 获取指定 Cuboid 的 Min X/Y/Z。
-     */
-    public static float getMinX(int index) {
-        return CUBOID_MINS[index * 3];
-    }
+            GlStateManager._deleteTexture(
+                    textureId
+            );
 
-    public static float getMinY(int index) {
-        return CUBOID_MINS[index * 3 + 1];
-    }
+            textureId =
+                    0;
+        }
 
-    public static float getMinZ(int index) {
-        return CUBOID_MINS[index * 3 + 2];
-    }
+        cuboidCount =
+                0;
 
-    /**
-     * 获取指定 Cuboid 的 Max X/Y/Z。
-     */
-    public static float getMaxX(int index) {
-        return CUBOID_MAXS[index * 3];
-    }
+        dirty =
+                true;
 
-    public static float getMaxY(int index) {
-        return CUBOID_MAXS[index * 3 + 1];
-    }
+        clearCpuData();
 
-    public static float getMaxZ(int index) {
-        return CUBOID_MAXS[index * 3 + 2];
+        QisPlan2.LOGGER.info(
+                "[灵异隔绝 GPU] 数据纹理已销毁"
+        );
     }
 }

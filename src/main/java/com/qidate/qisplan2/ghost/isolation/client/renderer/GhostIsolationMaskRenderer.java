@@ -9,11 +9,7 @@ import com.mojang.blaze3d.vertex.VertexFormat;
 import com.qidate.qisplan2.QisPlan2;
 import com.qidate.qisplan2.ghost.domain.client.renderer.GhostDomainDepthTarget;
 import com.qidate.qisplan2.ghost.domain.client.renderer.GhostDomainMatrices;
-import com.qidate.qisplan2.ghost.domain.client.renderer.GhostDomainRenderPipeline;
 import com.qidate.qisplan2.ghost.domain.client.renderer.GhostDomainShaderRegistry;
-import com.qidate.qisplan2.ghost.isolation.client.ClientGhostIsolationCuboid;
-import com.qidate.qisplan2.ghost.isolation.client.ClientGhostIsolationManager;
-import com.qidate.qisplan2.ghost.isolation.client.ClientGhostIsolationRegion;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.ShaderInstance;
 import net.minecraft.resources.ResourceLocation;
@@ -40,8 +36,6 @@ public final class GhostIsolationMaskRenderer {
             );
 
     private static final boolean DEBUG_OUTPUT_TO_SCREEN = true;
-
-    private static String LAST_DEBUG_CUBOID = "";
 
     private GhostIsolationMaskRenderer() {
     }
@@ -100,6 +94,27 @@ public final class GhostIsolationMaskRenderer {
         );
 
         /*
+         * ====================================================
+         * 灵异隔绝 Cuboid GPU 数据
+         * ====================================================
+         *
+         * 网络线程只负责修改 CPU 数据。
+         *
+         * 这里已经进入 Render Thread，
+         * 因此现在才真正执行 GPU Texture 上传。
+         */
+        GhostIsolationGpuData.uploadIfNeeded();
+
+        shader.setSampler(
+                "IsolationCuboidData",
+                GhostIsolationGpuData.getTextureId()
+        );
+
+        shader.getUniform("IsolationCuboidCount").set(
+                (float) GhostIsolationGpuData.getCuboidCount()
+        );
+
+        /*
          * 只读取已经复制出来的 Depth。
          */
         shader.setSampler(
@@ -137,95 +152,7 @@ public final class GhostIsolationMaskRenderer {
 
         /*
          * ====================================================
-         * 3. 获取当前维度的第一个真实隔绝 Cuboid
-         * ====================================================
-         *
-         * 当前阶段只测试一个 Cuboid。
-         *
-         * 后续再扩展成：
-         *
-         * Region
-         *   ↓
-         * Cuboids
-         *   ↓
-         * 多 Cuboid GPU 数据
-         */
-        ClientGhostIsolationCuboid cuboid = null;
-
-        for (ClientGhostIsolationRegion region :
-                ClientGhostIsolationManager.getRegions()) {
-
-            if (!region.getDimension().equals(
-                    minecraft.level.dimension().location()
-            )) {
-                continue;
-            }
-
-            if (!region.getCuboids().isEmpty()) {
-                cuboid = region.getCuboids().get(0);
-                break;
-            }
-        }
-
-//        String debugCuboid;
-//
-//        if (cuboid == null) {
-//            debugCuboid = "NONE";
-//        } else {
-//            debugCuboid =
-//                    cuboid.minX() + "," +
-//                            cuboid.minY() + "," +
-//                            cuboid.minZ() + " -> " +
-//                            cuboid.maxX() + "," +
-//                            cuboid.maxY() + "," +
-//                            cuboid.maxZ();
-//        }
-//
-//        if (!debugCuboid.equals(LAST_DEBUG_CUBOID)) {
-//
-//            LAST_DEBUG_CUBOID = debugCuboid;
-//
-//            QisPlan2.LOGGER.info(
-//                    "[灵异隔绝 Mask] Cuboid = {}",
-//                    debugCuboid
-//            );
-//        }
-
-        /*
-         * 默认关闭 Cuboid。
-         *
-         * 没有客户端同步到任何隔绝区域时，
-         * Shader 应该输出纯黑。
-         */
-        if (cuboid == null) {
-
-            /*
-             * 当前摄像机不在任何灵异隔绝 Cuboid 内。
-             *
-             * 关闭当前 Cuboid。
-             */
-            shader.getUniform("IsolationCuboidActive").set(0.0F);
-
-        } else {
-
-            shader.getUniform("IsolationCuboidMin").set(
-                    (float) cuboid.minX(),
-                    (float) cuboid.minY(),
-                    (float) cuboid.minZ()
-            );
-
-            shader.getUniform("IsolationCuboidMax").set(
-                    (float) cuboid.maxX() + 1.0F,
-                    (float) cuboid.maxY() + 1.0F,
-                    (float) cuboid.maxZ() + 1.0F
-            );
-
-            shader.getUniform("IsolationCuboidActive").set(1.0F);
-        }
-
-        /*
-         * ====================================================
-         * 4. 输出到 Mask RenderTarget
+         * 3. 输出到 Mask RenderTarget
          * ====================================================
          */
         outputTarget.bindWrite(false);
