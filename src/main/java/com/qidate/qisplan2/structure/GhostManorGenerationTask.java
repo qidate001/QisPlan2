@@ -47,6 +47,22 @@ public class GhostManorGenerationTask {
      */
     private boolean finished = false;
 
+    public int getMinChunkX() {
+        return origin.getX() >> 4;
+    }
+
+    public int getMaxChunkX() {
+        return getMinChunkX() + PARTS_X - 1;
+    }
+
+    public int getMinChunkZ() {
+        return origin.getZ() >> 4;
+    }
+
+    public int getMaxChunkZ() {
+        return getMinChunkZ() + PARTS_Z - 1;
+    }
+
     public GhostManorGenerationTask(
             ServerLevel level,
             BlockPos origin
@@ -69,6 +85,10 @@ public class GhostManorGenerationTask {
 
     public BlockPos getOrigin() {
         return origin;
+    }
+
+    public ServerLevel getLevel() {
+        return level;
     }
 
     /**

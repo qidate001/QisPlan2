@@ -352,6 +352,69 @@ public final class GhostIsolationSystem {
     }
 
     /**
+     * 一次性处理大型结构生成造成的空间变化。
+     */
+    public static void onBatchChanged(
+            ServerLevel level,
+            int minChunkX,
+            int maxChunkX,
+            int minChunkZ,
+            int maxChunkZ
+    ) {
+
+        GhostIsolationSavedData data =
+                GhostIsolationSavedData.get(level);
+
+        int minBlockX =
+                minChunkX << 4;
+
+        int maxBlockX =
+                (maxChunkX << 4) + 15;
+
+        int minBlockZ =
+                minChunkZ << 4;
+
+        int maxBlockZ =
+                (maxChunkZ << 4) + 15;
+
+        for (GhostIsolationRegion region :
+                data.getRegions()) {
+
+            if (region.getState()
+                    != IsolationState.ISOLATED) {
+
+                continue;
+            }
+
+            /*
+             * Region 的粗略 AABB 与 Batch 范围没有交集。
+             */
+            if (region.getMax().getX() < minBlockX
+                    || region.getMin().getX() > maxBlockX
+                    || region.getMax().getZ() < minBlockZ
+                    || region.getMin().getZ() > maxBlockZ) {
+
+                continue;
+            }
+
+            region.setState(
+                    IsolationState.DIRTY
+            );
+
+            QisPlan2.LOGGER.info(
+                    "[灵异隔绝检测] Region {} 因批量方块变化而标记为 DIRTY，Batch Chunk：X {}~{}，Z {}~{}",
+                    region.getId(),
+                    minChunkX,
+                    maxChunkX,
+                    minChunkZ,
+                    maxChunkZ
+            );
+        }
+
+        data.setDirty();
+    }
+
+    /**
      * 灵异隔绝系统的一次查询结果。
      *
      * @param state      最终得到的隔绝状态

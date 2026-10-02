@@ -1,5 +1,6 @@
 package com.qidate.qisplan2.mixin;
 
+import com.qidate.qisplan2.ghost.isolation.GhostIsolationBatchManager;
 import com.qidate.qisplan2.ghost.isolation.GhostIsolationBlockRegistry;
 import com.qidate.qisplan2.ghost.isolation.GhostIsolationSystem;
 
@@ -83,15 +84,26 @@ public abstract class LevelMixin {
             return;
         }
 
-        /*
-         * ServerLevel 才应该进入系统。
-         */
-        if (level instanceof net.minecraft.server.level.ServerLevel serverLevel) {
-
-            GhostIsolationSystem.onBlockChanged(
-                    serverLevel,
-                    pos
-            );
+        if (!(level instanceof net.minecraft.server.level.ServerLevel serverLevel)) {
+            return;
         }
+
+        /*
+         * 大型结构正在批量生成。
+         *
+         * 此时不处理单个方块变化，
+         * 等 Batch 完成后统一处理。
+         */
+        if (GhostIsolationBatchManager.isBlocked(
+                serverLevel,
+                pos
+        )) {
+            return;
+        }
+
+        GhostIsolationSystem.onBlockChanged(
+                serverLevel,
+                pos
+        );
     }
 }
