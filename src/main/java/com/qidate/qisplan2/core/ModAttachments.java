@@ -128,10 +128,7 @@ public class ModAttachments {
             );
 
     // 实体肉身鬼域抵抗
-    public static final DeferredHolder<
-            AttachmentType<?>,
-            AttachmentType<Integer>
-            > GHOST_RESISTANCE =
+    public static final DeferredHolder<AttachmentType<?>,AttachmentType<Integer>> GHOST_RESISTANCE =
             ATTACHMENT_TYPES.register(
                     "ghost_resistance",
                     () ->

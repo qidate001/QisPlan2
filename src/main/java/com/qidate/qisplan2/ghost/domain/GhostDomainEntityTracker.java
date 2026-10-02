@@ -1,5 +1,6 @@
 package com.qidate.qisplan2.ghost.domain;
 
+import com.qidate.qisplan2.ghost.isolation.GhostIsolationSystem;
 import com.qidate.qisplan2.ghost.layer.GhostLayerAccess;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
@@ -102,6 +103,19 @@ public final class GhostDomainEntityTracker {
              * 肉身鬼域抵抗
              */
             if (!GhostLayerAccess.canEnter(entity, domain)) {
+                continue;
+            }
+
+            /*
+             * 灵异隔绝
+             *
+             * 处于灵异隔绝空间中的实体，
+             * 无法被鬼域拉入。
+             */
+            if (GhostIsolationSystem.isIsolated(
+                    level,
+                    entity.blockPosition()
+            )) {
                 continue;
             }
 

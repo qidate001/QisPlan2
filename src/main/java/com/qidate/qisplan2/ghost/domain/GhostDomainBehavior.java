@@ -1,5 +1,6 @@
 package com.qidate.qisplan2.ghost.domain;
 
+import com.qidate.qisplan2.ghost.isolation.GhostIsolationSystem;
 import com.qidate.qisplan2.ghost.layer.GhostLayerHandler;
 import com.qidate.qisplan2.ghost.layer.GhostResistanceHandler;
 import net.minecraft.server.level.ServerLevel;
@@ -118,6 +119,22 @@ public interface GhostDomainBehavior {
             Entity entity
     ) {
         return false;
+    }
+
+    /**
+     * 判断实体是否可以进入鬼域。
+     *
+     * <p>默认情况下，处于灵异隔绝空间中的实体无法进入鬼域。</p>
+     */
+    default boolean canEntityEnter(
+            ServerLevel level,
+            GhostDomain domain,
+            Entity entity
+    ) {
+        return !GhostIsolationSystem.isIsolated(
+                level,
+                entity.blockPosition()
+        );
     }
 
     /**
