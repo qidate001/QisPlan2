@@ -8,6 +8,7 @@ import com.mojang.brigadier.context.CommandContext;
 import com.qidate.qisplan2.QisPlan2;
 import com.qidate.qisplan2.death.SupernaturalEntity;
 import com.qidate.qisplan2.ghost.domain.type.debug.DebugDomainController;
+import com.qidate.qisplan2.ghost.isolation.GhostIsolationDetector;
 import com.qidate.qisplan2.structure.GhostLakeGenerationManager;
 import com.qidate.qisplan2.structure.GhostManorGenerationManager;
 import com.qidate.qisplan2.structure.StructureSplitter;
@@ -573,7 +574,6 @@ public final class WorldCommands {
      * 检测当前位置是否被灵异隔绝
      * ============================================================
      */
-
     private static int debugIsolation(
             CommandContext<CommandSourceStack> context
     ) {
@@ -593,17 +593,80 @@ public final class WorldCommands {
             return 0;
         }
 
-        /*
-         * 暂时占位。
-         *
-         * 等 GhostIsolationSystem 完成后，
-         * 这里直接调用：
-         *
-         * GhostIsolationSystem.isIsolated(
-         *         player.serverLevel(),
-         *         player.blockPosition()
-         * );
-         */
+        GhostIsolationDetector.DetectionResult result =
+                GhostIsolationDetector.detect(
+                        player.serverLevel(),
+                        player.blockPosition()
+                );
+
+        switch (result.state()) {
+
+            case ISOLATED -> {
+
+                source.sendSuccess(
+                        () -> Component.translatable(
+                                "command.qisplan2.debug_isolation.isolated"
+                        ),
+                        false
+                );
+
+                QisPlan2.LOGGER.info(
+                        "[灵异隔绝测试] 玩家 {} 当前位置 {} 被确认处于灵异隔绝空间，范围：{} → {}",
+                        player.getGameProfile().getName(),
+                        player.blockPosition(),
+                        result.min(),
+                        result.max()
+                );
+            }
+
+            case UNKNOWN -> {
+
+                source.sendSuccess(
+                        () -> Component.translatable(
+                                "command.qisplan2.debug_isolation.unknown"
+                        ),
+                        false
+                );
+
+                QisPlan2.LOGGER.info(
+                        "[灵异隔绝测试] 玩家 {} 当前位置 {} 无法确定灵异隔绝状态",
+                        player.getGameProfile().getName(),
+                        player.blockPosition()
+                );
+            }
+
+            case OPEN -> {
+
+                /*
+                 * Detector 当前版本暂时不会主动返回 OPEN。
+                 *
+                 * 保留这个分支，是为了与 IsolationState
+                 * 的完整状态保持一致。
+                 */
+                source.sendSuccess(
+                        () -> Component.translatable(
+                                "command.qisplan2.debug_isolation.open"
+                        ),
+                        false
+                );
+            }
+
+            case DIRTY -> {
+
+                /*
+                 * Detector 本身不会返回 DIRTY。
+                 *
+                 * DIRTY 属于后续 GhostIsolationSystem
+                 * 的缓存状态。
+                 */
+                source.sendSuccess(
+                        () -> Component.translatable(
+                                "command.qisplan2.debug_isolation.unknown"
+                        ),
+                        false
+                );
+            }
+        }
 
         return 1;
     }
