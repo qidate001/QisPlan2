@@ -140,6 +140,10 @@
   "command.qisplan2.possessed.header": "Currently possessed:",
   "command.qisplan2.possessed.entry": " - Revival: %s",
 
+  "command.qisplan2.debug_isolation.isolated": "Your current position is isolated from supernatural forces.",
+  "command.qisplan2.debug_isolation.open": "Your current position is not isolated from supernatural forces.",
+  "command.qisplan2.debug_isolation.unknown": "The supernatural isolation state of your current position could not be determined.",
+
   "command.qisplan2.stun.success": "%s has entered normal shutdown for %s seconds.",
   "command.qisplan2.permanent_stun.success": "%s has entered permanent shutdown.",
 

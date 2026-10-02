@@ -118,6 +118,20 @@ public final class WorldCommands {
                         )
         );
 
+        /*
+         * ========================================================
+         * /qisplan2 debug_isolation
+         *
+         * 检测玩家当前位置是否被灵异隔绝
+         * ========================================================
+         */
+
+        root.then(
+                Commands.literal("debug_isolation")
+                        .executes(
+                                WorldCommands::debugIsolation
+                        )
+        );
 
         /*
          * ========================================================
@@ -550,6 +564,46 @@ public final class WorldCommands {
                 ),
                 true
         );
+
+        return 1;
+    }
+
+    /*
+     * ============================================================
+     * 检测当前位置是否被灵异隔绝
+     * ============================================================
+     */
+
+    private static int debugIsolation(
+            CommandContext<CommandSourceStack> context
+    ) {
+
+        CommandSourceStack source =
+                context.getSource();
+
+        if (!(source.getEntity()
+                instanceof ServerPlayer player)) {
+
+            source.sendFailure(
+                    Component.translatable(
+                            "command.qisplan2.player_only"
+                    )
+            );
+
+            return 0;
+        }
+
+        /*
+         * 暂时占位。
+         *
+         * 等 GhostIsolationSystem 完成后，
+         * 这里直接调用：
+         *
+         * GhostIsolationSystem.isIsolated(
+         *         player.serverLevel(),
+         *         player.blockPosition()
+         * );
+         */
 
         return 1;
     }
