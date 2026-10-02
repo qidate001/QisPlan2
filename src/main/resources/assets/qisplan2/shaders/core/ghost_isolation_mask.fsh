@@ -21,7 +21,7 @@ out vec4 fragColor;
  * 判断一个世界坐标是否位于
  * 当前灵异隔绝 Cuboid 内。
  */
-bool rayIntersectsCuboid(
+bool rayPassesThroughCuboid(
         vec3 rayOrigin,
         vec3 rayEnd
 ) {
@@ -307,7 +307,7 @@ void main() {
      */
     if (IsolationCuboidActive > 0.5) {
 
-        if (rayIntersectsCuboid(
+        if (rayPassesThroughCuboid(
                 rayStart,
                 sceneWorldPos
         )) {

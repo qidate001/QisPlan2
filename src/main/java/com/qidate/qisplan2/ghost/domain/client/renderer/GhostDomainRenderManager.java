@@ -45,8 +45,8 @@ public final class GhostDomainRenderManager {
         }
 
         /*
-         * 没有任何后处理效果时，
-         * 当前帧不需要准备 Depth。
+         * 没有任何鬼域后处理效果时，
+         * 当前帧不需要执行后处理。
          */
         if (effects.isEmpty()) {
             return;
@@ -59,9 +59,9 @@ public final class GhostDomainRenderManager {
          *
          * 所有后处理效果，包括：
          *
+         * GhostIsolationMask
          * GhostEye
          * GhostRain
-         * GhostIsolationMask
          *
          * 都使用这一份独立 Depth。
          */
@@ -71,6 +71,15 @@ public final class GhostDomainRenderManager {
          * ====================================================
          * 3. 正常鬼域后处理
          * ====================================================
+         *
+         * 此时：
+         *
+         * GhostIsolationMaskTarget
+         *
+         * 已经准备完成。
+         *
+         * 后续鬼域效果可以直接读取
+         * IsolationMaskSampler。
          */
         for (GhostDomainRenderEffect effect :
                 effects) {
@@ -86,8 +95,12 @@ public final class GhostDomainRenderManager {
          * 2. 生成灵异隔绝 Mask
          * ====================================================
          *
-         * 当前阶段是 Debug 模式，
-         * Mask 会直接输出到屏幕。
+         * Mask 必须在所有鬼域后处理之前生成。
+         *
+         * GhostEye / GhostRain 等后续效果
+         * 会读取这张 Mask，
+         * 从而判断某个像素是否处于
+         * 灵异隔绝空间。
          */
         GhostIsolationMaskRenderer.render();
     }

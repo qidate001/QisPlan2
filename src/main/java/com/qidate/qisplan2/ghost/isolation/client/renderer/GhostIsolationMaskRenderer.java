@@ -161,47 +161,35 @@ public final class GhostIsolationMaskRenderer {
                 continue;
             }
 
-            for (ClientGhostIsolationCuboid candidate :
-                    region.getCuboids()) {
-
-                if (candidate.contains(
-                        (int) camera.getPosition().x,
-                        (int) camera.getPosition().y,
-                        (int) camera.getPosition().z
-                )) {
-                    cuboid = candidate;
-                    break;
-                }
-            }
-
-            if (cuboid != null) {
+            if (!region.getCuboids().isEmpty()) {
+                cuboid = region.getCuboids().get(0);
                 break;
             }
         }
 
-        String debugCuboid;
-
-        if (cuboid == null) {
-            debugCuboid = "NONE";
-        } else {
-            debugCuboid =
-                    cuboid.minX() + "," +
-                            cuboid.minY() + "," +
-                            cuboid.minZ() + " -> " +
-                            cuboid.maxX() + "," +
-                            cuboid.maxY() + "," +
-                            cuboid.maxZ();
-        }
-
-        if (!debugCuboid.equals(LAST_DEBUG_CUBOID)) {
-
-            LAST_DEBUG_CUBOID = debugCuboid;
-
-            QisPlan2.LOGGER.info(
-                    "[灵异隔绝 Mask] Cuboid = {}",
-                    debugCuboid
-            );
-        }
+//        String debugCuboid;
+//
+//        if (cuboid == null) {
+//            debugCuboid = "NONE";
+//        } else {
+//            debugCuboid =
+//                    cuboid.minX() + "," +
+//                            cuboid.minY() + "," +
+//                            cuboid.minZ() + " -> " +
+//                            cuboid.maxX() + "," +
+//                            cuboid.maxY() + "," +
+//                            cuboid.maxZ();
+//        }
+//
+//        if (!debugCuboid.equals(LAST_DEBUG_CUBOID)) {
+//
+//            LAST_DEBUG_CUBOID = debugCuboid;
+//
+//            QisPlan2.LOGGER.info(
+//                    "[灵异隔绝 Mask] Cuboid = {}",
+//                    debugCuboid
+//            );
+//        }
 
         /*
          * 默认关闭 Cuboid。
@@ -227,9 +215,9 @@ public final class GhostIsolationMaskRenderer {
             );
 
             shader.getUniform("IsolationCuboidMax").set(
-                    (float) cuboid.maxX(),
-                    (float) cuboid.maxY(),
-                    (float) cuboid.maxZ()
+                    (float) cuboid.maxX() + 1.0F,
+                    (float) cuboid.maxY() + 1.0F,
+                    (float) cuboid.maxZ() + 1.0F
             );
 
             shader.getUniform("IsolationCuboidActive").set(1.0F);
