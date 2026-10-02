@@ -670,7 +670,7 @@ public final class WorldCommands {
                  * DIRTY 是缓存内部状态。
                  *
                  * 正常情况下 query() 会自动重新检测，
-                 * 因此这里理论上不会直接返回 DIRTY
+                 * 因此这里理论上不会直接返回 DIRTY。
                  */
                 source.sendSuccess(
                         () -> Component.translatable(
