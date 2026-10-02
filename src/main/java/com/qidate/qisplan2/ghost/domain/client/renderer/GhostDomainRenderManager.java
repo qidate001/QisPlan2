@@ -23,6 +23,8 @@ public final class GhostDomainRenderManager {
             return;
         }
 
+        minecraft.getMainRenderTarget().enableStencil();
+
         /*
          * ========================================================
          * 找出当前需要渲染的效果
@@ -67,19 +69,7 @@ public final class GhostDomainRenderManager {
          */
         GhostDomainRenderPipeline.prepareDepth();
 
-        /*
-         * ====================================================
-         * 2. 生成灵异隔绝 Mask
-         * ====================================================
-         *
-         * Mask 必须在所有鬼域后处理之前生成。
-         *
-         * GhostEye / GhostRain 等后续效果
-         * 会读取这张 Mask，
-         * 从而判断某个像素是否处于
-         * 灵异隔绝空间。
-         */
-        GhostIsolationMaskRenderer.render();
+        GhostDomainStencil.writeTestMask();
 
         /*
          * ====================================================
@@ -103,5 +93,23 @@ public final class GhostDomainRenderManager {
                     minecraft
             );
         }
+
+
+
+        GhostDomainStencil.disable();
+
+        /*
+         * ====================================================
+         * 2. 生成灵异隔绝 Mask
+         * ====================================================
+         *
+         * Mask 必须在所有鬼域后处理之前生成。
+         *
+         * GhostEye / GhostRain 等后续效果
+         * 会读取这张 Mask，
+         * 从而判断某个像素是否处于
+         * 灵异隔绝空间。
+         */
+//        GhostIsolationMaskRenderer.render();
     }
 }

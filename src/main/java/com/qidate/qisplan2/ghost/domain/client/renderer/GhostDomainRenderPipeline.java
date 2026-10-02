@@ -6,6 +6,7 @@ import com.mojang.blaze3d.vertex.BufferUploader;
 import com.mojang.blaze3d.vertex.DefaultVertexFormat;
 import com.mojang.blaze3d.vertex.Tesselator;
 import com.mojang.blaze3d.vertex.VertexFormat;
+import com.qidate.qisplan2.QisPlan2;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.ShaderInstance;
 
@@ -283,9 +284,7 @@ public final class GhostDomainRenderPipeline {
          * 所以复制完成后必须重新绑定 MainRenderTarget，
          * 同时恢复 viewport。
          */
-        depthTarget.copyDepthFrom(
-                mainTarget
-        );
+        depthTarget.copyDepthFrom(mainTarget);
 
         /*
          * 重新绑定主渲染目标。

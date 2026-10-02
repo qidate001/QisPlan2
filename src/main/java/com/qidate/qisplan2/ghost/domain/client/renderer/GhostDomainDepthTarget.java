@@ -1,6 +1,7 @@
 package com.qidate.qisplan2.ghost.domain.client.renderer;
 
 import com.mojang.blaze3d.pipeline.TextureTarget;
+import com.qidate.qisplan2.QisPlan2;
 import net.minecraft.client.Minecraft;
 
 /**
@@ -75,6 +76,13 @@ public final class GhostDomainDepthTarget {
                     height,
                     true,
                     Minecraft.ON_OSX
+            );
+
+            TARGET.enableStencil();
+
+            QisPlan2.LOGGER.info(
+                    "[鬼域深度缓冲] 创建完成：stencilEnabled={}",
+                    TARGET.isStencilEnabled()
             );
         }
 
