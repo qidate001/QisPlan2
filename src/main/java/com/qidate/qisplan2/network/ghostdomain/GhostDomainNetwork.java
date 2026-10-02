@@ -5,6 +5,9 @@ import com.qidate.qisplan2.ghost.domain.GhostDomainLayerHandler;
 import com.qidate.qisplan2.ghost.domain.GhostDomainTeleportHandler;
 import com.qidate.qisplan2.ghost.domain.client.ClientGhostDomainManager;
 import com.qidate.qisplan2.ghost.domain.client.ClientGhostDomainVisionSystem;
+import com.qidate.qisplan2.ghost.isolation.GhostIsolationRegion;
+import com.qidate.qisplan2.ghost.isolation.client.ClientGhostIsolationCuboid;
+import com.qidate.qisplan2.ghost.isolation.client.ClientGhostIsolationManager;
 import com.qidate.qisplan2.network.payload.*;
 
 import net.minecraft.server.level.ServerLevel;
@@ -106,7 +109,69 @@ public final class GhostDomainNetwork {
 
         /*
          * ========================================================
-         * S2C：鬼域视觉
+         * S2C：灵异隔绝区域添加
+         * ========================================================
+         */
+
+        registrar.playToClient(
+                GhostIsolationAddPayload.TYPE,
+                GhostIsolationAddPayload.STREAM_CODEC,
+                (payload, context) -> {
+
+                    context.enqueueWork(() -> {
+
+                        List<ClientGhostIsolationCuboid> cuboids =
+                                new ArrayList<>(
+                                        payload.cuboids().size()
+                                );
+
+                        for (GhostIsolationAddPayload.CuboidEntry entry :
+                                payload.cuboids()) {
+
+                            cuboids.add(
+                                    new ClientGhostIsolationCuboid(
+                                            entry.minX(),
+                                            entry.minY(),
+                                            entry.minZ(),
+                                            entry.maxX(),
+                                            entry.maxY(),
+                                            entry.maxZ()
+                                    )
+                            );
+                        }
+
+                        ClientGhostIsolationManager.add(
+                                payload.regionId(),
+                                payload.dimension(),
+                                cuboids
+                        );
+                    });
+                }
+        );
+
+        /*
+         * ========================================================
+         * S2C：灵异隔绝区域移除
+         * ========================================================
+         */
+
+        registrar.playToClient(
+                GhostIsolationRemovePayload.TYPE,
+                GhostIsolationRemovePayload.STREAM_CODEC,
+                (payload, context) -> {
+
+                    context.enqueueWork(() -> {
+
+                        ClientGhostIsolationManager.remove(
+                                payload.regionId()
+                        );
+                    });
+                }
+        );
+
+        /*
+         * ========================================================
+         * S2C：鬼域视觉（实体的视觉状态同步，和鬼域Shader渲染无关）
          * ========================================================
          */
 
@@ -245,7 +310,59 @@ public final class GhostDomainNetwork {
 
     /*
      * ========================================================
-     * S2C：鬼域视觉
+     * S2C：灵异隔绝区域添加
+     * ========================================================
+     */
+
+    /**
+     * 向指定维度中的所有玩家同步一个灵异隔绝区域。
+     *
+     * <p>
+     * 服务端确认一个 Region 成立后，
+     * 可以通过这个方法将其精确空间同步到客户端。
+     * </p>
+     *
+     * @param level Region 所在的服务端维度
+     * @param region 要同步的灵异隔绝区域
+     */
+    public static void sendIsolationAdd(
+            ServerLevel level,
+            GhostIsolationRegion region
+    ) {
+        PacketDistributor.sendToPlayersInDimension(
+                level,
+                GhostIsolationAddPayload.from(
+                        region
+                )
+        );
+    }
+
+    /**
+     * 向指定玩家同步一个灵异隔绝区域。
+     *
+     * <p>
+     * 主要用于玩家进入服务器、
+     * 切换维度或者需要补发客户端缓存时。
+     * </p>
+     *
+     * @param player 要接收数据的玩家
+     * @param region 要同步的灵异隔绝区域
+     */
+    public static void sendIsolationAdd(
+            ServerPlayer player,
+            GhostIsolationRegion region
+    ) {
+        PacketDistributor.sendToPlayer(
+                player,
+                GhostIsolationAddPayload.from(
+                        region
+                )
+        );
+    }
+
+    /*
+     * ========================================================
+     * S2C：鬼域视觉（实体的视觉状态同步，和鬼域Shader渲染无关）
      * ========================================================
      */
 
@@ -276,6 +393,58 @@ public final class GhostDomainNetwork {
                 new GhostDomainVisionPayload(
                         domain.getId(),
                         entries
+                )
+        );
+    }
+
+    /*
+     * ========================================================
+     * S2C：灵异隔绝区域移除
+     * ========================================================
+     */
+
+    /**
+     * 向指定维度中的所有玩家移除一个灵异隔绝区域。
+     *
+     * <p>
+     * 客户端只需要 Region UUID，
+     * 无需再次同步空间数据。
+     * </p>
+     *
+     * @param level Region 所在的服务端维度
+     * @param regionId 要移除的 Region UUID
+     */
+    public static void sendIsolationRemove(
+            ServerLevel level,
+            UUID regionId
+    ) {
+        PacketDistributor.sendToPlayersInDimension(
+                level,
+                new GhostIsolationRemovePayload(
+                        regionId
+                )
+        );
+    }
+
+    /**
+     * 向指定玩家移除一个灵异隔绝区域。
+     *
+     * <p>
+     * 主要用于玩家进入服务器、
+     * 切换维度或者客户端缓存需要修正时。
+     * </p>
+     *
+     * @param player 要接收数据的玩家
+     * @param regionId 要移除的 Region UUID
+     */
+    public static void sendIsolationRemove(
+            ServerPlayer player,
+            UUID regionId
+    ) {
+        PacketDistributor.sendToPlayer(
+                player,
+                new GhostIsolationRemovePayload(
+                        regionId
                 )
         );
     }

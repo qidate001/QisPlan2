@@ -84,6 +84,19 @@ public class GhostIsolationRegion {
         return seed;
     }
 
+    /**
+     * 获取这个 Region 所包含的所有精确隔绝长方体。
+     *
+     * <p>
+     * 这些长方体共同描述 Region 的实际空间范围。
+     * </p>
+     *
+     * @return Region 包含的所有长方体
+     */
+    public List<GhostIsolationCuboid> getCuboids() {
+        return List.copyOf(cuboids);
+    }
+
     public IsolationState getState() {
         return state;
     }
