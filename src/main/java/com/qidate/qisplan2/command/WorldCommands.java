@@ -9,6 +9,7 @@ import com.qidate.qisplan2.QisPlan2;
 import com.qidate.qisplan2.death.SupernaturalEntity;
 import com.qidate.qisplan2.ghost.domain.type.debug.DebugDomainController;
 import com.qidate.qisplan2.ghost.isolation.GhostIsolationDetector;
+import com.qidate.qisplan2.ghost.isolation.GhostIsolationSystem;
 import com.qidate.qisplan2.structure.GhostLakeGenerationManager;
 import com.qidate.qisplan2.structure.GhostManorGenerationManager;
 import com.qidate.qisplan2.structure.StructureSplitter;
@@ -593,8 +594,8 @@ public final class WorldCommands {
             return 0;
         }
 
-        GhostIsolationDetector.DetectionResult result =
-                GhostIsolationDetector.detect(
+        GhostIsolationSystem.QueryResult result =
+                GhostIsolationSystem.query(
                         player.serverLevel(),
                         player.blockPosition()
                 );
@@ -611,11 +612,16 @@ public final class WorldCommands {
                 );
 
                 QisPlan2.LOGGER.info(
-                        "[灵异隔绝测试] 玩家 {} 当前位置 {} 被确认处于灵异隔绝空间，范围：{} → {}",
+                        "[灵异隔绝测试] 玩家 {} 当前位置 {} 被确认处于灵异隔绝空间，查询方式：{}",
                         player.getGameProfile().getName(),
                         player.blockPosition(),
-                        result.min(),
-                        result.max()
+                        result.cacheHit()
+                                ? "缓存命中"
+                                : result.rechecked()
+                                ? "缓存失效后重新检测"
+                                : result.regionCreated()
+                                ? "首次检测并建立缓存"
+                                : "检测"
                 );
             }
 
@@ -629,19 +635,19 @@ public final class WorldCommands {
                 );
 
                 QisPlan2.LOGGER.info(
-                        "[灵异隔绝测试] 玩家 {} 当前位置 {} 无法确定灵异隔绝状态",
+                        "[灵异隔绝测试] 玩家 {} 当前位置 {} 无法确定灵异隔绝状态，查询方式：{}",
                         player.getGameProfile().getName(),
-                        player.blockPosition()
+                        player.blockPosition(),
+                        result.rechecked()
+                                ? "缓存失效后重新检测"
+                                : "首次检测"
                 );
             }
 
             case OPEN -> {
 
                 /*
-                 * Detector 当前版本暂时不会主动返回 OPEN。
-                 *
-                 * 保留这个分支，是为了与 IsolationState
-                 * 的完整状态保持一致。
+                 * 当前 Detector 暂时不会主动返回 OPEN。
                  */
                 source.sendSuccess(
                         () -> Component.translatable(
@@ -649,21 +655,34 @@ public final class WorldCommands {
                         ),
                         false
                 );
+
+                QisPlan2.LOGGER.info(
+                        "[灵异隔绝测试] 玩家 {} 当前位置 {} 未被灵异隔绝，查询命中缓存：{}",
+                        player.getGameProfile().getName(),
+                        player.blockPosition(),
+                        result.cacheHit()
+                );
             }
 
             case DIRTY -> {
 
                 /*
-                 * Detector 本身不会返回 DIRTY。
+                 * DIRTY 是缓存内部状态。
                  *
-                 * DIRTY 属于后续 GhostIsolationSystem
-                 * 的缓存状态。
+                 * 正常情况下 query() 会自动重新检测，
+                 * 因此这里理论上不会直接返回 DIRTY
                  */
                 source.sendSuccess(
                         () -> Component.translatable(
                                 "command.qisplan2.debug_isolation.unknown"
                         ),
                         false
+                );
+
+                QisPlan2.LOGGER.info(
+                        "[灵异隔绝测试] 玩家 {} 当前位置 {} 状态为 DIRTY",
+                        player.getGameProfile().getName(),
+                        player.blockPosition()
                 );
             }
         }
