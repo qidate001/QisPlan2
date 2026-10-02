@@ -173,6 +173,22 @@ public final class GhostDomainNetwork {
 
         /*
          * ========================================================
+         * S2C：清空客户端全部灵异隔绝区域数据
+         * ========================================================
+         */
+
+        registrar.playToClient(
+                GhostIsolationClearPayload.TYPE,
+                GhostIsolationClearPayload.STREAM_CODEC,
+                (payload, context) -> {
+                    context.enqueueWork(
+                            ClientGhostIsolationManager::clear
+                    );
+                }
+        );
+
+        /*
+         * ========================================================
          * S2C：鬼域视觉（实体的视觉状态同步，和鬼域Shader渲染无关）
          * ========================================================
          */
@@ -492,6 +508,25 @@ public final class GhostDomainNetwork {
 
             sendIsolationAdd(player, region);
         }
+    }
+
+    /**
+     * 清空指定玩家客户端缓存的全部灵异隔绝区域。
+     *
+     * <p>
+     * 主要用于玩家切换维度时，
+     * 清除旧维度的客户端缓存。
+     * </p>
+     *
+     * @param player 目标玩家
+     */
+    public static void sendIsolationClear(
+            ServerPlayer player
+    ) {
+        PacketDistributor.sendToPlayer(
+                player,
+                new GhostIsolationClearPayload()
+        );
     }
 
     /*

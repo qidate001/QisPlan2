@@ -53,6 +53,11 @@ public final class GhostIsolationPlayerSync {
     /**
      * 玩家切换维度。
      *
+     * <p>
+     * 先清除客户端旧维度的灵异隔绝区域，
+     * 再补发新维度已经存在的隔绝区域。
+     * </p>
+     *
      * @param event 玩家切换维度事件
      */
     @SubscribeEvent
@@ -64,10 +69,18 @@ public final class GhostIsolationPlayerSync {
             return;
         }
 
+        /*
+         * 先清空客户端旧维度的隔绝区域缓存。
+         */
+        GhostDomainNetwork.sendIsolationClear(player);
+
+        /*
+         * 再同步新维度已经存在的隔绝区域。
+         */
         sync(player);
 
         QisPlan2.LOGGER.info(
-                "[灵异隔绝] 玩家切换维度 {} -> {}，补发隔绝区域: {}",
+                "[灵异隔绝] 玩家切换维度 {} -> {}，清理旧缓存并补发新维度隔绝区域: {}",
                 event.getFrom().location(),
                 event.getTo().location(),
                 player.getGameProfile().getName()
