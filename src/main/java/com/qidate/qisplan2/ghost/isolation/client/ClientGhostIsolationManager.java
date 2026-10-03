@@ -1,6 +1,5 @@
 package com.qidate.qisplan2.ghost.isolation.client;
 
-import com.qidate.qisplan2.QisPlan2;
 import com.qidate.qisplan2.ghost.isolation.client.renderer.GhostIsolationGpuData;
 import net.minecraft.resources.ResourceLocation;
 
@@ -26,6 +25,16 @@ import java.util.UUID;
 public final class ClientGhostIsolationManager {
 
     private static final Map<UUID, ClientGhostIsolationRegion> REGIONS =
+            new LinkedHashMap<>();
+
+    /**
+     * 隔绝空间 UUID → 当前 GPU 数据中的 Region Index。
+     *
+     * <p>
+     * 该 Index 只是 GPU 数据的临时索引，
+     * Region 的真正身份仍然由 UUID 决定。
+     */
+    private static final Map<UUID, Integer> REGION_INDICES =
             new LinkedHashMap<>();
 
     private ClientGhostIsolationManager() {
@@ -57,14 +66,9 @@ public final class ClientGhostIsolationManager {
                 )
         );
 
-        GhostIsolationGpuData.rebuild();
+        rebuildRegionIndices();
 
-        QisPlan2.LOGGER.info(
-                "[灵异隔绝客户端] ADD Region: id={}, dimension={}, cuboids={}",
-                id,
-                dimension,
-                cuboids.size()
-        );
+        GhostIsolationGpuData.rebuild();
     }
 
     /**
@@ -77,12 +81,33 @@ public final class ClientGhostIsolationManager {
     ) {
         REGIONS.remove(id);
 
-        GhostIsolationGpuData.rebuild();
+        rebuildRegionIndices();
 
-        QisPlan2.LOGGER.info(
-                "[灵异隔绝客户端] REMOVE Region: {}",
-                id
-        );
+        GhostIsolationGpuData.rebuild();
+    }
+
+    /**
+     * 根据当前客户端存在的隔绝空间重新建立 GPU Region Index。
+     *
+     * <p>
+     * Index 只服务于当前 GPU 数据，
+     * 因此隔绝空间增删后允许重新编号。
+     */
+    private static void rebuildRegionIndices() {
+
+        REGION_INDICES.clear();
+
+        int index = 0;
+
+        for (UUID regionId : REGIONS.keySet()) {
+
+            REGION_INDICES.put(
+                    regionId,
+                    index
+            );
+
+            index++;
+        }
     }
 
     /**
@@ -106,6 +131,23 @@ public final class ClientGhostIsolationManager {
             UUID id
     ) {
         return REGIONS.get(id);
+    }
+
+    /**
+     * 获取隔绝空间当前对应的 GPU Region Index。
+     *
+     * @param regionId 隔绝空间 UUID
+     * @return GPU Region Index；不存在时返回 -1
+     */
+    public static int getRegionIndex(UUID regionId) {
+
+        Integer index = REGION_INDICES.get(regionId);
+
+        if (index == null) {
+            return -1;
+        }
+
+        return index;
     }
 
     /**
@@ -140,6 +182,61 @@ public final class ClientGhostIsolationManager {
     }
 
     /**
+     * 获取指定位置所属的灵异隔绝空间。
+     *
+     * <p>
+     * 返回值：
+     * <ul>
+     *     <li>{@code null}：当前位置属于普通空间</li>
+     *     <li>非 {@code null}：当前位置属于对应的隔绝空间</li>
+     * </ul>
+     *
+     * @param dimension 维度
+     * @param x 世界 X 坐标
+     * @param y 世界 Y 坐标
+     * @param z 世界 Z 坐标
+     * @return 所属隔绝空间的 UUID；如果不属于任何隔绝空间则返回 null
+     */
+    public static UUID getRegionId(
+            ResourceLocation dimension,
+            double x,
+            double y,
+            double z
+    ) {
+
+        for (ClientGhostIsolationRegion region :
+                REGIONS.values()) {
+
+            /*
+             * 隔绝空间只属于自己的维度。
+             */
+            if (!region.getDimension().equals(
+                    dimension
+            )) {
+                continue;
+            }
+
+            /*
+             * 检查当前位置是否位于该隔绝空间。
+             */
+            if (region.contains(
+                    dimension,
+                    (int) Math.floor(x),
+                    (int) Math.floor(y),
+                    (int) Math.floor(z)
+            )) {
+                return region.getId();
+            }
+        }
+
+        /*
+         * 没有命中任何隔绝空间，
+         * 说明当前位置属于普通空间。
+         */
+        return null;
+    }
+
+    /**
      * 清空客户端当前保存的所有灵异隔绝区域。
      *
      * <p>
@@ -150,6 +247,8 @@ public final class ClientGhostIsolationManager {
     public static void clear() {
 
         REGIONS.clear();
+
+        REGION_INDICES.clear();
 
         GhostIsolationGpuData.rebuild();
     }

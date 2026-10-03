@@ -7,6 +7,7 @@ import com.qidate.qisplan2.ghost.isolation.client.ClientGhostIsolationCuboid;
 import com.qidate.qisplan2.ghost.isolation.client.ClientGhostIsolationManager;
 import com.qidate.qisplan2.ghost.isolation.client.ClientGhostIsolationRegion;
 import net.minecraft.client.Minecraft;
+import net.minecraft.resources.ResourceLocation;
 import org.lwjgl.BufferUtils;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL12;
@@ -102,6 +103,15 @@ public final class GhostIsolationGpuData {
             new float[MAX_CUBOIDS * 3];
 
     /**
+     * 每个 Cuboid 所属的隔绝空间 Region Index。
+     *
+     * <p>
+     * 下标与 CUBOID_MINS / CUBOID_MAXS 中的 Cuboid 下标一致。
+     */
+    private static final int[] CUBOID_REGION_INDICES =
+            new int[MAX_CUBOIDS];
+
+    /**
      * GPU 是否需要重新上传。
      */
     private static boolean dirty = true;
@@ -127,121 +137,110 @@ public final class GhostIsolationGpuData {
      */
     public static void rebuild() {
 
+        cuboidCount = 0;
+
+        /*
+         * 当前客户端没有世界时，
+         * GPU 数据直接清空。
+         */
         Minecraft minecraft =
                 Minecraft.getInstance();
 
         if (minecraft.level == null) {
-            clear();
+            dirty = true;
             return;
         }
 
-        clearCpuData();
-
-        int count = 0;
+        ResourceLocation currentDimension =
+                minecraft.level
+                        .dimension()
+                        .location();
 
         /*
-         * ====================================================
-         * 遍历当前客户端所有 Region
-         * ====================================================
+         * 遍历当前客户端已知的所有隔绝空间。
          */
         for (ClientGhostIsolationRegion region :
                 ClientGhostIsolationManager.getRegions()) {
 
             /*
-             * 只处理当前维度。
+             * GPU 数据只上传当前维度的隔绝空间。
              */
             if (!region.getDimension().equals(
-                    minecraft.level.dimension().location()
+                    currentDimension
             )) {
                 continue;
             }
 
             /*
-             * =================================================
-             * 展开 Region 中的全部 Cuboid
-             * =================================================
+             * 获取该 Region 在当前 GPU 数据中的临时 Index。
+             */
+            int regionIndex =
+                    ClientGhostIsolationManager.getRegionIndex(
+                            region.getId()
+                    );
+
+            /*
+             * 理论上不应该发生。
+             */
+            if (regionIndex < 0) {
+                continue;
+            }
+
+            /*
+             * 一个 Region 可以包含多个 Cuboid。
              */
             for (ClientGhostIsolationCuboid cuboid :
                     region.getCuboids()) {
 
-                if (count >= MAX_CUBOIDS) {
-
-                    QisPlan2.LOGGER.warn(
-                            "[灵异隔绝 GPU] Cuboid 数量超过上限 {}，"
-                                    + "后续 Cuboid 将被忽略。",
-                            MAX_CUBOIDS
-                    );
-
-                    cuboidCount =
-                            count;
-
-                    dirty =
-                            true;
-
-                    return;
+                if (cuboidCount >= MAX_CUBOIDS) {
+                    break;
                 }
 
-                int offset =
-                        count * 3;
+                int base =
+                        cuboidCount * 3;
 
                 /*
-                 * =================================================
-                 * Min
-                 * =================================================
+                 * Cuboid 最小坐标。
                  */
-                CUBOID_MINS[offset] =
+                CUBOID_MINS[base] =
                         cuboid.minX();
 
-                CUBOID_MINS[offset + 1] =
+                CUBOID_MINS[base + 1] =
                         cuboid.minY();
 
-                CUBOID_MINS[offset + 2] =
+                CUBOID_MINS[base + 2] =
                         cuboid.minZ();
 
                 /*
-                 * =================================================
-                 * Max
+                 * Cuboid 最大坐标。
                  *
-                 * Minecraft 的 Cuboid max 是包含边界。
-                 *
-                 * Shader 使用：
-                 *
-                 * min <= position < max
-                 *
-                 * 因此这里必须 +1。
-                 * =================================================
+                 * Shader 使用连续空间 [min, max)。
+                 * 因此 Minecraft 的 inclusive max
+                 * 需要转换成 max + 1。
                  */
-                CUBOID_MAXS[offset] =
+                CUBOID_MAXS[base] =
                         cuboid.maxX() + 1.0F;
 
-                CUBOID_MAXS[offset + 1] =
+                CUBOID_MAXS[base + 1] =
                         cuboid.maxY() + 1.0F;
 
-                CUBOID_MAXS[offset + 2] =
+                CUBOID_MAXS[base + 2] =
                         cuboid.maxZ() + 1.0F;
 
-                count++;
+                /*
+                 * 记录这个 Cuboid 属于哪个 Region。
+                 */
+                CUBOID_REGION_INDICES[cuboidCount] =
+                        regionIndex;
+
+                cuboidCount++;
             }
         }
 
-        cuboidCount =
-                count;
-
         /*
-         * CPU 数据发生变化。
-         *
-         * GPU 数据暂时不动。
-         *
-         * 等 Render Thread 调用
-         * uploadIfNeeded() 时再上传。
+         * 标记 GPU 数据需要重新上传。
          */
-        dirty =
-                true;
-
-        QisPlan2.LOGGER.info(
-                "[灵异隔绝 GPU] 重建数据：Cuboid={}",
-                cuboidCount
-        );
+        dirty = true;
     }
 
     /**
@@ -504,15 +503,12 @@ public final class GhostIsolationGpuData {
                     textureId
             );
 
-            textureId =
-                    0;
+            textureId = 0;
         }
 
-        cuboidCount =
-                0;
+        cuboidCount = 0;
 
-        dirty =
-                true;
+        dirty = true;
 
         clearCpuData();
 
