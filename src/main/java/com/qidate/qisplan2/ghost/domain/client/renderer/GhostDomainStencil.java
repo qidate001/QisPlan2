@@ -2,6 +2,7 @@ package com.qidate.qisplan2.ghost.domain.client.renderer;
 
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.qidate.qisplan2.QisPlan2;
+import com.qidate.qisplan2.ghost.isolation.client.GhostIsolationRegionTarget;
 import com.qidate.qisplan2.ghost.isolation.client.renderer.GhostIsolationGpuData;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.ShaderInstance;
@@ -39,6 +40,15 @@ public final class GhostDomainStencil {
             ResourceLocation.fromNamespaceAndPath(
                     QisPlan2.MODID,
                     "ghost_isolation_stencil"
+            );
+
+    /**
+     * 用于生成隔绝空间 Region 身份纹理的 Shader。
+     */
+    private static final ResourceLocation REGION_SHADER_ID =
+            ResourceLocation.fromNamespaceAndPath(
+                    QisPlan2.MODID,
+                    "ghost_isolation_region"
             );
 
     private GhostDomainStencil() {
@@ -328,6 +338,209 @@ public final class GhostDomainStencil {
          * 不再修改 Stencil Buffer。
          */
         RenderSystem.stencilMask(0x00);
+    }
+
+    /**
+     * 根据当前灵异隔绝空间数据生成屏幕空间 Region 身份纹理。
+     *
+     * <p>
+     * 该 Pass 不修改主渲染目标，
+     * 而是将结果写入 {@link GhostIsolationRegionTarget}。
+     * </p>
+     *
+     * <p>
+     * Region Identity 约定：
+     * </p>
+     *
+     * <ul>
+     *     <li>{@code 0}：普通空间</li>
+     *     <li>{@code 1}：Region Index 0</li>
+     *     <li>{@code 2}：Region Index 1</li>
+     *     <li>{@code 3}：Region Index 2</li>
+     *     <li>……</li>
+     * </ul>
+     *
+     * <p>
+     * 这里使用 {@code Region Index + 1}，
+     * 避免第一个 Region 与普通空间 {@code 0} 冲突。
+     * </p>
+     */
+    public static void writeIsolationRegion() {
+
+        Minecraft minecraft =
+                Minecraft.getInstance();
+
+        if (minecraft.level == null) {
+            return;
+        }
+
+        /*
+         * ========================================================
+         * 获取 Region Identity Shader
+         * ========================================================
+         */
+
+        if (!GhostDomainShaderRegistry.isRegistered(
+                REGION_SHADER_ID
+        )) {
+            return;
+        }
+
+        ShaderInstance shader =
+                GhostDomainShaderRegistry.get(
+                        REGION_SHADER_ID
+                );
+
+        if (shader == null) {
+            return;
+        }
+
+        /*
+         * ========================================================
+         * 确保 GPU 数据已经上传
+         * ========================================================
+         */
+
+        GhostIsolationGpuData.uploadIfNeeded();
+
+        /*
+         * ========================================================
+         * 获取 Region Identity Target
+         * ========================================================
+         */
+
+        var regionTarget =
+                GhostIsolationRegionTarget.get();
+
+        /*
+         * ========================================================
+         * 将当前渲染目标切换到 Region Identity Target
+         * ========================================================
+         *
+         * 注意：
+         *
+         * 这里绝对不能继续写 MainRenderTarget。
+         *
+         * MainRenderTarget：
+         *     保存 Minecraft 当前画面
+         *
+         * RegionTarget：
+         *     保存每个像素属于哪个隔绝空间
+         */
+
+        regionTarget.bindWrite(false);
+
+        RenderSystem.viewport(
+                0,
+                0,
+                regionTarget.width,
+                regionTarget.height
+        );
+
+        /*
+         * ========================================================
+         * 设置 Region Identity Shader
+         * ========================================================
+         */
+
+        RenderSystem.setShader(
+                () -> shader
+        );
+
+        /*
+         * 隔绝空间 Cuboid GPU Texture。
+         */
+        shader.setSampler(
+                "IsolationCuboidData",
+                GhostIsolationGpuData.getTextureId()
+        );
+
+        /*
+         * Cuboid 数量。
+         */
+        shader.getUniform(
+                "IsolationCuboidCount"
+        ).set(
+                (float) GhostIsolationGpuData.getCuboidCount()
+        );
+
+        /*
+         * 当前帧共享 Depth。
+         */
+        shader.setSampler(
+                "MainDepthSampler",
+                GhostDomainDepthTarget
+                        .get()
+                        .getDepthTextureId()
+        );
+
+        /*
+         * Projection Matrix。
+         */
+        shader.getUniform(
+                "IsolationProjMat"
+        ).set(
+                RenderSystem.getProjectionMatrix()
+        );
+
+        /*
+         * ModelView Matrix。
+         */
+        shader.getUniform(
+                "IsolationModelViewMat"
+        ).set(
+                GhostDomainMatrices
+                        .getModelViewMatrix()
+        );
+
+        /*
+         * Camera Position。
+         */
+        var camera =
+                minecraft.gameRenderer
+                        .getMainCamera();
+
+        shader.getUniform(
+                "IsolationCameraPos"
+        ).set(
+                (float) camera.getPosition().x,
+                (float) camera.getPosition().y,
+                (float) camera.getPosition().z
+        );
+
+        /*
+         * ========================================================
+         * 绘制 Region Identity
+         * ========================================================
+         *
+         * ghost_isolation_region.fsh 会直接输出：
+         *
+         *     R = Region Index + 1
+         *
+         * 因此这里无需额外处理。
+         */
+        GhostDomainRenderPipeline.drawFullscreenQuad();
+
+        /*
+         * ========================================================
+         * 恢复 MainRenderTarget
+         * ========================================================
+         *
+         * Region Identity Pass 完成后，
+         * 后续 GhostDomain Effect 仍然必须继续绘制到主画面。
+         */
+
+        var mainTarget =
+                minecraft.getMainRenderTarget();
+
+        mainTarget.bindWrite(false);
+
+        RenderSystem.viewport(
+                0,
+                0,
+                mainTarget.width,
+                mainTarget.height
+        );
     }
 
     /**
