@@ -62,15 +62,8 @@ void main() {
      *
      * 两者不一致时，鬼域不能传播到这里。
      */
-    if (
-        abs(
-            pixelRegion
-            -
-            GhostEyeSourceRegion
-        ) > 0.5
-    ) {
+    if (abs(pixelRegion - GhostEyeSourceRegion) > 0.001) {
         fragColor = scene;
-
         return;
     }
 

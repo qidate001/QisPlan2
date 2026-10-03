@@ -1,6 +1,7 @@
 package com.qidate.qisplan2.ghost.domain.client.renderer.effect;
 
 import com.mojang.blaze3d.systems.RenderSystem;
+import com.qidate.qisplan2.QisPlan2;
 import com.qidate.qisplan2.ghost.isolation.client.ClientGhostIsolationManager;
 import com.qidate.qisplan2.ghost.possession.ability.ghosteye.GhostEyeAbility;
 import com.qidate.qisplan2.ghost.domain.client.ClientGhostDomain;
@@ -83,6 +84,8 @@ public final class GhostEyeRenderEffect
         if (ghostEyeDomain == null) {
             return;
         }
+
+
 
         /*
          * ========================================================
@@ -230,8 +233,11 @@ public final class GhostEyeRenderEffect
              * GPU Region Index 使用 +1 编码。
              * ====================================================
              */
+            float encodedSourceRegion =
+                    (float) (regionIndex + 1) / 256.0F;
+
             shader.getUniform("GhostEyeSourceRegion").set(
-                    (float) (regionIndex + 1)
+                    encodedSourceRegion
             );
         }
     }

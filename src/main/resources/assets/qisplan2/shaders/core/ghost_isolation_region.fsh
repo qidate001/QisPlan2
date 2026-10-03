@@ -3,13 +3,16 @@
 uniform sampler2D MainDepthSampler;
 
 /*
- * 灵异隔绝 Cuboid GPU 数据。
- *
- * x = 0 → Min
- * x = 1 → Max
- *
- * Min.w = Region Index
- */
+
+灵异隔绝 Cuboid GPU 数据。
+
+
+x = 0 → Min
+x = 1 → Max
+
+
+Min.w = Region Index
+*/
 uniform sampler2D IsolationCuboidData;
 
 uniform float IsolationCuboidCount;
@@ -23,12 +26,71 @@ in vec2 texCoord;
 
 out vec4 fragColor;
 
+/*
+
+============================================================
+Region Identity GPU 编码范围
+
+
+Region Identity 并不是直接把：
+
+
+
+
+
+
+0 / 1 / 2 / 3 / ...
+
+
+写入普通颜色纹理。
+
+
+TextureTarget 使用普通颜色纹理时，
+颜色值需要保持在 0.0 ~ 1.0。
+
+
+因此这里使用归一化编码：
+
+
+
+
+
+
+普通空间       = 0
+
+
+
+
+Region 0       = 1 / 256
+
+
+
+
+Region 1       = 2 / 256
+
+
+
+
+Region 2       = 3 / 256
+
+
+
+
+...
+
+
+GhostEye 等消费者必须使用相同编码。
+============================================================
+*/
+const float REGION_IDENTITY_SCALE = 256.0;
 
 /*
- * ============================================================
- * 判断一条射线是否穿过指定 Cuboid。
- * ============================================================
- */
+
+============================================================
+判断一条射线是否穿过指定 Cuboid。
+
+============================================================
+*/
 bool rayPassesThroughCuboid(
         vec3 rayOrigin,
         vec3 rayEnd,
@@ -42,16 +104,17 @@ bool rayPassesThroughCuboid(
     float tMin = 0.0;
     float tMax = 1.0;
 
-
     /*
-     * X
-     */
+
+    X
+    */
     if (abs(direction.x) < 0.000001) {
 
         if (rayOrigin.x < cuboidMin.x
             || rayOrigin.x >= cuboidMax.x) {
 
             return false;
+
         }
 
     } else {
@@ -79,18 +142,20 @@ bool rayPassesThroughCuboid(
         if (tMin > tMax) {
             return false;
         }
+
     }
 
-
     /*
-     * Y
-     */
+
+    Y
+    */
     if (abs(direction.y) < 0.000001) {
 
         if (rayOrigin.y < cuboidMin.y
             || rayOrigin.y >= cuboidMax.y) {
 
             return false;
+
         }
 
     } else {
@@ -118,18 +183,20 @@ bool rayPassesThroughCuboid(
         if (tMin > tMax) {
             return false;
         }
+
     }
 
-
     /*
-     * Z
-     */
+
+    Z
+    */
     if (abs(direction.z) < 0.000001) {
 
         if (rayOrigin.z < cuboidMin.z
             || rayOrigin.z >= cuboidMax.z) {
 
             return false;
+
         }
 
     } else {
@@ -157,18 +224,20 @@ bool rayPassesThroughCuboid(
         if (tMin > tMax) {
             return false;
         }
+
     }
 
     return tMax >= 0.0
     && tMin <= 1.0;
 }
 
-
 /*
- * ============================================================
- * 获取 Cuboid Min
- * ============================================================
- */
+
+============================================================
+获取 Cuboid Min
+
+============================================================
+*/
 vec4 getCuboidMinData(int index) {
 
     return texelFetch(
@@ -178,12 +247,13 @@ vec4 getCuboidMinData(int index) {
     );
 }
 
-
 /*
- * ============================================================
- * 获取 Cuboid Max
- * ============================================================
- */
+
+============================================================
+获取 Cuboid Max
+
+============================================================
+*/
 vec3 getCuboidMax(int index) {
 
     return texelFetch(
@@ -192,7 +262,6 @@ vec3 getCuboidMax(int index) {
             0
     ).xyz;
 }
-
 
 void main() {
 
@@ -352,7 +421,13 @@ void main() {
         )) {
 
             /*
-             * Min.w 就是 Region Index。
+             * Min.w 是 CPU Region Index。
+             *
+             * +1：
+             *     普通空间 = 0
+             *     Region 0 = 1
+             *     Region 1 = 2
+             *     ...
              */
             regionIndex =
             cuboidMinData.w + 1.0;
@@ -364,22 +439,38 @@ void main() {
 
     /*
      * ========================================================
-     * 输出 Region Identity。
+     * 输出归一化 Region Identity。
      *
-     * 0 = 普通空间
-     * 1 = Region Index 0
-     * 2 = Region Index 1
-     * 3 = Region Index 2
+     * 普通空间：
+     *
+     *     0.0
+     *
+     * Region Index 0：
+     *
+     *     1 / 256
+     *
+     * Region Index 1：
+     *
+     *     2 / 256
+     *
+     * Region Index 2：
+     *
+     *     3 / 256
+     *
      * ...
      *
-     * +1 是为了让普通空间保持 0。
+     * 这样可以安全写入普通 TextureTarget。
      * ========================================================
      */
+    float encodedRegion =
+    regionIndex / REGION_IDENTITY_SCALE;
+
     fragColor =
     vec4(
-            regionIndex,
+            encodedRegion,
             0.0,
             0.0,
             1.0
     );
+
 }

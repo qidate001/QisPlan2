@@ -414,6 +414,19 @@ public final class GhostDomainStencil {
 
         /*
          * ========================================================
+         * Region Identity Pass 不参与 Stencil 测试。
+         *
+         * Stencil 只负责：
+         *     后续普通 GhostDomain Effect 是否允许渲染。
+         *
+         * Region Identity 必须覆盖整个屏幕，
+         * 包括所有隔绝空间。
+         * ========================================================
+         */
+        GL11.glDisable(GL11.GL_STENCIL_TEST);
+
+        /*
+         * ========================================================
          * 将当前渲染目标切换到 Region Identity Target
          * ========================================================
          *
@@ -540,6 +553,27 @@ public final class GhostDomainStencil {
                 0,
                 mainTarget.width,
                 mainTarget.height
+        );
+
+        /*
+         * ========================================================
+         * 恢复后续 GhostDomain Effect 所需的 Stencil 状态。
+         * ========================================================
+         */
+        GL11.glEnable(GL11.GL_STENCIL_TEST);
+
+        RenderSystem.stencilFunc(
+                GL11.GL_EQUAL,
+                0,
+                0xFF
+        );
+
+        RenderSystem.stencilMask(0x00);
+
+        RenderSystem.stencilOp(
+                GL11.GL_KEEP,
+                GL11.GL_KEEP,
+                GL11.GL_KEEP
         );
     }
 
