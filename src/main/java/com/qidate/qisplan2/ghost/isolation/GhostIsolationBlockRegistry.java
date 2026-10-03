@@ -32,6 +32,18 @@ public final class GhostIsolationBlockRegistry {
         );
 
         register(
+                ModBlocks.GHOST_STONE_BRICKS_PRIME
+        );
+
+        register(
+                ModBlocks.GHOST_DOOR
+        );
+
+        register(
+                ModBlocks.GHOST_GRAVE_SOIL
+        );
+
+        register(
                 Blocks.GOLD_BLOCK.builtInRegistryHolder()
         );
     }
