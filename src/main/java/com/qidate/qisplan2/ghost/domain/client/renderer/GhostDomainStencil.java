@@ -544,6 +544,78 @@ public final class GhostDomainStencil {
     }
 
     /**
+     * 暂时关闭当前 GhostDomain Effect 的
+     * Stencil Test。
+     *
+     * <p>
+     * Stencil Buffer 本身不会被清除，
+     * 也不会修改 Stencil 数据。
+     *
+     * <p>
+     * 这里只是让当前 Effect 的 Fragment
+     * 不再受到：
+     *
+     * <pre>
+     * Stencil == 0
+     * </pre>
+     *
+     * 的限制。
+     *
+     * <p>
+     * 因此使用 Region Identity
+     * 自行判断空间的 Effect，
+     * 可以在灵异隔绝空间内部正常执行。
+     */
+    public static void disableForEffect() {
+        GL11.glDisable(
+                GL11.GL_STENCIL_TEST
+        );
+    }
+
+    /**
+     * 恢复 GhostDomain Effect 使用的
+     * Stencil Test。
+     *
+     * <p>
+     * 恢复后的规则为：
+     *
+     * <pre>
+     * Stencil == 0
+     *     → 允许渲染
+     *
+     * Stencil == 1
+     *     → 禁止渲染
+     * </pre>
+     *
+     * <p>
+     * Stencil Buffer 本身不会被修改。
+     */
+    public static void enableForEffect() {
+
+        GL11.glEnable(
+                GL11.GL_STENCIL_TEST
+        );
+
+        RenderSystem.stencilFunc(
+                GL11.GL_EQUAL,
+                0,
+                0xFF
+        );
+
+        /*
+         * 后续鬼域效果只读取 Stencil，
+         * 不修改 Stencil Buffer。
+         */
+        RenderSystem.stencilMask(0x00);
+
+        RenderSystem.stencilOp(
+                GL11.GL_KEEP,
+                GL11.GL_KEEP,
+                GL11.GL_KEEP
+        );
+    }
+
+    /**
      * 恢复 Stencil 默认状态。
      *
      * <p>

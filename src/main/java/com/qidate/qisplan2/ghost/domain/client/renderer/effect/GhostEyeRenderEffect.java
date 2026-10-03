@@ -1,6 +1,7 @@
 package com.qidate.qisplan2.ghost.domain.client.renderer.effect;
 
 import com.mojang.blaze3d.systems.RenderSystem;
+import com.qidate.qisplan2.ghost.isolation.client.ClientGhostIsolationManager;
 import com.qidate.qisplan2.ghost.possession.ability.ghosteye.GhostEyeAbility;
 import com.qidate.qisplan2.ghost.domain.client.ClientGhostDomain;
 import com.qidate.qisplan2.ghost.domain.client.ClientGhostDomainManager;
@@ -11,6 +12,8 @@ import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.ShaderInstance;
 import net.minecraft.resources.ResourceLocation;
+
+import java.util.UUID;
 
 public final class GhostEyeRenderEffect
         implements GhostDomainRenderEffect {
@@ -49,6 +52,21 @@ public final class GhostEyeRenderEffect
         return getCurrentGhostEyeDomain(
                 minecraft
         ) != null;
+    }
+
+    /**
+     * GhostEye 不使用传统的
+     * “Stencil = 0 才允许渲染”规则。
+     *
+     * <p>
+     * GhostEye 使用 Region Identity
+     * 判断当前像素是否属于
+     * Source 所在的空间。
+     * </p>
+     */
+    @Override
+    public boolean useIsolationStencil() {
+        return false;
     }
 
     @Override
@@ -149,6 +167,73 @@ public final class GhostEyeRenderEffect
         ).set(
                 (float) ghostEyeDomain.getLayer()
         );
+
+        /*
+         * ========================================================
+         * 设置 GhostEye Source 所在的空间身份。
+         * ========================================================
+         *
+         * GhostEyeRegionIdentity Shader 中的空间编号约定：
+         *
+         *     0
+         *         = 开放空间
+         *
+         *     1
+         *         = 客户端 GPU Region Index 0
+         *
+         *     2
+         *         = 客户端 GPU Region Index 1
+         *
+         *     ...
+         *
+         * 因此这里不能直接把
+         * ClientGhostIsolationManager 的 GPU Index
+         * 传给 Shader。
+         *
+         * 必须进行：
+         *
+         *     GPU Index + 1
+         *
+         * ========================================================
+         */
+
+        UUID sourceRegionUUID =
+                ghostEyeDomain.getSourceRegionUUID();
+
+        if (sourceRegionUUID == null) {
+
+            /*
+             * ====================================================
+             * Source 当前位于开放空间。
+             * ====================================================
+             */
+            shader.getUniform("GhostEyeSourceRegion").set(
+                    0.0F
+            );
+
+        } else {
+
+            /*
+             * ====================================================
+             * Source 当前位于某个灵异隔绝 Region。
+             *
+             * 查询客户端当前 GPU 使用的临时 Region Index。
+             * ====================================================
+             */
+            int regionIndex =
+                    ClientGhostIsolationManager.getRegionIndex(
+                            sourceRegionUUID
+                    );
+
+            /*
+             * ====================================================
+             * GPU Region Index 使用 +1 编码。
+             * ====================================================
+             */
+            shader.getUniform("GhostEyeSourceRegion").set(
+                    (float) (regionIndex + 1)
+            );
+        }
     }
 
     private ClientGhostDomain getCurrentGhostEyeDomain(

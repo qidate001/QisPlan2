@@ -124,14 +124,64 @@ public final class GhostDomainRenderManager {
          * 4. 渲染鬼域后处理效果
          * ========================================================
          *
-         * 此时 Stencil Test 已经启用。
+         * 不同 GhostDomain Effect
+         * 可以选择不同的空间裁剪方式。
          *
-         * 每个鬼域后处理效果无需自行判断
-         * 灵异隔绝空间，Stencil 会统一进行裁剪。
+         * 默认 Effect：
+         *
+         *     使用 Stencil
+         *     Stencil == 0 → 渲染
+         *
+         * 特殊 Effect：
+         *
+         *     不使用 Stencil
+         *     自行通过 Region Identity
+         *     判断当前像素所属空间。
          */
         for (GhostDomainRenderEffect effect :
                 effects) {
 
+            /*
+             * ====================================================
+             * 根据当前 Effect 决定是否使用 Stencil
+             * ====================================================
+             */
+            if (effect.useIsolationStencil()) {
+
+                /*
+                 * 普通鬼域效果：
+                 *
+                 *     Stencil == 0
+                 *         → 允许渲染
+                 *
+                 *     Stencil == 1
+                 *         → 禁止渲染
+                 *
+                 * 正常情况下这里已经是正确状态，
+                 * 这里显式恢复一次可以避免前一个
+                 * Region Identity Effect 修改状态。
+                 */
+                GhostDomainStencil.enableForEffect();
+
+            } else {
+
+                /*
+                 * Region Identity Effect：
+                 *
+                 * 当前 Effect 不使用传统 Stencil。
+                 *
+                 * 关闭 Stencil Test，
+                 * 但保留 Stencil Buffer 中已经生成的
+                 * 隔绝空间信息。
+                 */
+                GhostDomainStencil.disableForEffect();
+            }
+
+            /*
+             * ====================================================
+             * 执行当前鬼域 Effect
+             * ====================================================
+             */
             GhostDomainRenderPipeline.renderPrepared(
                     effect,
                     minecraft
@@ -142,8 +192,6 @@ public final class GhostDomainRenderManager {
          * ========================================================
          * 5. 恢复 Stencil 状态
          * ========================================================
-         *
-         * 防止 Stencil Test 状态影响后续正常的 Minecraft 渲染。
          */
         GhostDomainStencil.disable();
     }
