@@ -7,10 +7,13 @@ import com.qidate.qisplan2.ghost.domain.client.renderer.GhostDomainMatrices;
 import com.qidate.qisplan2.ghost.domain.client.renderer.GhostDomainRenderEffect;
 import com.qidate.qisplan2.ghost.domain.client.renderer.GhostDomainRenderEffectRegistry;
 import com.qidate.qisplan2.ghost.domain.type.umbrella.GhostUmbrellaDomainController;
+import com.qidate.qisplan2.ghost.isolation.client.ClientGhostIsolationManager;
 import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.ShaderInstance;
 import net.minecraft.resources.ResourceLocation;
+
+import java.util.UUID;
 
 public final class GhostUmbrellaRenderEffect
         implements GhostDomainRenderEffect {
@@ -155,6 +158,50 @@ public final class GhostUmbrellaRenderEffect
         ).set(
                 (float) domain.getLayer()
         );
+
+        /*
+         * ========================================================
+         * 鬼域来源所在的灵异隔绝 Region
+         *
+         * 0            = 普通世界
+         * 1 / 256      = Region Index 0
+         * 2 / 256      = Region Index 1
+         * 3 / 256      = Region Index 2
+         * ...
+         *
+         * 必须与 ghost_isolation_region.fsh
+         * 使用完全相同的编码。
+         * ========================================================
+         */
+
+        UUID sourceRegionUUID =
+                domain.getSourceRegionUUID();
+
+        if (sourceRegionUUID == null) {
+
+            shader.getUniform(
+                    "GhostUmbrellaSourceRegion"
+            ).set(
+                    0.0F
+            );
+
+        } else {
+
+            int regionIndex =
+                    ClientGhostIsolationManager.getRegionIndex(
+                            sourceRegionUUID
+                    );
+
+            float encodedSourceRegion =
+                    (float) (regionIndex + 1)
+                            / 256.0F;
+
+            shader.getUniform(
+                    "GhostUmbrellaSourceRegion"
+            ).set(
+                    encodedSourceRegion
+            );
+        }
     }
 
     private ClientGhostDomain getCurrentGhostUmbrellaDomain(

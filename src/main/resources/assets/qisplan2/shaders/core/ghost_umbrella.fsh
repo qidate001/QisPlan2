@@ -2,6 +2,7 @@
 
 uniform sampler2D DiffuseSampler;
 uniform sampler2D MainDepthSampler;
+uniform sampler2D GhostUmbrellaRegionIdentity;
 
 uniform mat4 GhostUmbrellaProjMat;
 uniform mat4 GhostUmbrellaModelViewMat;
@@ -12,6 +13,7 @@ uniform vec3 GhostUmbrellaDomainCenter;
 uniform float GhostUmbrellaDomainRadius;
 uniform float GhostUmbrellaDomainActive;
 uniform float GhostUmbrellaDomainLayer;
+uniform float GhostUmbrellaSourceRegion;
 
 in vec2 texCoord;
 
@@ -35,6 +37,42 @@ void main() {
             MainDepthSampler,
             texCoord
         ).r;
+
+    // =========================================================
+    // 当前屏幕像素所属的灵异隔绝 Region
+    //
+    // 0            = 普通世界
+    // 1 / 256      = Region Index 0
+    // 2 / 256      = Region Index 1
+    // 3 / 256      = Region Index 2
+    // ...
+    // =========================================================
+
+    float pixelRegion =
+    texture(
+            GhostUmbrellaRegionIdentity,
+            texCoord
+    ).r;
+
+
+    // =========================================================
+    // 空间归属判断
+    //
+    // 鬼伞鬼域只能影响与自身来源相同的空间。
+    // =========================================================
+
+    if (
+        abs(
+            pixelRegion
+            -
+            GhostUmbrellaSourceRegion
+        ) > 0.001
+    ) {
+
+        fragColor = scene;
+
+        return;
+    }
 
 
     // =========================================================

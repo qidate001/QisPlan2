@@ -364,5 +364,13 @@ public final class GhostDomainRenderPipeline {
                             .getColorTextureId()
             );
         }
+
+        if (shader.getUniform("GhostUmbrellaSourceRegion") != null) {
+
+            shader.setSampler(
+                    "GhostUmbrellaRegionIdentity",
+                    GhostIsolationRegionTarget.get().getColorTextureId()
+            );
+        }
     }
 }
