@@ -14,6 +14,7 @@ import org.lwjgl.opengl.GL12;
 import org.lwjgl.opengl.GL30;
 
 import java.nio.FloatBuffer;
+import java.util.Arrays;
 
 /**
  * 灵异隔绝 Cuboid 的 GPU 数据。
@@ -138,6 +139,11 @@ public final class GhostIsolationGpuData {
     public static void rebuild() {
 
         cuboidCount = 0;
+
+        Arrays.fill(
+                CUBOID_REGION_INDICES,
+                -1
+        );
 
         /*
          * 当前客户端没有世界时，
@@ -305,8 +311,12 @@ public final class GhostIsolationGpuData {
                     CUBOID_MINS[offset + 2]
             );
 
+            /*
+             * Min.w：
+             * 保存该 Cuboid 所属的 Region Index。
+             */
             buffer.put(
-                    1.0F
+                    (float) CUBOID_REGION_INDICES[i]
             );
 
             /*

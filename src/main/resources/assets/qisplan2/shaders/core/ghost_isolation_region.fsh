@@ -5,21 +5,13 @@ uniform sampler2D MainDepthSampler;
 /*
  * 灵异隔绝 Cuboid GPU 数据。
  *
- * Texture：
- *
- * width  = 2
- * height = MAX_CUBOIDS
- *
  * x = 0 → Min
  * x = 1 → Max
  *
- * y = Cuboid index
+ * Min.w = Region Index
  */
 uniform sampler2D IsolationCuboidData;
 
-/*
- * 当前有效 Cuboid 数量。
- */
 uniform float IsolationCuboidCount;
 
 uniform mat4 IsolationProjMat;
@@ -44,7 +36,8 @@ bool rayPassesThroughCuboid(
         vec3 cuboidMax
 ) {
 
-    vec3 direction = rayEnd - rayOrigin;
+    vec3 direction =
+    rayEnd - rayOrigin;
 
     float tMin = 0.0;
     float tMax = 1.0;
@@ -176,32 +169,12 @@ bool rayPassesThroughCuboid(
  * 获取 Cuboid Min
  * ============================================================
  */
-vec3 getCuboidMin(int index) {
+vec4 getCuboidMinData(int index) {
 
     return texelFetch(
             IsolationCuboidData,
             ivec2(0, index),
             0
-    ).xyz;
-}
-
-
-/*
- * ============================================================
- * 获取 Cuboid 所属的 Region Index
- * ============================================================
- *
- * Region Index 保存在 Min.w。
- */
-int getCuboidRegionIndex(int index) {
-
-    return int(
-            texelFetch(
-                    IsolationCuboidData,
-                    ivec2(0, index),
-                    0
-            ).w
-            + 0.5
     );
 }
 
@@ -224,9 +197,7 @@ vec3 getCuboidMax(int index) {
 void main() {
 
     /*
-     * ========================================================
-     * 当前像素深度
-     * ========================================================
+     * 当前像素深度。
      */
     float depth =
     texture(
@@ -236,14 +207,15 @@ void main() {
 
 
     /*
-     * ========================================================
-     * 屏幕坐标 → NDC
-     * ========================================================
+     * 屏幕坐标 → NDC。
      */
     vec2 ndcXY =
     texCoord * 2.0 - 1.0;
 
 
+    /*
+     * Near / Far NDC。
+     */
     vec4 nearNDC =
     vec4(
             ndcXY,
@@ -260,9 +232,7 @@ void main() {
 
 
     /*
-     * ========================================================
-     * NDC → View Space
-     * ========================================================
+     * NDC → View Space。
      */
     vec4 nearView =
     inverse(
@@ -279,9 +249,7 @@ void main() {
 
 
     /*
-     * ========================================================
-     * View Space → World Space
-     * ========================================================
+     * View Space → World Space。
      */
     vec4 nearWorld =
     inverse(
@@ -298,10 +266,8 @@ void main() {
 
 
     /*
-     * Minecraft 的 ModelView
-     * 使用相对于 Camera 的坐标。
-     *
-     * 因此重新加回 Camera Position。
+     * Minecraft ModelView 使用相对于 Camera
+     * 的坐标，因此加回 Camera Position。
      */
     vec3 rayStart =
     nearWorld.xyz
@@ -313,9 +279,7 @@ void main() {
 
 
     /*
-     * ========================================================
-     * 根据深度恢复当前像素的世界坐标。
-     * ========================================================
+     * 根据深度恢复当前像素世界坐标。
      */
     vec4 sceneNDC =
     vec4(
@@ -345,33 +309,40 @@ void main() {
 
     /*
      * ========================================================
-     * 默认不是隔绝区域。
+     * 默认：
+     *
+     * 0 = 普通空间
      * ========================================================
      */
-    bool isolated = false;
+    float regionIndex = 0.0;
 
 
-    /*
-     * ========================================================
-     * 遍历所有 Cuboid。
-     * ========================================================
-     */
     int count =
     int(IsolationCuboidCount);
 
     const int MAX_CUBOIDS = 256;
 
+
+    /*
+     * ========================================================
+     * 查找当前像素所属的隔绝空间。
+     * ========================================================
+     */
     for (int i = 0; i < MAX_CUBOIDS; i++) {
 
         if (i >= count) {
             break;
         }
 
+        vec4 cuboidMinData =
+        getCuboidMinData(i);
+
         vec3 cuboidMin =
-        getCuboidMin(i);
+        cuboidMinData.xyz;
 
         vec3 cuboidMax =
         getCuboidMax(i);
+
 
         if (rayPassesThroughCuboid(
                 rayStart,
@@ -380,7 +351,11 @@ void main() {
                 cuboidMax
         )) {
 
-            isolated = true;
+            /*
+             * Min.w 就是 Region Index。
+             */
+            regionIndex =
+            cuboidMinData.w + 1.0;
 
             break;
         }
@@ -389,32 +364,22 @@ void main() {
 
     /*
      * ========================================================
-     * Stencil 写入 Pass
+     * 输出 Region Identity。
+     *
+     * 0 = 普通空间
+     * 1 = Region Index 0
+     * 2 = Region Index 1
+     * 3 = Region Index 2
+     * ...
+     *
+     * +1 是为了让普通空间保持 0。
      * ========================================================
-     *
-     * 隔绝区域：
-     *
-     *     正常输出
-     *     → OpenGL StencilOp = REPLACE
-     *     → Stencil = 1
-     *
-     * 非隔绝区域：
-     *
-     *     discard
-     *     → 不执行 Stencil REPLACE
      */
-    if (isolated) {
-
-        fragColor =
-        vec4(
-                1.0,
-                1.0,
-                1.0,
-                1.0
-        );
-
-        return;
-    }
-
-    discard;
+    fragColor =
+    vec4(
+            regionIndex,
+            0.0,
+            0.0,
+            1.0
+    );
 }

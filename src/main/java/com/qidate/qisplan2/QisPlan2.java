@@ -108,6 +108,7 @@ public class QisPlan2 {
              * ========================================================
              */
 
+            // 此 Shader 负责告诉 OpenGL：这个像素是不是隔绝空间
             ResourceLocation ghostIsolationStencilId =
                     ResourceLocation.fromNamespaceAndPath(
                             MODID,
@@ -122,6 +123,25 @@ public class QisPlan2 {
                     ),
                     shader -> GhostDomainShaderRegistry.register(
                             ghostIsolationStencilId,
+                            shader
+                    )
+            );
+
+            // 此 Shader 负责告诉 GPU：这个像素属于哪个隔绝空间。
+            ResourceLocation ghostIsolationRegionId =
+                    ResourceLocation.fromNamespaceAndPath(
+                            MODID,
+                            "ghost_isolation_region"
+                    );
+
+            event.registerShader(
+                    new ShaderInstance(
+                            event.getResourceProvider(),
+                            ghostIsolationRegionId,
+                            DefaultVertexFormat.POSITION
+                    ),
+                    shader -> GhostDomainShaderRegistry.register(
+                            ghostIsolationRegionId,
                             shader
                     )
             );
