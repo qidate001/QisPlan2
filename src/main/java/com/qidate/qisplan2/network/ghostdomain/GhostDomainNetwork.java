@@ -111,6 +111,49 @@ public final class GhostDomainNetwork {
 
         /*
          * ========================================================
+         * S2C：鬼域 Source 所在 Region 更新
+         * ========================================================
+         */
+
+        registrar.playToClient(
+                GhostDomainSourceRegionPayload.TYPE,
+                GhostDomainSourceRegionPayload.STREAM_CODEC,
+                (payload, context) -> {
+
+                    context.enqueueWork(() -> {
+
+                        /*
+                         * ========================================================
+                         * 更新客户端 GhostDomain 的 Source Region。
+                         * ========================================================
+                         *
+                         * 服务端已经完成：
+                         *
+                         *     Source 位置
+                         *         ↓
+                         *     Region UUID
+                         *
+                         * 当前数据包只负责把这个真实 Region UUID
+                         * 传递给客户端。
+                         *
+                         * 客户端后续在真正进行渲染时，
+                         * 再通过 ClientGhostIsolationManager
+                         * 将 Region UUID 转换为当前运行期间的
+                         * 临时 GPU Region Index。
+                         *
+                         * 这里绝对不直接保存 GPU Index。
+                         */
+
+                        ClientGhostDomainManager.updateSourceRegion(
+                                payload.domainId(),
+                                payload.regionId()
+                        );
+                    });
+                }
+        );
+
+        /*
+         * ========================================================
          * S2C：灵异隔绝区域添加
          * ========================================================
          */
@@ -322,6 +365,50 @@ public final class GhostDomainNetwork {
                         domain.getLayer(),
                         domain.getRadius(),
                         immediate
+                )
+        );
+    }
+
+    /*
+     * ========================================================
+     * S2C：鬼域 Source 所在 Region 更新
+     * ========================================================
+     */
+
+    /**
+     * 向指定维度中的所有玩家同步
+     * GhostDomain Source 当前所在的灵异隔绝 Region。
+     *
+     * <p>
+     * Region UUID 由服务端统一确定。
+     *
+     * <p>
+     * 如果 Source 当前位于开放空间，
+     * 则 {@code regionId} 可以为 {@code null}。
+     *
+     * <p>
+     * 客户端收到 Region UUID 后，
+     * 后续会通过自己的
+     * ClientGhostIsolationManager
+     * 将 Region UUID 转换为当前客户端临时的
+     * GPU Region Index。
+     *
+     * @param level GhostDomain 所在的服务端维度
+     * @param domain GhostDomain
+     * @param regionId Source 当前所在的 Region UUID；
+     *                 如果位于开放空间则为 null
+     */
+    public static void sendSourceRegion(
+            ServerLevel level,
+            GhostDomain domain,
+            UUID regionId
+    ) {
+
+        PacketDistributor.sendToPlayersInDimension(
+                level,
+                new GhostDomainSourceRegionPayload(
+                        domain.getId(),
+                        regionId
                 )
         );
     }

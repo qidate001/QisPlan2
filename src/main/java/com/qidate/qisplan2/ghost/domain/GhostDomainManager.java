@@ -1,6 +1,7 @@
 package com.qidate.qisplan2.ghost.domain;
 
 import com.qidate.qisplan2.QisPlan2;
+import com.qidate.qisplan2.ghost.isolation.GhostIsolationSystem;
 import com.qidate.qisplan2.network.QisNetwork;
 import com.qidate.qisplan2.network.ghostdomain.GhostDomainNetwork;
 import net.minecraft.resources.ResourceLocation;
@@ -19,6 +20,29 @@ public final class GhostDomainManager {
 
     private final Map<UUID, GhostDomain> domains =
             new LinkedHashMap<>();
+
+    /**
+     * 每个灵异领域 Source 当前所在的灵异隔绝 Region。
+     *
+     * <p>
+     * Key：
+     *     GhostDomain 的 UUID
+     *
+     * <p>
+     * Value：
+     *     Source 当前所在的 Region UUID。
+     *
+     * <p>
+     * 如果 Source 当前位于开放空间，
+     * 或者没有处于任何有效的灵异隔绝 Region，
+     * 则对应的 Value 为 {@code null}。
+     *
+     * <p>
+     * 这里保存的是 Region 的真实 UUID，
+     * 而不是客户端 GPU 使用的临时 Region Index。
+     */
+    private final Map<UUID, UUID> sourceRegionIds =
+            new HashMap<>();
 
     /**
      * 当前由鬼域系统授予飞行权限的玩家。
@@ -364,6 +388,110 @@ public final class GhostDomainManager {
         );
     }
 
+    /**
+     * 更新指定灵异领域 Source 当前所在的灵异隔绝 Region。
+     *
+     * <p>
+     * 本方法只负责检测 Source 的 Region 身份变化，
+     * 当前阶段暂不进行网络同步。
+     *
+     * <p>
+     * Region 身份使用 {@link UUID} 表示，
+     * 而不是客户端 GPU 使用的临时 Region Index。
+     *
+     * <p>
+     * 只有以下情况发生变化时，
+     * 才会更新缓存：
+     *
+     * <ul>
+     *     <li>开放空间 → Region</li>
+     *     <li>Region → 开放空间</li>
+     *     <li>Region A → Region B</li>
+     * </ul>
+     *
+     * @param domain 需要检测的灵异领域
+     */
+    private void updateSourceRegion(
+            GhostDomain domain
+    ) {
+
+        Entity source =
+                level.getEntity(
+                        domain.getSourceUUID()
+                );
+
+        /*
+         * ========================================================
+         * Source 不存在。
+         *
+         * 当前不主动改变缓存。
+         * ========================================================
+         */
+        if (source == null) {
+            return;
+        }
+
+        UUID currentRegionId =
+                GhostIsolationSystem.getRegionId(
+                        level,
+                        source.blockPosition()
+                );
+
+        UUID previousRegionId =
+                sourceRegionIds.get(
+                        domain.getId()
+                );
+
+        /*
+         * ========================================================
+         * Region 身份没有发生变化。
+         *
+         * 不需要进行任何处理。
+         * ========================================================
+         */
+        if (Objects.equals(
+                previousRegionId,
+                currentRegionId
+        )) {
+            return;
+        }
+
+        /*
+         * ========================================================
+         * Source 的 Region 身份发生变化。
+         *
+         * 更新服务端缓存。
+         * ========================================================
+         */
+        sourceRegionIds.put(
+                domain.getId(),
+                currentRegionId
+        );
+
+        /*
+         * ========================================================
+         * 将新的 Region 身份同步给客户端。
+         *
+         * 这里只在 Region 身份发生变化时发送，
+         * 不会因为 GhostDomain 每 tick 更新
+         * 而重复发送相同的数据。
+         * ========================================================
+         */
+        GhostDomainNetwork.sendSourceRegion(
+                level,
+                domain,
+                currentRegionId
+        );
+
+        QisPlan2.LOGGER.info(
+                "[GhostDomain] Source 所在灵异隔绝 Region 发生变化：domain={}, source={}, {} -> {}",
+                domain.getId(),
+                domain.getSourceUUID(),
+                previousRegionId,
+                currentRegionId
+        );
+    }
+
     public void tick() {
 
         for (GhostDomain domain : domains.values()) {
@@ -408,6 +536,17 @@ public final class GhostDomainManager {
                     level,
                     domain
             );
+
+            /*
+             * ========================================================
+             * 检测 Source 当前所在的灵异隔绝 Region。
+             *
+             * 当前阶段只更新服务端缓存，
+             * 暂不进行客户端同步。
+             * ========================================================
+             */
+
+            updateSourceRegion(domain);
 
             /*
              * ========================================================

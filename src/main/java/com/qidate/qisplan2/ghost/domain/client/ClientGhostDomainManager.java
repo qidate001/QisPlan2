@@ -237,6 +237,63 @@ public final class ClientGhostDomainManager {
         domain.setRadius(radius);
     }
 
+    /**
+     * 更新指定 GhostDomain 的 Source 所在灵异隔绝 Region。
+     *
+     * <p>
+     * Region UUID 由服务端统一确定，
+     * 客户端这里只负责将其保存到对应的
+     * {@link ClientGhostDomain} 中。
+     *
+     * <p>
+     * {@code null} 表示 Source 当前位于开放空间。
+     *
+     * <p>
+     * 注意：
+     * 这里保存的是 Region 的真实 UUID，
+     * 而不是客户端 GPU 使用的临时 Region Index。
+     *
+     * @param domainId 需要更新的 GhostDomain UUID
+     * @param regionId Source 当前所在的 Region UUID；
+     *                 如果位于开放空间则为 null
+     */
+    public static void updateSourceRegion(
+            UUID domainId,
+            UUID regionId
+    ) {
+
+        ClientGhostDomain domain =
+                DOMAINS.get(domainId);
+
+        /*
+         * ========================================================
+         * 客户端当前没有找到对应的 GhostDomain。
+         *
+         * 这种情况是允许出现的。
+         *
+         * 例如：
+         *
+         *     领域数据包还没有到达客户端，
+         *     但 Region 更新数据包已经先到达。
+         *
+         * 当前不创建 GhostDomain，
+         * 也不缓存 Region 数据。
+         * ========================================================
+         */
+        if (domain == null) {
+            return;
+        }
+
+        /*
+         * ========================================================
+         * 更新 Source 当前所在的 Region。
+         * ========================================================
+         */
+        domain.setSourceRegionUUID(
+                regionId
+        );
+    }
+
     public static ClientGhostDomain getEffectiveDomain(
             double x,
             double y,

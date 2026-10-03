@@ -107,6 +107,107 @@ public final class GhostIsolationSystem {
     }
 
     /**
+     * 查询指定位置当前所属的灵异隔绝 Region。
+     *
+     * <p>
+     * 本方法只查询已经存在于
+     * {@link GhostIsolationSavedData} 中的有效 Region，
+     * 不会主动触发 {@link GhostIsolationDetector} 进行
+     * 新的空间检测。
+     * </p>
+     *
+     * <p>
+     * 因此，本方法适合用于其他系统获取：
+     *
+     * <pre>
+     *     指定位置 → Region UUID
+     * </pre>
+     *
+     * <p>
+     * 如果当前位置不属于任何已经确认的
+     * 灵异隔绝 Region，则返回 {@code null}。
+     * </p>
+     *
+     * @param level 世界
+     * @param pos   要查询的位置
+     * @return 当前所属的 Region UUID；
+     *         如果不属于任何有效 Region，则返回 null
+     */
+    public static UUID getRegionId(
+            ServerLevel level,
+            BlockPos pos
+    ) {
+
+        GhostIsolationSavedData data =
+                GhostIsolationSavedData.get(level);
+
+        /*
+         * ========================================================
+         * 查询当前世界中已经保存的 Region。
+         * ========================================================
+         *
+         * 这里故意不调用 query()。
+         *
+         * 因为 query() 在没有命中缓存时，
+         * 可能会触发 GhostIsolationDetector
+         * 进行新的空间检测。
+         *
+         * 本方法的职责只是：
+         *
+         *     “这个位置现在属于哪个已经确认的 Region？”
+         *
+         * 而不是：
+         *
+         *     “这个位置是否应该建立一个新的 Region？”
+         */
+        for (GhostIsolationRegion region :
+                data.getRegions()) {
+
+            /*
+             * ====================================================
+             * 检查位置是否属于当前 Region。
+             * ====================================================
+             */
+            if (!region.containsExact(
+                    level.dimension(),
+                    pos
+            )) {
+                continue;
+            }
+
+            /*
+             * ====================================================
+             * 只有已经确认有效的 Region
+             * 才能作为当前 Region 身份返回。
+             *
+             * DIRTY Region 已经失效，
+             * 不能继续作为有效的空间身份。
+             * ====================================================
+             */
+            if (region.getState() !=
+                    IsolationState.ISOLATED) {
+
+                continue;
+            }
+
+            /*
+             * ====================================================
+             * 找到当前位置所属的有效 Region。
+             * ====================================================
+             */
+            return region.getId();
+        }
+
+        /*
+         * ========================================================
+         * 当前位于开放空间，
+         * 或者没有找到有效的 Region。
+         * ========================================================
+         */
+        return null;
+    }
+
+    /**
      * 查询指定位置的灵异隔绝状态。
      *
      * <p>

@@ -11,6 +11,26 @@ public final class ClientGhostDomain {
 
     private final UUID id;
     private final UUID sourceUUID;
+
+    /**
+     * GhostDomain Source 当前所在的灵异隔绝 Region。
+     *
+     * <p>
+     * 这里保存的是服务端同步过来的
+     * Region 真实 UUID。
+     *
+     * <p>
+     * {@code null} 表示 Source 当前位于开放空间，
+     * 或者客户端尚未收到该 Source 的 Region 信息。
+     *
+     * <p>
+     * 注意：
+     * 这里绝对不能保存 GPU Region Index。
+     * GPU Index 是客户端运行期间动态分配的临时编号，
+     * 可能随着 Region 重建而发生变化。
+     */
+    private UUID sourceRegionUUID;
+
     private final ResourceLocation domainType;
     private final ResourceLocation dimension;
 
@@ -108,6 +128,17 @@ public final class ClientGhostDomain {
 
     public UUID getSourceUUID() {
         return sourceUUID;
+    }
+
+    /**
+     * 获取 GhostDomain Source 当前所在的
+     * 灵异隔绝 Region UUID。
+     *
+     * @return Region UUID；
+     *         如果 Source 位于开放空间，则返回 null
+     */
+    public UUID getSourceRegionUUID() {
+        return sourceRegionUUID;
     }
 
     public ResourceLocation getDomainType() {
@@ -210,6 +241,25 @@ public final class ClientGhostDomain {
         this.targetX = x;
         this.targetY = y;
         this.targetZ = z;
+    }
+
+    /**
+     * 更新 GhostDomain Source 当前所在的
+     * 灵异隔绝 Region。
+     *
+     * <p>
+     * 该 UUID 由服务端同步，
+     * 客户端只负责保存。
+     *
+     * @param sourceRegionUUID 新的 Region UUID；
+     *                         {@code null} 表示开放空间
+     */
+    public void setSourceRegionUUID(
+            UUID sourceRegionUUID
+    ) {
+
+        this.sourceRegionUUID =
+                sourceRegionUUID;
     }
 
     /**
