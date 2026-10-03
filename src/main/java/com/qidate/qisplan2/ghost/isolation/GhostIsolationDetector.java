@@ -18,6 +18,15 @@ import java.util.Set;
  * Flood Fill（洪水填充）检测。
  *
  * <p>
+ * 检测会按照以下顺序进行：
+ *
+ * <ol>
+ *     <li>起点本身是灵异隔绝方块 → UNKNOWN</li>
+ *     <li>当前位置能够直接向上连通天空 → OPEN</li>
+ *     <li>否则进行 Flood Fill</li>
+ * </ol>
+ *
+ * <p>
  * 如果所有能够到达的空间最终都被
  * {@link GhostIsolationBlockRegistry} 注册的隔绝方块封闭，
  * 则认为当前位置处于灵异隔绝空间。
@@ -52,7 +61,8 @@ public final class GhostIsolationDetector {
 
         /*
          * 如果起点本身就是隔绝方块，
-         * 直接返回 UNKNOWN。
+         * 无法从该位置判断其内部空间，
+         * 因此直接返回 UNKNOWN。
          */
         BlockState startState =
                 level.getBlockState(start);
@@ -62,6 +72,26 @@ public final class GhostIsolationDetector {
         )) {
             return DetectionResult.unknown();
         }
+
+        /*
+         * ========================================================
+         * 第一阶段：天空连通性检测
+         * ========================================================
+         *
+         * 只要当前位置沿 Y 轴向上，
+         * 一直到世界顶部都没有遇到能够阻断灵异传播的方块，
+         * 那么当前位置必然属于开放空间。
+         */
+        if (isOpenToSky(level, start)) {
+
+            return DetectionResult.open();
+        }
+
+        /*
+         * ========================================================
+         * 第二阶段：Flood Fill
+         * ========================================================
+         */
 
         /*
          * BFS 队列。
@@ -265,6 +295,84 @@ public final class GhostIsolationDetector {
     }
 
     /**
+     * 检查指定位置是否能够沿 Y 轴直接连通天空。
+     *
+     * <p>
+     * 这里只判断“是否存在能够阻断灵异传播的方块”，
+     * 而不是判断方块是不是空气。
+     *
+     * <p>
+     * 因此普通石头、玻璃、树叶等方块，
+     * 如果没有注册到
+     * {@link GhostIsolationBlockRegistry}，
+     * 就不会阻断检测。
+     *
+     * @param level 世界
+     * @param start 起点
+     * @return 如果能够连通世界顶部，则返回 {@code true}
+     */
+    private static boolean isOpenToSky(
+            ServerLevel level,
+            BlockPos start
+    ) {
+
+        int maxY =
+                level.getMaxBuildHeight();
+
+        /*
+         * 从起点的上一个方块开始检查。
+         *
+         * 起点本身已经在 detect() 中检查过，
+         * 因此这里无需再次检查。
+         */
+        for (int y = start.getY() + 1;
+             y < maxY;
+             y++) {
+
+            BlockPos pos =
+                    new BlockPos(
+                            start.getX(),
+                            y,
+                            start.getZ()
+                    );
+
+            /*
+             * 不主动加载未加载区块。
+             *
+             * 如果天空检测过程中发现对应 Chunk 未加载，
+             * 就不能证明它是 OPEN。
+             *
+             * 因此返回 false，
+             * 让后续 Flood Fill 决定最终结果。
+             */
+            if (!level.hasChunkAt(pos)) {
+                return false;
+            }
+
+            BlockState state =
+                    level.getBlockState(pos);
+
+            /*
+             * 只有注册的灵异隔绝方块
+             * 才能够阻断向天空的灵异传播。
+             */
+            if (GhostIsolationBlockRegistry.canBlockSupernatural(
+                    state
+            )) {
+                return false;
+            }
+        }
+
+        /*
+         * 从当前位置一直到世界顶部，
+         * 都没有遇到灵异隔绝方块。
+         *
+         * 因此当前位置必然属于开放空间。
+         */
+        return true;
+    }
+
+    /**
      * 一次检测的结果。
      */
     public record DetectionResult(
@@ -291,6 +399,20 @@ public final class GhostIsolationDetector {
                     max,
                     seed,
                     cuboids
+            );
+        }
+
+        /**
+         * 创建一个已经确认的开放空间结果。
+         */
+        public static DetectionResult open() {
+
+            return new DetectionResult(
+                    IsolationState.OPEN,
+                    null,
+                    null,
+                    null,
+                    List.of()
             );
         }
 

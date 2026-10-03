@@ -227,17 +227,31 @@ public final class GhostIsolationSystem {
 
         /*
          * ========================================================
-         * UNKNOWN
-         *
-         * 当前无法确认是否存在灵异隔绝空间。
-         *
-         * 不建立永久 Region，
-         * 但建立短时负缓存，
-         * 避免下一 tick 再次执行大型 Flood Fill。
+         * 根据 Detector 的实际结果分别处理。
          * ========================================================
+         *
+         * Detector 现在拥有三种可能结果：
+         *
+         *     ISOLATED
+         *         确认当前位置属于灵异隔绝空间。
+         *
+         *     OPEN
+         *         确认当前位置与开放世界连通。
+         *
+         *     UNKNOWN
+         *         当前检测无法得出可靠结论。
+         *
+         * System 必须完整保留这个状态，
+         * 不能再简单使用 !isIsolated() 将
+         * UNKNOWN 当成 OPEN。
          */
-        if (!result.isIsolated()) {
+        if (result.state() ==
+                IsolationState.OPEN) {
 
+            /*
+             * OPEN 只建立短时负缓存，
+             * 不创建 GhostIsolationRegion。
+             */
             putOpenCache(
                     level,
                     pos
@@ -251,12 +265,35 @@ public final class GhostIsolationSystem {
             );
         }
 
+        if (result.state() ==
+                IsolationState.UNKNOWN) {
+
+            /*
+             * UNKNOWN 不进入 OPEN_CACHE。
+             *
+             * 因为 UNKNOWN 的含义是：
+             * 当前无法证明它是开放空间。
+             *
+             * 如果这里缓存成 OPEN，
+             * 后续查询就会错误地跳过检测。
+             */
+            return new QueryResult(
+                    IsolationState.UNKNOWN,
+                    false,
+                    false,
+                    false
+            );
+        }
+
         /*
          * ========================================================
-         * 第三步：确认隔绝。
-         *
-         * 建立新的 Region。
+         * ISOLATED
          * ========================================================
+         *
+         * Detector 已经确认这是一个完整的
+         * 灵异隔绝空间。
+         *
+         * 因此建立正式的 GhostIsolationRegion。
          */
         GhostIsolationRegion region =
                 new GhostIsolationRegion(
@@ -274,9 +311,7 @@ public final class GhostIsolationSystem {
          * 保存新的 Region。
          * ========================================================
          */
-        data.addRegion(
-                region
-        );
+        data.addRegion(region);
 
         /*
          * ========================================================
