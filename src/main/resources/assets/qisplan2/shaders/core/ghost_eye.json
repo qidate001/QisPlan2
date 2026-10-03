@@ -10,6 +10,9 @@
     },
     {
       "name": "MainDepthSampler"
+    },
+    {
+      "name": "GhostEyeRegionIdentity"
     }
   ],
   "uniforms": [
@@ -75,6 +78,14 @@
       "count": 1,
       "values": [
         1.0
+      ]
+    },
+    {
+      "name": "GhostEyeSourceRegion",
+      "type": "float",
+      "count": 1,
+      "values": [
+        0.0
       ]
     }
   ]

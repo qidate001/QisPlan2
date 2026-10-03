@@ -2,6 +2,7 @@
 
 uniform sampler2D DiffuseSampler;
 uniform sampler2D MainDepthSampler;
+uniform sampler2D GhostEyeRegionIdentity;
 
 uniform mat4 GhostEyeProjMat;
 uniform mat4 GhostEyeModelViewMat;
@@ -12,6 +13,7 @@ uniform vec3 GhostEyeDomainCenter;
 uniform float GhostEyeDomainRadius;
 uniform float GhostEyeDomainActive;
 uniform float GhostEyeDomainLayer;
+uniform float GhostEyeSourceRegion;
 
 in vec2 texCoord;
 
@@ -35,6 +37,42 @@ void main() {
             MainDepthSampler,
             texCoord
         ).r;
+
+    float pixelRegion =
+        texture(
+            GhostEyeRegionIdentity,
+            texCoord
+        ).r;
+
+    /*
+     * =========================================================
+     * 判断当前像素是否属于鬼域源头所在空间
+     * =========================================================
+     *
+     * GhostEyeSourceRegion：
+     *
+     *     0 = 普通空间
+     *     1 = Region Index 0
+     *     2 = Region Index 1
+     *     ...
+     *
+     * GhostEyeRegionIdentity：
+     *
+     *     当前屏幕像素实际所属空间
+     *
+     * 两者不一致时，鬼域不能传播到这里。
+     */
+    if (
+        abs(
+            pixelRegion
+            -
+            GhostEyeSourceRegion
+        ) > 0.5
+    ) {
+        fragColor = scene;
+
+        return;
+    }
 
 
     // =========================================================
