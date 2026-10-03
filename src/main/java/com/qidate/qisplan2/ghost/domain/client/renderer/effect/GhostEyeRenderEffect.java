@@ -1,7 +1,6 @@
 package com.qidate.qisplan2.ghost.domain.client.renderer.effect;
 
 import com.mojang.blaze3d.systems.RenderSystem;
-import com.qidate.qisplan2.ghost.isolation.client.renderer.GhostIsolationMaskTarget;
 import com.qidate.qisplan2.ghost.possession.ability.ghosteye.GhostEyeAbility;
 import com.qidate.qisplan2.ghost.domain.client.ClientGhostDomain;
 import com.qidate.qisplan2.ghost.domain.client.ClientGhostDomainManager;
@@ -66,22 +65,6 @@ public final class GhostEyeRenderEffect
         if (ghostEyeDomain == null) {
             return;
         }
-
-        /*
-         * ========================================================
-         * 灵异隔绝 Mask
-         * ========================================================
-         *
-         * IsolationMaskSampler 是 sampler2D，
-         * 不能通过 getUniform().set() 设置。
-         *
-         * 这里直接把灵异隔绝 Mask RenderTarget
-         * 的颜色纹理绑定给 GhostEye Shader。
-         */
-        shader.setSampler(
-                "IsolationMaskSampler",
-                GhostIsolationMaskTarget.get().getColorTextureId()
-        );
 
         /*
          * ========================================================

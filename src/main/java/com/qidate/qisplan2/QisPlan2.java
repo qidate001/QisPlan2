@@ -104,27 +104,9 @@ public class QisPlan2 {
 
             /*
              * ========================================================
-             * 灵异隔绝 Mask Shader
+             * 灵异隔绝 Stencil Mask Shader
              * ========================================================
              */
-
-            ResourceLocation ghostIsolationMaskId =
-                    ResourceLocation.fromNamespaceAndPath(
-                            MODID,
-                            "ghost_isolation_mask"
-                    );
-
-            event.registerShader(
-                    new ShaderInstance(
-                            event.getResourceProvider(),
-                            ghostIsolationMaskId,
-                            DefaultVertexFormat.POSITION
-                    ),
-                    shader -> GhostDomainShaderRegistry.register(
-                            ghostIsolationMaskId,
-                            shader
-                    )
-            );
 
             ResourceLocation ghostIsolationStencilId =
                     ResourceLocation.fromNamespaceAndPath(

@@ -1,5 +1,5 @@
 {
-  "vertex": "qisplan2:ghost_isolation_mask",
+  "vertex": "qisplan2:ghost_isolation_stencil",
   "fragment": "qisplan2:ghost_isolation_stencil",
   "samplers": [
     {

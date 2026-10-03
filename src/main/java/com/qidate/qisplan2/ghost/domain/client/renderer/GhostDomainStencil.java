@@ -1,11 +1,6 @@
 package com.qidate.qisplan2.ghost.domain.client.renderer;
 
 import com.mojang.blaze3d.systems.RenderSystem;
-import com.mojang.blaze3d.vertex.BufferBuilder;
-import com.mojang.blaze3d.vertex.BufferUploader;
-import com.mojang.blaze3d.vertex.DefaultVertexFormat;
-import com.mojang.blaze3d.vertex.Tesselator;
-import com.mojang.blaze3d.vertex.VertexFormat;
 import com.qidate.qisplan2.QisPlan2;
 import com.qidate.qisplan2.ghost.isolation.client.renderer.GhostIsolationGpuData;
 import net.minecraft.client.Minecraft;
@@ -14,15 +9,32 @@ import net.minecraft.resources.ResourceLocation;
 import org.lwjgl.opengl.GL11;
 
 /**
- * 鬼域 Stencil 测试。
+ * 鬼域 Stencil 管理器。
  *
  * <p>
- * 当前阶段仅用于验证 Stencil Buffer 是否能够
- * 正常控制后续鬼域后处理的绘制区域。
+ * 负责根据 {@link GhostIsolationGpuData} 中的灵异隔绝空间数据，
+ * 在主渲染目标的 Stencil Buffer 中生成隔绝区域标记。
+ * </p>
+ *
+ * <p>
+ * Stencil 值约定：
+ * </p>
+ *
+ * <ul>
+ *     <li>{@code 0}：正常空间，允许鬼域后处理</li>
+ *     <li>{@code 1}：灵异隔绝空间，禁止鬼域后处理</li>
+ * </ul>
+ *
+ * <p>
+ * GhostDomain 后处理在 Stencil Test 下进行渲染，
+ * 因此各个具体的鬼域效果无需自行判断灵异隔绝空间。
  * </p>
  */
 public final class GhostDomainStencil {
 
+    /**
+     * 用于生成隔绝空间 Stencil 的 Shader。
+     */
     private static final ResourceLocation SHADER_ID =
             ResourceLocation.fromNamespaceAndPath(
                     QisPlan2.MODID,
@@ -33,192 +45,48 @@ public final class GhostDomainStencil {
     }
 
     /**
-     * 清空当前 MainRenderTarget 的 Stencil，
-     * 然后在屏幕左半边写入 1。
+     * 根据当前灵异隔绝空间数据生成 Stencil Mask。
      *
      * <p>
-     * 当前仅用于测试，后续会替换为真正的
-     * 灵异隔绝区域生成逻辑。
+     * Shader 会对屏幕上的每一个像素进行计算，
+     * 判断摄像机到当前可见世界表面的射线是否经过
+     * 任意一个 {@code GhostIsolationCuboid}。
      * </p>
+     *
+     * <p>
+     * 对于处于灵异隔绝空间的像素：
+     * </p>
+     *
+     * <pre>
+     * Fragment Shader 正常输出
+     *         ↓
+     * Stencil Operation = REPLACE
+     *         ↓
+     * Stencil = 1
+     * </pre>
+     *
+     * <p>
+     * 对于不处于灵异隔绝空间的像素：
+     * </p>
+     *
+     * <pre>
+     * Fragment Shader discard
+     *         ↓
+     * 不执行 Stencil 写入
+     *         ↓
+     * Stencil 保持为 0
+     * </pre>
+     *
+     * <p>
+     * 完成后，Stencil Test 会被设置为：
+     * </p>
+     *
+     * <pre>
+     * Stencil == 0 → 允许后续鬼域效果
+     * Stencil == 1 → 禁止后续鬼域效果
+     * </pre>
      */
-    public static void writeTestMask() {
-
-        Minecraft minecraft =
-                Minecraft.getInstance();
-
-        var target =
-                minecraft.getMainRenderTarget();
-
-        /*
-         * 确保当前目标拥有 Stencil。
-         */
-        if (!target.isStencilEnabled()) {
-            target.enableStencil();
-        }
-
-        target.bindWrite(false);
-
-        RenderSystem.viewport(
-                0,
-                0,
-                target.width,
-                target.height
-        );
-
-        /*
-         * 清空 Stencil Buffer。
-         */
-        RenderSystem.clearStencil(0);
-
-        RenderSystem.clear(
-                GL11.GL_STENCIL_BUFFER_BIT,
-                Minecraft.ON_OSX
-        );
-
-        /*
-         * 开启 Stencil Test。
-         */
-        GL11.glEnable(GL11.GL_STENCIL_TEST);
-
-        /*
-         * 允许写入全部 Stencil 位。
-         */
-        RenderSystem.stencilMask(0xFF);
-
-        /*
-         * 所有像素都允许通过 Stencil Test。
-         */
-        RenderSystem.stencilFunc(
-                GL11.GL_ALWAYS,
-                1,
-                0xFF
-        );
-
-        /*
-         * Stencil Test + Depth Test 都通过时，
-         * 把 Stencil 写成 1。
-         */
-        RenderSystem.stencilOp(
-                GL11.GL_KEEP,
-                GL11.GL_KEEP,
-                GL11.GL_REPLACE
-        );
-
-        /*
-         * 写 Stencil 测试时不参与 Depth Test。
-         *
-         * 我们只是向 Stencil Buffer 写入测试区域，
-         * 不应该受到已经存在的世界深度影响。
-         */
-        RenderSystem.disableDepthTest();
-
-        /*
-         * 不修改颜色。
-         */
-        RenderSystem.colorMask(
-                false,
-                false,
-                false,
-                false
-        );
-
-        /*
-         * 不修改 Depth。
-         */
-        RenderSystem.depthMask(false);
-
-        /*
-         * 只绘制屏幕左半边。
-         */
-        drawLeftHalf(target.width, target.height);
-
-        /*
-         * 恢复颜色写入。
-         */
-        RenderSystem.colorMask(
-                true,
-                true,
-                true,
-                true
-        );
-
-        /*
-         * 恢复 Depth 写入。
-         */
-        RenderSystem.depthMask(true);
-
-        /*
-         * 恢复 Depth Test。
-         */
-        RenderSystem.enableDepthTest();
-
-        /*
-         * 后续绘制只允许 Stencil == 1。
-         */
-        RenderSystem.stencilFunc(
-                GL11.GL_EQUAL,
-                1,
-                0xFF
-        );
-
-        /*
-         * 后续不再修改 Stencil。
-         */
-        RenderSystem.stencilMask(0x00);
-    }
-
-    /**
-     * 绘制屏幕左半边。
-     */
-    private static void drawLeftHalf(
-            int width,
-            int height
-    ) {
-        float left =
-                -1.0F;
-
-        float right =
-                0.0F;
-
-        Tesselator tesselator =
-                Tesselator.getInstance();
-
-        BufferBuilder buffer =
-                tesselator.begin(
-                        VertexFormat.Mode.QUADS,
-                        DefaultVertexFormat.POSITION
-                );
-
-        buffer.addVertex(
-                left,
-                1.0F,
-                0.0F
-        );
-
-        buffer.addVertex(
-                left,
-                -1.0F,
-                0.0F
-        );
-
-        buffer.addVertex(
-                right,
-                -1.0F,
-                0.0F
-        );
-
-        buffer.addVertex(
-                right,
-                1.0F,
-                0.0F
-        );
-
-        BufferUploader.drawWithShader(
-                buffer.buildOrThrow()
-        );
-    }
-
-    public static void writeIsolationMask() {
+    public static void writeIsolationStencil() {
 
         Minecraft minecraft =
                 Minecraft.getInstance();
@@ -227,6 +95,10 @@ public final class GhostDomainStencil {
             return;
         }
 
+        /*
+         * Shader 尚未注册时，
+         * 当前帧无法生成 Stencil。
+         */
         if (!GhostDomainShaderRegistry.isRegistered(SHADER_ID)) {
             return;
         }
@@ -243,7 +115,7 @@ public final class GhostDomainStencil {
 
         /*
          * ========================================================
-         * 确保 MainRenderTarget 有 Stencil。
+         * 确保主渲染目标拥有 Stencil Buffer。
          * ========================================================
          */
         if (!target.isStencilEnabled()) {
@@ -252,34 +124,43 @@ public final class GhostDomainStencil {
 
         /*
          * ========================================================
-         * 上传最新的 Cuboid GPU 数据。
+         * 上传最新的灵异隔绝空间 GPU 数据。
          * ========================================================
+         *
+         * CPU 侧数据可能已经发生变化，
+         * 这里只负责确保 Render Thread 上的 GPU Texture
+         * 已经同步到最新状态。
          */
         GhostIsolationGpuData.uploadIfNeeded();
 
         /*
          * ========================================================
-         * 设置 Stencil：
-         *
-         * 所有 Fragment 默认允许通过。
-         *
-         * 后面的 Shader：
-         *
-         *     return → REPLACE → Stencil = 1
-         *
-         *     discard → 不写入 Stencil
+         * 开启 Stencil Test。
          * ========================================================
          */
         GL11.glEnable(GL11.GL_STENCIL_TEST);
 
+        /*
+         * 允许写入全部 Stencil 位。
+         */
         RenderSystem.stencilMask(0xFF);
 
+        /*
+         * 所有 Fragment 默认通过 Stencil Test。
+         */
         RenderSystem.stencilFunc(
                 GL11.GL_ALWAYS,
                 1,
                 0xFF
         );
 
+        /*
+         * Fragment Shader 正常通过时，
+         * 将 Stencil 写成 1。
+         *
+         * Shader 使用 discard 时，
+         * 不会执行 Stencil 写入。
+         */
         RenderSystem.stencilOp(
                 GL11.GL_KEEP,
                 GL11.GL_KEEP,
@@ -288,7 +169,7 @@ public final class GhostDomainStencil {
 
         /*
          * ========================================================
-         * 不修改颜色。
+         * Stencil 生成阶段不修改颜色。
          * ========================================================
          */
         RenderSystem.colorMask(
@@ -299,20 +180,32 @@ public final class GhostDomainStencil {
         );
 
         /*
-         * 不参与深度测试。
+         * 不参与 Depth Test。
+         *
+         * Stencil 的生成完全由隔绝空间 Shader 决定，
+         * 不应该受到当前世界 Depth 的影响。
          */
         RenderSystem.disableDepthTest();
 
         /*
-         * 不修改 Depth。
+         * 不修改 Depth Buffer。
          */
         RenderSystem.depthMask(false);
 
         /*
          * ========================================================
-         * 清空 Stencil。
+         * 清空上一帧的 Stencil。
          * ========================================================
          */
+        target.bindWrite(false);
+
+        RenderSystem.viewport(
+                0,
+                0,
+                target.width,
+                target.height
+        );
+
         RenderSystem.clearStencil(0);
 
         RenderSystem.clear(
@@ -322,13 +215,17 @@ public final class GhostDomainStencil {
 
         /*
          * ========================================================
-         * 设置 Shader。
+         * 设置隔绝空间 Stencil Shader。
          * ========================================================
          */
+
         RenderSystem.setShader(
                 () -> shader
         );
 
+        /*
+         * 灵异隔绝空间 Cuboid GPU Texture。
+         */
         shader.setSampler(
                 "IsolationCuboidData",
                 GhostIsolationGpuData.getTextureId()
@@ -341,7 +238,7 @@ public final class GhostDomainStencil {
         );
 
         /*
-         * 使用共享 Depth。
+         * 使用 GhostDomain 共享 Depth。
          */
         shader.setSampler(
                 "MainDepthSampler",
@@ -386,23 +283,17 @@ public final class GhostDomainStencil {
 
         /*
          * ========================================================
-         * 绘制 Fullscreen Quad。
+         * 执行隔绝空间 Stencil 生成。
          * ========================================================
+         *
+         * GhostDomainRenderPipeline 负责通用的
+         * Fullscreen Quad 绘制。
          */
-        target.bindWrite(false);
-
-        RenderSystem.viewport(
-                0,
-                0,
-                target.width,
-                target.height
-        );
-
-        drawFullscreenQuad();
+        GhostDomainRenderPipeline.drawFullscreenQuad();
 
         /*
          * ========================================================
-         * 恢复颜色 / Depth。
+         * 恢复颜色 / Depth 状态。
          * ========================================================
          */
         RenderSystem.colorMask(
@@ -413,16 +304,18 @@ public final class GhostDomainStencil {
         );
 
         RenderSystem.depthMask(true);
-
         RenderSystem.enableDepthTest();
 
         /*
          * ========================================================
-         * 后续 GhostDomain Effect：
-         *
-         * Stencil = 0 → 允许
-         * Stencil = 1 → 禁止
+         * 配置后续 GhostDomain Effect 的 Stencil Test。
          * ========================================================
+         *
+         * Stencil = 0：
+         *     正常空间 → 允许渲染
+         *
+         * Stencil = 1：
+         *     灵异隔绝空间 → 禁止渲染
          */
         RenderSystem.stencilFunc(
                 GL11.GL_EQUAL,
@@ -431,112 +324,49 @@ public final class GhostDomainStencil {
         );
 
         /*
-         * 后续不再修改 Stencil。
+         * 后续鬼域效果只读取 Stencil，
+         * 不再修改 Stencil Buffer。
          */
         RenderSystem.stencilMask(0x00);
     }
 
     /**
-     * 绘制一个覆盖整个屏幕的 Quad。
-     */
-    public static void drawFullscreenQuad() {
-
-        Minecraft minecraft =
-                Minecraft.getInstance();
-
-        var mainTarget =
-                minecraft.getMainRenderTarget();
-
-        /*
-         * 后处理不需要深度测试。
-         */
-        RenderSystem.disableDepthTest();
-
-        /*
-         * 后处理不会向深度缓冲写入内容。
-         */
-        RenderSystem.depthMask(false);
-
-        /*
-         * 确保当前 viewport 对应主渲染目标。
-         */
-        RenderSystem.viewport(
-                0,
-                0,
-                mainTarget.width,
-                mainTarget.height
-        );
-
-        Tesselator tesselator =
-                Tesselator.getInstance();
-
-        BufferBuilder buffer =
-                tesselator.begin(
-                        VertexFormat.Mode.QUADS,
-                        DefaultVertexFormat.POSITION
-                );
-
-        buffer.addVertex(
-                -1.0F,
-                1.0F,
-                0.0F
-        );
-
-        buffer.addVertex(
-                -1.0F,
-                -1.0F,
-                0.0F
-        );
-
-        buffer.addVertex(
-                1.0F,
-                -1.0F,
-                0.0F
-        );
-
-        buffer.addVertex(
-                1.0F,
-                1.0F,
-                0.0F
-        );
-
-        BufferUploader.drawWithShader(
-                buffer.buildOrThrow()
-        );
-
-        /*
-         * 恢复后续世界/第一人称渲染需要的状态。
-         */
-        RenderSystem.depthMask(true);
-        RenderSystem.enableDepthTest();
-
-        RenderSystem.setShaderColor(
-                1.0F,
-                1.0F,
-                1.0F,
-                1.0F
-        );
-    }
-
-    /**
      * 恢复 Stencil 默认状态。
+     *
+     * <p>
+     * 防止 GhostDomain 后处理结束后，
+     * Stencil Test 状态继续影响 Minecraft 后续渲染。
+     * </p>
      */
     public static void disable() {
 
+        /*
+         * 恢复 Stencil 写入。
+         */
         RenderSystem.stencilMask(0xFF);
 
+        /*
+         * 恢复默认 Stencil Test：
+         * 所有像素都允许通过。
+         */
         RenderSystem.stencilFunc(
                 GL11.GL_ALWAYS,
                 0,
                 0xFF
         );
 
+        /*
+         * 后续不再执行 Stencil 修改。
+         */
         RenderSystem.stencilOp(
                 GL11.GL_KEEP,
                 GL11.GL_KEEP,
                 GL11.GL_KEEP
         );
 
+        /*
+         * 关闭 Stencil Test。
+         */
         GL11.glDisable(GL11.GL_STENCIL_TEST);
     }
 }

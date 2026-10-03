@@ -79,11 +79,6 @@ public final class GhostDomainDepthTarget {
             );
 
             TARGET.enableStencil();
-
-            QisPlan2.LOGGER.info(
-                    "[鬼域深度缓冲] 创建完成：stencilEnabled={}",
-                    TARGET.isStencilEnabled()
-            );
         }
 
         return TARGET;
