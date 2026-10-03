@@ -1,6 +1,7 @@
 {
   "itemGroup.qisplan2.qis_plan_ghost": "Qi's Plan 2: §4Ghost",
   "itemGroup.qisplan2.qis_plan_ghost_items": "Qi's Plan 2: Paranormal Materials",
+  "itemGroup.qisplan2.qis_plan_else": "Qi's Plan 2: Other Content",
 
   "qisplan2.configuration.client": "Client Configuration",
   "qisplan2.configuration.apiKey": "API Key",
@@ -29,17 +30,23 @@
 
   "block.qisplan2.ghost_carpet": "§4Ghost Carpet",
   "block.qisplan2.ghost_stone_bricks": "§4Ghost Stone Bricks",
-  "block.qisplan2.ghost_stove": "§4Ghost Stove",
-  "block.qisplan2.ghost_stone_bricks_prime": "§4Ghost Stove §6PRIME",
+  "block.qisplan2.ghost_stone_bricks_prime": "§4Ghost Stone Bricks §6PRIME",
   "block.qisplan2.ghost_grave_soil": "§4Ghost Grave Soil",
   "block.qisplan2.ghost_tombstone": "§4Ghost Tombstone",
+  "block.qisplan2.ghost_stove": "§4Ghost Stove",
   "block.qisplan2.ghost_door": "§4Ghost Door",
   "block.qisplan2.ghost_door_plate": "§4Ghost Door Plate",
   "block.qisplan2.ghost_grass": "§4Ghost Grass",
   "block.qisplan2.ghost_piano": "§4Ghost Piano",
   "block.qisplan2.ghost_leather_box": "§4Ghost Leather Box",
+  "block.qisplan2.ghost_leather_wall": "§4Ghost Leather Wall",
   "block.qisplan2.ghost_lake_water": "§4Ghost Lake Water",
   "block.qisplan2.partition_exit": "Partition dimension exit block",
+
+  "fluid_type.qisplan2.ghost_lake_water": "§4Ghost Lake Water",
+  "fluid_type.qisplan2.ghost_blood": "§4Ghost Blood",
+
+  "effect.qisplan2.life_sign_protection": "§4Ghost Sign Guardian",
 
   "item.qisplan2.death_curse_sword": "§4Death Curse Sword",
   "item.qisplan2.ghost_coin": "Ghost Coin",
@@ -65,11 +72,6 @@
   "item.qisplan2.closing_ghost_spawn_egg": "§4Closing ghost spawn egg",
   "item.qisplan2.calling_ghost_spawn_egg": "§4Calling ghost spawn egg",
 
-  "fluid_type.qisplan2.ghost_lake_water": "§4Ghost Lake Water",
-  "fluid_type.qisplan2.ghost_blood": "§4Ghost Blood",
-
-  "effect.qisplan2.life_sign_protection": "§4Ghost Sign Guardian",
-
   "entity.qisplan2.ghost_painting": "§4Ghost Painting",
   "entity.qisplan2.night_wanderer": "§4Night Wanderer",
   "entity.qisplan2.invisible_ghost": "§4Invisible Ghost",
@@ -86,7 +88,7 @@
   "ghost.qisplan2.closing_ghost": "Closing Ghost",
   "ghost.qisplan2.calling_ghost": "Calling Ghost",
   "ghost.qisplan2.ghost_divination_slip": "Ghost Divination Slip",
-  "ghost.qisplan2.ghost_eye": "§4Calling Ghost",
+  "ghost.qisplan2.ghost_eye": "Ghost Eye",
 
   "curse.qisplan2.ghost_divination": "Life Sign",
   "curse.qisplan2.ghost_tombstone": "Ghost Tombstone",
@@ -102,7 +104,7 @@
   "death.attack.death_curse": "%1$s was consumed by the §4Death Curse§r.",
   "death.attack.ghost_stone_bricks": "%1$s attempted to destroy something that should not have been destroyed.",
   "death.attack.ghost_stove": "%1$s has been turned into delicious food by the §4ghost stove§r.",
-  "death.attack.ghost_grass": "%1$s has been transformed into nutrients by §4ghost grass§r. ",
+  "death.attack.ghost_grass": "%1$s has been transformed into nutrients by §4ghost grass§r.",
   "death.attack.ghost_night_wanderer": "%1$s has been transformed into a source of fear during the long, dark night by the ghosts of §4night wanderers§r",
   "death.attack.ghost_piano": "%1$s was shaken unconscious by the §4Ghost Music§r from the §4Ghost Piano§r",
   "death.attack.invisible_ghost": "%1$s consciousness was erased by supernatural forces",
@@ -110,14 +112,36 @@
   "death.attack.knocking_ghost": "%1$s was killed by §4Knocking Curse§r.",
   "death.attack.opening_ghost": "%1$s was killed by the §4Opening Ghost§r under the §4Opening Curse§r",
   "death.attack.closing_ghost": "%1$s was killed by the §4Closing Ghost§r under the §4Closing Curse§r",
-  "death.attack.ghost_lake_water": "%1$s was engulfed by the §4Ghost Lake§4",
+  "death.attack.ghost_lake_water": "%1$s was engulfed by the §4Ghost Lake§r",
   "death.attack.ghost_blood": "%1$s was melted by §4Ghost Blood§r",
   "death.attack.ghost_door_plate": "%1$s has been torn in half",
   "death.attack.calling_ghost": "%1$s lost its soul",
 
+  "command.qisplan2.player_only": "§cThis command must be executed by a player.",
+  "command.qisplan2.entity_only": "§cThis command must be executed by an entity.",
+
   "qisplan2.death_curse.triggered": "☠ The §4Death Curse§r has been triggered! The §4Death Curse Sword§r has shattered!",
   "qisplan2.death_curse.reflection": "☠ The §4Death Curse§r has rebounded!",
   "qisplan2.death_curse.infected": "☠ You have been infected with a §4Death Curse§r! Current stacks: %1$d/10",
+
+  "command.qisplan2.kill.default": "Cleared §e%s§r paranormal entities nearby.",
+  "command.qisplan2.kill.radius": "Within §e%s§r blocks, cleared §e%s§r paranormal entities.",
+
+  "command.qisplan2.split_structure.success": "Structure split complete: §e%s§r\nGenerated §e%s§r chunk structures in total.",
+  "command.qisplan2.split_structure.failure": "Structure split failed: §c%s§r\nError: %s",
+
+  "command.qisplan2.generate_ghost_manor.busy": "§cA ghost manor is already being generated.",
+  "command.qisplan2.generate_ghost_manor.success": "§aStarted generating the ghost manor.",
+
+  "command.qisplan2.generate_ghost_lake.busy": "§cA ghost lake is already being generated.",
+  "command.qisplan2.generate_ghost_lake.success": "§aStarted generating the ghost lake.",
+
+  "command.qisplan2.debug_domain.create.success": "Created Debug Ghost Domain (radius §e%s§r, layers §e%s§r, strength §e%s§r).",
+  "command.qisplan2.debug_domain.remove.success": "§aRemoved Debug Ghost Domain.",
+
+  "command.qisplan2.debug_isolation.isolated": "Your current position is isolated from supernatural forces.",
+  "command.qisplan2.debug_isolation.open": "Your current position is not isolated from supernatural forces.",
+  "command.qisplan2.debug_isolation.unknown": "The supernatural isolation state of your current position could not be determined.",
 
   "command.qisplan2.curse.empty": "There are currently no active curses.",
   "command.qisplan2.curse.header": "Currently active curses:",
@@ -127,8 +151,6 @@
   "command.qisplan2.isay.api_key_missing": "§cError: Please set the API Key in the mod configuration first!",
   "command.qisplan2.isay.thinking": "§eThinking, please wait...",
   "command.qisplan2.isay.error": "§cAn error occurred while processing the request: %s",
-
-  "command.qisplan2.player_only": "§cThis command must be executed by a player.",
   "command.qisplan2.ghost_not_found": "No possessable ghost exists: %s",
   "command.qisplan2.already_possessed": "You have already possessed: %s",
   "command.qisplan2.possess.success": "Successfully possessed: %s",
@@ -139,10 +161,6 @@
   "command.qisplan2.possessed.empty": "You are not possessing any ghosts.",
   "command.qisplan2.possessed.header": "Currently possessed:",
   "command.qisplan2.possessed.entry": " - Revival: %s",
-
-  "command.qisplan2.debug_isolation.isolated": "Your current position is isolated from supernatural forces.",
-  "command.qisplan2.debug_isolation.open": "Your current position is not isolated from supernatural forces.",
-  "command.qisplan2.debug_isolation.unknown": "The supernatural isolation state of your current position could not be determined.",
 
   "command.qisplan2.stun.success": "%s has entered normal shutdown for %s seconds.",
   "command.qisplan2.permanent_stun.success": "%s has entered permanent shutdown.",
