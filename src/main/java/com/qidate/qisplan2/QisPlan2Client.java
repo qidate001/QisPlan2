@@ -22,6 +22,7 @@ import com.qidate.qisplan2.client.hud.DeathCurseHudOverlay;
 
 import com.qidate.qisplan2.ghost.domain.client.renderer.effect.GhostEyeRenderEffect;
 import com.qidate.qisplan2.ghost.domain.client.renderer.effect.GhostUmbrellaRenderEffect;
+import com.qidate.qisplan2.ghost.isolation.client.ClientGhostIsolationChunkHandler;
 import com.qidate.qisplan2.ghost.tombstone.client.GhostTombstoneBlockEntityRenderer;
 import net.minecraft.client.model.HumanoidModel;
 import net.minecraft.client.model.geom.builders.CubeDeformation;
@@ -117,6 +118,11 @@ public class QisPlan2Client {
         // 鬼域客户端退出清理
         NeoForge.EVENT_BUS.register(
                 ClientGhostDomainEvents.class
+        );
+
+        // 区块加载 灵异隔离 GPU 数据重载
+        NeoForge.EVENT_BUS.register(
+                ClientGhostIsolationChunkHandler.class
         );
 
         // 注册客户端诅咒

@@ -8,6 +8,7 @@ import com.qidate.qisplan2.ghost.isolation.client.ClientGhostIsolationManager;
 import com.qidate.qisplan2.ghost.isolation.client.ClientGhostIsolationRegion;
 import net.minecraft.client.Minecraft;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.level.chunk.status.ChunkStatus;
 import org.lwjgl.BufferUtils;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL12;
@@ -39,7 +40,7 @@ import java.util.Arrays;
  * R = X
  * G = Y
  * B = Z
- * A = 1
+ * A = Region Index / 其他数据
  * </pre>
  */
 public final class GhostIsolationGpuData {
@@ -198,6 +199,49 @@ public final class GhostIsolationGpuData {
             for (ClientGhostIsolationCuboid cuboid :
                     region.getCuboids()) {
 
+                /*
+                 * ====================================================
+                 * 客户端 Chunk 加载状态过滤
+                 * ====================================================
+                 *
+                 * 如果这个 Cuboid 所覆盖的所有 Chunk
+                 * 都已经离开客户端的 Chunk Cache，
+                 * 那么客户端当前根本没有对应的世界几何。
+                 *
+                 * 此时不要把这个 Cuboid 提交给 GPU。
+                 *
+                 * 这样可以避免：
+                 *
+                 *     世界墙体 Chunk 已卸载
+                 *             ↓
+                 *     MainDepth 中没有墙
+                 *             ↓
+                 *     ghost_isolation_region.fsh
+                 *     射线穿过本应存在的墙体
+                 *             ↓
+                 *     错误识别为隔绝空间
+                 *
+                 * 注意：
+                 *
+                 * 这里只过滤“完全没有已加载 Chunk”的 Cuboid。
+                 *
+                 * 如果 Cuboid 横跨：
+                 *
+                 *     已加载 Chunk + 未加载 Chunk
+                 *
+                 * 第一版仍然保留整个 Cuboid。
+                 *
+                 * 后续如果需要更精确的处理，
+                 * 再进行 Cuboid → Chunk 裁剪。
+                 * ====================================================
+                 */
+                if (!isCuboidInLoadedChunk(
+                        minecraft,
+                        cuboid
+                )) {
+                    continue;
+                }
+
                 if (cuboidCount >= MAX_CUBOIDS) {
                     break;
                 }
@@ -247,6 +291,85 @@ public final class GhostIsolationGpuData {
          * 标记 GPU 数据需要重新上传。
          */
         dirty = true;
+    }
+
+    /**
+     * 判断指定 Cuboid 是否至少与一个当前客户端
+     * 已加载的 Chunk 相交。
+     *
+     * <p>
+     * 这里只查询 ClientChunkCache。
+     * 不会请求加载 Chunk。
+     *
+     * <p>
+     * {@code requireChunk = false} 是关键：
+     *
+     * <pre>
+     * 已加载   → 返回 LevelChunk
+     * 未加载   → 返回 null
+     * </pre>
+     */
+    private static boolean isCuboidInLoadedChunk(
+            Minecraft minecraft,
+            ClientGhostIsolationCuboid cuboid
+    ) {
+
+        /*
+         * Minecraft 方块坐标转换为 Chunk 坐标。
+         *
+         * 使用 >> 4 可以正确处理负坐标，
+         * 因为 Java 对负整数的右移等价于向负无穷方向
+         * 的 2^4 整除结果。
+         */
+        int minChunkX =
+                cuboid.minX() >> 4;
+
+        int maxChunkX =
+                cuboid.maxX() >> 4;
+
+        int minChunkZ =
+                cuboid.minZ() >> 4;
+
+        int maxChunkZ =
+                cuboid.maxZ() >> 4;
+
+        /*
+         * 获取当前客户端 Chunk Cache。
+         */
+        var chunkSource =
+                minecraft.level.getChunkSource();
+
+        /*
+         * 检查 Cuboid 覆盖范围内的所有 Chunk。
+         *
+         * 只要找到一个已经加载的 Chunk，
+         * 就认为这个 Cuboid 当前仍然应该提交 GPU。
+         */
+        for (int chunkX = minChunkX;
+             chunkX <= maxChunkX;
+             chunkX++) {
+
+            for (int chunkZ = minChunkZ;
+                 chunkZ <= maxChunkZ;
+                 chunkZ++) {
+
+                if (chunkSource.getChunk(
+                        chunkX,
+                        chunkZ,
+                        ChunkStatus.FULL,
+                        false
+                ) != null) {
+
+                    return true;
+                }
+            }
+        }
+
+        /*
+         * 整个 Cuboid 都位于当前客户端
+         * 尚未加载的 Chunk 中。
+         */
+        return false;
     }
 
     /**
@@ -355,14 +478,6 @@ public final class GhostIsolationGpuData {
         /*
          * ====================================================
          * 上传 RGBA32F Texture
-         * ====================================================
-         *
-         * 这里不能使用 Minecraft 的
-         * GlStateManager._texImage2D，
-         * 因为你这个 1.21.1 映射的参数是 IntBuffer。
-         *
-         * 直接调用 LWJGL 的 GL11.glTexImage2D，
-         * 可以使用 FloatBuffer。
          * ====================================================
          */
         GL11.glTexImage2D(
