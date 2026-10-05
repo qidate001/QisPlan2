@@ -4,6 +4,7 @@ import com.qidate.qisplan2.entity.TestGeckoEntity;
 import com.qidate.qisplan2.entity.calling.CallingGhost;
 import com.qidate.qisplan2.entity.ghostdoor.closing.ClosingGhost;
 import com.qidate.qisplan2.entity.ghostdoor.opening.OpeningGhost;
+import com.qidate.qisplan2.entity.ghostmist.GhostMist;
 import com.qidate.qisplan2.entity.invisible.InvisibleGhost;
 import com.qidate.qisplan2.entity.ghostdoor.knocking.KnockingGhost;
 import com.qidate.qisplan2.entity.nightwanderer.NightWanderer;
@@ -165,6 +166,29 @@ public class ModEntities {
                             .updateInterval(1)
                             .build(
                                     "qisplan2:calling_ghost"
+                            )
+            );
+
+    // 鬼雾
+    public static final DeferredHolder<EntityType<?>, EntityType<GhostMist>> GHOST_MIST =
+            ENTITY_TYPES.register(
+                    "ghost_mist",
+                    () -> EntityType.Builder
+                            .of(
+                                    GhostMist::new,
+                                    MobCategory.MONSTER
+                            )
+                            .sized(
+                                    0.6F,
+                                    1.8F
+                            )
+                            .clientTrackingRange(8)
+                            .updateInterval(3)
+                            .build(
+                                    ResourceLocation.fromNamespaceAndPath(
+                                            MODID,
+                                            "ghost_mist"
+                                    ).toString()
                             )
             );
 

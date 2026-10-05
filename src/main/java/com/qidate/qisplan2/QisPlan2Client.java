@@ -6,6 +6,7 @@ import com.qidate.qisplan2.client.curse.CurseClientBootstrap;
 import com.qidate.qisplan2.entity.calling.CallingGhostRenderer;
 import com.qidate.qisplan2.entity.ghostdoor.closing.ClosingGhostRenderer;
 import com.qidate.qisplan2.entity.ghostdoor.opening.OpeningGhostRenderer;
+import com.qidate.qisplan2.entity.ghostmist.GhostMistRenderer;
 import com.qidate.qisplan2.entity.invisible.InvisibleGhostRenderer;
 import com.qidate.qisplan2.entity.ghostdoor.knocking.KnockingGhostRenderer;
 import com.qidate.qisplan2.entity.nightwanderer.NightWandererRenderer;
@@ -289,6 +290,12 @@ public class QisPlan2Client {
         event.registerEntityRenderer(
                 ModEntities.CALLING_GHOST.get(),
                 CallingGhostRenderer::new
+        );
+
+        // 鬼雾
+        event.registerEntityRenderer(
+                ModEntities.GHOST_MIST.get(),
+                GhostMistRenderer::new
         );
 
         // 鬼画
