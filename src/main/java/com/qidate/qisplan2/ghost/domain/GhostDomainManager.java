@@ -337,6 +337,28 @@ public final class GhostDomainManager {
         );
     }
 
+    /**
+     * ========================================
+     * 同步鬼域运行时状态
+     * ========================================
+     *
+     * 用于 Domain 的强度、半径等运行时状态发生变化后，
+     * 主动通知客户端。
+     */
+    public void syncUpdate(
+            GhostDomain domain
+    ) {
+        if (!domains.containsKey(domain.getId())) {
+            return;
+        }
+
+        GhostDomainNetwork.sendUpdate(
+                level,
+                domain,
+                true
+        );
+    }
+
     public GhostDomain get(
             UUID id
     ) {

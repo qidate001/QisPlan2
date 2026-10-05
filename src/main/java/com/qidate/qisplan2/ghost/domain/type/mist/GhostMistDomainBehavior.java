@@ -2,6 +2,7 @@ package com.qidate.qisplan2.ghost.domain.type.mist;
 
 import com.qidate.qisplan2.death.ModDamageTypes;
 import com.qidate.qisplan2.death.SupernaturalDeathHandler;
+import com.qidate.qisplan2.entity.ghostmist.GhostMist;
 import com.qidate.qisplan2.ghost.domain.GhostDomain;
 import com.qidate.qisplan2.ghost.domain.GhostDomainBehavior;
 import com.qidate.qisplan2.ghost.domain.GhostDomainEntityTracker;
@@ -242,14 +243,14 @@ public final class GhostMistDomainBehavior
 
             if (killed) {
 
-                domain.setStrength(
-                        domain.getStrength()
-                                + STRENGTH_GROWTH
-                );
+                if (!(source instanceof GhostMist ghost)) {
+                    continue;
+                }
 
-                domain.setRadius(
-                        domain.getRadius()
-                                + RADIUS_GROWTH
+                GhostMistDomainController.grow(
+                        level,
+                        ghost,
+                        domain
                 );
             }
         }

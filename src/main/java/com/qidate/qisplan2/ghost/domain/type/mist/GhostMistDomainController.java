@@ -1,6 +1,7 @@
 package com.qidate.qisplan2.ghost.domain.type.mist;
 
 import com.qidate.qisplan2.QisPlan2;
+import com.qidate.qisplan2.entity.GhostAttributeSystem;
 import com.qidate.qisplan2.entity.ghostmist.GhostMist;
 import com.qidate.qisplan2.ghost.domain.GhostDomain;
 import com.qidate.qisplan2.ghost.domain.GhostDomainManager;
@@ -12,153 +13,225 @@ import net.minecraft.server.level.ServerLevel;
 import java.util.UUID;
 
 /**
- * ========================================================
+ * ========================================
  * 鬼雾鬼域控制器
- * ========================================================
+ * ========================================
  *
  * 负责：
  *
  * 1. 创建鬼雾鬼域
- * 2. 定义鬼雾鬼域的基础参数
+ * 2. 从鬼雾实体恢复鬼域状态
+ * 3. 保持 GhostMist 与 GhostDomain 状态同步
+ * 4. 处理鬼雾成长
+ *
+ * 持久化数据由 GhostMist 实体负责。
+ *
+ * GhostDomain 则负责运行时状态。
  */
 public final class GhostMistDomainController {
 
-    /**
-     * ========================================================
-     * 鬼雾鬼域类型
-     * ========================================================
-     */
     public static final ResourceLocation DOMAIN_TYPE =
             ResourceLocation.fromNamespaceAndPath(
                     QisPlan2.MODID,
                     "ghost_mist"
             );
 
-    /**
-     * ========================================================
-     * 鬼雾鬼域半径
-     * ========================================================
-     */
-    private static final double DOMAIN_RADIUS = 80.0D;
+    private static final double DEFAULT_DOMAIN_RADIUS =
+            80.0D;
 
     private GhostMistDomainController() {
     }
 
     /**
-     * ========================================================
-     * 创建鬼雾鬼域
-     * ========================================================
+     * ========================================
+     * 创建 / 恢复鬼域
+     * ========================================
      *
-     * 为指定的鬼雾实体创建一个对应的球形鬼域。
+     * 如果鬼域已经存在，则不重复创建。
      *
-     * GhostDomainManager 会负责后续：
-     *
-     * - 鬼域位置更新
-     * - 鬼域生命周期
-     * - 源实体消失后的自动清理
-     * - 鬼域网络同步
+     * 如果不存在，则使用 GhostMist 实体中
+     * 保存的鬼域状态重新创建。
      */
     public static void createDomain(
             ServerLevel level,
             GhostMist ghost
     ) {
-
         GhostDomainManager manager =
                 GhostDomainManager.get(level);
 
-        /*
-         * ========================================================
-         * 防止重复创建
-         * ========================================================
-         */
-        if (manager.getBySourceAndType(
-                ghost.getUUID(),
-                DOMAIN_TYPE
-        ) != null) {
+        GhostDomain existingDomain =
+                manager.getBySourceAndType(
+                        ghost.getUUID(),
+                        DOMAIN_TYPE
+                );
+
+        if (existingDomain != null) {
+
+            /*
+             * ========================================
+             * 已存在鬼域
+             * ========================================
+             *
+             * 正常运行过程中：
+             *
+             * GhostDomain 是运行时状态的权威来源。
+             *
+             * 因此这里不重新覆盖 Domain。
+             */
 
             return;
         }
 
         /*
-         * ========================================================
-         * 创建鬼域
-         * ========================================================
+         * ========================================
+         * 使用实体持久化数据恢复鬼域
+         * ========================================
          */
+
+        double strength =
+                ghost.getDomainStrength();
+
+        double radius =
+                ghost.getDomainRadius();
+
         GhostDomain domain =
                 new GhostDomain(
                         UUID.randomUUID(),
-
-                        /*
-                         * 鬼域源头。
-                         */
                         ghost.getUUID(),
-
                         DOMAIN_TYPE,
-
-                        /*
-                         * 鬼域强度直接使用鬼雾自身的
-                         * 灵异强度。
-                         */
-                        ghost.getSupernaturalStrength(),
-
-                        /*
-                         * 当前使用第 1 层。
-                         */
+                        strength,
                         1,
-
-                        DOMAIN_RADIUS,
-
-                        /*
-                         * 鬼域所在维度。
-                         */
+                        radius,
                         level.dimension(),
-
-                        /*
-                         * 初始位置。
-                         *
-                         * 后续由 GhostDomainManager
-                         * 根据 DISTANCE 模式自动更新。
-                         */
                         ghost.getX(),
                         ghost.getY(),
                         ghost.getZ(),
-
-                        /*
-                         * 球形鬼域。
-                         */
                         new SphereDomainShape(
-                                DOMAIN_RADIUS
+                                radius
                         ),
-
-                        /*
-                         * 根据源头实体位置更新。
-                         */
                         GhostDomainUpdateMode.DISTANCE,
-
-                        /*
-                         * 源头移动超过 3 格时更新。
-                         */
                         3.0D,
-
-                        /*
-                         * 鬼雾鬼域规则。
-                         *
-                         * 当前暂时为空。
-                         */
                         new GhostMistDomainBehavior()
                 );
 
-        /*
-         * ========================================================
-         * 注册到统一鬼域管理器
-         * ========================================================
-         */
         manager.add(domain);
 
+        /*
+         * ========================================
+         * 保证厉鬼自身灵异强度
+         * 与鬼域强度一致
+         * ========================================
+         */
+
+        GhostAttributeSystem.setSupernaturalStrength(
+                ghost,
+                strength
+        );
+
         QisPlan2.LOGGER.info(
-                "[鬼雾] 鬼雾源头 {} 创建鬼域，半径={}",
+                "[鬼雾] 鬼雾源头 {} 创建/恢复鬼域，强度={}，半径={}",
                 ghost.getUUID(),
-                DOMAIN_RADIUS
+                strength,
+                radius
+        );
+    }
+
+    /**
+     * ========================================
+     * 鬼雾成长
+     * ========================================
+     *
+     * 每成功杀死一个目标：
+     *
+     * Strength +0.1
+     * Radius +0.05
+     *
+     * 同时同步：
+     *
+     * GhostMist
+     * GhostDomain
+     * 客户端
+     */
+    public static void grow(
+            ServerLevel level,
+            GhostMist ghost,
+            GhostDomain domain
+    ) {
+        /*
+         * ========================================
+         * 计算新的状态
+         * ========================================
+         */
+
+        double newStrength =
+                domain.getStrength() + 0.1D;
+
+        double newRadius =
+                domain.getRadius() + 0.05D;
+
+        /*
+         * ========================================
+         * ① 更新 GhostDomain
+         * ========================================
+         *
+         * Domain 是运行时状态的权威来源。
+         */
+
+        domain.setStrength(
+                newStrength
+        );
+
+        domain.setRadius(
+                newRadius
+        );
+
+        /*
+         * ========================================
+         * ② 同步回 GhostMist
+         * ========================================
+         *
+         * 实体保存这些数据。
+         */
+
+        ghost.setDomainStrength(
+                newStrength
+        );
+
+        ghost.setDomainRadius(
+                newRadius
+        );
+
+        /*
+         * ========================================
+         * ③ 厉鬼灵异强度同步
+         * ========================================
+         *
+         * 厉鬼自身强度 = 鬼域强度
+         */
+
+        GhostAttributeSystem.setSupernaturalStrength(
+                ghost,
+                newStrength
+        );
+
+        /*
+         * ========================================
+         * ④ 通知客户端 Domain 状态发生变化
+         * ========================================
+         *
+         * Domain 的强度和半径都发生了变化。
+         */
+
+        GhostDomainManager.get(level)
+                .syncUpdate(
+                        domain
+                );
+
+        QisPlan2.LOGGER.info(
+                "[鬼雾] 鬼雾 {} 成长：强度={}，半径={}",
+                ghost.getUUID(),
+                newStrength,
+                newRadius
         );
     }
 }
