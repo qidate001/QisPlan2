@@ -297,6 +297,12 @@ public class QisPlan2Client {
                 GhostPaintingRenderer::new
         );
 
+        // 测试实体
+        event.registerEntityRenderer(
+                ModEntities.TEST_GECKO.get(),
+                TestGeckoRenderer::new
+        );
+
         BlockEntityRenderers.register(
                 ModBlocks.GHOST_DOOR_PLATE_BLOCK_ENTITY.get(),
                 GhostDoorPlateBlockEntityRenderer::new

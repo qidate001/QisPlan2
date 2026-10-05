@@ -1,0 +1,9 @@
+{
+  "replace": false,
+  "values": [
+    "qisplan2:ghost_stone_bricks",
+    "qisplan2:ghost_stone_bricks_prime",
+    "qisplan2:ghost_grave_soil",
+    "minecraft:gold_block"
+  ]
+}

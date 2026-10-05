@@ -1,9 +1,8 @@
 package com.qidate.qisplan2.ghost.isolation;
 
+import com.qidate.qisplan2.block.GhostDoorBlock;
 import com.qidate.qisplan2.core.ModBlocks;
-import net.minecraft.core.Holder;
-import net.minecraft.world.level.block.Block;
-import net.minecraft.world.level.block.Blocks;
+import com.qidate.qisplan2.core.ModTags;
 import net.minecraft.world.level.block.state.BlockState;
 
 import java.util.ArrayList;
@@ -11,57 +10,34 @@ import java.util.List;
 import java.util.function.Predicate;
 
 /**
- * 灵异隔绝方块注册表。
+ * 灵异隔绝规则。
  *
  * <p>
  * 用于统一判断某个方块状态是否能够阻断灵异传播。
  * </p>
+ *
+ * <p>
+ * 普通方块通过 {@link ModTags.Blocks#GHOST_ISOLATION} 判断；
+ * 需要根据 BlockState 判断的特殊情况则通过自定义规则处理。
+ * </p>
  */
 public final class GhostIsolationBlockRegistry {
 
-    private static final List<Predicate<BlockState>> RULES =
+    private static final List<Predicate<BlockState>> SPECIAL_RULES =
             new ArrayList<>();
 
     private GhostIsolationBlockRegistry() {
     }
 
+    /**
+     * 初始化特殊的灵异隔绝规则。
+     */
     public static void init() {
 
-        register(
-                ModBlocks.GHOST_STONE_BRICKS
-        );
-
-        register(
-                ModBlocks.GHOST_STONE_BRICKS_PRIME
-        );
-
-        register(
-                ModBlocks.GHOST_DOOR
-        );
-
-        register(
-                ModBlocks.GHOST_GRAVE_SOIL
-        );
-
-        register(
-                Blocks.GOLD_BLOCK.builtInRegistryHolder()
-        );
-    }
-
-    /**
-     * 注册一个能够隔绝灵异的方块。
-     *
-     * <p>
-     * 使用 Holder 而不是直接获取 Block，
-     * 避免在 DeferredRegister 完成绑定前调用 get()。
-     * </p>
-     */
-    public static void register(
-            Holder<Block> block
-    ) {
-
-        RULES.add(
-                state -> state.is(block)
+        // 只有关闭状态的鬼门能够隔绝灵异。
+        register(state ->
+                state.is(ModBlocks.GHOST_DOOR)
+                        && !state.getValue(GhostDoorBlock.OPEN)
         );
     }
 
@@ -69,15 +45,14 @@ public final class GhostIsolationBlockRegistry {
      * 注册一个自定义的灵异隔绝规则。
      *
      * <p>
-     * 适用于需要根据 BlockState 判断的特殊方块，
-     * 例如只有关闭状态的鬼门才能隔绝灵异。
+     * 适用于无法直接通过 Tag 表达的 BlockState 条件。
      * </p>
      */
     public static void register(
             Predicate<BlockState> rule
     ) {
 
-        RULES.add(rule);
+        SPECIAL_RULES.add(rule);
     }
 
     /**
@@ -87,7 +62,18 @@ public final class GhostIsolationBlockRegistry {
             BlockState state
     ) {
 
-        for (Predicate<BlockState> rule : RULES) {
+        /*
+         * 普通隔绝方块：
+         * 直接通过 Tag 判断。
+         */
+        if (state.is(ModTags.Blocks.GHOST_ISOLATION)) {
+            return true;
+        }
+
+        /*
+         * 特殊 BlockState 规则。
+         */
+        for (Predicate<BlockState> rule : SPECIAL_RULES) {
 
             if (rule.test(state)) {
                 return true;

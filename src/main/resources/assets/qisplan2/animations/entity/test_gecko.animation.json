@@ -1,0 +1,38 @@
+{
+	"format_version": "1.8.0",
+	"animations": {
+		"animation.qisplan2_test_gecko.new": {
+			"animation_length": 1.25,
+			"bones": {
+				"right_arm": {
+					"rotation": {
+						"0.0": [0, 0, 0],
+						"1.25": [0, 0, -102.5]
+					}
+				}
+			}
+		},
+		"animation.qisplan2_test_gecko.move": {
+			"loop": true,
+			"animation_length": 1,
+			"bones": {
+				"left_leg": {
+					"rotation": {
+						"0.0": [0, 0, 0],
+						"0.25": [40.5, 0, 0],
+						"0.75": [-51, 0, 0],
+						"1.0": [0, 0, 0]
+					}
+				},
+				"right_leg": {
+					"rotation": {
+						"0.0": [0, 0, 0],
+						"0.25": [-51, 0, 0],
+						"0.75": [40.5, 0, 0],
+						"1.0": [0, 0, 0]
+					}
+				}
+			}
+		}
+	}
+}

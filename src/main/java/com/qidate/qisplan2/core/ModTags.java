@@ -63,6 +63,23 @@ public class ModTags {
                         )
                 );
 
+        /**
+         * 可以隔绝灵异传播的方块。
+         *
+         * <p>
+         * 这里用于定义“整个方块类型”都能够隔绝灵异的方块。
+         * 需要根据 BlockState 判断的特殊情况不放在这里。
+         * </p>
+         */
+        public static final TagKey<Block> GHOST_ISOLATION =
+                TagKey.create(
+                        Registries.BLOCK,
+                        ResourceLocation.fromNamespaceAndPath(
+                                QisPlan2.MODID,
+                                "ghost_isolation"
+                        )
+                );
+
         private Blocks() {
         }
     }

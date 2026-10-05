@@ -1,5 +1,6 @@
 package com.qidate.qisplan2.core;
 
+import com.qidate.qisplan2.entity.TestGeckoEntity;
 import com.qidate.qisplan2.entity.calling.CallingGhost;
 import com.qidate.qisplan2.entity.ghostdoor.closing.ClosingGhost;
 import com.qidate.qisplan2.entity.ghostdoor.opening.OpeningGhost;
@@ -54,6 +55,13 @@ public final class ModEntityAttributes {
         event.put(
                 ModEntities.CALLING_GHOST.get(),
                 CallingGhost.createAttributes()
+                        .build()
+        );
+
+        // GeckoLib 测试实体
+        event.put(
+                ModEntities.TEST_GECKO.get(),
+                TestGeckoEntity.createAttributes()
                         .build()
         );
     }

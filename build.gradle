@@ -28,7 +28,18 @@ sourceSets.main.resources {
 }
 
 repositories {
-    // Add here additional repositories if required by some of the dependencies below.
+    exclusiveContent {
+        forRepository {
+            maven {
+                name = 'GeckoLib'
+                url = 'https://dl.cloudsmith.io/public/geckolib3/geckolib/maven/'
+            }
+        }
+
+        filter {
+            includeGroupAndSubgroups('software.bernie.geckolib')
+        }
+    }
 }
 
 base {
@@ -120,6 +131,11 @@ neoForge {
 //}
 
 dependencies {
+    // GeckoLib
+    implementation "software.bernie.geckolib:geckolib-neoforge-1.21.1:${geckolib_version}"
+    jarJar "software.bernie.geckolib:geckolib-neoforge-1.21.1:${geckolib_version}"
+
+    // Jackson
     implementation 'com.fasterxml.jackson.core:jackson-databind:2.17.3'
     implementation 'com.fasterxml.jackson.core:jackson-core:2.17.3'
     implementation 'com.fasterxml.jackson.core:jackson-annotations:2.17.3'
