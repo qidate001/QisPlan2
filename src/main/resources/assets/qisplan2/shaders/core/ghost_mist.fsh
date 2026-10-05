@@ -453,7 +453,21 @@ void main() {
 
         if (tExit > 0.0) {
 
-            tEnter =
+            /*
+             * =================================================
+             * 摄像机在球内 / 球外
+             * =================================================
+             *
+             * 球外：
+             *     tEnter > 0
+             *
+             * 球内：
+             *     tEnter < 0
+             *
+             * 因此统一把起点限制到摄像机之后。
+             */
+
+            float fogStart =
                 max(
                     tEnter,
                     0.0
@@ -473,24 +487,35 @@ void main() {
                 );
 
 
+            /*
+             * =================================================
+             * 确认真正存在可见鬼雾
+             * =================================================
+             */
+
             if (
                 visibleExit
-                > tEnter
+                > fogStart
             ) {
 
                 float fogLength =
                     visibleExit
-                    - tEnter;
+                    - fogStart;
 
 
                 /*
                  * =================================================
-                 * 计算雾气采样位置
+                 * 雾气采样位置
                  * =================================================
+                 *
+                 * 取鬼雾可见区间的中点。
+                 *
+                 * 这样无论玩家在球内还是球外，
+                 * 都可以得到稳定的噪声采样。
                  */
 
                 float sampleT =
-                    tEnter
+                    fogStart
                     + fogLength * 0.5;
 
                 vec3 samplePosition =
@@ -503,8 +528,6 @@ void main() {
                  * =================================================
                  * 程序雾
                  * =================================================
-                 *
-                 * 时间变化让雾气缓慢移动。
                  */
 
                 vec3 noisePosition =
@@ -548,12 +571,16 @@ void main() {
                  * =================================================
                  * 鬼域层数
                  * =================================================
-                 *
-                 * 层数越高，鬼雾越浓。
                  */
 
                 float layerStrength =
-                    1.0 + (GhostMistDomainLayer - 1.0) * 0.18;
+                    1.0
+                    +
+                    (
+                        GhostMistDomainLayer
+                        - 1.0
+                    )
+                    * 0.18;
 
                 layerStrength =
                     clamp(
@@ -569,7 +596,10 @@ void main() {
                  * =================================================
                  */
 
-                float density = 0.045 * layerStrength;
+                float density =
+                    0.045
+                    *
+                    layerStrength;
 
 
                 /*
@@ -579,8 +609,8 @@ void main() {
                  */
 
                 float baseFog =
-                1.0
-                -
+                    1.0
+                    -
                     exp(
                         -fogLength
                         * density
@@ -595,7 +625,8 @@ void main() {
 
                 float noisyFog =
                     baseFog
-                    * (
+                    *
+                    (
                         0.65
                         +
                         fogNoise
@@ -605,61 +636,67 @@ void main() {
 
                 /*
                  * =================================================
-                 * 球体边缘轻微衰减
+                 * 球体边缘柔化
                  * =================================================
                  *
-                 * 越接近鬼域边界，
-                 * 雾越柔和。
+                 * 这里使用真正的摄像机位置，
+                 * 而不是 near plane 的 rayStart。
                  */
-
-                vec3 cameraToDomain =
-                    rayStart
-                    - GhostMistDomainCenter;
 
                 float cameraDistance =
                     length(
-                        cameraToDomain
+                        GhostMistCameraPos
+                        -
+                        GhostMistDomainCenter
                     );
 
-                float boundaryFade =
-                    clamp(
-                        (
-                        GhostMistDomainRadius
-                        - cameraDistance
-                        )
-                        /
-                        12.0,
-                        0.0,
-                        1.0
-                    );
 
                 /*
-                 * 摄像机在球外时，
-                 * 不直接削掉雾。
+                 * 球外：
                  *
-                 * 只有靠近边界时进行轻微柔化。
+                 * 距离球越远，
+                 * 整个鬼雾球越清晰。
+                 *
+                 * 不让球外距离直接导致鬼雾消失。
                  */
+
+                float boundaryFade = 1.0;
+
+
+                /*
+                 * 球内：
+                 *
+                 * 只有靠近边界时稍微柔化。
+                 */
+
                 if (
                     cameraDistance
-                    > GhostMistDomainRadius
+                    < GhostMistDomainRadius
                 ) {
 
                     boundaryFade =
-                        clamp(
+                    clamp(
                             (
                             GhostMistDomainRadius
-                            - cameraDistance
+                            -
+                            cameraDistance
                             )
                             /
-                            10.0
-                            + 1.0,
+                            12.0,
                             0.0,
                             1.0
-                        );
+                    );
                 }
+
 
                 noisyFog *= boundaryFade;
 
+
+                /*
+                 * =================================================
+                 * 最终雾量
+                 * =================================================
+                 */
 
                 fogAmount =
                     clamp(
