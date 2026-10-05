@@ -69,12 +69,25 @@ public class GhostMist
      * ========================================
      * TICK
      * ========================================
+     *
+     * 当前阶段：
+     * 每 tick 确保鬼雾拥有自己的鬼域。
+     *
+     * 鬼域本身的生命周期与位置维护
+     * 仍然由 GhostDomainManager 负责。
      */
     @Override
     public void tick() {
         super.tick();
 
-        GhostMistDomainController.tick(this);
+        if (this.level()
+                instanceof net.minecraft.server.level.ServerLevel level) {
+
+            GhostMistDomainController.createDomain(
+                    level,
+                    this
+            );
+        }
     }
 
     /**

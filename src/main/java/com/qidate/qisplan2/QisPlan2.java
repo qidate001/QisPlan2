@@ -195,6 +195,31 @@ public class QisPlan2 {
                     )
             );
 
+
+            /*
+             * ========================================================
+             * 鬼雾 Shader
+             * ========================================================
+             */
+
+            ResourceLocation ghostMistId =
+                    ResourceLocation.fromNamespaceAndPath(
+                            MODID,
+                            "ghost_mist"
+                    );
+
+            event.registerShader(
+                    new ShaderInstance(
+                            event.getResourceProvider(),
+                            ghostMistId,
+                            DefaultVertexFormat.POSITION
+                    ),
+                    shader -> GhostDomainShaderRegistry.register(
+                            ghostMistId,
+                            shader
+                    )
+            );
+
         } catch (IOException e) {
 
             throw new RuntimeException(

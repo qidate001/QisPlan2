@@ -12,23 +12,21 @@ import net.minecraft.server.level.ServerLevel;
 import java.util.UUID;
 
 /**
- * ========================================
+ * ========================================================
  * 鬼雾鬼域控制器
- * ========================================
+ * ========================================================
  *
  * 负责：
  *
  * 1. 创建鬼雾鬼域
- * 2. 删除鬼雾鬼域
- * 3. 维护鬼域位置
- * 4. 确保鬼雾实体与鬼域一一对应
- *
- * 当前阶段不处理任何鬼域 Effect。
+ * 2. 定义鬼雾鬼域的基础参数
  */
 public final class GhostMistDomainController {
 
     /**
-     * 鬼雾鬼域类型。
+     * ========================================================
+     * 鬼雾鬼域类型
+     * ========================================================
      */
     public static final ResourceLocation DOMAIN_TYPE =
             ResourceLocation.fromNamespaceAndPath(
@@ -37,10 +35,9 @@ public final class GhostMistDomainController {
             );
 
     /**
-     * 鬼雾鬼域半径。
-     *
-     * 当前先给一个测试值。
-     * 后续你可以直接调整。
+     * ========================================================
+     * 鬼雾鬼域半径
+     * ========================================================
      */
     private static final double DOMAIN_RADIUS = 80.0D;
 
@@ -48,83 +45,20 @@ public final class GhostMistDomainController {
     }
 
     /**
-     * ========================================
-     * 鬼雾实体每 tick 调用
-     * ========================================
-     *
-     * 确保鬼雾实体始终拥有自己的鬼域。
-     */
-    public static void tick(
-            GhostMist ghost
-    ) {
-
-        /*
-         * ========================================
-         * 只在服务端处理
-         * ========================================
-         */
-        if (!(ghost.level()
-                instanceof ServerLevel level)) {
-
-            return;
-        }
-
-        /*
-         * ========================================
-         * 鬼已经死亡
-         * ========================================
-         *
-         * 死亡实体不应该继续维持鬼域。
-         */
-        if (!ghost.isAlive()) {
-
-            removeDomain(
-                    level,
-                    ghost.getUUID()
-            );
-
-            return;
-        }
-
-        /*
-         * ========================================
-         * 获取鬼雾鬼域管理器
-         * ========================================
-         */
-        GhostDomainManager manager =
-                GhostDomainManager.get(level);
-
-        /*
-         * ========================================
-         * 查找现有鬼域
-         * ========================================
-         */
-        GhostDomain domain =
-                manager.getBySourceAndType(
-                        ghost.getUUID(),
-                        DOMAIN_TYPE
-                );
-
-        /*
-         * ========================================
-         * 鬼域不存在
-         * ========================================
-         */
-        if (domain == null) {
-
-            createDomain(
-                    level,
-                    ghost
-            );
-        }
-    }
-
-    /**
-     * ========================================
+     * ========================================================
      * 创建鬼雾鬼域
-     * ========================================
+     * ========================================================
+     *
+     * 为指定的鬼雾实体创建一个对应的球形鬼域。
+     *
+     * GhostDomainManager 会负责后续：
+     *
+     * - 鬼域位置更新
+     * - 鬼域生命周期
+     * - 源实体消失后的自动清理
+     * - 鬼域网络同步
      */
-    private static void createDomain(
+    public static void createDomain(
             ServerLevel level,
             GhostMist ghost
     ) {
@@ -133,7 +67,9 @@ public final class GhostMistDomainController {
                 GhostDomainManager.get(level);
 
         /*
-         * 防止重复创建。
+         * ========================================================
+         * 防止重复创建
+         * ========================================================
          */
         if (manager.getBySourceAndType(
                 ghost.getUUID(),
@@ -144,31 +80,45 @@ public final class GhostMistDomainController {
         }
 
         /*
-         * ========================================
+         * ========================================================
          * 创建鬼域
-         * ========================================
+         * ========================================================
          */
         GhostDomain domain =
                 new GhostDomain(
                         UUID.randomUUID(),
+
+                        /*
+                         * 鬼域源头。
+                         */
                         ghost.getUUID(),
+
                         DOMAIN_TYPE,
 
                         /*
-                         * 当前先使用实体自身的
+                         * 鬼域强度直接使用鬼雾自身的
                          * 灵异强度。
                          */
                         ghost.getSupernaturalStrength(),
 
                         /*
-                         * 第 1 层。
+                         * 当前使用第 1 层。
                          */
                         1,
 
                         DOMAIN_RADIUS,
 
+                        /*
+                         * 鬼域所在维度。
+                         */
                         level.dimension(),
 
+                        /*
+                         * 初始位置。
+                         *
+                         * 后续由 GhostDomainManager
+                         * 根据 DISTANCE 模式自动更新。
+                         */
                         ghost.getX(),
                         ghost.getY(),
                         ghost.getZ(),
@@ -181,18 +131,28 @@ public final class GhostMistDomainController {
                         ),
 
                         /*
-                         * 根据距离更新。
+                         * 根据源头实体位置更新。
                          */
                         GhostDomainUpdateMode.DISTANCE,
 
+                        /*
+                         * 源头移动超过 3 格时更新。
+                         */
                         3.0D,
 
                         /*
-                         * 当前没有任何 Effect。
+                         * 鬼雾鬼域规则。
+                         *
+                         * 当前暂时为空。
                          */
                         new GhostMistDomainBehavior()
                 );
 
+        /*
+         * ========================================================
+         * 注册到统一鬼域管理器
+         * ========================================================
+         */
         manager.add(domain);
 
         QisPlan2.LOGGER.info(
@@ -200,22 +160,5 @@ public final class GhostMistDomainController {
                 ghost.getUUID(),
                 DOMAIN_RADIUS
         );
-    }
-
-    /**
-     * ========================================
-     * 删除鬼雾鬼域
-     * ========================================
-     */
-    public static void removeDomain(
-            ServerLevel level,
-            UUID sourceUUID
-    ) {
-
-        GhostDomainManager.get(level)
-                .removeBySourceAndType(
-                        sourceUUID,
-                        DOMAIN_TYPE
-                );
     }
 }

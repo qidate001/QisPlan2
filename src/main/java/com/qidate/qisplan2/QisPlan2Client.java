@@ -22,6 +22,7 @@ import com.qidate.qisplan2.core.*;
 import com.qidate.qisplan2.client.hud.DeathCurseHudOverlay;
 
 import com.qidate.qisplan2.ghost.domain.client.renderer.effect.GhostEyeRenderEffect;
+import com.qidate.qisplan2.ghost.domain.client.renderer.effect.GhostMistRenderEffect;
 import com.qidate.qisplan2.ghost.domain.client.renderer.effect.GhostUmbrellaRenderEffect;
 import com.qidate.qisplan2.ghost.isolation.client.ClientGhostIsolationChunkHandler;
 import com.qidate.qisplan2.ghost.tombstone.client.GhostTombstoneBlockEntityRenderer;
@@ -132,6 +133,7 @@ public class QisPlan2Client {
         // 鬼域效果注册
         GhostEyeRenderEffect.register();
         GhostUmbrellaRenderEffect.register();
+        GhostMistRenderEffect.register();
     }
 
     private static void registerParticleProviders(

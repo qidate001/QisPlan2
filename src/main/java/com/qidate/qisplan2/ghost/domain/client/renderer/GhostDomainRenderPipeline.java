@@ -369,7 +369,17 @@ public final class GhostDomainRenderPipeline {
 
             shader.setSampler(
                     "GhostUmbrellaRegionIdentity",
-                    GhostIsolationRegionTarget.get().getColorTextureId()
+                    GhostIsolationRegionTarget.get()
+                            .getColorTextureId()
+            );
+        }
+
+        if (shader.getUniform("GhostMistSourceRegion") != null) {
+
+            shader.setSampler(
+                    "GhostMistRegionIdentity",
+                    GhostIsolationRegionTarget.get()
+                            .getColorTextureId()
             );
         }
     }
