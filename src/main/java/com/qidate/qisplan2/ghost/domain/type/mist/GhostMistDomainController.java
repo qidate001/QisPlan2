@@ -9,13 +9,13 @@ import com.qidate.qisplan2.ghost.domain.GhostDomainUpdateMode;
 import com.qidate.qisplan2.ghost.domain.SphereDomainShape;
 import com.qidate.qisplan2.ghost.possession.ability.GhostAbilityContext;
 import com.qidate.qisplan2.ghost.possession.ability.ghostmist.GhostMistAbility;
+import com.qidate.qisplan2.ghost.possession.data.PossessedGhostData;
+import com.qidate.qisplan2.ghost.possession.data.PossessedGhostDomainData;
 import com.qidate.qisplan2.ghost.possession.manager.PossessionHandler;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 
-import java.util.HashSet;
-import java.util.Set;
 import java.util.UUID;
 
 /**
@@ -53,17 +53,6 @@ public final class GhostMistDomainController {
                     QisPlan2.MODID,
                     "ghost_mist"
             );
-
-    private static final double DEFAULT_DOMAIN_RADIUS =
-            80.0D;
-
-    /**
-     * ========================================
-     * 当前主动开启鬼雾鬼域的玩家
-     * ========================================
-     */
-    private static final Set<UUID> OPEN_MISTS =
-            new HashSet<>();
 
     private GhostMistDomainController() {
     }
@@ -119,14 +108,24 @@ public final class GhostMistDomainController {
 
         /*
          * ========================================================
-         * 鬼雾当前没有开启
+         * 获取玩家鬼雾持久数据
          * ========================================================
          */
 
-        if (!OPEN_MISTS.contains(
-                player.getUUID()
-        )) {
+        PossessedGhostData data =
+                PossessionHandler.getData(
+                        player,
+                        GhostMistAbility.ID
+                );
 
+        if (data == null) {
+            return;
+        }
+
+        PossessedGhostDomainData domainData =
+                data.domain().orElse(null);
+
+        if (domainData == null || !domainData.open()) {
             return;
         }
 
@@ -191,8 +190,22 @@ public final class GhostMistDomainController {
             return;
         }
 
-        UUID uuid =
-                player.getUUID();
+        PossessedGhostData data =
+                PossessionHandler.getData(
+                        player,
+                        GhostMistAbility.ID
+                );
+
+        if (data == null) {
+            return;
+        }
+
+        PossessedGhostDomainData domainData =
+                data.domain().orElse(null);
+
+        if (domainData == null) {
+            return;
+        }
 
         /*
          * ========================================================
@@ -200,9 +213,29 @@ public final class GhostMistDomainController {
          * ========================================================
          */
 
-        if (!OPEN_MISTS.add(uuid)) {
+        if (domainData.open()) {
             return;
         }
+
+        /*
+         * ========================================================
+         * 更新持久鬼域状态
+         * ========================================================
+         */
+
+        PossessedGhostDomainData newDomainData =
+                domainData.withOpen(true);
+
+        PossessedGhostData newData =
+                data.withDomain(
+                        newDomainData
+                );
+
+        PossessionHandler.setData(
+                player,
+                GhostMistAbility.ID,
+                newData
+        );
 
         /*
          * ========================================================
@@ -238,10 +271,39 @@ public final class GhostMistDomainController {
             ServerPlayer player
     ) {
 
-        boolean wasOpen =
-                OPEN_MISTS.remove(
-                        player.getUUID()
+        PossessedGhostData data =
+                PossessionHandler.getData(
+                        player,
+                        GhostMistAbility.ID
                 );
+
+        boolean wasOpen = false;
+
+        if (data != null) {
+
+            PossessedGhostDomainData domainData =
+                    data.domain().orElse(null);
+
+            if (domainData != null) {
+
+                wasOpen =
+                        domainData.open();
+
+                if (wasOpen) {
+
+                    PossessedGhostData newData =
+                            data.withDomain(
+                                    domainData.withOpen(false)
+                            );
+
+                    PossessionHandler.setData(
+                            player,
+                            GhostMistAbility.ID,
+                            newData
+                    );
+                }
+            }
+        }
 
         /*
          * ========================================================
@@ -268,9 +330,19 @@ public final class GhostMistDomainController {
             ServerPlayer player
     ) {
 
-        return OPEN_MISTS.contains(
-                player.getUUID()
-        );
+        PossessedGhostData data =
+                PossessionHandler.getData(
+                        player,
+                        GhostMistAbility.ID
+                );
+
+        if (data == null) {
+            return false;
+        }
+
+        return data.domain()
+                .map(PossessedGhostDomainData::open)
+                .orElse(false);
     }
 
 
@@ -348,10 +420,31 @@ public final class GhostMistDomainController {
          * 会替换成真正的源头数据。
          */
 
-        double strength = 100.0D;
+        PossessedGhostData data =
+                PossessionHandler.getData(
+                        player,
+                        GhostMistAbility.ID
+                );
+
+        if (data == null) {
+            return;
+        }
+
+        PossessedGhostDomainData domainData =
+                data.domain().orElse(null);
+
+        if (domainData == null) {
+            return;
+        }
+
+        double strength =
+                domainData.strength();
 
         double radius =
-                DEFAULT_DOMAIN_RADIUS;
+                domainData.radius();
+
+        int layer =
+                domainData.layer();
 
         GhostDomain domain =
                 new GhostDomain(
@@ -359,7 +452,7 @@ public final class GhostMistDomainController {
                         player.getUUID(),
                         DOMAIN_TYPE,
                         strength,
-                        1,
+                        layer,
                         radius,
                         level.dimension(),
                         player.getX(),
@@ -545,7 +638,7 @@ public final class GhostMistDomainController {
 
         /*
          * ========================================================
-         * ① 更新 GhostDomain
+         * 1. 更新 GhostDomain
          * ========================================================
          */
 
@@ -559,7 +652,7 @@ public final class GhostMistDomainController {
 
         /*
          * ========================================================
-         * ② 同步回 GhostMist
+         * 2. 同步回 GhostMist
          * ========================================================
          */
 
@@ -573,7 +666,7 @@ public final class GhostMistDomainController {
 
         /*
          * ========================================================
-         * ③ 厉鬼灵异强度同步
+         * 3. 厉鬼灵异强度同步
          * ========================================================
          */
 
@@ -584,7 +677,7 @@ public final class GhostMistDomainController {
 
         /*
          * ========================================================
-         * ④ 通知客户端 Domain 状态发生变化
+         * 4. 通知客户端 Domain 状态发生变化
          * ========================================================
          */
 

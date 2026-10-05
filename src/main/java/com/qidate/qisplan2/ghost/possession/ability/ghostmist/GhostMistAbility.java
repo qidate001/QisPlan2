@@ -4,7 +4,10 @@ import com.qidate.qisplan2.QisPlan2;
 import com.qidate.qisplan2.ghost.domain.type.mist.GhostMistDomainController;
 import com.qidate.qisplan2.ghost.possession.ability.GhostAbilityContext;
 import com.qidate.qisplan2.ghost.possession.ability.PossessedGhostAbility;
+import com.qidate.qisplan2.ghost.possession.data.PossessedGhostDomainData;
 import net.minecraft.resources.ResourceLocation;
+
+import java.util.Optional;
 
 /**
  * ========================================
@@ -44,6 +47,19 @@ public final class GhostMistAbility
     @Override
     public double minimumStrengthRatio() {
         return 0.50D;
+    }
+
+    /**
+     * 鬼域。
+     */
+    @Override
+    public Optional<PossessedGhostDomainData> initialDomainData() {
+        return Optional.of(
+                PossessedGhostDomainData.create(
+                        100.0D,
+                        80.0D
+                )
+        );
     }
 
     /**

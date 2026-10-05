@@ -5,10 +5,13 @@ import com.qidate.qisplan2.ghost.corrosion.CorrosionType;
 import com.qidate.qisplan2.ghost.corrosion.GhostCorrosion;
 import com.qidate.qisplan2.ghost.possession.classification.GhostClassification;
 import com.qidate.qisplan2.ghost.possession.classification.GhostTag;
+import com.qidate.qisplan2.ghost.possession.data.PossessedGhostDomainData;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.EntityType;
+
+import java.util.Optional;
 
 public interface PossessedGhostAbility {
 
@@ -63,6 +66,38 @@ public interface PossessedGhostAbility {
     default double minimumStrengthRatio() {
 
         return 1.0D / 3.0D;
+    }
+
+    /*
+     * ============================================================
+     * 鬼域
+     * ============================================================
+     */
+
+    /**
+     * 新获得这只鬼时的初始鬼域数据。
+     *
+     * <p>
+     * 并不是所有厉鬼都拥有鬼域。
+     * </p>
+     *
+     * <p>
+     * 返回 Optional.empty() 表示：
+     *
+     *     这只鬼没有鬼域。
+     *
+     * 返回具体数据则表示：
+     *
+     *     这只鬼拥有鬼域，
+     *     并使用返回的数据作为初始鬼域状态。
+     * </p>
+     *
+     * <p>
+     * 鬼域强度与厉鬼本体强度是两个独立的数据。
+     * </p>
+     */
+    default Optional<PossessedGhostDomainData> initialDomainData() {
+        return Optional.empty();
     }
 
 

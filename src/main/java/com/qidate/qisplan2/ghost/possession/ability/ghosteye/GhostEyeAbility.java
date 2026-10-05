@@ -8,7 +8,10 @@ import com.qidate.qisplan2.ghost.corrosion.GhostCorrosion;
 import com.qidate.qisplan2.ghost.domain.type.eye.GhostEyeDomainController;
 import com.qidate.qisplan2.ghost.possession.classification.GhostClassification;
 import com.qidate.qisplan2.ghost.possession.classification.GhostTag;
+import com.qidate.qisplan2.ghost.possession.data.PossessedGhostDomainData;
 import net.minecraft.resources.ResourceLocation;
+
+import java.util.Optional;
 
 public final class GhostEyeAbility
         implements PossessedGhostAbility {
@@ -33,6 +36,19 @@ public final class GhostEyeAbility
     @Override
     public double initialStrength() {
         return 100.0D;
+    }
+
+    /**
+     * 鬼域。
+     */
+    @Override
+    public Optional<PossessedGhostDomainData> initialDomainData() {
+        return Optional.of(
+                PossessedGhostDomainData.create(
+                        100.0D,
+                        80.0D
+                )
+        );
     }
 
     @Override

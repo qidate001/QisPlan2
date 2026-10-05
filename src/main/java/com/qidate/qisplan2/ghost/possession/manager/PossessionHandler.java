@@ -11,6 +11,7 @@ import com.qidate.qisplan2.ghost.possession.ability.GhostAbilityRegistry;
 import com.qidate.qisplan2.ghost.possession.ability.PossessedGhostAbility;
 import com.qidate.qisplan2.ghost.possession.ability.nightwanderer.NightWandererAbility;
 import com.qidate.qisplan2.ghost.possession.data.PossessedGhostData;
+import com.qidate.qisplan2.ghost.possession.data.PossessedGhostDomainData;
 import com.qidate.qisplan2.ghost.possession.data.PossessedGhostState;
 import com.qidate.qisplan2.ghost.possession.suppression.GhostSuppressionSystem;
 import net.minecraft.core.BlockPos;
@@ -22,6 +23,7 @@ import net.minecraft.world.entity.player.Player;
 import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 
 public final class PossessionHandler {
 
@@ -483,7 +485,15 @@ public final class PossessionHandler {
          * ========================================================
          * 创建完整持久数据。
          *
-         * initialStrength 只负责初始化。
+         * initialStrength：
+         *     初始化厉鬼本体强度。
+         *
+         * initialDomainData：
+         *     初始化这只厉鬼的鬼域数据。
+         *
+         * 注意：
+         *     并不是所有厉鬼都有鬼域，
+         *     因此 domain 由 Ability 自己决定是否存在。
          * ========================================================
          */
 
@@ -491,6 +501,19 @@ public final class PossessionHandler {
                 PossessedGhostData.create(
                         ability.initialStrength()
                 );
+
+
+        Optional<PossessedGhostDomainData> initialDomainData =
+                ability.initialDomainData();
+
+
+        if (initialDomainData.isPresent()) {
+
+            data =
+                    data.withDomain(
+                            initialDomainData.get()
+                    );
+        }
 
 
         Map<ResourceLocation, PossessedGhostData> newData =
