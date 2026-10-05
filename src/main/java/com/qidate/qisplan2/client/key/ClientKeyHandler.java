@@ -4,6 +4,7 @@ import com.qidate.qisplan2.client.screen.PossessionScreen.PossessionScreen;
 import com.qidate.qisplan2.network.divinationslip.GhostDivinationNetwork;
 import com.qidate.qisplan2.network.ghostdomain.GhostDomainNetwork;
 import com.qidate.qisplan2.network.ghosteye.GhostEyeNetwork;
+import com.qidate.qisplan2.network.ghostmist.GhostMistNetwork;
 import net.minecraft.client.Minecraft;
 import net.neoforged.neoforge.client.event.ClientTickEvent;
 import net.neoforged.neoforge.client.event.RegisterKeyMappingsEvent;
@@ -31,6 +32,16 @@ public final class ClientKeyHandler {
         event.register(GHOST_EYE_SELF_LAYER_DOWN);
         event.register(GHOST_EYE_TOGGLE);
         event.register(GHOST_EYE_REBOOT);
+
+        /*
+         * ========================================================
+         * 鬼雾
+         * ========================================================
+         */
+
+        event.register(
+                GHOST_MIST_TOGGLE
+        );
 
         event.register(GHOST_DOMAIN_TELEPORT);
         event.register(GHOST_DOMAIN_RAISE_LAYER);
@@ -110,6 +121,16 @@ public final class ClientKeyHandler {
         // 鬼眼重启
         if (GHOST_EYE_REBOOT.consumeClick()) {
             GhostEyeNetwork.sendReboot();
+        }
+
+        /*
+         * ========================================================
+         * 鬼雾
+         * ========================================================
+         */
+
+        while (GHOST_MIST_TOGGLE.consumeClick()) {
+            GhostMistNetwork.sendToggle();
         }
 
         /*

@@ -5,6 +5,7 @@ import com.qidate.qisplan2.ghost.possession.ability.ghostdoor.closing.ClosingGho
 import com.qidate.qisplan2.ghost.possession.ability.ghostdoor.opening.OpeningGhostAbility;
 import com.qidate.qisplan2.ghost.possession.ability.ghosteye.GhostEyeAbility;
 import com.qidate.qisplan2.ghost.possession.ability.ghostdoor.knocking.KnockingGhostAbility;
+import com.qidate.qisplan2.ghost.possession.ability.ghostmist.GhostMistAbility;
 import com.qidate.qisplan2.ghost.possession.ability.nightwanderer.NightWandererAbility;
 import net.minecraft.resources.ResourceLocation;
 
@@ -15,10 +16,7 @@ import java.util.Set;
 
 public final class GhostAbilityRegistry {
 
-    private static final Map<
-            ResourceLocation,
-            PossessedGhostAbility
-            > ABILITIES =
+    private static final Map< ResourceLocation, PossessedGhostAbility> ABILITIES =
             new HashMap<>();
 
     private static boolean initialized = false;
@@ -86,6 +84,10 @@ public final class GhostAbilityRegistry {
 
         register(
                 new GhostEyeAbility()
+        );
+
+        register(
+                new GhostMistAbility()
         );
     }
 }

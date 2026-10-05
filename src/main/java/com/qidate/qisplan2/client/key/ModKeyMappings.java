@@ -109,6 +109,20 @@ public final class ModKeyMappings {
 
     /*
      * ========================================================
+     * 鬼雾
+     * ========================================================
+     */
+
+    public static final KeyMapping GHOST_MIST_TOGGLE =
+            new KeyMapping(
+                    "key.qisplan2.ghost_mist_toggle",
+                    InputConstants.Type.KEYSYM,
+                    GLFW.GLFW_PLATFORM_NULL,
+                    CATEGORY
+            );
+
+    /*
+     * ========================================================
      * 鬼域通用
      * ========================================================
      */
