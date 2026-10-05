@@ -48,6 +48,19 @@ import java.util.UUID;
  */
 public final class GhostMistDomainController {
 
+    /**
+     * 每成功杀死一个目标，
+     * 鬼域强度增加 0.1。
+     */
+    private static final double STRENGTH_GROWTH = 0.1D;
+
+    /**
+     * 每成功杀死一个目标，
+     * 鬼域半径增加 0.05。
+     */
+    private static final double RADIUS_GROWTH = 0.05D;
+
+
     public static final ResourceLocation DOMAIN_TYPE =
             ResourceLocation.fromNamespaceAndPath(
                     QisPlan2.MODID,
@@ -72,6 +85,12 @@ public final class GhostMistDomainController {
      * </p>
      *
      * <p>
+     * 持久鬼域状态由 PossessedGhostDomainData 决定。
+     * 如果鬼域处于开启状态，则确保当前维度存在
+     * 对应的运行时 GhostDomain。
+     * </p>
+     *
+     * <p>
      * 注意：
      *
      * 世界中的 GhostMist 实体鬼域
@@ -84,12 +103,6 @@ public final class GhostMistDomainController {
 
         ServerPlayer player =
                 context.player();
-
-        if (!(player.level()
-                instanceof ServerLevel level)) {
-
-            return;
-        }
 
         /*
          * ========================================================
@@ -108,9 +121,49 @@ public final class GhostMistDomainController {
 
         /*
          * ========================================================
-         * 获取玩家鬼雾持久数据
+         * 确保持久鬼域对应的运行时鬼域存在
          * ========================================================
          */
+
+        ensureDomain(player);
+    }
+
+    /**
+     * 确保玩家当前维度存在鬼雾鬼域。
+     *
+     * <p>
+     * 这是：
+     *
+     * 持久鬼域状态
+     *      ↓
+     * 运行时 GhostDomain
+     *
+     * 的桥梁。
+     * </p>
+     *
+     * <p>
+     * 如果鬼域已经存在，则什么都不做。
+     * 如果持久数据不存在、鬼域未开启，
+     * 或玩家没有驾驭鬼雾，则什么都不做。
+     * </p>
+     */
+    public static void ensureDomain(
+            ServerPlayer player
+    ) {
+
+        if (!(player.level()
+                instanceof ServerLevel level)) {
+
+            return;
+        }
+
+        if (!PossessionHandler.hasGhost(
+                player,
+                GhostMistAbility.ID
+        )) {
+
+            return;
+        }
 
         PossessedGhostData data =
                 PossessionHandler.getData(
@@ -129,12 +182,6 @@ public final class GhostMistDomainController {
             return;
         }
 
-        /*
-         * ========================================================
-         * 获取当前鬼雾鬼域
-         * ========================================================
-         */
-
         GhostDomainManager manager =
                 GhostDomainManager.get(level);
 
@@ -144,28 +191,14 @@ public final class GhostMistDomainController {
                         DOMAIN_TYPE
                 );
 
-        /*
-         * ========================================================
-         * 鬼雾已经开启，但鬼域不存在
-         * ========================================================
-         */
-
-        if (domain == null) {
-
-            /*
-             * ====================================================
-             * 这里暂时只恢复生命周期。
-             *
-             * 玩家鬼雾的强度、半径等持久化数据，
-             * 等驭鬼数据结构重构后再正式接入。
-             * ====================================================
-             */
-
-            createDomain(
-                    level,
-                    player
-            );
+        if (domain != null) {
+            return;
         }
+
+        createDomain(
+                level,
+                player
+        );
     }
 
 
@@ -685,5 +718,132 @@ public final class GhostMistDomainController {
                 .syncUpdate(
                         domain
                 );
+    }
+
+    /**
+     * 玩家驾驭鬼雾后的鬼域成长。
+     *
+     * <p>
+     * 与世界中的 GhostMist 实体不同，
+     * 玩家鬼雾的成长数据必须写回
+     * PossessedGhostDomainData，
+     * 从而在玩家退出游戏、切换维度、
+     * 重新进入游戏后仍然保留。
+     * </p>
+     *
+     * <p>
+     * 每成功击杀一个目标：
+     *
+     * 强度 +0.1
+     * 半径 +0.05
+     *
+     * 持久数据与运行时 GhostDomain
+     * 同时更新。
+     * </p>
+     */
+    public static void grow(
+            ServerPlayer player,
+            GhostDomain domain
+    ) {
+        /*
+         * ========================================
+         * 获取玩家当前驾驭的鬼雾数据
+         * ========================================
+         */
+
+        PossessedGhostData data =
+                PossessionHandler.getData(
+                        player,
+                        GhostMistAbility.ID
+                );
+
+        if (data == null) {
+            return;
+        }
+
+        /*
+         * ========================================
+         * 获取鬼域持久数据
+         * ========================================
+         */
+
+        PossessedGhostDomainData domainData =
+                data.domain().orElse(null);
+
+        if (domainData == null) {
+            return;
+        }
+
+        /*
+         * ========================================
+         * 计算新的鬼域属性
+         * ========================================
+         */
+
+        double newStrength =
+                domainData.strength()
+                        + STRENGTH_GROWTH;
+
+        double newRadius =
+                domainData.radius()
+                        + RADIUS_GROWTH;
+
+        /*
+         * ========================================
+         * 写回持久数据
+         * ========================================
+         */
+
+        PossessedGhostDomainData newDomainData =
+                domainData
+                        .withStrength(newStrength)
+                        .withRadius(newRadius);
+
+        PossessedGhostData newData =
+                data.withDomain(
+                        newDomainData
+                );
+
+        PossessionHandler.setData(
+                player,
+                GhostMistAbility.ID,
+                newData
+        );
+
+        /*
+         * ========================================
+         * 更新运行时 GhostDomain
+         * ========================================
+         */
+
+        domain.setStrength(
+                newStrength
+        );
+
+        domain.setRadius(
+                newRadius
+        );
+
+        /*
+         * ========================================
+         * 同步客户端
+         * ========================================
+         */
+
+        if (player.level()
+                instanceof ServerLevel level) {
+
+            GhostDomainManager.get(level)
+                    .syncUpdate(
+                            domain
+                    );
+        }
+
+        QisPlan2.LOGGER.info(
+                "[鬼雾] 玩家 {} 的鬼域成长：强度={}，半径={}",
+                player.getGameProfile().getName(),
+                newStrength,
+                newRadius
+        );
     }
 }

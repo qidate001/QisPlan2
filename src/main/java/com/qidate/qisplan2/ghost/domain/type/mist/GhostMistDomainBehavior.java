@@ -7,6 +7,7 @@ import com.qidate.qisplan2.ghost.domain.GhostDomain;
 import com.qidate.qisplan2.ghost.domain.GhostDomainBehavior;
 import com.qidate.qisplan2.ghost.domain.GhostDomainEntityTracker;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 
@@ -52,18 +53,6 @@ public final class GhostMistDomainBehavior
      * 攻击强度 = 鬼域强度 / 5
      */
     private static final double ATTACK_STRENGTH_DIVISOR = 5.0D;
-
-    /**
-     * 每成功杀死一个目标，
-     * 鬼域强度增加 0.1。
-     */
-    private static final double STRENGTH_GROWTH = 0.1D;
-
-    /**
-     * 每成功杀死一个目标，
-     * 鬼域半径增加 0.05。
-     */
-    private static final double RADIUS_GROWTH = 0.05D;
 
     @Override
     public void onCreate(
@@ -229,29 +218,43 @@ public final class GhostMistDomainBehavior
              * ========================================
              * 成功击杀后的鬼域成长
              * ========================================
-             *
-             * 每成功杀死一个目标：
-             *
-             * 强度 +0.1
-             * 半径 +0.05
-             *
-             * 两者都直接修改 GhostDomain。
-             *
-             * GhostDomain 的同步机制会负责
-             * 将变化后的数据发送给客户端。
              */
 
             if (killed) {
 
-                if (!(source instanceof GhostMist ghost)) {
+                /*
+                 * ========================================
+                 * 世界中的 GhostMist
+                 * ========================================
+                 *
+                 * 世界鬼雾仍然使用原来的成长逻辑。
+                 */
+                if (source instanceof GhostMist ghost) {
+
+                    GhostMistDomainController.grow(
+                            level,
+                            ghost,
+                            domain
+                    );
+
                     continue;
                 }
 
-                GhostMistDomainController.grow(
-                        level,
-                        ghost,
-                        domain
-                );
+                /*
+                 * ========================================
+                 * 玩家驾驭的鬼雾
+                 * ========================================
+                 *
+                 * 玩家鬼雾的成长必须写回
+                 * PossessedGhostDomainData。
+                 */
+                if (source instanceof ServerPlayer player) {
+
+                    GhostMistDomainController.grow(
+                            player,
+                            domain
+                    );
+                }
             }
         }
     }
