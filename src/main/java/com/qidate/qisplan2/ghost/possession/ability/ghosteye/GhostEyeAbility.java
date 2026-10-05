@@ -45,7 +45,7 @@ public final class GhostEyeAbility
     public Optional<PossessedGhostDomainData> initialDomainData() {
         return Optional.of(
                 PossessedGhostDomainData.create(
-                        100.0D,
+                        initialStrength(),
                         80.0D
                 )
         );

@@ -117,7 +117,7 @@ public final class ModKeyMappings {
             new KeyMapping(
                     "key.qisplan2.ghost_mist_toggle",
                     InputConstants.Type.KEYSYM,
-                    GLFW.GLFW_PLATFORM_NULL,
+                    GLFW.GLFW_KEY_UNKNOWN,
                     CATEGORY
             );
 

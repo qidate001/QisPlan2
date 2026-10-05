@@ -2,6 +2,8 @@ package com.qidate.qisplan2.ghost.domain.type.eye;
 
 import com.qidate.qisplan2.QisPlan2;
 import com.qidate.qisplan2.ghost.possession.ability.GhostAbilityContext;
+import com.qidate.qisplan2.ghost.possession.data.PossessedGhostData;
+import com.qidate.qisplan2.ghost.possession.data.PossessedGhostDomainData;
 import com.qidate.qisplan2.ghost.possession.manager.PossessionHandler;
 import com.qidate.qisplan2.ghost.possession.ability.ghosteye.GhostEyeAbility;
 import com.qidate.qisplan2.ghost.domain.*;
@@ -30,64 +32,121 @@ public final class GhostEyeDomainController {
                     "ghost_eye"
             );
 
-    private static final double DOMAIN_RADIUS = 80.0D;
-
-    /**
-     * 当前主动开启鬼眼的玩家。
-     */
-    private static final Set<UUID> OPEN_EYES =
-            new HashSet<>();
-
     private GhostEyeDomainController() {
     }
 
     /**
      * 鬼眼每 tick 调用。
+     *
+     * <p>
+     * 鬼眼是否开启由 PossessedGhostDomainData
+     * 中的 open 字段决定。
+     * </p>
+     *
+     * <p>
+     * 如果鬼眼处于开启状态，但当前维度的
+     * 运行时 GhostDomain 不存在，则自动重建。
+     * </p>
      */
     public static void tick(
             GhostAbilityContext context
     ) {
-
         ServerPlayer player =
                 context.player();
 
-        if (!(player.level()
-                instanceof ServerLevel level)) {
-
-            return;
-        }
-
         /*
-         * ========================================================
-         * 已经失去鬼眼
-         * ========================================================
+         * ========================================
+         * 玩家已经失去鬼眼
+         * ========================================
          */
 
         if (!PossessionHandler.hasGhost(
                 player,
                 GhostEyeAbility.ID
         )) {
-
             close(player);
             return;
         }
 
         /*
-         * ========================================================
-         * 鬼眼当前没有开启
-         * ========================================================
+         * ========================================
+         * 确保鬼眼鬼域存在
+         * ========================================
          */
 
-        if (!OPEN_EYES.contains(player.getUUID())) {
+        ensureDomain(player);
+    }
+
+    /**
+     * 确保玩家当前维度存在鬼眼鬼域。
+     *
+     * <p>
+     * 持久鬼域状态：
+     *
+     * PossessedGhostDomainData
+     *        ↓
+     *      open
+     *        ↓
+     *  Runtime GhostDomain
+     * </p>
+     *
+     * <p>
+     * 如果鬼眼没有开启，则不会创建鬼域。
+     * 如果鬼眼已经开启但运行时鬼域不存在，
+     * 则自动重建。
+     * </p>
+     */
+    public static void ensureDomain(
+            ServerPlayer player
+    ) {
+        if (!(player.level()
+                instanceof ServerLevel level)) {
             return;
         }
 
         /*
-         * ========================================================
-         * 获取当前鬼眼鬼域
-         * ========================================================
+         * 玩家必须仍然驾驭鬼眼。
          */
+        if (!PossessionHandler.hasGhost(
+                player,
+                GhostEyeAbility.ID
+        )) {
+            return;
+        }
 
+        /*
+         * 获取鬼眼持久数据。
+         */
+        PossessedGhostData data =
+                PossessionHandler.getData(
+                        player,
+                        GhostEyeAbility.ID
+                );
+
+        if (data == null) {
+            return;
+        }
+
+        /*
+         * 获取鬼域持久数据。
+         */
+        PossessedGhostDomainData domainData =
+                data.domain().orElse(null);
+
+        if (domainData == null) {
+            return;
+        }
+
+        /*
+         * 鬼眼没有睁开，不创建运行时鬼域。
+         */
+        if (!domainData.open()) {
+            return;
+        }
+
+        /*
+         * 当前维度已经存在鬼域。
+         */
         GhostDomainManager manager =
                 GhostDomainManager.get(level);
 
@@ -97,21 +156,20 @@ public final class GhostEyeDomainController {
                         DOMAIN_TYPE
                 );
 
-        /*
-         * ========================================================
-         * 鬼眼已经开启，但鬼域不存在
-         * ========================================================
-         */
-
-        if (domain == null) {
-
-            createDomain(
-                    level,
-                    player
-            );
-
+        if (domain != null) {
             return;
         }
+
+        /*
+         * 持久状态要求鬼眼开启，
+         * 但运行时鬼域不存在。
+         *
+         * 重建。
+         */
+        createDomain(
+                level,
+                player
+        );
     }
 
     public static int getEyeLayer(
@@ -139,11 +197,15 @@ public final class GhostEyeDomainController {
 
     /**
      * 开启鬼眼。
+     *
+     * <p>
+     * 开启状态写入 PossessedGhostDomainData，
+     * 然后创建运行时 GhostDomain。
+     * </p>
      */
     public static void open(
             ServerPlayer player
     ) {
-
         if (!PossessionHandler.hasGhost(
                 player,
                 GhostEyeAbility.ID
@@ -151,15 +213,50 @@ public final class GhostEyeDomainController {
             return;
         }
 
-        UUID uuid = player.getUUID();
+        PossessedGhostData data =
+                PossessionHandler.getData(
+                        player,
+                        GhostEyeAbility.ID
+                );
 
-        /*
-         * 已经开启
-         */
-        if (!OPEN_EYES.add(uuid)) {
+        if (data == null) {
             return;
         }
 
+        PossessedGhostDomainData domainData =
+                data.domain().orElse(null);
+
+        if (domainData == null) {
+            return;
+        }
+
+        /*
+         * 已经开启。
+         */
+        if (domainData.open()) {
+            return;
+        }
+
+        /*
+         * 写入持久状态。
+         */
+        PossessedGhostDomainData newDomainData =
+                domainData.withOpen(true);
+
+        PossessedGhostData newData =
+                data.withDomain(
+                        newDomainData
+                );
+
+        PossessionHandler.setData(
+                player,
+                GhostEyeAbility.ID,
+                newData
+        );
+
+        /*
+         * 创建运行时鬼域。
+         */
         if (player.level()
                 instanceof ServerLevel level) {
 
@@ -177,15 +274,48 @@ public final class GhostEyeDomainController {
 
     /**
      * 关闭鬼眼。
+     *
+     * <p>
+     * 关闭状态写入持久数据，
+     * 同时删除运行时 GhostDomain。
+     * </p>
      */
     public static void close(
             ServerPlayer player
     ) {
-
-        boolean wasOpen =
-                OPEN_EYES.remove(
-                        player.getUUID()
+        PossessedGhostData data =
+                PossessionHandler.getData(
+                        player,
+                        GhostEyeAbility.ID
                 );
+
+        boolean wasOpen = false;
+
+        if (data != null) {
+
+            PossessedGhostDomainData domainData =
+                    data.domain().orElse(null);
+
+            if (domainData != null) {
+
+                wasOpen =
+                        domainData.open();
+
+                if (wasOpen) {
+
+                    PossessedGhostData newData =
+                            data.withDomain(
+                                    domainData.withOpen(false)
+                            );
+
+                    PossessionHandler.setData(
+                            player,
+                            GhostEyeAbility.ID,
+                            newData
+                    );
+                }
+            }
+        }
 
         removeDomain(player);
 
@@ -204,23 +334,39 @@ public final class GhostEyeDomainController {
     public static boolean isOpen(
             ServerPlayer player
     ) {
+        PossessedGhostData data =
+                PossessionHandler.getData(
+                        player,
+                        GhostEyeAbility.ID
+                );
 
-        return OPEN_EYES.contains(
-                player.getUUID()
-        );
+        if (data == null) {
+            return false;
+        }
+
+        return data.domain()
+                .map(PossessedGhostDomainData::open)
+                .orElse(false);
     }
 
     /**
-     * 创建第 1 层鬼眼鬼域。
+     * 创建鬼眼鬼域。
+     *
+     * <p>
+     * 鬼域的强度、半径、层数全部来自
+     * PossessedGhostDomainData。
+     * </p>
      */
     private static void createDomain(
             ServerLevel level,
             ServerPlayer player
     ) {
-
         /*
-         * 防止重复创建。
+         * ========================================
+         * 防止重复创建
+         * ========================================
          */
+
         GhostDomainManager manager =
                 GhostDomainManager.get(level);
 
@@ -231,11 +377,49 @@ public final class GhostEyeDomainController {
             return;
         }
 
-        double strength =
-                PossessionHandler.getEffectiveStrength(
+        /*
+         * ========================================
+         * 获取持久数据
+         * ========================================
+         */
+
+        PossessedGhostData data =
+                PossessionHandler.getData(
                         player,
                         GhostEyeAbility.ID
                 );
+
+        if (data == null) {
+            return;
+        }
+
+        PossessedGhostDomainData domainData =
+                data.domain().orElse(null);
+
+        if (domainData == null) {
+            return;
+        }
+
+        /*
+         * ========================================
+         * 从持久数据读取鬼域属性
+         * ========================================
+         */
+
+        double strength =
+                domainData.strength();
+
+        double radius =
+                domainData.radius();
+
+        int layer =
+                domainData.layer();
+
+        /*
+         * ========================================
+         * 创建运行时 GhostDomain
+         * ========================================
+         */
 
         GhostDomain domain =
                 new GhostDomain(
@@ -243,14 +427,14 @@ public final class GhostEyeDomainController {
                         player.getUUID(),
                         DOMAIN_TYPE,
                         strength,
-                        1,
-                        DOMAIN_RADIUS,
+                        layer,
+                        radius,
                         level.dimension(),
                         player.getX(),
                         player.getY(),
                         player.getZ(),
                         new SphereDomainShape(
-                                DOMAIN_RADIUS
+                                radius
                         ),
                         GhostDomainUpdateMode.DISTANCE,
                         3.0D,
@@ -260,10 +444,11 @@ public final class GhostEyeDomainController {
         manager.add(domain);
 
         QisPlan2.LOGGER.info(
-                "[鬼眼] 玩家 {} 开启了第1层鬼域，强度={}，半径={}",
+                "[鬼眼] 玩家 {} 开启了第{}层鬼域，强度={}，半径={}",
                 player.getGameProfile().getName(),
+                layer,
                 strength,
-                DOMAIN_RADIUS
+                radius
         );
     }
 
