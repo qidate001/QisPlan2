@@ -34,12 +34,10 @@ public final class GhostMistAbility
     }
 
     /**
-     * 当前先保持与鬼眼相同的基础本质强度。
-     *
-     * 后续重构驭鬼数据时再正式确定。
+     * 基础强度。
      */
     @Override
-    public double initialIntrinsicStrength() {
+    public double initialStrength() {
         return 100.0D;
     }
 

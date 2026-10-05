@@ -9,6 +9,7 @@ import com.qidate.qisplan2.ghost.corrosion.CorrosionMatrix;
 import com.qidate.qisplan2.ghost.corrosion.CorrosionType;
 import com.qidate.qisplan2.ghost.possession.ability.GhostAbilityRegistry;
 import com.qidate.qisplan2.ghost.possession.ability.PossessedGhostAbility;
+import com.qidate.qisplan2.ghost.possession.data.PossessedGhostData;
 import com.qidate.qisplan2.ghost.possession.data.PossessedGhostState;
 import com.qidate.qisplan2.ghost.possession.manager.PossessionHandler;
 import com.qidate.qisplan2.ghost.possession.suppression.GhostSuppressionSystem;
@@ -505,7 +506,7 @@ public class PossessionStatusRenderer {
         var player =
                 minecraft.player;
 
-        Map<ResourceLocation, PossessedGhostState> ghosts =
+        Map<ResourceLocation, PossessedGhostData> ghosts =
                 player.getData(
                         ModAttachments.POSSESSED_GHOSTS
                 );
@@ -835,7 +836,7 @@ public class PossessionStatusRenderer {
             drawGhostCard(
                     graphics,
                     entry.getKey(),
-                    entry.getValue(),
+                    entry.getValue().state(),
                     rightX,
                     rightY
             );

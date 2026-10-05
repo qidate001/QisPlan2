@@ -6,67 +6,91 @@ import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
 
+/**
+ * 一只被驾驭的厉鬼当前的通用状态。
+ *
+ * <p>
+ * 这里保存的是所有厉鬼都拥有的状态，
+ * 与具体厉鬼的专属数据无关。
+ * </p>
+ *
+ * <p>
+ * 这些数据全部属于玩家的持久化 Attachment，
+ * 因此玩家下线、重新上线以及服务器重启后都会保留。
+ * </p>
+ */
 public record PossessedGhostState(
 
-        /**
-         * 复苏值：
+        /*
+         * ============================================================
+         * 复苏
+         * ============================================================
          *
-         * 0.0 ~ 1.0 = 0% ~ 100%
+         * 0.0 = 尚未复苏
+         * 1.0 = 完全复苏
          */
         double revival,
 
-        /**
-         * 浅死机值：
+        /*
+         * ============================================================
+         * 当前强度
+         * ============================================================
          *
-         * 1 点 = 抵消 1% 的复苏增长。
+         * 强度是所有厉鬼都拥有的通用状态。
+         *
+         * 它不是“本质强度”，
+         * 也不是固定不变的属性。
+         *
+         * 厉鬼可以随着游戏进程增强或削弱。
+         */
+        double strength,
+
+        /*
+         * ============================================================
+         * 浅死机
+         * ============================================================
          */
         double shallowStun,
 
-        /**
-         * 普通死机剩余时间。
-         *
-         * 单位：tick。
+        /*
+         * ============================================================
+         * 普通死机剩余 Tick
+         * ============================================================
          */
         long stunTicks,
 
-        /**
-         * 是否永久死机。
+        /*
+         * ============================================================
+         * 永久死机
+         * ============================================================
          */
         boolean permanentStun,
 
-        /**
-         * 上次使用能力的时间。
+        /*
+         * ============================================================
+         * 上一次主动能力使用时间
+         * ============================================================
+         *
+         * 使用 Minecraft GameTime。
          */
-        long lastAbilityUseTick,
+        long lastAbilityUseTick
 
-        /**
-         * 厉鬼本质强度。
-         *
-         * 这是“这只鬼本身有多强”。
-         *
-         * 它不是当前实际使用强度。
-         *
-         * 它可以随着玩家成长、特殊事件、
-         * 吞噬、融合等机制不断增加。
-         */
-        double intrinsicStrength
 ) {
 
     /**
-     * 浅死机值上限。
+     * 浅死机最大值。
      */
-    public static final double MAX_SHALLOW_STUN =
-            100.0D;
+    public static final double MAX_SHALLOW_STUN = 100.0D;
 
 
-    /**
-     * 状态构造时统一限制数值范围。
+    /*
+     * ============================================================
+     * 数据校正
+     * ============================================================
      */
+
     public PossessedGhostState {
 
-        /*
-         * 复苏值限制在 0~1。
-         */
         revival =
                 Math.clamp(
                         revival,
@@ -74,9 +98,12 @@ public record PossessedGhostState(
                         1.0D
                 );
 
-        /*
-         * 浅死机值限制在 0~100。
-         */
+        strength =
+                Math.max(
+                        0.0D,
+                        strength
+                );
+
         shallowStun =
                 Math.clamp(
                         shallowStun,
@@ -84,22 +111,10 @@ public record PossessedGhostState(
                         MAX_SHALLOW_STUN
                 );
 
-        /*
-         * 死机时间不能为负数。
-         */
         stunTicks =
                 Math.max(
                         0L,
                         stunTicks
-                );
-
-        /*
-         * 本质强度不能为负数。
-         */
-        intrinsicStrength =
-                Math.max(
-                        0.0D,
-                        intrinsicStrength
                 );
     }
 
@@ -118,6 +133,12 @@ public record PossessedGhostState(
                                     .fieldOf("revival")
                                     .forGetter(
                                             PossessedGhostState::revival
+                                    ),
+
+                            Codec.DOUBLE
+                                    .fieldOf("strength")
+                                    .forGetter(
+                                            PossessedGhostState::strength
                                     ),
 
                             Codec.DOUBLE
@@ -151,20 +172,6 @@ public record PossessedGhostState(
                                     )
                                     .forGetter(
                                             PossessedGhostState::lastAbilityUseTick
-                                    ),
-
-                            /*
-                             * 厉鬼本质强度。
-                             *
-                             * optional 是为了兼容旧存档。
-                             */
-                            Codec.DOUBLE
-                                    .optionalFieldOf(
-                                            "intrinsic_strength",
-                                            1.0D
-                                    )
-                                    .forGetter(
-                                            PossessedGhostState::intrinsicStrength
                                     )
 
                     ).apply(
@@ -176,7 +183,7 @@ public record PossessedGhostState(
 
     /*
      * ============================================================
-     * 网络 StreamCodec
+     * 网络同步
      * ============================================================
      */
 
@@ -184,10 +191,14 @@ public record PossessedGhostState(
             RegistryFriendlyByteBuf,
             PossessedGhostState
             > STREAM_CODEC =
+
             StreamCodec.composite(
 
                     ByteBufCodecs.DOUBLE,
                     PossessedGhostState::revival,
+
+                    ByteBufCodecs.DOUBLE,
+                    PossessedGhostState::strength,
 
                     ByteBufCodecs.DOUBLE,
                     PossessedGhostState::shallowStun,
@@ -201,9 +212,6 @@ public record PossessedGhostState(
                     ByteBufCodecs.VAR_LONG,
                     PossessedGhostState::lastAbilityUseTick,
 
-                    ByteBufCodecs.DOUBLE,
-                    PossessedGhostState::intrinsicStrength,
-
                     PossessedGhostState::new
             );
 
@@ -215,37 +223,33 @@ public record PossessedGhostState(
      */
 
     /**
-     * 创建一只刚被驾驭时的状态。
+     * 创建一只刚刚被驾驭的厉鬼的初始状态。
      *
-     * 初始复苏为 0。
-     * 初始浅死机为 0。
-     * 初始没有死机。
-     *
-     * 本质强度由具体 Ability 提供。
+     * @param initialStrength 初始强度
      */
     public static PossessedGhostState create(
-            double intrinsicStrength
+            double initialStrength
     ) {
 
         return new PossessedGhostState(
                 0.0D,
+                initialStrength,
                 0.0D,
                 0L,
                 false,
-                Long.MIN_VALUE,
-                intrinsicStrength
+                Long.MIN_VALUE
         );
     }
 
 
     /*
      * ============================================================
-     * 死机判断
+     * 状态判断
      * ============================================================
      */
 
     /**
-     * 当前是否处于普通死机。
+     * 是否处于普通死机。
      */
     public boolean isStunned() {
 
@@ -255,7 +259,7 @@ public record PossessedGhostState(
 
 
     /**
-     * 当前是否永久死机。
+     * 是否处于永久死机。
      */
     public boolean isPermanentlyStunned() {
 
@@ -264,7 +268,7 @@ public record PossessedGhostState(
 
 
     /**
-     * 当前是否处于任意死机状态。
+     * 是否处于任何形式的死机。
      */
     public boolean isAnyStun() {
 

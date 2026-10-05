@@ -4,6 +4,7 @@ import com.qidate.qisplan2.QisPlan2;
 import com.qidate.qisplan2.core.ModAttachments;
 import com.qidate.qisplan2.ghost.possession.ability.GhostAbilityRegistry;
 import com.qidate.qisplan2.ghost.possession.ability.PossessedGhostAbility;
+import com.qidate.qisplan2.ghost.possession.data.PossessedGhostData;
 import com.qidate.qisplan2.ghost.possession.data.PossessedGhostState;
 import com.qidate.qisplan2.ghost.possession.manager.GhostSuppressionAllocationHandler;
 import com.qidate.qisplan2.ghost.possession.manager.SuppressionAllocation;
@@ -155,7 +156,7 @@ public class PossessionSuppressionRenderer {
             return;
         }
 
-        Map<ResourceLocation, PossessedGhostState> ghosts =
+        Map<ResourceLocation, PossessedGhostData> ghosts =
                 minecraft.player.getData(
                         ModAttachments.POSSESSED_GHOSTS
                 );
@@ -197,7 +198,7 @@ public class PossessionSuppressionRenderer {
             drawWorkbenchGhostCard(
                     graphics,
                     entry.getKey(),
-                    entry.getValue(),
+                    entry.getValue().state(),
                     x,
                     y
             );
@@ -268,7 +269,7 @@ public class PossessionSuppressionRenderer {
                 Minecraft.getInstance().font,
                 String.format(
                         "%.0f",
-                        state.intrinsicStrength()
+                        state.strength()
                 ),
                 x + 132,
                 y + 6,
@@ -663,7 +664,7 @@ public class PossessionSuppressionRenderer {
             return false;
         }
 
-        Map<ResourceLocation, PossessedGhostState> ghosts =
+        Map<ResourceLocation, PossessedGhostData> ghosts =
                 minecraft.player.getData(
                         ModAttachments.POSSESSED_GHOSTS
                 );
@@ -1215,7 +1216,7 @@ public class PossessionSuppressionRenderer {
             return null;
         }
 
-        Map<ResourceLocation, PossessedGhostState> ghosts =
+        Map<ResourceLocation, PossessedGhostData> ghosts =
                 minecraft.player.getData(
                         ModAttachments.POSSESSED_GHOSTS
                 );

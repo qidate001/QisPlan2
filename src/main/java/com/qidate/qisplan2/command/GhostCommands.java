@@ -10,6 +10,7 @@ import com.qidate.qisplan2.core.ModAttachments;
 import com.qidate.qisplan2.ghost.curse.Curse;
 import com.qidate.qisplan2.ghost.curse.CurseManager;
 import com.qidate.qisplan2.ghost.curse.CurseRegistry;
+import com.qidate.qisplan2.ghost.possession.data.PossessedGhostData;
 import com.qidate.qisplan2.ghost.possession.data.PossessedGhostState;
 import com.qidate.qisplan2.ghost.possession.manager.PossessionHandler;
 import com.qidate.qisplan2.ghost.possession.ability.GhostAbilityRegistry;
@@ -493,7 +494,7 @@ public final class GhostCommands {
             return 0;
         }
 
-        Map<ResourceLocation, PossessedGhostState> ghosts =
+        Map<ResourceLocation, PossessedGhostData> ghosts =
                 player.getData(
                         ModAttachments.POSSESSED_GHOSTS
                 );
@@ -523,7 +524,7 @@ public final class GhostCommands {
                     entry.getKey();
 
             PossessedGhostState state =
-                    entry.getValue();
+                    entry.getValue().state();
 
             String ghostName =
                     Component.translatable(

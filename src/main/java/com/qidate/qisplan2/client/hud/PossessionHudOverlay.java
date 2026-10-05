@@ -2,9 +2,11 @@ package com.qidate.qisplan2.client.hud;
 
 import com.qidate.qisplan2.QisPlan2;
 import com.qidate.qisplan2.core.ModAttachments;
+import com.qidate.qisplan2.ghost.possession.data.PossessedGhostData;
 import com.qidate.qisplan2.ghost.possession.data.PossessedGhostState;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
@@ -90,10 +92,7 @@ public class PossessionHudOverlay {
         }
 
 
-        Map<
-                net.minecraft.resources.ResourceLocation,
-                PossessedGhostState
-                > ghosts =
+        Map<ResourceLocation, PossessedGhostData> ghosts =
                 minecraft.player.getData(
                         ModAttachments.POSSESSED_GHOSTS
                 );
@@ -132,12 +131,12 @@ public class PossessionHudOverlay {
                         - BAR_HEIGHT;
 
 
-        for (PossessedGhostState state :
+        for (PossessedGhostData data :
                 ghosts.values()) {
 
             drawGhostBars(
                     graphics,
-                    state,
+                    data.state(),
                     x,
                     y
             );

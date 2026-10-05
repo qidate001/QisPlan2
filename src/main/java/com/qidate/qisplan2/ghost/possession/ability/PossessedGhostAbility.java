@@ -42,19 +42,12 @@ public interface PossessedGhostAbility {
      */
 
     /**
-     * 初始本质强度。
+     * 新获得这只鬼时的初始强度。
      *
-     * 玩家刚刚驾驭这只鬼时，
-     * intrinsicStrength 会使用这个值。
-     *
-     * 例如：
-     *
-     * 10.0
-     * 20.0
-     * 100.0
+     * 仅用于创建 PossessedGhostState。
+     * 强度本身属于持久状态，而不是 Ability 的固定属性。
      */
-    default double initialIntrinsicStrength() {
-
+    default double initialStrength() {
         return 1.0D;
     }
 

@@ -6,6 +6,7 @@ import com.qidate.qisplan2.core.ModFluids;
 import com.qidate.qisplan2.death.ModDamageTypes;
 import com.qidate.qisplan2.death.SupernaturalDeathHandler;
 import com.qidate.qisplan2.fluid.GhostFluidConfig;
+import com.qidate.qisplan2.ghost.possession.data.PossessedGhostData;
 import com.qidate.qisplan2.ghost.possession.data.PossessedGhostState;
 import com.qidate.qisplan2.ghost.possession.manager.PossessionHandler;
 
@@ -446,10 +447,7 @@ public final class GhostFluidHandler {
             GhostFluidConfig config,
             double immersion
     ) {
-        Map<
-                ResourceLocation,
-                PossessedGhostState
-                > oldData =
+        Map<ResourceLocation, PossessedGhostData> oldData =
                 player.getData(
                         ModAttachments.POSSESSED_GHOSTS
                 );
@@ -482,7 +480,7 @@ public final class GhostFluidHandler {
                     entry.getKey();
 
             PossessedGhostState state =
-                    entry.getValue();
+                    entry.getValue().state();
 
 
             /*
@@ -514,11 +512,11 @@ public final class GhostFluidHandler {
             PossessedGhostState newState =
                     new PossessedGhostState(
                             newRevival,
+                            state.strength(),
                             state.shallowStun(),
                             state.stunTicks(),
                             state.permanentStun(),
-                            state.lastAbilityUseTick(),
-                            state.intrinsicStrength()
+                            state.lastAbilityUseTick()
                     );
 
 

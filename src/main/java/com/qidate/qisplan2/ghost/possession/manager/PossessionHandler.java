@@ -3,15 +3,15 @@ package com.qidate.qisplan2.ghost.possession.manager;
 import com.qidate.qisplan2.core.ModAttachments;
 import com.qidate.qisplan2.death.QisDeathHandler;
 import com.qidate.qisplan2.event.GhostBreakoutHandler;
-import com.qidate.qisplan2.ghost.possession.ability.GhostAbilityContext;
-import com.qidate.qisplan2.ghost.possession.data.PossessedGhostState;
-import com.qidate.qisplan2.ghost.possession.ability.GhostAbilityRegistry;
-import com.qidate.qisplan2.ghost.possession.ability.PossessedGhostAbility;
-import com.qidate.qisplan2.ghost.possession.ability.nightwanderer.NightWandererAbility;
-
 import com.qidate.qisplan2.ghost.corrosion.CorrosionMatrix;
 import com.qidate.qisplan2.ghost.corrosion.CorrosionType;
 import com.qidate.qisplan2.ghost.corrosion.GhostCorrosion;
+import com.qidate.qisplan2.ghost.possession.ability.GhostAbilityContext;
+import com.qidate.qisplan2.ghost.possession.ability.GhostAbilityRegistry;
+import com.qidate.qisplan2.ghost.possession.ability.PossessedGhostAbility;
+import com.qidate.qisplan2.ghost.possession.ability.nightwanderer.NightWandererAbility;
+import com.qidate.qisplan2.ghost.possession.data.PossessedGhostData;
+import com.qidate.qisplan2.ghost.possession.data.PossessedGhostState;
 import com.qidate.qisplan2.ghost.possession.suppression.GhostSuppressionSystem;
 import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceLocation;
@@ -42,40 +42,26 @@ public final class PossessionHandler {
     public static final ResourceLocation NIGHT_WANDERER =
             NightWandererAbility.ID;
 
+
     /*
      * ============================================================
      * 非灵异伤害减免
      * ============================================================
      */
 
-    /**
-     * 获取玩家当前的非灵异伤害减免。
-     * 默认最高 90%
-     * 特殊鬼可以修改减伤数值以及减伤上限。
-     */
     public static double getNonSupernaturalDamageReduction(
             ServerPlayer player
     ) {
 
-        Map<ResourceLocation, PossessedGhostState> ghosts =
+        Map<ResourceLocation, PossessedGhostData> ghosts =
                 player.getData(
                         ModAttachments.POSSESSED_GHOSTS
                 );
 
-        /*
-         * ========================================================
-         * 基础减伤
-         * ========================================================
-         *
-         * 每20点肉身侵蚀相当于一只普通鬼：
-         *
-         * 20 → 50%
-         * 40 → 75%
-         * 60 → 87.5%
-         * 80 → 93.75%（最终封顶90%）
-         */
+
         double bodyCorrosion =
                 getEffectiveBodyCorrosion(player);
+
 
         double reduction =
                 1.0D
@@ -84,14 +70,17 @@ public final class PossessionHandler {
                         bodyCorrosion / 20.0D
                 );
 
+
         double reductionCap =
                 0.90D;
+
 
         /*
          * ========================================================
          * 特殊鬼修改
          * ========================================================
          */
+
         for (ResourceLocation ghost :
                 ghosts.keySet()) {
 
@@ -102,11 +91,13 @@ public final class PossessionHandler {
                 continue;
             }
 
+
             reduction =
                     ability.modifyNonSupernaturalDamageReduction(
                             player,
                             reduction
                     );
+
 
             reductionCap =
                     ability.modifyNonSupernaturalDamageReductionCap(
@@ -115,43 +106,40 @@ public final class PossessionHandler {
                     );
         }
 
+
         reductionCap =
                 Math.clamp(
                         reductionCap,
                         0.0D,
-                        1.0D);
+                        1.0D
+                );
+
 
         reduction =
                 Math.clamp(
                         reduction,
                         0.0D,
-                        reductionCap);
+                        reductionCap
+                );
+
 
         return reduction;
     }
 
 
-    /**
-     * 获取肉身侵蚀度。
-     *
-     * 由：
-     *
-     * 全方位
-     * 皮肤
-     * 血肉
-     * 骨骼
-     *
-     * 四项共同决定肉体强化。
-     *
-     * GLOBAL 已经扩散到了各部位，因此这里取平均值，
-     * 避免重复计算。
+    /*
+     * ============================================================
+     * 肉身侵蚀
+     * ============================================================
      */
+
     public static double getEffectiveBodyCorrosion(
             Player player
     ) {
 
         CorrosionMatrix matrix =
                 getCorrosionMatrix(player);
+
 
         return (
                 matrix.total(CorrosionType.GLOBAL)
@@ -161,30 +149,46 @@ public final class PossessionHandler {
         ) / 4.0D;
     }
 
+
     public static CorrosionMatrix getCorrosionMatrix(
             Player player
     ) {
-        CorrosionMatrix matrix = new CorrosionMatrix();
 
-        Map<ResourceLocation, PossessedGhostState> ghosts =
-                player.getData(ModAttachments.POSSESSED_GHOSTS);
+        CorrosionMatrix matrix =
+                new CorrosionMatrix();
 
-        for (ResourceLocation ghost : ghosts.keySet()) {
+
+        Map<ResourceLocation, PossessedGhostData> ghosts =
+                player.getData(
+                        ModAttachments.POSSESSED_GHOSTS
+                );
+
+
+        for (ResourceLocation ghost :
+                ghosts.keySet()) {
 
             PossessedGhostAbility ability =
                     GhostAbilityRegistry.get(ghost);
+
 
             if (ability == null) {
                 continue;
             }
 
+
             GhostCorrosion corrosion =
                     ability.corrosion();
 
-            for (var entry : corrosion.entries().entrySet()) {
 
-                CorrosionType type = entry.getKey();
-                int amount = entry.getValue();
+            for (var entry :
+                    corrosion.entries().entrySet()) {
+
+                CorrosionType type =
+                        entry.getKey();
+
+                int amount =
+                        entry.getValue();
+
 
                 if (type == CorrosionType.GLOBAL) {
 
@@ -194,6 +198,7 @@ public final class PossessionHandler {
                             CorrosionType.GLOBAL,
                             amount
                     );
+
 
                     for (CorrosionType other :
                             CorrosionType.values()) {
@@ -209,8 +214,10 @@ public final class PossessionHandler {
                         }
                     }
 
+
                     continue;
                 }
+
 
                 matrix.add(
                         type,
@@ -220,6 +227,7 @@ public final class PossessionHandler {
                 );
             }
         }
+
 
         return matrix;
     }
@@ -231,10 +239,6 @@ public final class PossessionHandler {
      * ============================================================
      */
 
-    /**
-     * 获取驭鬼带来的生命上限加成。
-     * 共40点生命上限。
-     */
     public static double getMaxHealthBonus(
             ServerPlayer player
     ) {
@@ -242,19 +246,7 @@ public final class PossessionHandler {
         double bodyCorrosion =
                 getEffectiveBodyCorrosion(player);
 
-        /*
-         * ========================================================
-         * 基础生命加成
-         * ========================================================
-         *
-         * 与减伤共用同一曲线：
-         *
-         * 20 → +20
-         * 40 → +30
-         * 60 → +35
-         * 80 → +37.5
-         * 最终趋近 +40
-         */
+
         double ratio =
                 1.0D
                         - Math.pow(
@@ -262,14 +254,11 @@ public final class PossessionHandler {
                         bodyCorrosion / 20.0D
                 );
 
+
         double health =
                 40.0D * ratio;
 
-        /*
-         * ========================================================
-         * 特殊鬼修改
-         * ========================================================
-         */
+
         for (ResourceLocation ghost :
                 player.getData(
                         ModAttachments.POSSESSED_GHOSTS
@@ -278,9 +267,11 @@ public final class PossessionHandler {
             PossessedGhostAbility ability =
                     GhostAbilityRegistry.get(ghost);
 
+
             if (ability == null) {
                 continue;
             }
+
 
             health =
                     ability.modifyMaxHealthBonus(
@@ -288,6 +279,7 @@ public final class PossessionHandler {
                             health
                     );
         }
+
 
         return Math.max(
                 0.0D,
@@ -302,9 +294,6 @@ public final class PossessionHandler {
      * ============================================================
      */
 
-    /**
-     * 浅死机值最大 100 点。
-     */
     public static final double MAX_SHALLOW_STUN =
             PossessedGhostState.MAX_SHALLOW_STUN;
 
@@ -315,15 +304,6 @@ public final class PossessionHandler {
      * ============================================================
      */
 
-    /**
-     * 给状态增加复苏值。
-     *
-     * revivalPercent 使用百分比。
-     *
-     * 例如：
-     *
-     * 10.0 = 10%
-     */
     public static PossessedGhostState addRevival(
             PossessedGhostState state,
             double revivalPercent
@@ -333,25 +313,23 @@ public final class PossessionHandler {
             return null;
         }
 
+
         if (revivalPercent <= 0.0D) {
             return state;
         }
 
 
         /*
-         * ========================================================
          * 死机期间不复苏。
-         * ========================================================
          */
-
         if (state.isAnyStun()) {
-
             return state;
         }
 
 
         double revival =
                 state.revival();
+
 
         double shallowStun =
                 state.shallowStun();
@@ -368,6 +346,7 @@ public final class PossessionHandler {
                         shallowStun,
                         revivalPercent
                 );
+
 
         shallowStun -=
                 consumed;
@@ -387,6 +366,7 @@ public final class PossessionHandler {
         revival +=
                 actualRevival / 100.0D;
 
+
         revival =
                 Math.min(
                         1.0D,
@@ -396,18 +376,15 @@ public final class PossessionHandler {
 
         return new PossessedGhostState(
                 revival,
+                state.strength(),
                 shallowStun,
                 state.stunTicks(),
                 state.permanentStun(),
-                state.lastAbilityUseTick(),
-                state.intrinsicStrength()
+                state.lastAbilityUseTick()
         );
     }
 
-    /**
-     * 根据该鬼的被压制状态，
-     * 计算实际复苏增长后再增加复苏值。
-     */
+
     public static PossessedGhostState addRevival(
             ServerPlayer player,
             ResourceLocation ghost,
@@ -420,31 +397,27 @@ public final class PossessionHandler {
             return null;
         }
 
-        if (player == null) {
+
+        if (player == null
+                || ghost == null) {
+
             return state;
         }
 
-        if (ghost == null) {
-            return state;
-        }
 
         if (type == null) {
+
             return addRevival(
                     state,
                     revivalPercent
             );
         }
 
+
         if (revivalPercent <= 0.0D) {
             return state;
         }
 
-
-        /*
-         * ========================================================
-         * 根据被压制数计算实际复苏增长
-         * ========================================================
-         */
 
         double suppression =
                 GhostSuppressionSystem.getSuppression(
@@ -452,15 +425,11 @@ public final class PossessionHandler {
                         ghost
                 );
 
+
         double actualRevival =
                 revivalPercent
                         * (1.0D - suppression);
 
-        /*
-         * ========================================================
-         * 使用原来的复苏逻辑
-         * ========================================================
-         */
 
         return addRevival(
                 state,
@@ -475,19 +444,10 @@ public final class PossessionHandler {
      * ============================================================
      */
 
-    /**
-     * 驭鬼。
-     */
     public static boolean possess(
             ServerPlayer player,
             ResourceLocation ghost
     ) {
-
-        /*
-         * ========================================================
-         * 必须存在对应 Ability。
-         * ========================================================
-         */
 
         if (!GhostAbilityRegistry.contains(
                 ghost
@@ -497,34 +457,22 @@ public final class PossessionHandler {
         }
 
 
-        Map<ResourceLocation, PossessedGhostState> oldData =
+        Map<ResourceLocation, PossessedGhostData> oldData =
                 player.getData(
                         ModAttachments.POSSESSED_GHOSTS
                 );
 
 
-        /*
-         * 已经驾驭。
-         */
-
-        if (oldData.containsKey(
-                ghost
-        )) {
-
+        if (oldData.containsKey(ghost)) {
             return false;
         }
 
-
-        /*
-         * ========================================================
-         * 获取 Ability。
-         * ========================================================
-         */
 
         PossessedGhostAbility ability =
                 GhostAbilityRegistry.get(
                         ghost
                 );
+
 
         if (ability == null) {
             return false;
@@ -533,41 +481,39 @@ public final class PossessionHandler {
 
         /*
          * ========================================================
-         * 创建状态。
+         * 创建完整持久数据。
          *
-         * 初始本质强度由 Ability 决定。
+         * initialStrength 只负责初始化。
          * ========================================================
          */
 
-        PossessedGhostState state =
-                PossessedGhostState.create(
-                        ability.initialIntrinsicStrength()
+        PossessedGhostData data =
+                PossessedGhostData.create(
+                        ability.initialStrength()
                 );
 
 
-        Map<ResourceLocation, PossessedGhostState> data =
+        Map<ResourceLocation, PossessedGhostData> newData =
                 new HashMap<>(
                         oldData
                 );
 
 
-        data.put(
+        newData.put(
                 ghost,
-                state
+                data
         );
 
 
         player.setData(
                 ModAttachments.POSSESSED_GHOSTS,
-                data
+                newData
         );
 
 
         /*
          * ========================================================
-         * 通知 Ability：
-         *
-         * 玩家刚刚驾驭了这只鬼。
+         * 通知 Ability。
          * ========================================================
          */
 
@@ -575,7 +521,7 @@ public final class PossessionHandler {
                 new GhostAbilityContext(
                         player,
                         ghost,
-                        state
+                        data
                 )
         );
 
@@ -595,24 +541,19 @@ public final class PossessionHandler {
             ResourceLocation ghost
     ) {
 
-        Map<ResourceLocation, PossessedGhostState> oldData =
+        Map<ResourceLocation, PossessedGhostData> oldData =
                 player.getData(
                         ModAttachments.POSSESSED_GHOSTS
                 );
 
 
-        if (!oldData.containsKey(
-                ghost
-        )) {
+        PossessedGhostData data =
+                oldData.get(ghost);
 
+
+        if (data == null) {
             return false;
         }
-
-
-        PossessedGhostState state =
-                oldData.get(
-                        ghost
-                );
 
 
         PossessedGhostAbility ability =
@@ -627,33 +568,29 @@ public final class PossessionHandler {
                     new GhostAbilityContext(
                             player,
                             ghost,
-                            state
+                            data
                     )
             );
         }
 
 
-        Map<ResourceLocation, PossessedGhostState> data =
+        Map<ResourceLocation, PossessedGhostData> newData =
                 new HashMap<>(
                         oldData
                 );
 
 
-        data.remove(
+        newData.remove(
                 ghost
         );
 
 
         player.setData(
                 ModAttachments.POSSESSED_GHOSTS,
-                data
+                newData
         );
 
 
-        /*
-         * 解除该厉鬼驾驭后，
-         * 同时释放所有与该鬼有关的压制额度。
-         */
         GhostSuppressionAllocationHandler.removeByGhost(
                 player,
                 ghost
@@ -670,9 +607,6 @@ public final class PossessionHandler {
      * ============================================================
      */
 
-    /**
-     * 是否驾驭了某只鬼。
-     */
     public static boolean hasGhost(
             ServerPlayer player,
             ResourceLocation ghost
@@ -680,36 +614,57 @@ public final class PossessionHandler {
 
         return player.getData(
                 ModAttachments.POSSESSED_GHOSTS
-        ).containsKey(
-                ghost
-        );
+        ).containsKey(ghost);
     }
 
 
     /**
-     * 获取某只鬼的状态。
+     * 获取某只鬼的完整持久数据。
      */
-    public static PossessedGhostState getState(
+    public static PossessedGhostData getData(
             Player player,
             ResourceLocation ghost
     ) {
 
         return player.getData(
                 ModAttachments.POSSESSED_GHOSTS
-        ).get(
-                ghost
-        );
+        ).get(ghost);
     }
 
+
     /**
-     * 获取玩家当前驾驭的所有厉鬼状态。
+     * 获取某只鬼的通用状态。
+     */
+    public static PossessedGhostState getState(
+            Player player,
+            ResourceLocation ghost
+    ) {
+
+        PossessedGhostData data =
+                getData(
+                        player,
+                        ghost
+                );
+
+
+        if (data == null) {
+            return null;
+        }
+
+
+        return data.state();
+    }
+
+
+    /**
+     * 获取所有鬼的完整数据。
      *
-     * 返回副本，避免外部直接修改玩家内部 Attachment 数据。
+     * 返回副本。
      */
     public static Map<
             ResourceLocation,
-            PossessedGhostState
-            > getAllStates(
+            PossessedGhostData
+            > getAllData(
             Player player
     ) {
 
@@ -720,14 +675,46 @@ public final class PossessionHandler {
         );
     }
 
+
+    /**
+     * 获取所有鬼的通用状态。
+     *
+     * 返回副本。
+     *
+     * 这是给旧系统/只关心 State 的代码使用的便利方法。
+     */
+    public static Map<
+            ResourceLocation,
+            PossessedGhostState
+            > getAllStates(
+            Player player
+    ) {
+
+        Map<
+                ResourceLocation,
+                PossessedGhostState
+                > result =
+                new HashMap<>();
+
+
+        for (var entry :
+                player.getData(
+                        ModAttachments.POSSESSED_GHOSTS
+                ).entrySet()) {
+
+            result.put(
+                    entry.getKey(),
+                    entry.getValue().state()
+            );
+        }
+
+
+        return result;
+    }
+
+
     /**
      * 清空玩家当前驾驭的全部厉鬼。
-     *
-     * 用于：
-     *
-     * 玩家死亡
-     * 厉鬼破体
-     * 特殊强制失去全部驾驭
      */
     public static void clearAll(
             ServerPlayer player
@@ -740,9 +727,50 @@ public final class PossessionHandler {
     }
 
 
-    /**
-     * 设置某只鬼的状态。
+    /*
+     * ============================================================
+     * 设置完整数据
+     * ============================================================
      */
+
+    public static void setData(
+            ServerPlayer player,
+            ResourceLocation ghost,
+            PossessedGhostData data
+    ) {
+
+        if (data == null) {
+            return;
+        }
+
+
+        Map<ResourceLocation, PossessedGhostData> newData =
+                new HashMap<>(
+                        player.getData(
+                                ModAttachments.POSSESSED_GHOSTS
+                        )
+                );
+
+
+        newData.put(
+                ghost,
+                data
+        );
+
+
+        player.setData(
+                ModAttachments.POSSESSED_GHOSTS,
+                newData
+        );
+    }
+
+
+    /*
+     * ============================================================
+     * 设置状态
+     * ============================================================
+     */
+
     public static void setState(
             ServerPlayer player,
             ResourceLocation ghost,
@@ -754,31 +782,32 @@ public final class PossessionHandler {
         }
 
 
-        Map<ResourceLocation, PossessedGhostState> data =
-                new HashMap<>(
-                        player.getData(
-                                ModAttachments.POSSESSED_GHOSTS
-                        )
+        PossessedGhostData oldData =
+                getData(
+                        player,
+                        ghost
                 );
 
 
-        data.put(
+        if (oldData == null) {
+            return;
+        }
+
+
+        setData(
+                player,
                 ghost,
-                state
-        );
-
-
-        player.setData(
-                ModAttachments.POSSESSED_GHOSTS,
-                data
+                oldData.withState(state)
         );
     }
 
 
-
-    /**
-     * 获取某个部位最终侵蚀值
+    /*
+     * ============================================================
+     * 侵蚀
+     * ============================================================
      */
+
     public static int getCorrosion(
             ServerPlayer player,
             CorrosionType type
@@ -789,24 +818,34 @@ public final class PossessionHandler {
     }
 
 
-
-    /**
-     * 获取全部侵蚀值
-     */
-    public static EnumMap<CorrosionType, Integer> getAllCorrosion(
+    public static EnumMap<
+            CorrosionType,
+            Integer
+            > getAllCorrosion(
             ServerPlayer player
     ) {
 
-        EnumMap<CorrosionType, Integer> result =
-                new EnumMap<>(CorrosionType.class);
+        EnumMap<
+                CorrosionType,
+                Integer
+                > result =
+                new EnumMap<>(
+                        CorrosionType.class
+                );
 
-        for (CorrosionType type : CorrosionType.values()) {
+
+        for (CorrosionType type :
+                CorrosionType.values()) {
 
             result.put(
                     type,
-                    getCorrosion(player, type)
+                    getCorrosion(
+                            player,
+                            type
+                    )
             );
         }
+
 
         return result;
     }
@@ -821,12 +860,15 @@ public final class PossessionHandler {
         CorrosionMatrix matrix =
                 getCorrosionMatrix(player);
 
+
         int total =
                 matrix.total(type);
+
 
         if (total <= 0) {
             return 0.0D;
         }
+
 
         int own =
                 matrix.contribution(
@@ -834,12 +876,11 @@ public final class PossessionHandler {
                         ghost
                 );
 
+
         return own / (double) total;
     }
 
-    /**
-     * 汇总矩阵
-     */
+
     public static CorrosionMatrix getCorrosionMatrix(
             ServerPlayer player
     ) {
@@ -847,15 +888,13 @@ public final class PossessionHandler {
         CorrosionMatrix matrix =
                 new CorrosionMatrix();
 
-        Map<ResourceLocation, PossessedGhostState> ghosts =
+
+        Map<ResourceLocation, PossessedGhostData> ghosts =
                 player.getData(
                         ModAttachments.POSSESSED_GHOSTS
                 );
 
 
-        /*
-         * 每只鬼分别贡献。
-         */
         for (ResourceLocation ghost :
                 ghosts.keySet()) {
 
@@ -864,16 +903,25 @@ public final class PossessionHandler {
                             ghost
                     );
 
+
             if (ability == null) {
                 continue;
             }
 
-            GhostCorrosion corrosion = ability.corrosion();
 
-            for (var entry : corrosion.entries().entrySet()) {
+            GhostCorrosion corrosion =
+                    ability.corrosion();
 
-                CorrosionType type = entry.getKey();
-                int amount = entry.getValue();
+
+            for (var entry :
+                    corrosion.entries().entrySet()) {
+
+                CorrosionType type =
+                        entry.getKey();
+
+                int amount =
+                        entry.getValue();
+
 
                 if (type == CorrosionType.GLOBAL) {
 
@@ -884,7 +932,9 @@ public final class PossessionHandler {
                             amount
                     );
 
-                    for (CorrosionType other : CorrosionType.values()) {
+
+                    for (CorrosionType other :
+                            CorrosionType.values()) {
 
                         if (other != CorrosionType.GLOBAL) {
 
@@ -897,8 +947,10 @@ public final class PossessionHandler {
                         }
                     }
 
+
                     continue;
                 }
+
 
                 matrix.add(
                         type,
@@ -908,6 +960,7 @@ public final class PossessionHandler {
                 );
             }
         }
+
 
         return matrix;
     }
@@ -922,8 +975,7 @@ public final class PossessionHandler {
     /**
      * 获取一只已经驾驭的鬼当前实际发挥出来的强度。
      *
-     * 这个方法以后应该作为其他系统读取
-     * “当前鬼有多强”的统一入口。
+     * 这是其他系统读取“当前鬼有多强”的统一入口。
      */
     public static double getEffectiveStrength(
             Player player,
@@ -961,10 +1013,10 @@ public final class PossessionHandler {
 
 
     /**
-     * 获取指定鬼当前的本质强度。
+     * 获取当前持久化强度。
      */
-    public static double getIntrinsicStrength(
-            ServerPlayer player,
+    public static double getStrength(
+            Player player,
             ResourceLocation ghost
     ) {
 
@@ -980,14 +1032,14 @@ public final class PossessionHandler {
         }
 
 
-        return state.intrinsicStrength();
+        return state.strength();
     }
 
 
     /**
-     * 增加指定鬼的本质强度。
+     * 增加指定鬼的强度。
      */
-    public static boolean addIntrinsicStrength(
+    public static boolean addStrength(
             ServerPlayer player,
             ResourceLocation ghost,
             double amount
@@ -1006,11 +1058,10 @@ public final class PossessionHandler {
 
 
         PossessedGhostState newState =
-                GhostStrengthSystem
-                        .addIntrinsicStrength(
-                                state,
-                                amount
-                        );
+                GhostStrengthSystem.addStrength(
+                        state,
+                        amount
+                );
 
 
         setState(
@@ -1025,9 +1076,9 @@ public final class PossessionHandler {
 
 
     /**
-     * 直接设置指定鬼的本质强度。
+     * 直接设置指定鬼的当前强度。
      */
-    public static boolean setIntrinsicStrength(
+    public static boolean setStrength(
             ServerPlayer player,
             ResourceLocation ghost,
             double strength
@@ -1046,11 +1097,10 @@ public final class PossessionHandler {
 
 
         PossessedGhostState newState =
-                GhostStrengthSystem
-                        .setIntrinsicStrength(
-                                state,
-                                strength
-                        );
+                GhostStrengthSystem.setStrength(
+                        state,
+                        strength
+                );
 
 
         setState(
@@ -1070,9 +1120,6 @@ public final class PossessionHandler {
      * ============================================================
      */
 
-    /**
-     * 给指定厉鬼增加浅死机值。
-     */
     public static boolean addShallowStun(
             ServerPlayer player,
             ResourceLocation ghost,
@@ -1084,14 +1131,9 @@ public final class PossessionHandler {
         }
 
 
-        Map<ResourceLocation, PossessedGhostState> oldData =
-                player.getData(
-                        ModAttachments.POSSESSED_GHOSTS
-                );
-
-
         PossessedGhostState state =
-                oldData.get(
+                getState(
+                        player,
                         ghost
                 );
 
@@ -1101,36 +1143,22 @@ public final class PossessionHandler {
         }
 
 
-        double newShallowStun =
-                Math.min(
-                        PossessedGhostState.MAX_SHALLOW_STUN,
-                        state.shallowStun()
-                                + amount
+        PossessedGhostState newState =
+                addShallowStun(
+                        state,
+                        amount
                 );
 
 
-        Map<ResourceLocation, PossessedGhostState> data =
-                new HashMap<>(
-                        oldData
-                );
+        if (newState == state) {
+            return false;
+        }
 
 
-        data.put(
+        setState(
+                player,
                 ghost,
-                new PossessedGhostState(
-                        state.revival(),
-                        newShallowStun,
-                        state.stunTicks(),
-                        state.permanentStun(),
-                        state.lastAbilityUseTick(),
-                        state.intrinsicStrength()
-                )
-        );
-
-
-        player.setData(
-                ModAttachments.POSSESSED_GHOSTS,
-                data
+                newState
         );
 
 
@@ -1138,9 +1166,6 @@ public final class PossessionHandler {
     }
 
 
-    /**
-     * 给状态增加浅死机值。
-     */
     public static PossessedGhostState addShallowStun(
             PossessedGhostState state,
             double amount
@@ -1149,6 +1174,7 @@ public final class PossessionHandler {
         if (state == null) {
             return null;
         }
+
 
         if (amount <= 0.0D) {
             return state;
@@ -1165,11 +1191,11 @@ public final class PossessionHandler {
 
         return new PossessedGhostState(
                 state.revival(),
+                state.strength(),
                 newShallowStun,
                 state.stunTicks(),
                 state.permanentStun(),
-                state.lastAbilityUseTick(),
-                state.intrinsicStrength()
+                state.lastAbilityUseTick()
         );
     }
 
@@ -1186,16 +1212,9 @@ public final class PossessionHandler {
             long ticks
     ) {
 
-        Map<ResourceLocation, PossessedGhostState> data =
-                new HashMap<>(
-                        player.getData(
-                                ModAttachments.POSSESSED_GHOSTS
-                        )
-                );
-
-
         PossessedGhostState state =
-                data.get(
+                getState(
+                        player,
                         ghost
                 );
 
@@ -1205,25 +1224,24 @@ public final class PossessionHandler {
         }
 
 
-        data.put(
-                ghost,
+        PossessedGhostState newState =
                 new PossessedGhostState(
                         state.revival(),
+                        state.strength(),
                         state.shallowStun(),
                         Math.max(
                                 1L,
                                 ticks
                         ),
                         false,
-                        state.lastAbilityUseTick(),
-                        state.intrinsicStrength()
-                )
-        );
+                        state.lastAbilityUseTick()
+                );
 
 
-        player.setData(
-                ModAttachments.POSSESSED_GHOSTS,
-                data
+        setState(
+                player,
+                ghost,
+                newState
         );
 
 
@@ -1242,16 +1260,9 @@ public final class PossessionHandler {
             ResourceLocation ghost
     ) {
 
-        Map<ResourceLocation, PossessedGhostState> data =
-                new HashMap<>(
-                        player.getData(
-                                ModAttachments.POSSESSED_GHOSTS
-                        )
-                );
-
-
         PossessedGhostState state =
-                data.get(
+                getState(
+                        player,
                         ghost
                 );
 
@@ -1261,22 +1272,21 @@ public final class PossessionHandler {
         }
 
 
-        data.put(
-                ghost,
+        PossessedGhostState newState =
                 new PossessedGhostState(
                         state.revival(),
+                        state.strength(),
                         state.shallowStun(),
                         0L,
                         true,
-                        state.lastAbilityUseTick(),
-                        state.intrinsicStrength()
-                )
-        );
+                        state.lastAbilityUseTick()
+                );
 
 
-        player.setData(
-                ModAttachments.POSSESSED_GHOSTS,
-                data
+        setState(
+                player,
+                ghost,
+                newState
         );
 
 
@@ -1294,7 +1304,7 @@ public final class PossessionHandler {
             ServerPlayer player
     ) {
 
-        Map<ResourceLocation, PossessedGhostState> oldData =
+        Map<ResourceLocation, PossessedGhostData> oldData =
                 player.getData(
                         ModAttachments.POSSESSED_GHOSTS
                 );
@@ -1305,7 +1315,7 @@ public final class PossessionHandler {
         }
 
 
-        Map<ResourceLocation, PossessedGhostState> data =
+        Map<ResourceLocation, PossessedGhostData> data =
                 new HashMap<>(
                         oldData
                 );
@@ -1321,18 +1331,26 @@ public final class PossessionHandler {
             ResourceLocation ghost =
                     entry.getKey();
 
-            PossessedGhostState state =
+
+            PossessedGhostData oldGhostData =
                     entry.getValue();
+
+
+            PossessedGhostState state =
+                    oldGhostData.state();
 
 
             double revival =
                     state.revival();
 
+
             double shallowStun =
                     state.shallowStun();
 
+
             long stunTicks =
                     state.stunTicks();
+
 
             boolean permanentStun =
                     state.permanentStun();
@@ -1374,28 +1392,19 @@ public final class PossessionHandler {
 
             if (revival >= 1.0D) {
 
-                /*
-                 * ========================================================
-                 * 厉鬼复苏导致死亡。
-                 *
-                 * 这种死亡不会依赖 LivingDeathEvent，
-                 * 所以必须主动触发破体。
-                 * ========================================================
-                 */
-
                 GhostBreakoutHandler.breakout(
                         player
                 );
 
-                /*
-                 * 然后再真正让玩家死亡。
-                 */
+
                 QisDeathHandler.forceKillAndCleanup(
                         player
                 );
 
+
                 return;
             }
+
 
             /*
              * ====================================================
@@ -1406,17 +1415,23 @@ public final class PossessionHandler {
             PossessedGhostState newState =
                     new PossessedGhostState(
                             revival,
+                            state.strength(),
                             shallowStun,
                             stunTicks,
                             permanentStun,
-                            state.lastAbilityUseTick(),
-                            state.intrinsicStrength()
+                            state.lastAbilityUseTick()
+                    );
+
+
+            PossessedGhostData newData =
+                    oldGhostData.withState(
+                            newState
                     );
 
 
             data.put(
                     ghost,
-                    newState
+                    newData
             );
 
 
@@ -1434,17 +1449,11 @@ public final class PossessionHandler {
 
             if (ability != null) {
 
-                PossessedGhostState beforeAbility =
-                        data.get(
-                                ghost
-                        );
-
-
                 GhostAbilityContext context =
                         new GhostAbilityContext(
                                 player,
                                 ghost,
-                                beforeAbility
+                                newData
                         );
 
 
@@ -1453,11 +1462,11 @@ public final class PossessionHandler {
                 );
 
 
-                PossessedGhostState afterAbility =
-                        context.state();
+                PossessedGhostData afterAbility =
+                        context.data();
 
 
-                if (afterAbility != beforeAbility) {
+                if (afterAbility != newData) {
 
                     changed = true;
                 }
@@ -1514,14 +1523,14 @@ public final class PossessionHandler {
             LivingEntity target
     ) {
 
-        PossessedGhostState state =
-                getState(
+        PossessedGhostData data =
+                getData(
                         player,
                         ghost
                 );
 
 
-        if (state == null) {
+        if (data == null) {
             return false;
         }
 
@@ -1541,7 +1550,7 @@ public final class PossessionHandler {
                 new GhostAbilityContext(
                         player,
                         ghost,
-                        state,
+                        data,
                         target
                 );
 
@@ -1552,16 +1561,12 @@ public final class PossessionHandler {
                 );
 
 
-        /*
-         * Ability 执行成功后，
-         * 将 Context 中修改后的状态统一写回。
-         */
         if (success) {
 
-            setState(
+            setData(
                     player,
                     ghost,
-                    context.state()
+                    context.data()
             );
         }
 
@@ -1582,14 +1587,14 @@ public final class PossessionHandler {
             BlockPos pos
     ) {
 
-        PossessedGhostState state =
-                getState(
+        PossessedGhostData data =
+                getData(
                         player,
                         ghost
                 );
 
 
-        if (state == null) {
+        if (data == null) {
             return false;
         }
 
@@ -1609,7 +1614,7 @@ public final class PossessionHandler {
                 new GhostAbilityContext(
                         player,
                         ghost,
-                        state
+                        data
                 );
 
 
@@ -1620,16 +1625,12 @@ public final class PossessionHandler {
                 );
 
 
-        /*
-         * Ability 执行成功后，
-         * 统一提交状态。
-         */
         if (success) {
 
-            setState(
+            setData(
                     player,
                     ghost,
-                    context.state()
+                    context.data()
             );
         }
 
@@ -1659,7 +1660,7 @@ public final class PossessionHandler {
         }
 
 
-        Map<ResourceLocation, PossessedGhostState> oldData =
+        Map<ResourceLocation, PossessedGhostData> oldData =
                 player.getData(
                         ModAttachments.POSSESSED_GHOSTS
                 );
@@ -1670,7 +1671,7 @@ public final class PossessionHandler {
         }
 
 
-        Map<ResourceLocation, PossessedGhostState> data =
+        Map<ResourceLocation, PossessedGhostData> data =
                 new HashMap<>(
                         oldData
                 );
@@ -1683,8 +1684,12 @@ public final class PossessionHandler {
         for (var entry :
                 oldData.entrySet()) {
 
-            PossessedGhostState oldState =
+            PossessedGhostData oldGhostData =
                     entry.getValue();
+
+
+            PossessedGhostState oldState =
+                    oldGhostData.state();
 
 
             PossessedGhostState newState =
@@ -1698,8 +1703,11 @@ public final class PossessionHandler {
 
                 data.put(
                         entry.getKey(),
-                        newState
+                        oldGhostData.withState(
+                                newState
+                        )
                 );
+
 
                 count++;
             }

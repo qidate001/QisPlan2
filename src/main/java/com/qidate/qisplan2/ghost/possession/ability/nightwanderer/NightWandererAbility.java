@@ -116,7 +116,7 @@ public final class NightWandererAbility
     }
 
     @Override
-    public double initialIntrinsicStrength() {
+    public double initialStrength() {
         return 4.0D;
     }
 
@@ -274,11 +274,11 @@ public final class NightWandererAbility
         newState =
                 new PossessedGhostState(
                         newState.revival(),
+                        state.strength(),
                         newState.shallowStun(),
                         newState.stunTicks(),
                         newState.permanentStun(),
-                        now,
-                        state.intrinsicStrength()
+                        now
                 );
 
         context.setState(

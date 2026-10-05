@@ -34,7 +34,7 @@ public final class GhostDivinationSlipAbility
     }
 
     @Override
-    public double initialIntrinsicStrength() {
+    public double initialStrength() {
         return 20.0D;
     }
 

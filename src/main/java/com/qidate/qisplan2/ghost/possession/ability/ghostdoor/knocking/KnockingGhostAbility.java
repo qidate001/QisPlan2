@@ -81,7 +81,7 @@ public final class KnockingGhostAbility
      * 敲门鬼完整复苏时的本质灵异强度。
      */
     @Override
-    public double initialIntrinsicStrength() {
+    public double initialStrength() {
         return 20.0D;
     }
 
@@ -262,11 +262,11 @@ public final class KnockingGhostAbility
         newState =
                 new PossessedGhostState(
                         newState.revival(),
+                        state.strength(),
                         newState.shallowStun(),
                         newState.stunTicks(),
                         newState.permanentStun(),
-                        now,
-                        state.intrinsicStrength()
+                        now
                 );
 
         context.setState(

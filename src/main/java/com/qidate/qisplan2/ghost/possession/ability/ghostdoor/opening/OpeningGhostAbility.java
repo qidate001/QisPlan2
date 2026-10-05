@@ -38,7 +38,7 @@ public final class OpeningGhostAbility
     }
 
     @Override
-    public double initialIntrinsicStrength() {
+    public double initialStrength() {
         return 20.0D;
     }
 

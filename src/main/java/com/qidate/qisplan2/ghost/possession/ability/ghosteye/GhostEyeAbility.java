@@ -31,7 +31,7 @@ public final class GhostEyeAbility
     }
 
     @Override
-    public double initialIntrinsicStrength() {
+    public double initialStrength() {
         return 100.0D;
     }
 

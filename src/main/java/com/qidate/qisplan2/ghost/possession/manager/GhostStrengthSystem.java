@@ -8,13 +8,13 @@ import com.qidate.qisplan2.ghost.possession.data.PossessedGhostState;
  * 负责：
  *
  * 1. 计算一只鬼当前真正发挥出来的强度。
- * 2. 根据本质强度成长。
- * 3. 统一处理复苏值对强度的影响。
+ * 2. 修改当前强度。
+ * 3. 统一处理复苏值对强度发挥比例的影响。
  *
- * 这里暂时只负责基础公式。
+ * 强度本身是 PossessedGhostState 的普通持久状态，
+ * 与复苏值一样可以随着游戏过程发生变化。
  *
- * 后续厉鬼互相压制、增强、环境修正、
- * 协同规则等，都可以继续在这里扩展。
+ * 不再存在“本质强度”概念。
  */
 public final class GhostStrengthSystem {
 
@@ -22,14 +22,20 @@ public final class GhostStrengthSystem {
     }
 
 
+    /*
+     * ============================================================
+     * 计算当前实际强度
+     * ============================================================
+     */
+
     /**
-     * 根据本质强度、复苏值和最低发挥比例，
-     * 计算当前实际使用强度。
+     * 根据当前强度、复苏值和最低发挥比例，
+     * 计算这只鬼当前真正发挥出来的强度。
      *
      * 公式：
      *
      * effective =
-     * intrinsic *
+     * strength *
      * (
      *     minimumRatio
      *     + revival * (1 - minimumRatio)
@@ -37,7 +43,7 @@ public final class GhostStrengthSystem {
      *
      * 例如：
      *
-     * 本质强度 = 100
+     * 当前强度 = 100
      * 最低发挥 = 1/3
      *
      * 0% 复苏：
@@ -50,19 +56,20 @@ public final class GhostStrengthSystem {
      * 100
      */
     public static double calculate(
-            double intrinsicStrength,
+            double strength,
             double revival,
             double minimumRatio
     ) {
 
         /*
-         * 本质强度不能为负数。
+         * 强度不能为负数。
          */
-        intrinsicStrength =
+        strength =
                 Math.max(
                         0.0D,
-                        intrinsicStrength
+                        strength
                 );
+
 
         /*
          * 复苏值限制在 0~1。
@@ -74,6 +81,7 @@ public final class GhostStrengthSystem {
                         1.0D
                 );
 
+
         /*
          * 最低发挥比例限制在 0~1。
          */
@@ -84,17 +92,13 @@ public final class GhostStrengthSystem {
                         1.0D
                 );
 
+
         /*
          * ========================================================
          * 计算当前发挥比例
          * ========================================================
-         *
-         * 0% 复苏：
-         * minimumRatio
-         *
-         * 100% 复苏：
-         * 1.0
          */
+
         double ratio =
                 minimumRatio
                         + revival
@@ -103,14 +107,13 @@ public final class GhostStrengthSystem {
                                 - minimumRatio
                 );
 
-        return intrinsicStrength
-                * ratio;
+
+        return strength * ratio;
     }
 
 
     /**
-     * 根据状态和 Ability 的最低发挥比例，
-     * 直接计算当前强度。
+     * 根据状态直接计算当前实际强度。
      */
     public static double calculate(
             PossessedGhostState state,
@@ -121,18 +124,25 @@ public final class GhostStrengthSystem {
             return 0.0D;
         }
 
+
         return calculate(
-                state.intrinsicStrength(),
+                state.strength(),
                 state.revival(),
                 minimumRatio
         );
     }
 
 
+    /*
+     * ============================================================
+     * 增加强度
+     * ============================================================
+     */
+
     /**
-     * 增加厉鬼本质强度。
+     * 增加当前强度。
      *
-     * 本质强度是成长属性。
+     * 强度是持久状态。
      *
      * 例如：
      *
@@ -140,7 +150,7 @@ public final class GhostStrengthSystem {
      * 增长 +2
      * → 12
      */
-    public static PossessedGhostState addIntrinsicStrength(
+    public static PossessedGhostState addStrength(
             PossessedGhostState state,
             double amount
     ) {
@@ -149,35 +159,41 @@ public final class GhostStrengthSystem {
             return null;
         }
 
+
         if (amount == 0.0D) {
             return state;
         }
 
+
         double newStrength =
                 Math.max(
                         0.0D,
-                        state.intrinsicStrength()
+                        state.strength()
                                 + amount
                 );
 
+
         return new PossessedGhostState(
                 state.revival(),
+                newStrength,
                 state.shallowStun(),
                 state.stunTicks(),
                 state.permanentStun(),
-                state.lastAbilityUseTick(),
-                newStrength
+                state.lastAbilityUseTick()
         );
     }
 
 
-    /**
-     * 将本质强度直接设置为指定值。
-     *
-     * 后续特殊规则、融合、吞噬等机制
-     * 可以使用这个接口。
+    /*
+     * ============================================================
+     * 设置强度
+     * ============================================================
      */
-    public static PossessedGhostState setIntrinsicStrength(
+
+    /**
+     * 直接设置当前强度。
+     */
+    public static PossessedGhostState setStrength(
             PossessedGhostState state,
             double strength
     ) {
@@ -186,16 +202,17 @@ public final class GhostStrengthSystem {
             return null;
         }
 
+
         return new PossessedGhostState(
                 state.revival(),
-                state.shallowStun(),
-                state.stunTicks(),
-                state.permanentStun(),
-                state.lastAbilityUseTick(),
                 Math.max(
                         0.0D,
                         strength
-                )
+                ),
+                state.shallowStun(),
+                state.stunTicks(),
+                state.permanentStun(),
+                state.lastAbilityUseTick()
         );
     }
 }

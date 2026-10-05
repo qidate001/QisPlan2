@@ -2,6 +2,7 @@ package com.qidate.qisplan2.core;
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
+import com.qidate.qisplan2.ghost.possession.data.PossessedGhostData;
 import com.qidate.qisplan2.ghost.possession.data.PossessedGhostState;
 import com.qidate.qisplan2.ghost.layer.GhostLayerData;
 import com.qidate.qisplan2.ghost.partition.PartitionReturnData;
@@ -32,40 +33,40 @@ public class ModAttachments {
     }
 
     /**
-     * 玩家当前驾驭的鬼及其状态。
+     * 玩家当前驾驭的鬼及其完整持久数据。
      *
      * Key：
      *     鬼的 ResourceLocation
      *
      * Value：
-     *     该鬼的复苏值、上次使用时间等状态
+     *     该鬼的完整 PossessedGhostData
      *
      * 因此玩家可以同时驾驭多只鬼。
      */
     public static final DeferredHolder<
             AttachmentType<?>,
-            AttachmentType<Map<ResourceLocation, PossessedGhostState>>
+            AttachmentType<Map<ResourceLocation, PossessedGhostData>>
             > POSSESSED_GHOSTS =
             ATTACHMENT_TYPES.register(
                     "possessed_ghosts",
                     () -> AttachmentType
-                            .<Map<ResourceLocation, PossessedGhostState>>builder(
+                            .<Map<ResourceLocation, PossessedGhostData>>builder(
                                     (java.util.function.Supplier<
-                                            Map<ResourceLocation, PossessedGhostState>
+                                            Map<ResourceLocation, PossessedGhostData>
                                             >)
                                             HashMap::new
                             )
                             .serialize(
                                     Codec.unboundedMap(
                                             ResourceLocation.CODEC,
-                                            PossessedGhostState.CODEC
+                                            PossessedGhostData.CODEC
                                     )
                             )
                             .sync(
                                     ByteBufCodecs.map(
                                             HashMap::new,
                                             ResourceLocation.STREAM_CODEC,
-                                            PossessedGhostState.STREAM_CODEC,
+                                            PossessedGhostData.STREAM_CODEC,
                                             32
                                     )
                             )
