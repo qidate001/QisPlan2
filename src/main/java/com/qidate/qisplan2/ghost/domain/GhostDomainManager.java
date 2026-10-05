@@ -111,25 +111,64 @@ public final class GhostDomainManager {
 
     public void remove(UUID id) {
 
-        GhostDomain domain = domains.remove(id);
+        /*
+         * ========================================================
+         * 获取鬼域
+         * ========================================================
+         */
+        GhostDomain domain =
+                domains.remove(id);
 
         if (domain == null) {
             return;
         }
 
+        /*
+         * ========================================================
+         * 清理 Source Region 缓存
+         * ========================================================
+         *
+         * GhostDomain 已经不存在，
+         * 对应的 Region 身份缓存也必须同时失效。
+         */
+        sourceRegionIds.remove(
+                domain.getId()
+        );
+
+        /*
+         * ========================================================
+         * 清理实体追踪状态
+         * ========================================================
+         */
         GhostDomainEntityTracker
                 .get(level)
                 .removeDomain(domain);
 
+        /*
+         * ========================================================
+         * 鬼域行为收尾
+         * ========================================================
+         *
+         * 所有具体鬼域自己的清理逻辑，
+         * 统一从这里进入。
+         */
         domain.getBehavior().onRemove(
                 level,
                 domain
         );
 
+        /*
+         * ========================================================
+         * 清理鬼域主人视觉
+         * ========================================================
+         */
         Entity source =
-                level.getEntity(domain.getSourceUUID());
+                level.getEntity(
+                        domain.getSourceUUID()
+                );
 
         if (source instanceof ServerPlayer player) {
+
             GhostDomainNetwork.sendVision(
                     player,
                     domain,
@@ -137,6 +176,11 @@ public final class GhostDomainManager {
             );
         }
 
+        /*
+         * ========================================================
+         * 通知客户端删除鬼域
+         * ========================================================
+         */
         GhostDomainNetwork.sendRemove(
                 level,
                 domain.getId()
@@ -494,36 +538,60 @@ public final class GhostDomainManager {
 
     public void tick() {
 
-        for (GhostDomain domain : domains.values()) {
+        /*
+         * ============================================================
+         * 使用快照遍历
+         * ============================================================
+         *
+         * 因为本次 tick 可能会发现 Source 已经不存在，
+         * 从而调用 remove() 修改 domains。
+         *
+         * 直接遍历 domains.values() 会导致
+         * ConcurrentModificationException。
+         */
+        for (GhostDomain domain :
+                new ArrayList<>(domains.values())) {
+
+            /*
+             * ========================================================
+             * 检查 Source 是否仍然存在
+             * ========================================================
+             */
+            Entity source =
+                    level.getEntity(
+                            domain.getSourceUUID()
+                    );
+
+            if (source == null
+                    || source.isRemoved()) {
+
+                /*
+                 * Source 已经不存在。
+                 *
+                 * 由 GhostDomainManager 统一完成
+                 * 整个鬼域的生命周期收尾。
+                 */
+                remove(
+                        domain.getId()
+                );
+
+                continue;
+            }
 
             /*
              * ========================================================
              * 自动更新鬼域位置
              * ========================================================
-             *
-             * DISTANCE：
-             *   鬼域自动跟随自己的来源实体。
-             *
-             * MANUAL：
-             *   不自动移动，由外部主动调用 updatePosition()。
              */
             if (domain.getUpdateMode()
                     == GhostDomainUpdateMode.DISTANCE) {
 
-                Entity source =
-                        level.getEntity(
-                                domain.getSourceUUID()
-                        );
-
-                if (source != null) {
-
-                    updatePosition(
-                            domain.getId(),
-                            source.getX(),
-                            source.getY(),
-                            source.getZ()
-                    );
-                }
+                updatePosition(
+                        domain.getId(),
+                        source.getX(),
+                        source.getY(),
+                        source.getZ()
+                );
             }
 
             /*
@@ -531,7 +599,6 @@ public final class GhostDomainManager {
              * 鬼域行为
              * ========================================================
              */
-
             domain.getBehavior().tick(
                     level,
                     domain
@@ -539,43 +606,33 @@ public final class GhostDomainManager {
 
             /*
              * ========================================================
-             * 检测 Source 当前所在的灵异隔绝 Region。
-             *
-             * 当前阶段只更新服务端缓存，
-             * 暂不进行客户端同步。
+             * 检测 Source 当前所在的灵异隔绝 Region
              * ========================================================
              */
-
-            updateSourceRegion(domain);
+            updateSourceRegion(
+                    domain
+            );
 
             /*
              * ========================================================
              * 鬼域主人视觉
              * ========================================================
              */
-
-            updateVision(domain);
+            updateVision(
+                    domain
+            );
         }
 
         /*
          * ============================================================
          * 鬼域主人飞行权限
          * ============================================================
-         *
-         * 所有鬼域的位置、层数和行为处理完成后，
-         * 再统一计算玩家当前是否拥有飞行权限。
-         *
-         * 这样可以正确处理：
-         *
-         *   删除最后一个高层鬼域
-         *   ↓
-         *   本 tick 结束时
-         *   ↓
-         *   立即取消飞行权限
          */
         for (ServerPlayer player : level.players()) {
 
-            updateOwnerFlight(player);
+            updateOwnerFlight(
+                    player
+            );
         }
     }
 
