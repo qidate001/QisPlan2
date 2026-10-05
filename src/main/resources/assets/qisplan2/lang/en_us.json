@@ -71,6 +71,7 @@
   "item.qisplan2.opening_ghost_spawn_egg": "§4Opening ghost spawn egg",
   "item.qisplan2.closing_ghost_spawn_egg": "§4Closing ghost spawn egg",
   "item.qisplan2.calling_ghost_spawn_egg": "§4Calling ghost spawn egg",
+  "item.qisplan2.ghost_mist_spawn_egg": "§4Ghost mist spawn egg",
 
   "entity.qisplan2.ghost_painting": "§4Ghost Painting",
   "entity.qisplan2.night_wanderer": "§4Night Wanderer",
@@ -79,6 +80,7 @@
   "entity.qisplan2.opening_ghost": "§4Opening Ghost",
   "entity.qisplan2.closing_ghost": "§4Closing Ghost",
   "entity.qisplan2.calling_ghost": "§4Calling Ghost",
+  "entity.qisplan2.ghost_mist": "§4Ghost Mist",
 
   "ghost.qisplan2.ghost_painting": "Ghost Painting",
   "ghost.qisplan2.night_wanderer": "Night Wanderer",
@@ -89,6 +91,7 @@
   "ghost.qisplan2.calling_ghost": "Calling Ghost",
   "ghost.qisplan2.ghost_divination_slip": "Ghost Divination Slip",
   "ghost.qisplan2.ghost_eye": "Ghost Eye",
+  "ghost.qisplan2.ghost_mist": "Ghost Mist",
 
   "curse.qisplan2.ghost_divination": "Life Sign",
   "curse.qisplan2.ghost_tombstone": "Ghost Tombstone",
@@ -116,6 +119,7 @@
   "death.attack.ghost_blood": "%1$s was melted by §4Ghost Blood§r",
   "death.attack.ghost_door_plate": "%1$s has been torn in half",
   "death.attack.calling_ghost": "%1$s lost its soul",
+  "death.attack.ghost_mist": "%1$s became part of this thick mist",
 
   "command.qisplan2.player_only": "§cThis command must be executed by a player.",
   "command.qisplan2.entity_only": "§cThis command must be executed by an entity.",

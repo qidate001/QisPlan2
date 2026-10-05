@@ -197,14 +197,14 @@ public final class GhostMistRenderEffect
 
         /*
          * ========================================================
-         * 鬼域层数
+         * 鬼域强度（浓度）
          * ========================================================
          */
 
         shader.getUniform(
-                "GhostMistDomainLayer"
+                "GhostMistDomainStrength"
         ).set(
-                (float) ghostMistDomain.getLayer()
+                (float) ghostMistDomain.getStrength()
         );
 
         /*

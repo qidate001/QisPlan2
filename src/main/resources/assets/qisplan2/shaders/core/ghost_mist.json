@@ -75,7 +75,7 @@
       ]
     },
     {
-      "name": "GhostMistDomainLayer",
+      "name": "GhostMistDomainStrength",
       "type": "float",
       "count": 1,
       "values": [

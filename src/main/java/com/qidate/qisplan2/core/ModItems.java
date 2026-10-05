@@ -384,4 +384,17 @@ public class ModItems {
                             new Item.Properties()
                     )
             );
+
+    // 鬼雾刷怪蛋
+    public static final DeferredItem<SpawnEggItem>
+            GHOST_MIST_SPAWN_EGG =
+            ITEMS.register(
+                    "ghost_mist_spawn_egg",
+                    () -> new SpawnEggItem(
+                            GHOST_MIST.get(),
+                            0x767474,
+                            0xB2B2B2,
+                            new Item.Properties()
+                    )
+            );
 }

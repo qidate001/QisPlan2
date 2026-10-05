@@ -31,13 +31,13 @@ public class GhostMist
      * 初始灵异强度。
      */
     private static final double BASE_SUPERNATURAL_STRENGTH =
-            5.0D;
+            20.0D;
 
     /**
      * 初始灵异防御。
      */
     private static final double BASE_SUPERNATURAL_DEFENSE =
-            4.0D;
+            25.0D;
 
     public GhostMist(
             EntityType<? extends GhostMist> entityType,

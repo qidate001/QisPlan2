@@ -71,6 +71,7 @@
   "item.qisplan2.opening_ghost_spawn_egg": "§4开门鬼刷怪蛋",
   "item.qisplan2.closing_ghost_spawn_egg": "§4关门鬼刷怪蛋",
   "item.qisplan2.calling_ghost_spawn_egg": "§4喊人鬼刷怪蛋",
+  "item.qisplan2.ghost_mist_spawn_egg": "§4鬼雾刷怪蛋",
 
   "entity.qisplan2.ghost_painting": "§4鬼画",
   "entity.qisplan2.night_wanderer": "§4夜游鬼",
@@ -79,6 +80,7 @@
   "entity.qisplan2.opening_ghost": "§4开门鬼",
   "entity.qisplan2.closing_ghost": "§4关门鬼",
   "entity.qisplan2.calling_ghost": "§4喊人鬼",
+  "entity.qisplan2.ghost_mist": "§4鬼雾",
 
   "ghost.qisplan2.ghost_painting": "鬼画",
   "ghost.qisplan2.night_wanderer": "夜游鬼",
@@ -89,6 +91,7 @@
   "ghost.qisplan2.calling_ghost": "喊人鬼",
   "ghost.qisplan2.ghost_divination_slip": "鬼签",
   "ghost.qisplan2.ghost_eye": "鬼眼",
+  "ghost.qisplan2.ghost_mist": "鬼雾",
 
   "curse.qisplan2.ghost_divination": "生签",
   "curse.qisplan2.ghost_tombstone": "鬼墓碑",
@@ -117,6 +120,7 @@
   "death.attack.ghost_blood": "%1$s 被§4鬼血§r融化了",
   "death.attack.ghost_door_plate": "%1$s 被撕成了两半",
   "death.attack.calling_ghost": "%1$s 丧失了灵魂",
+  "death.attack.ghost_mist": "%1$s 化为了这浓雾的一部分",
 
 
 

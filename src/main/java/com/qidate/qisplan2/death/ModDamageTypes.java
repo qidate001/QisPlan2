@@ -216,6 +216,19 @@ public class ModDamageTypes {
                     )
             );
 
+    /**
+     * 鬼雾灵异攻击
+     */
+    public static final ResourceKey<DamageType>
+            GHOST_MIST =
+            ResourceKey.create(
+                    Registries.DAMAGE_TYPE,
+                    ResourceLocation.fromNamespaceAndPath(
+                            QisPlan2.MODID,
+                            "ghost_mist"
+                    )
+            );
+
 
 
 
@@ -526,6 +539,25 @@ public class ModDamageTypes {
                         )
                         .getHolderOrThrow(
                                 GHOST_DIVINATION_SLIP
+                        ),
+                entity
+        );
+    }
+
+    /**
+     * 创建鬼雾死亡 DamageSource
+     */
+    public static DamageSource ghostMist(
+            Entity entity
+    ) {
+        return new DamageSource(
+                entity.level()
+                        .registryAccess()
+                        .registryOrThrow(
+                                Registries.DAMAGE_TYPE
+                        )
+                        .getHolderOrThrow(
+                                GHOST_MIST
                         ),
                 entity
         );

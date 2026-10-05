@@ -12,7 +12,7 @@ uniform vec3 GhostMistDomainCenter;
 
 uniform float GhostMistDomainRadius;
 uniform float GhostMistDomainActive;
-uniform float GhostMistDomainLayer;
+uniform float GhostMistDomainStrength;
 uniform float GhostMistSourceRegion;
 uniform float GhostMistTime;
 
@@ -568,25 +568,24 @@ void main() {
 
 
                 /*
-                 * =================================================
-                 * 鬼域层数
-                 * =================================================
-                 */
+                * =================================================
+                * 鬼域强度
+                * =================================================
+                *
+                * 鬼雾浓度直接由鬼域强度决定。
+                *
+                * 强度每增加 1，
+                * 基础雾密度增加 1 份。
+                *
+                * 为避免极高强度导致整屏完全不透明，
+                * 设置视觉强度上限。
+                */
 
-                float layerStrength =
-                    1.0
-                    +
-                    (
-                        GhostMistDomainLayer
-                        - 1.0
-                    )
-                    * 0.18;
-
-                layerStrength =
+                float mistStrength =
                     clamp(
-                        layerStrength,
+                        GhostMistDomainStrength,
                         1.0,
-                        2.5
+                        20.0
                     );
 
 
@@ -598,8 +597,7 @@ void main() {
 
                 float density =
                     0.045
-                    *
-                    layerStrength;
+                    * mistStrength;
 
 
                 /*

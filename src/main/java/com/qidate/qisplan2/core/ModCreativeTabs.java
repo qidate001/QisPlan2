@@ -87,6 +87,7 @@ public class ModCreativeTabs {
                         output.accept(OPENING_GHOST_SPAWN_EGG);
                         output.accept(CLOSING_GHOST_SPAWN_EGG);
                         output.accept(CALLING_GHOST_SPAWN_EGG);
+                        output.accept(GHOST_MIST_SPAWN_EGG);
                     })
                     .build()
             );
