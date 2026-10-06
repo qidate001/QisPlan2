@@ -22,6 +22,29 @@ public final class GhostDomainManager {
             new LinkedHashMap<>();
 
     /**
+     * 鬼域视觉同步缓存。
+     *
+     * <p>
+     * Key：
+     *     GhostDomain UUID
+     *
+     * <p>
+     * Value：
+     *     上一次已经发送给鬼域主人的视觉状态。
+     *
+     * <p>
+     * 视觉状态：
+     *
+     *     Entity UUID → RGB Color
+     *
+     * <p>
+     * 只有视觉状态发生变化时，
+     * 才重新发送 GhostDomainVisionPayload。
+     */
+    private final Map<UUID, Map<UUID, Integer>> visionStates =
+            new HashMap<>();
+
+    /**
      * 每个灵异领域 Source 当前所在的灵异隔绝 Region。
      *
      * <p>
@@ -127,11 +150,17 @@ public final class GhostDomainManager {
          * ========================================================
          * 清理 Source Region 缓存
          * ========================================================
-         *
-         * GhostDomain 已经不存在，
-         * 对应的 Region 身份缓存也必须同时失效。
          */
         sourceRegionIds.remove(
+                domain.getId()
+        );
+
+        /*
+         * ========================================================
+         * 清理鬼域视觉同步缓存
+         * ========================================================
+         */
+        visionStates.remove(
                 domain.getId()
         );
 
@@ -808,41 +837,82 @@ public final class GhostDomainManager {
      * 只有鬼域来源实体是玩家时，
      * 才会向对应客户端发送视觉数据。
      *
+     * <p>
+     * 视觉数据只有在发生变化时才会发送。
+     *
      * @param domain 鬼域
      */
     private void updateVision(
             GhostDomain domain
     ) {
 
+        /*
+         * ========================================================
+         * 检查鬼域是否拥有实体视觉
+         * ========================================================
+         */
         if (!domain.getBehavior().hasEntityVision(
                 level,
                 domain
         )) {
 
+            /*
+             * 当前鬼域不使用实体视觉。
+             *
+             * 如果之前存在视觉缓存，
+             * 这里也应该清掉。
+             */
+            visionStates.remove(
+                    domain.getId()
+            );
+
             return;
         }
 
+        /*
+         * ========================================================
+         * 获取鬼域主人
+         * ========================================================
+         */
         Entity source =
                 level.getEntity(
                         domain.getSourceUUID()
                 );
 
         /*
-         * 当前只有玩家拥有客户端，
-         * 因此非玩家来源的鬼域不需要视觉同步。
+         * 当前只有玩家拥有客户端。
+         *
+         * 非玩家来源的鬼域不需要视觉同步。
          */
         if (!(source instanceof ServerPlayer player)) {
+
+            visionStates.remove(
+                    domain.getId()
+            );
+
             return;
         }
 
         /*
-         * 鬼域主人已经离开当前世界。
+         * ========================================================
+         * 检查玩家状态
+         * ========================================================
          */
         if (!player.isAlive()
                 || player.isRemoved()) {
+
+            visionStates.remove(
+                    domain.getId()
+            );
+
             return;
         }
 
+        /*
+         * ========================================================
+         * 计算当前视觉状态
+         * ========================================================
+         */
         Map<UUID, Integer> visibleEntities =
                 GhostDomainVisionSystem
                         .collectVisibleEntities(
@@ -850,10 +920,60 @@ public final class GhostDomainManager {
                                 domain
                         );
 
+        /*
+         * ========================================================
+         * 获取上一次已经同步的状态
+         * ========================================================
+         */
+        Map<UUID, Integer> previousState =
+                visionStates.get(
+                        domain.getId()
+                );
+
+        /*
+         * ========================================================
+         * 视觉状态没有发生变化
+         * ========================================================
+         *
+         * 第一次同步时 previousState == null，
+         * 因此第一次一定会发送。
+         */
+        if (previousState != null
+                && previousState.equals(
+                visibleEntities
+        )) {
+
+            return;
+        }
+
+        /*
+         * ========================================================
+         * 视觉状态发生变化
+         * ========================================================
+         *
+         * 现在才真正发送网络包。
+         */
         GhostDomainNetwork.sendVision(
                 player,
                 domain,
                 visibleEntities
+        );
+
+        /*
+         * ========================================================
+         * 保存本次已经成功同步的状态
+         * ========================================================
+         *
+         * 必须复制 Map。
+         *
+         * 不能直接保存 visibleEntities 的引用，
+         * 避免未来代码修改这个 Map 时影响缓存。
+         */
+        visionStates.put(
+                domain.getId(),
+                new LinkedHashMap<>(
+                        visibleEntities
+                )
         );
     }
 

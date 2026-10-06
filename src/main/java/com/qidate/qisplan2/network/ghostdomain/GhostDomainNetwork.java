@@ -256,6 +256,7 @@ public final class GhostDomainNetwork {
                         }
 
                         ClientGhostDomainVisionSystem.update(
+                                payload.domainId(),
                                 entities
                         );
                     });
