@@ -1,67 +1,84 @@
 package com.qidate.qisplan2.ghost.domain.client.renderer;
 
+import com.qidate.qisplan2.ghost.domain.client.ClientGhostDomain;
+import com.qidate.qisplan2.ghost.domain.client.ClientGhostDomainManager;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.ShaderInstance;
 import net.minecraft.resources.ResourceLocation;
 
+import java.util.Collection;
+import java.util.Collections;
+
 public interface GhostDomainRenderEffect {
 
     /**
-     * 当前渲染效果使用的 Shader ID。
+     * 获取该后处理效果使用的 Shader。
      */
     ResourceLocation shaderId();
 
     /**
-     * 判断当前是否应该渲染这个效果。
+     * 判断该后处理效果当前是否需要渲染。
      */
     boolean shouldRender(
             Minecraft minecraft
     );
 
     /**
-     * 设置该渲染效果专属的 Shader Uniform。
+     * 获取当前 Effect 对应的所有 GhostDomain。
+     *
+     * <p>
+     * 默认按照 Shader ID / Domain Type 匹配。
+     * </p>
+     *
+     * <p>
+     * 一个 Effect 可以同时对应多个同类型 GhostDomain。
+     * </p>
+     */
+    default Collection<ClientGhostDomain> getDomains(
+            Minecraft minecraft
+    ) {
+
+        if (minecraft.level == null) {
+            return Collections.emptyList();
+        }
+
+        ResourceLocation domainType =
+                shaderId();
+
+        ResourceLocation currentDimension =
+                minecraft.level
+                        .dimension()
+                        .location();
+
+        return ClientGhostDomainManager.getDomains()
+                .stream()
+                .filter(domain ->
+                        domain.getDimension()
+                                .equals(currentDimension)
+                )
+                .filter(domain ->
+                        domainType.equals(
+                                domain.getDomainType()
+                        )
+                )
+                .toList();
+    }
+
+    /**
+     * 设置指定 GhostDomain 对应的 Shader Uniform。
+     *
+     * @param shader 当前 Shader
+     * @param minecraft 当前 Minecraft 实例
+     * @param domain 当前正在渲染的 GhostDomain
      */
     void setupUniforms(
             ShaderInstance shader,
-            Minecraft minecraft
+            Minecraft minecraft,
+            ClientGhostDomain domain
     );
 
     /**
-     * 判断当前渲染效果是否使用
-     * 灵异隔绝空间 Stencil Mask。
-     *
-     * <p>
-     * 默认情况下，鬼域后处理使用传统的
-     * Stencil 空间裁剪规则：
-     *
-     * <pre>
-     * Stencil = 0
-     *     → 普通空间
-     *     → 允许鬼域效果
-     *
-     * Stencil = 1
-     *     → 灵异隔绝空间
-     *     → 不允许鬼域效果
-     * </pre>
-     *
-     * <p>
-     * 对于已经能够通过
-     * {@code GhostDomainRegionIdentity}
-     * 自行判断空间身份的特殊效果，
-     * 可以返回 {@code false}。
-     *
-     * <p>
-     * 例如 GhostEye：
-     *
-     * <pre>
-     * PixelRegion == SourceRegion
-     *     → 允许渲染
-     *
-     * PixelRegion != SourceRegion
-     *     → 保持原画面
-     * </pre>
-     *
-     * @return 是否使用传统 Stencil Mask
+     * 是否使用灵异隔绝 Stencil。
      */
     default boolean useIsolationStencil() {
         return true;

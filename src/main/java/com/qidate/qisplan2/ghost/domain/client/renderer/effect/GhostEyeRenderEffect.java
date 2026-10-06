@@ -1,19 +1,20 @@
 package com.qidate.qisplan2.ghost.domain.client.renderer.effect;
 
 import com.mojang.blaze3d.systems.RenderSystem;
-import com.qidate.qisplan2.QisPlan2;
-import com.qidate.qisplan2.ghost.isolation.client.ClientGhostIsolationManager;
-import com.qidate.qisplan2.ghost.possession.ability.ghosteye.GhostEyeAbility;
 import com.qidate.qisplan2.ghost.domain.client.ClientGhostDomain;
 import com.qidate.qisplan2.ghost.domain.client.ClientGhostDomainManager;
 import com.qidate.qisplan2.ghost.domain.client.renderer.GhostDomainMatrices;
 import com.qidate.qisplan2.ghost.domain.client.renderer.GhostDomainRenderEffect;
 import com.qidate.qisplan2.ghost.domain.client.renderer.GhostDomainRenderEffectRegistry;
+import com.qidate.qisplan2.ghost.isolation.client.ClientGhostIsolationManager;
+import com.qidate.qisplan2.ghost.possession.ability.ghosteye.GhostEyeAbility;
 import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.ShaderInstance;
 import net.minecraft.resources.ResourceLocation;
 
+import java.util.Collection;
+import java.util.Collections;
 import java.util.UUID;
 
 public final class GhostEyeRenderEffect
@@ -50,9 +51,40 @@ public final class GhostEyeRenderEffect
             return false;
         }
 
-        return getCurrentGhostEyeDomain(
-                minecraft
-        ) != null;
+        return !getDomains(minecraft).isEmpty();
+    }
+
+    /**
+     * 获取当前客户端所有 GhostEye 鬼域。
+     *
+     * <p>
+     * 不再只获取第一个 GhostEye Domain。
+     * </p>
+     */
+    @Override
+    public Collection<ClientGhostDomain> getDomains(
+            Minecraft minecraft
+    ) {
+
+        if (minecraft.level == null) {
+            return Collections.emptyList();
+        }
+
+        return ClientGhostDomainManager.getDomains()
+                .stream()
+                .filter(domain ->
+                        domain.getDimension().equals(
+                                minecraft.level
+                                        .dimension()
+                                        .location()
+                        )
+                )
+                .filter(domain ->
+                        GhostEyeAbility.ID.equals(
+                                domain.getDomainType()
+                        )
+                )
+                .toList();
     }
 
     /**
@@ -61,8 +93,7 @@ public final class GhostEyeRenderEffect
      *
      * <p>
      * GhostEye 使用 Region Identity
-     * 判断当前像素是否属于
-     * Source 所在的空间。
+     * 判断当前像素是否属于 Source 所在的空间。
      * </p>
      */
     @Override
@@ -73,19 +104,13 @@ public final class GhostEyeRenderEffect
     @Override
     public void setupUniforms(
             ShaderInstance shader,
-            Minecraft minecraft
+            Minecraft minecraft,
+            ClientGhostDomain ghostEyeDomain
     ) {
-
-        ClientGhostDomain ghostEyeDomain =
-                getCurrentGhostEyeDomain(
-                        minecraft
-                );
 
         if (ghostEyeDomain == null) {
             return;
         }
-
-
 
         /*
          * ========================================================
@@ -205,34 +230,17 @@ public final class GhostEyeRenderEffect
 
         if (sourceRegionUUID == null) {
 
-            /*
-             * ====================================================
-             * Source 当前位于开放空间。
-             * ====================================================
-             */
             shader.getUniform("GhostEyeSourceRegion").set(
                     0.0F
             );
 
         } else {
 
-            /*
-             * ====================================================
-             * Source 当前位于某个灵异隔绝 Region。
-             *
-             * 查询客户端当前 GPU 使用的临时 Region Index。
-             * ====================================================
-             */
             int regionIndex =
                     ClientGhostIsolationManager.getRegionIndex(
                             sourceRegionUUID
                     );
 
-            /*
-             * ====================================================
-             * GPU Region Index 使用 +1 编码。
-             * ====================================================
-             */
             float encodedSourceRegion =
                     (float) (regionIndex + 1) / 256.0F;
 
@@ -240,18 +248,5 @@ public final class GhostEyeRenderEffect
                     encodedSourceRegion
             );
         }
-    }
-
-    private ClientGhostDomain getCurrentGhostEyeDomain(
-            Minecraft minecraft
-    ) {
-
-        if (minecraft.level == null) {
-            return null;
-        }
-
-        return ClientGhostDomainManager.getFirstDomainByType(
-                GhostEyeAbility.ID
-        );
     }
 }

@@ -85,9 +85,9 @@ public final class GhostMistRenderEffect
             return false;
         }
 
-        return getCurrentGhostMistDomain(
+        return !getDomains(
                 minecraft
-        ) != null;
+        ).isEmpty();
     }
 
     /**
@@ -111,13 +111,9 @@ public final class GhostMistRenderEffect
     @Override
     public void setupUniforms(
             ShaderInstance shader,
-            Minecraft minecraft
+            Minecraft minecraft,
+            ClientGhostDomain ghostMistDomain
     ) {
-
-        ClientGhostDomain ghostMistDomain =
-                getCurrentGhostMistDomain(
-                        minecraft
-                );
 
         if (ghostMistDomain == null) {
             return;
@@ -267,23 +263,5 @@ public final class GhostMistRenderEffect
                     encodedSourceRegion
             );
         }
-    }
-
-    /**
-     * ========================================================
-     * 获取当前鬼雾鬼域
-     * ========================================================
-     */
-    private ClientGhostDomain getCurrentGhostMistDomain(
-            Minecraft minecraft
-    ) {
-
-        if (minecraft.level == null) {
-            return null;
-        }
-
-        return ClientGhostDomainManager.getFirstDomainByType(
-                GhostMistDomainController.DOMAIN_TYPE
-        );
     }
 }

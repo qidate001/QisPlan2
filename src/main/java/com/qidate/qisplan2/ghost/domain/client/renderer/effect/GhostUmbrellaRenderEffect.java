@@ -50,21 +50,17 @@ public final class GhostUmbrellaRenderEffect
             return false;
         }
 
-        return getCurrentGhostUmbrellaDomain(
+        return !getDomains(
                 minecraft
-        ) != null;
+        ).isEmpty();
     }
 
     @Override
     public void setupUniforms(
             ShaderInstance shader,
-            Minecraft minecraft
+            Minecraft minecraft,
+            ClientGhostDomain domain
     ) {
-
-        ClientGhostDomain domain =
-                getCurrentGhostUmbrellaDomain(
-                        minecraft
-                );
 
         if (domain == null) {
             return;
@@ -202,18 +198,5 @@ public final class GhostUmbrellaRenderEffect
                     encodedSourceRegion
             );
         }
-    }
-
-    private ClientGhostDomain getCurrentGhostUmbrellaDomain(
-            Minecraft minecraft
-    ) {
-
-        if (minecraft.level == null) {
-            return null;
-        }
-
-        return ClientGhostDomainManager.getFirstDomainByType(
-                GhostUmbrellaDomainController.DOMAIN_TYPE
-        );
     }
 }
