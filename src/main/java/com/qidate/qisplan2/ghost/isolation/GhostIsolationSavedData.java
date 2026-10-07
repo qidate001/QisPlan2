@@ -1,16 +1,17 @@
 package com.qidate.qisplan2.ghost.isolation;
 
+import net.minecraft.core.BlockPos;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.Tag;
+import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.level.ChunkPos;
+import net.minecraft.world.level.Level;
 import net.minecraft.world.level.saveddata.SavedData;
 
-import java.util.Collection;
-import java.util.LinkedHashMap;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 
 /**
  * 灵异隔绝系统持久化数据。
@@ -48,6 +49,27 @@ public final class GhostIsolationSavedData
      */
     private final Map<UUID, GhostIsolationRegion> regions =
             new LinkedHashMap<>();
+
+    /**
+     * Chunk → Region 索引。
+     *
+     * <p>
+     * 用于快速找到一个 Chunk 内可能存在的灵异隔绝 Region。
+     * </p>
+     *
+     * <p>
+     * Key 同时包含维度与 Chunk 坐标，
+     * 防止不同维度的相同 Chunk 坐标发生冲突。
+     * </p>
+     */
+    private final Map<RegionChunkKey, Set<UUID>> regionsByChunk =
+            new HashMap<>();
+
+    private record RegionChunkKey(
+            ResourceKey<Level> dimension,
+            long chunkPos
+    ) {
+    }
 
     private GhostIsolationSavedData() {
     }
@@ -121,6 +143,10 @@ public final class GhostIsolationSavedData
                     region.getId(),
                     region
             );
+
+            data.addRegionToIndex(
+                    region
+            );
         }
 
         return data;
@@ -178,11 +204,17 @@ public final class GhostIsolationSavedData
     public void addRegion(
             GhostIsolationRegion region
     ) {
+        GhostIsolationRegion old =
+                regions.put(
+                        region.getId(),
+                        region
+                );
 
-        regions.put(
-                region.getId(),
-                region
-        );
+        if (old != null) {
+            removeRegionFromIndex(old);
+        }
+
+        addRegionToIndex(region);
 
         setDirty();
     }
@@ -193,9 +225,154 @@ public final class GhostIsolationSavedData
     public void removeRegion(
             UUID id
     ) {
+        GhostIsolationRegion region =
+                regions.remove(id);
 
-        if (regions.remove(id) != null) {
-            setDirty();
+        if (region == null) {
+            return;
+        }
+
+        removeRegionFromIndex(region);
+
+        setDirty();
+    }
+
+    /**
+     * 添加一个索引。
+     */
+    private void addRegionToIndex(
+            GhostIsolationRegion region
+    ) {
+        ResourceKey<Level> dimension =
+                region.getDimension();
+
+        BlockPos min =
+                region.getMin();
+
+        BlockPos max =
+                region.getMax();
+
+        int minChunkX =
+                min.getX() >> 4;
+
+        int maxChunkX =
+                max.getX() >> 4;
+
+        int minChunkZ =
+                min.getZ() >> 4;
+
+        int maxChunkZ =
+                max.getZ() >> 4;
+
+        for (int chunkX = minChunkX;
+             chunkX <= maxChunkX;
+             chunkX++) {
+
+            for (int chunkZ = minChunkZ;
+                 chunkZ <= maxChunkZ;
+                 chunkZ++) {
+
+                long chunkPos =
+                        ChunkPos.asLong(
+                                chunkX,
+                                chunkZ
+                        );
+
+                RegionChunkKey key =
+                        new RegionChunkKey(
+                                dimension,
+                                chunkPos
+                        );
+
+                regionsByChunk
+                        .computeIfAbsent(
+                                key,
+                                ignored -> new HashSet<>()
+                        )
+                        .add(region.getId());
+            }
+        }
+    }
+
+    /**
+     * 获取区块索引。
+     */
+    public Set<UUID> getRegionIds(
+            ResourceKey<Level> dimension,
+            ChunkPos chunkPos
+    ) {
+        Set<UUID> ids =
+                regionsByChunk.get(
+                        new RegionChunkKey(
+                                dimension,
+                                chunkPos.toLong()
+                        )
+                );
+
+        if (ids == null) {
+            return Set.of();
+        }
+
+        return Collections.unmodifiableSet(ids);
+    }
+
+    /**
+     * 删除一个索引。
+     */
+    private void removeRegionFromIndex(
+            GhostIsolationRegion region
+    ) {
+        ResourceKey<Level> dimension =
+                region.getDimension();
+
+        BlockPos min =
+                region.getMin();
+
+        BlockPos max =
+                region.getMax();
+
+        int minChunkX =
+                min.getX() >> 4;
+
+        int maxChunkX =
+                max.getX() >> 4;
+
+        int minChunkZ =
+                min.getZ() >> 4;
+
+        int maxChunkZ =
+                max.getZ() >> 4;
+
+        for (int chunkX = minChunkX;
+             chunkX <= maxChunkX;
+             chunkX++) {
+
+            for (int chunkZ = minChunkZ;
+                 chunkZ <= maxChunkZ;
+                 chunkZ++) {
+
+                RegionChunkKey key =
+                        new RegionChunkKey(
+                                dimension,
+                                ChunkPos.asLong(
+                                        chunkX,
+                                        chunkZ
+                                )
+                        );
+
+                Set<UUID> ids =
+                        regionsByChunk.get(key);
+
+                if (ids == null) {
+                    continue;
+                }
+
+                ids.remove(region.getId());
+
+                if (ids.isEmpty()) {
+                    regionsByChunk.remove(key);
+                }
+            }
         }
     }
 
@@ -212,6 +389,7 @@ public final class GhostIsolationSavedData
         }
 
         regions.clear();
+        regionsByChunk.clear();
 
         setDirty();
     }
