@@ -347,8 +347,8 @@ public final class GhostDomainEntityTracker {
             /*
              * 灵异隔绝只需要对候选鬼域进行一次判断。
              */
-            boolean isolated =
-                    GhostIsolationSystem.isIsolated(
+            UUID regionId =
+                    GhostIsolationSystem.getRegionId(
                             level,
                             entity.blockPosition()
                     );
@@ -391,7 +391,7 @@ public final class GhostDomainEntityTracker {
                 /*
                  * 灵异隔绝
                  */
-                if (isolated) {
+                if (regionId != null) {
                     continue;
                 }
 

@@ -118,6 +118,17 @@ public final class GhostIsolationGpuData {
      */
     private static boolean dirty = true;
 
+    /**
+     * OpenGL Texture 上传用的持久化 Native Buffer。
+     *
+     * <p>
+     * 生命周期与本类一致。
+     *
+     * <p>
+     * 只能在 Render Thread 使用。
+     */
+    private static FloatBuffer uploadBuffer;
+
     private GhostIsolationGpuData() {
     }
 
@@ -405,12 +416,11 @@ public final class GhostIsolationGpuData {
          * 2 × MAX_CUBOIDS × 4
          * ====================================================
          */
-        FloatBuffer buffer =
-                BufferUtils.createFloatBuffer(
-                        TEXTURE_WIDTH
-                                * MAX_CUBOIDS
-                                * 4
-                );
+        ensureUploadBuffer();
+
+        FloatBuffer buffer = uploadBuffer;
+
+        buffer.clear();
 
         for (int i = 0; i < MAX_CUBOIDS; i++) {
 
@@ -477,6 +487,40 @@ public final class GhostIsolationGpuData {
 
         /*
          * ====================================================
+         * 检查 Texture
+         * ====================================================
+         */
+        if (!buffer.isDirect()) {
+            throw new IllegalStateException(
+                    "GhostIsolationGpuData upload buffer is not direct"
+            );
+        }
+
+        int expectedFloats =
+                TEXTURE_WIDTH
+                        * MAX_CUBOIDS
+                        * 4;
+
+        if (buffer.capacity() < expectedFloats) {
+            throw new IllegalStateException(
+                    "GhostIsolationGpuData upload buffer capacity="
+                            + buffer.capacity()
+                            + ", expected="
+                            + expectedFloats
+            );
+        }
+
+        if (buffer.remaining() != expectedFloats) {
+            throw new IllegalStateException(
+                    "GhostIsolationGpuData upload buffer remaining="
+                            + buffer.remaining()
+                            + ", expected="
+                            + expectedFloats
+            );
+        }
+
+        /*
+         * ====================================================
          * 上传 RGBA32F Texture
          * ====================================================
          */
@@ -529,8 +573,7 @@ public final class GhostIsolationGpuData {
         /*
          * GPU 数据现在与 CPU 数据同步。
          */
-        dirty =
-                false;
+        dirty = false;
     }
 
     /**
@@ -551,6 +594,27 @@ public final class GhostIsolationGpuData {
         QisPlan2.LOGGER.info(
                 "[灵异隔绝 GPU] 创建数据纹理：id={}",
                 textureId
+        );
+    }
+
+    /**
+     * 确保 GPU 上传 Buffer 存在。
+     */
+    private static void ensureUploadBuffer() {
+
+        if (uploadBuffer != null) {
+            return;
+        }
+
+        uploadBuffer = org.lwjgl.system.MemoryUtil.memAllocFloat(
+                TEXTURE_WIDTH
+                        * MAX_CUBOIDS
+                        * 4
+        );
+
+        QisPlan2.LOGGER.info(
+                "[灵异隔绝 GPU] 创建上传 Buffer：{} floats",
+                uploadBuffer.capacity()
         );
     }
 
@@ -629,6 +693,15 @@ public final class GhostIsolationGpuData {
             );
 
             textureId = 0;
+        }
+
+        if (uploadBuffer != null) {
+
+            org.lwjgl.system.MemoryUtil.memFree(
+                    uploadBuffer
+            );
+
+            uploadBuffer = null;
         }
 
         cuboidCount = 0;
