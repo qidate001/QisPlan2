@@ -5,6 +5,7 @@ import com.qidate.qisplan2.network.ghostdomain.GhostDomainNetwork;
 import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.Level;
 
 import java.util.HashMap;
@@ -143,45 +144,36 @@ public final class GhostIsolationSystem {
 
         /*
          * ========================================================
-         * 查询当前世界中已经保存的 Region。
+         * 根据当前位置确定 Chunk。
          * ========================================================
-         *
-         * 这里故意不调用 query()。
-         *
-         * 因为 query() 在没有命中缓存时，
-         * 可能会触发 GhostIsolationDetector
-         * 进行新的空间检测。
-         *
-         * 本方法的职责只是：
-         *
-         *     “这个位置现在属于哪个已经确认的 Region？”
-         *
-         * 而不是：
-         *
-         *     “这个位置是否应该建立一个新的 Region？”
          */
-        for (GhostIsolationRegion region :
-                data.getRegions()) {
+        ChunkPos chunkPos =
+                new ChunkPos(pos);
 
-            /*
-             * ====================================================
-             * 检查位置是否属于当前 Region。
-             * ====================================================
-             */
-            if (!region.containsExact(
-                    level.dimension(),
-                    pos
-            )) {
+        /*
+         * ========================================================
+         * 通过 Chunk Index 获取候选 Region。
+         *
+         * 一个 Chunk 可以对应多个 Region。
+         * ========================================================
+         */
+        for (UUID regionId :
+                data.getRegionIds(
+                        level.dimension(),
+                        chunkPos
+                )) {
+
+            GhostIsolationRegion region =
+                    data.getRegion(regionId);
+
+            if (region == null) {
                 continue;
             }
 
             /*
              * ====================================================
-             * 只有已经确认有效的 Region
+             * 只有有效的 ISOLATED Region
              * 才能作为当前 Region 身份返回。
-             *
-             * DIRTY Region 已经失效，
-             * 不能继续作为有效的空间身份。
              * ====================================================
              */
             if (region.getState() !=
@@ -192,18 +184,27 @@ public final class GhostIsolationSystem {
 
             /*
              * ====================================================
-             * 找到当前位置所属的有效 Region。
+             * 精确判断当前位置是否属于 Region。
+             *
+             * containsExact() 内部已经负责：
+             *
+             *     Dimension
+             *         ↓
+             *     BoundingBox
+             *         ↓
+             *     Cuboid
              * ====================================================
              */
+            if (!region.containsExact(
+                    level.dimension(),
+                    pos
+            )) {
+                continue;
+            }
+
             return region.getId();
         }
 
-        /*
-         * ========================================================
-         * 当前位于开放空间，
-         * 或者没有找到有效的 Region。
-         * ========================================================
-         */
         return null;
     }
 

@@ -4,7 +4,6 @@ import com.qidate.qisplan2.ghost.domain.type.umbrella.GhostUmbrellaDomainControl
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.world.entity.Entity;
 
 public final class GhostDomainServerManager {
 
@@ -22,16 +21,6 @@ public final class GhostDomainServerManager {
             for (ServerPlayer player : level.players()) {
                 GhostUmbrellaDomainController.tick(player);
             }
-
-            /*
-             * 更新实体与鬼域关系
-             */
-//            GhostDomainEntityTracker tracker =
-//                    GhostDomainEntityTracker.get(level);
-//
-//            for (Entity entity : level.getAllEntities()) {
-//                tracker.update(entity);
-//            }
 
             /*
              * 执行鬼域自身行为
