@@ -5,37 +5,17 @@ import com.qidate.qisplan2.death.SupernaturalDeathHandler;
 import com.qidate.qisplan2.entity.ghostmist.GhostMist;
 import com.qidate.qisplan2.ghost.domain.GhostDomain;
 import com.qidate.qisplan2.ghost.domain.GhostDomainBehavior;
-import com.qidate.qisplan2.ghost.domain.GhostDomainEntityTracker;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 
+import java.util.Set;
+
 /**
  * ========================================
  * 鬼雾鬼域行为
  * ========================================
- *
- * 鬼雾的主要规则：
- *
- * 1. 每秒对鬼域内所有符合条件的生物
- *    发动一次灵异袭击。
- *
- * 2. 灵异袭击强度 =
- *
- *        鬼域强度 / 5
- *
- * 3. 如果成功杀死目标：
- *
- *        鬼域强度 +0.1
- *        鬼域半径 +0.05
- *
- * 4. 实体范围由
- *    GhostDomainEntityTracker
- *    统一维护。
- *
- * 5. 只有当鬼雾鬼域是目标当前的
- *    最终生效鬼域时，鬼雾才能发动袭击。
  */
 public final class GhostMistDomainBehavior
         implements GhostDomainBehavior {
@@ -45,7 +25,7 @@ public final class GhostMistDomainBehavior
      *
      * 20 tick = 1 秒
      */
-    private static final long ATTACK_INTERVAL = 20L;
+    private static final int ATTACK_INTERVAL = 20;
 
     /**
      * 鬼雾灵异袭击强度倍率。
@@ -54,31 +34,31 @@ public final class GhostMistDomainBehavior
      */
     private static final double ATTACK_STRENGTH_DIVISOR = 5.0D;
 
+    /**
+     * 鬼雾鬼域行为的执行间隔。
+     *
+     * <p>
+     * GhostDomainManager 会按照这个间隔
+     * 调用一次 onTick()。
+     * </p>
+     *
+     * @return 20 tick，即每秒执行一次
+     */
     @Override
-    public void onCreate(
-            ServerLevel level,
-            GhostDomain domain
-    ) {
+    public int getTickInterval() {
+        return ATTACK_INTERVAL;
     }
 
+    /**
+     * 每次鬼雾鬼域行为执行时，
+     * 对当前最终生效于鬼雾鬼域的实体发动袭击。
+     */
     @Override
-    public void tick(
+    public void onTick(
             ServerLevel level,
-            GhostDomain domain
+            GhostDomain domain,
+            Set<Entity> entities
     ) {
-        /*
-         * ========================================
-         * 每秒发动一次灵异袭击
-         * ========================================
-         */
-
-        if (
-                level.getGameTime()
-                        % ATTACK_INTERVAL
-                        != 0L
-        ) {
-            return;
-        }
 
         /*
          * ========================================
@@ -90,16 +70,13 @@ public final class GhostMistDomainBehavior
          *
          * 这里仍然进行一次安全检查。
          */
-
         Entity source =
                 level.getEntity(
                         domain.getSourceUUID()
                 );
 
-        if (
-                source == null
-                        || source.isRemoved()
-        ) {
+        if (source == null
+                || source.isRemoved()) {
             return;
         }
 
@@ -110,50 +87,48 @@ public final class GhostMistDomainBehavior
          *
          * 鬼域强度 / 5
          */
-
         double attackStrength =
                 domain.getStrength()
                         / ATTACK_STRENGTH_DIVISOR;
 
         /*
          * ========================================
-         * 攻击鬼域范围内的生物
+         * 攻击当前有效实体
          * ========================================
          */
-
-        attackEntitiesInDomain(
+        attackEntities(
                 level,
                 domain,
                 source,
-                attackStrength
+                attackStrength,
+                entities
         );
     }
 
     /**
-     * 攻击鬼域范围内的其他生物。
+     * 攻击已经由 Tracker 确认属于
+     * 当前鬼域最终生效范围的实体。
      *
      * <p>
-     * 实体范围由 GhostDomainEntityTracker
-     * 统一维护，这里不再自行进行 AABB 搜索
-     * 和鬼域范围判定。
+     * 本方法不负责实体发现，
+     * 只负责执行鬼雾的灵异规则。
      * </p>
      *
-     * <p>
-     * 只有当前鬼雾鬼域是该实体的最终生效鬼域时，
-     * 鬼雾才能对其发动灵异袭击。
-     * </p>
+     * @param level 当前服务器维度
+     * @param domain 当前鬼雾鬼域
+     * @param source 鬼雾源头
+     * @param strength 本次袭击强度
+     * @param entities 当前最终生效于该鬼域的实体
      */
-    private void attackEntitiesInDomain(
+    private void attackEntities(
             ServerLevel level,
             GhostDomain domain,
             Entity source,
-            double strength
+            double strength,
+            Set<Entity> entities
     ) {
-        GhostDomainEntityTracker tracker =
-                GhostDomainEntityTracker.get(level);
 
-        for (Entity entity :
-                tracker.getEntities(domain)) {
+        for (Entity entity : entities) {
 
             /*
              * 不攻击鬼雾源头本身。
@@ -178,33 +153,9 @@ public final class GhostMistDomainBehavior
 
             /*
              * ========================================
-             * 判断最终生效鬼域
-             * ========================================
-             *
-             * 一个实体可能同时处于多个鬼域。
-             *
-             * 只有鬼雾鬼域是该实体最终生效的鬼域时，
-             * 才允许鬼雾发动灵异袭击。
-             */
-            GhostDomain effectiveDomain =
-                    tracker.getEffectiveDomain(entity);
-
-            if (effectiveDomain == null) {
-                continue;
-            }
-
-            if (!effectiveDomain.getId().equals(
-                    domain.getId()
-            )) {
-                continue;
-            }
-
-            /*
-             * ========================================
              * 发动灵异袭击
              * ========================================
              */
-
             boolean killed =
                     SupernaturalDeathHandler.tryKill(
                             target,
@@ -219,46 +170,73 @@ public final class GhostMistDomainBehavior
              * 成功击杀后的鬼域成长
              * ========================================
              */
+            if (!killed) {
+                continue;
+            }
 
-            if (killed) {
+            /*
+             * ========================================
+             * 世界中的 GhostMist
+             * ========================================
+             *
+             * 世界鬼雾仍然使用原来的成长逻辑。
+             */
+            if (source instanceof GhostMist ghost) {
 
-                /*
-                 * ========================================
-                 * 世界中的 GhostMist
-                 * ========================================
-                 *
-                 * 世界鬼雾仍然使用原来的成长逻辑。
-                 */
-                if (source instanceof GhostMist ghost) {
+                GhostMistDomainController.grow(
+                        level,
+                        ghost,
+                        domain
+                );
 
-                    GhostMistDomainController.grow(
-                            level,
-                            ghost,
-                            domain
-                    );
+                continue;
+            }
 
-                    continue;
-                }
+            /*
+             * ========================================
+             * 玩家驾驭的鬼雾
+             * ========================================
+             *
+             * 玩家鬼雾的成长必须写回
+             * PossessedGhostDomainData。
+             */
+            if (source instanceof ServerPlayer player) {
 
-                /*
-                 * ========================================
-                 * 玩家驾驭的鬼雾
-                 * ========================================
-                 *
-                 * 玩家鬼雾的成长必须写回
-                 * PossessedGhostDomainData。
-                 */
-                if (source instanceof ServerPlayer player) {
-
-                    GhostMistDomainController.grow(
-                            player,
-                            domain
-                    );
-                }
+                GhostMistDomainController.grow(
+                        player,
+                        domain
+                );
             }
         }
     }
 
+    /**
+     * 当鬼雾鬼域被创建时调用。
+     *
+     * <p>
+     * 当前鬼雾没有额外的创建逻辑。
+     * </p>
+     *
+     * @param level 当前服务器维度
+     * @param domain 新创建的鬼雾鬼域
+     */
+    @Override
+    public void onCreate(
+            ServerLevel level,
+            GhostDomain domain
+    ) {
+    }
+
+    /**
+     * 当鬼雾鬼域被移除时调用。
+     *
+     * <p>
+     * 当前鬼雾没有额外的移除逻辑。
+     * </p>
+     *
+     * @param level 当前服务器维度
+     * @param domain 被移除的鬼雾鬼域
+     */
     @Override
     public void onRemove(
             ServerLevel level,

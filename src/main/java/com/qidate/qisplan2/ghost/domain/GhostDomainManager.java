@@ -22,6 +22,9 @@ public final class GhostDomainManager {
     private final Map<UUID, GhostDomain> domains =
             new LinkedHashMap<>();
 
+    private final Map<UUID, Integer> behaviorTickCounters =
+            new HashMap<>();
+
     /**
      * 鬼域视觉同步缓存。
      *
@@ -165,6 +168,18 @@ public final class GhostDomainManager {
          * ========================================================
          */
         visionStates.remove(
+                domain.getId()
+        );
+
+        /*
+         * ========================================================
+         * 清理 Behavior 周期计时器
+         * ========================================================
+         *
+         * 该鬼域已经被删除，
+         * 不再需要保存它的周期执行状态。
+         */
+        behaviorTickCounters.remove(
                 domain.getId()
         );
 
@@ -695,31 +710,24 @@ public final class GhostDomainManager {
 
             /*
              * ========================================================
-             * 鬼域行为
+             * Source 所在灵异隔绝区域
              * ========================================================
              */
-            domain.getBehavior().tick(
-                    level,
-                    domain
-            );
+            updateSourceRegion(domain);
 
             /*
              * ========================================================
-             * 检测 Source 当前所在的灵异隔绝 Region
+             * Behavior 周期行为
              * ========================================================
              */
-            updateSourceRegion(
-                    domain
-            );
+            tickBehavior(domain);
 
             /*
              * ========================================================
              * 鬼域主人视觉
              * ========================================================
              */
-            updateVision(
-                    domain
-            );
+            updateVision(domain);
         }
 
         /*
@@ -733,6 +741,95 @@ public final class GhostDomainManager {
                     player
             );
         }
+    }
+
+    /**
+     * 执行鬼域行为的周期性逻辑。
+     *
+     * <p>
+     * GhostDomainManager 负责统一控制
+     * 行为的执行频率，而 GhostDomainBehavior
+     * 不再自行实现周期性 Tick 调度。
+     * </p>
+     *
+     * <p>
+     * 实体关系由 GhostDomainEntityTracker
+     * 统一维护。
+     *
+     * <p>
+     * 这里向 Behavior 提供的是：
+     *
+     * <ul>
+     *     <li>当前仍然存在的实体</li>
+     *     <li>当前最终生效于该鬼域的实体</li>
+     * </ul>
+     *
+     * <p>
+     * Behavior 不需要再次访问 Tracker，
+     * 也不需要重新判断鬼域覆盖关系。
+     * </p>
+     *
+     * @param domain 当前鬼域
+     */
+    private void tickBehavior(
+            GhostDomain domain
+    ) {
+
+        GhostDomainBehavior behavior =
+                domain.getBehavior();
+
+        int interval =
+                behavior.getTickInterval();
+
+        if (interval <= 0) {
+            return;
+        }
+
+        int tick =
+                behaviorTickCounters.merge(
+                        domain.getId(),
+                        1,
+                        Integer::sum
+                );
+
+        if (tick < interval) {
+            return;
+        }
+
+        behaviorTickCounters.put(
+                domain.getId(),
+                0
+        );
+
+        /*
+         * ========================================
+         * 获取当前最终生效实体
+         * ========================================
+         *
+         * Tracker 已经完成：
+         *
+         * 1. 空间关系维护
+         * 2. 鬼域覆盖关系维护
+         * 3. 鬼域优先级计算
+         * 4. 最终生效鬼域计算
+         *
+         * Behavior 不再参与这些工作。
+         */
+        Set<Entity> entities =
+                GhostDomainEntityTracker
+                        .get(level)
+                        .getEffectiveEntities(domain);
+
+        /*
+         * ========================================
+         * 执行鬼域行为
+         * ========================================
+         */
+        behavior.onTick(
+                level,
+                domain,
+                entities
+        );
     }
 
     /**

@@ -7,10 +7,19 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
 
+import java.util.Set;
+
 public interface GhostDomainBehavior {
 
     /**
-     * 鬼域创建后调用。
+     * 当鬼域创建时调用。
+     *
+     * <p>
+     * 用于执行该鬼域行为自身的初始化逻辑。
+     * </p>
+     *
+     * @param level 当前服务器维度
+     * @param domain 创建完成的鬼域
      */
     default void onCreate(
             ServerLevel level,
@@ -19,16 +28,63 @@ public interface GhostDomainBehavior {
     }
 
     /**
-     * 每个服务器 tick 调用。
+     * 获取该鬼域行为的周期执行间隔。
+     *
+     * <p>
+     * 返回值表示多少个服务器 Tick 执行一次
+     * {@link #onTick(ServerLevel, GhostDomain, Set)}。
+     * </p>
+     *
+     * <p>
+     * 返回小于等于 0 的值表示该鬼域行为
+     * 不需要周期性 Tick。
+     * </p>
+     *
+     * <p>
+     * 周期计时由 {@link GhostDomainManager} 统一负责，
+     * 具体鬼域行为不应该自行维护 Tick 计数器。
+     * </p>
+     *
+     * @return 周期执行间隔；小于等于 0 表示不需要周期 Tick
      */
-    default void tick(
+    default int getTickInterval() {
+        return 0;
+    }
+
+    /**
+     * 执行鬼域行为的周期性逻辑。
+     *
+     * <p>
+     * 本方法只负责执行行为规则，
+     * 不负责寻找或判断哪些实体处于鬼域中。
+     * </p>
+     *
+     * <p>
+     * {@code entities} 已经由
+     * {@link GhostDomainEntityTracker} 根据服务器权威的
+     * 鬼域实体关系提供。
+     * </p>
+     *
+     * @param level 当前服务器维度
+     * @param domain 当前鬼域
+     * @param entities 当前处于该鬼域中的实体
+     */
+    default void onTick(
             ServerLevel level,
-            GhostDomain domain
+            GhostDomain domain,
+            Set<Entity> entities
     ) {
     }
 
     /**
-     * 鬼域删除前调用。
+     * 当鬼域被删除时调用。
+     *
+     * <p>
+     * 用于执行该鬼域行为自身的清理逻辑。
+     * </p>
+     *
+     * @param level 当前服务器维度
+     * @param domain 被删除的鬼域
      */
     default void onRemove(
             ServerLevel level,
@@ -37,14 +93,23 @@ public interface GhostDomainBehavior {
     }
 
     /**
-     * 实体进入鬼域时调用。
+     * 当实体进入鬼域时调用。
+     *
+     * <p>
+     * 默认情况下，实体进入鬼域后，
+     * 会根据鬼域层数与实体自身的灵异抵抗，
+     * 决定实体实际进入的鬼域层数。
+     * </p>
+     *
+     * @param level 当前服务器维度
+     * @param domain 实体进入的鬼域
+     * @param entity 进入鬼域的实体
      */
     default void onEntityEnter(
             ServerLevel level,
             GhostDomain domain,
             Entity entity
     ) {
-
         int enterLayer =
                 Math.min(
                         domain.getLayer(),
@@ -58,7 +123,16 @@ public interface GhostDomainBehavior {
     }
 
     /**
-     * 实体离开鬼域时调用。
+     * 当实体离开鬼域时调用。
+     *
+     * <p>
+     * 默认情况下，实体离开鬼域后，
+     * 将其鬼域层数恢复为 0。
+     * </p>
+     *
+     * @param level 当前服务器维度
+     * @param domain 实体离开的鬼域
+     * @param entity 离开鬼域的实体
      */
     default void onEntityLeave(
             ServerLevel level,
@@ -72,7 +146,19 @@ public interface GhostDomainBehavior {
     }
 
     /**
-     * 实体从一个鬼域切换到另一个鬼域时调用。
+     * 当实体最终生效的鬼域发生切换时调用。
+     *
+     * <p>
+     * 实体可能同时处于多个重叠鬼域中。
+     * 当最终生效鬼域从 {@code oldDomain}
+     * 切换到 {@code newDomain} 时，
+     * 由新鬼域行为处理这次切换。
+     * </p>
+     *
+     * @param level 当前服务器维度
+     * @param oldDomain 原最终生效鬼域
+     * @param newDomain 新最终生效鬼域
+     * @param entity 发生切换的实体
      */
     default void onEntitySwitch(
             ServerLevel level,
@@ -80,7 +166,6 @@ public interface GhostDomainBehavior {
             GhostDomain newDomain,
             Entity entity
     ) {
-
         int enterLayer =
                 Math.min(
                         newDomain.getLayer(),
@@ -94,7 +179,16 @@ public interface GhostDomainBehavior {
     }
 
     /**
-     * 实体鬼域层数发生改变时调用。
+     * 当实体所在鬼域层数发生变化时调用。
+     *
+     * <p>
+     * 默认情况下，直接将实体的鬼域层数
+     * 更新为当前鬼域层数。
+     * </p>
+     *
+     * @param level 当前服务器维度
+     * @param domain 当前鬼域
+     * @param entity 处于鬼域中的实体
      */
     default void onEntityLayerChange(
             ServerLevel level,
@@ -108,10 +202,12 @@ public interface GhostDomainBehavior {
     }
 
     /**
-     * 判断当鬼域总层数增加时，
-     * 实体是否应该提升到新的层数。
+     * 判断该实体是否应该提升到更高的鬼域层数。
      *
-     * <p>默认不提升。</p>
+     * @param level 当前服务器维度
+     * @param domain 当前鬼域
+     * @param entity 处于鬼域中的实体
+     * @return 是否应该提升实体的鬼域层数
      */
     default boolean shouldRaiseEntityLayer(
             ServerLevel level,
@@ -122,9 +218,22 @@ public interface GhostDomainBehavior {
     }
 
     /**
-     * 判断实体是否可以进入鬼域。
+     * 判断实体是否允许进入该鬼域。
      *
-     * <p>默认情况下，处于灵异隔绝空间中的实体无法进入鬼域。</p>
+     * <p>
+     * 默认情况下，处于灵异隔绝区域中的实体
+     * 不允许进入鬼域。
+     * </p>
+     *
+     * <p>
+     * 实际的实体追踪与进入事件由
+     * {@link GhostDomainEntityTracker} 负责。
+     * </p>
+     *
+     * @param level 当前服务器维度
+     * @param domain 目标鬼域
+     * @param entity 尝试进入鬼域的实体
+     * @return 是否允许实体进入鬼域
      */
     default boolean canEntityEnter(
             ServerLevel level,
@@ -138,9 +247,12 @@ public interface GhostDomainBehavior {
     }
 
     /**
-     * 是否允许使用鬼域传送。
+     * 判断玩家是否允许执行鬼域传送。
      *
-     * <p>默认允许。</p>
+     * @param level 当前服务器维度
+     * @param domain 当前鬼域
+     * @param player 进行传送的玩家
+     * @return 是否允许传送
      */
     default boolean canTeleport(
             ServerLevel level,
@@ -151,10 +263,19 @@ public interface GhostDomainBehavior {
     }
 
     /**
-     * 执行鬼域传送。
+     * 执行玩家的鬼域传送。
      *
-     * 默认实现：
-     * 传送到目标位置。
+     * <p>
+     * 默认实现直接调用 Minecraft 原版玩家传送。
+     * </p>
+     *
+     * @param level 当前服务器维度
+     * @param domain 当前鬼域
+     * @param player 进行传送的玩家
+     * @param x 目标 X 坐标
+     * @param y 目标 Y 坐标
+     * @param z 目标 Z 坐标
+     * @return 是否成功执行传送
      */
     default boolean teleport(
             ServerLevel level,
@@ -164,7 +285,6 @@ public interface GhostDomainBehavior {
             double y,
             double z
     ) {
-
         player.teleportTo(
                 level,
                 x,
@@ -178,14 +298,16 @@ public interface GhostDomainBehavior {
     }
 
     /**
-     * 是否启用鬼域视觉描边。
+     * 判断该鬼域是否拥有实体视觉。
      *
      * <p>
-     * 默认启用。
+     * 如果返回 {@code true}，
+     * GhostDomainManager 会为鬼域主人维护实体视觉状态。
+     * </p>
      *
-     * <p>
-     * 鬼域主人可以看到鬼域范围内的实体，
-     * 并根据实体类型显示对应颜色。
+     * @param level 当前服务器维度
+     * @param domain 当前鬼域
+     * @return 是否启用实体视觉
      */
     default boolean hasEntityVision(
             ServerLevel level,
@@ -195,17 +317,13 @@ public interface GhostDomainBehavior {
     }
 
     /**
-     * 获取鬼域主人飞行能力的解锁层数。
+     * 获取该鬼域达到多少层后可以解锁飞行能力。
      *
      * <p>
-     * 当鬼域层数达到该层数时，
-     * 鬼域主人获得 Minecraft 原版飞行能力。
+     * 返回小于等于 0 的值表示该鬼域不提供飞行能力。
+     * </p>
      *
-     * <p>
-     * 默认第二层解锁。
-     *
-     * <p>
-     * 返回 {@code 0} 表示该鬼域不提供飞行能力。
+     * @return 飞行解锁层数
      */
     default int getFlightUnlockLayer() {
         return 2;

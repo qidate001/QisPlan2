@@ -1008,6 +1008,94 @@ public final class GhostDomainEntityTracker {
     }
 
     /**
+     * 获取当前最终生效于指定鬼域的所有实体。
+     *
+     * <p>
+     * 与 {@link #getEntities(GhostDomain)} 不同，
+     * 这里不会返回仅仅与鬼域发生空间重叠、
+     * 但最终被其他更高优先级鬼域覆盖的实体。
+     * </p>
+     *
+     * <p>
+     * 一个实体可能同时处于多个鬼域。
+     * GhostDomainEntityTracker 会根据鬼域优先级，
+     * 在 {@code effectiveDomains} 中维护该实体最终生效的鬼域。
+     * </p>
+     *
+     * <p>
+     * 因此：
+     *
+     * <pre>
+     * getEntities(domain)
+     *     = 所有与该鬼域发生空间重叠的实体
+     *
+     * getEffectiveEntities(domain)
+     *     = 最终由该鬼域生效的实体
+     * </pre>
+     *
+     * <p>
+     * 这个方法只负责读取 Tracker 已经维护好的关系，
+     * 不会重新进行 AABB 搜索、鬼域范围判断或优先级计算。
+     * </p>
+     *
+     * @param domain 目标鬼域
+     * @return 当前最终生效于该鬼域的实体集合
+     */
+    public Set<Entity> getEffectiveEntities(
+            GhostDomain domain
+    ) {
+
+        Set<UUID> entityIds =
+                domainEntities.get(
+                        domain.getId()
+                );
+
+        if (entityIds == null
+                || entityIds.isEmpty()) {
+
+            return Collections.emptySet();
+        }
+
+        Set<Entity> result =
+                new HashSet<>();
+
+        for (UUID entityId : entityIds) {
+
+            Entity entity =
+                    level.getEntity(entityId);
+
+            if (entity == null
+                    || entity.isRemoved()) {
+                continue;
+            }
+
+            /*
+             * effectiveDomains 已经由 Tracker
+             * 在实体进入、离开、切换鬼域时维护。
+             *
+             * 这里只读取最终结果，
+             * 不重新计算鬼域优先级。
+             */
+            GhostDomain effectiveDomain =
+                    getEffectiveDomain(entity);
+
+            if (effectiveDomain == null) {
+                continue;
+            }
+
+            if (!effectiveDomain.getId().equals(
+                    domain.getId()
+            )) {
+                continue;
+            }
+
+            result.add(entity);
+        }
+
+        return result;
+    }
+
+    /**
      * 当鬼域层数发生变化时，
      * 刷新当前维度中所有实体与该鬼域的关系。
      *
