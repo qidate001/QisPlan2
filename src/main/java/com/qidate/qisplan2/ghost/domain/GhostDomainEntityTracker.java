@@ -8,7 +8,6 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntitySelector;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.phys.AABB;
-import net.minecraft.world.phys.Vec3;
 
 import java.util.*;
 
@@ -47,6 +46,23 @@ public final class GhostDomainEntityTracker {
      */
     private final Map<UUID, Set<UUID>> domainEntities =
             new HashMap<>();
+
+    /**
+     * 自上次消费以后，
+     * 实体与鬼域之间的关系发生过变化的鬼域。
+     *
+     * <p>
+     * 这里只记录“关系发生变化”的事实，
+     * 不关心具体是 Vision、音效还是其它系统需要这个变化。
+     * </p>
+     *
+     * <p>
+     * 当实体进入或离开某个鬼域时，
+     * 对应鬼域会被标记为 Dirty。
+     * </p>
+     */
+    private final Set<UUID> relationshipDirtyDomains =
+            new HashSet<>();
 
     /**
      * Chunk → 覆盖该 Chunk 的所有鬼域 UUID。
@@ -268,6 +284,13 @@ public final class GhostDomainEntityTracker {
             if (entities.isEmpty()) {
                 domainEntities.remove(domainId);
             }
+
+            /*
+             * 实体从该鬼域的追踪关系中移除。
+             */
+            relationshipDirtyDomains.add(
+                    domainId
+            );
         }
 
         /*
@@ -434,13 +457,16 @@ public final class GhostDomainEntityTracker {
                         )
                         .add(entityUUID);
 
-//                if (entity instanceof ServerPlayer) {
-//                    QisPlan2.LOGGER.info(
-//                            "[GhostDomainTracker] 实体进入鬼域: entity={}, domain={}",
-//                            entity.getName().getString(),
-//                            domainId
-//                    );
-//                }
+                /*
+                 * 实体进入该鬼域。
+                 *
+                 * 记录实体关系发生变化，
+                 * 由上层系统决定是否需要重新计算
+                 * Vision 等依赖实体关系的状态。
+                 */
+                relationshipDirtyDomains.add(
+                        domainId
+                );
             }
         }
 
@@ -460,6 +486,16 @@ public final class GhostDomainEntityTracker {
                 if (entities.isEmpty()) {
                     domainEntities.remove(domainId);
                 }
+
+                /*
+                 * 实体离开该鬼域。
+                 *
+                 * 即使 domainEntities 最终变空，
+                 * 这里也必须标记 Dirty。
+                 */
+                relationshipDirtyDomains.add(
+                        domainId
+                );
             }
         }
 
@@ -963,6 +999,61 @@ public final class GhostDomainEntityTracker {
 
         return Collections.unmodifiableSet(
                 result
+        );
+    }
+
+    /**
+     * 获取并清空当前所有发生实体关系变化的鬼域。
+     *
+     * <p>
+     * 本方法采用一次性消费语义：
+     * 调用后，本次已经记录的 Dirty Domain
+     * 将从 Tracker 中移除。
+     * </p>
+     *
+     * <p>
+     * Tracker 只负责记录实体关系变化，
+     * 不负责决定这些变化具体由哪个系统消费。
+     * </p>
+     *
+     * @return 自上次消费以来发生实体关系变化的鬼域 UUID
+     */
+    public Set<UUID> consumeRelationshipDirtyDomains() {
+
+        if (relationshipDirtyDomains.isEmpty()) {
+            return Collections.emptySet();
+        }
+
+        Set<UUID> result =
+                new LinkedHashSet<>(
+                        relationshipDirtyDomains
+                );
+
+        relationshipDirtyDomains.clear();
+
+        return result;
+    }
+
+    /**
+     * 主动标记一个鬼域的实体关系为 Dirty。
+     *
+     * <p>
+     * 本方法用于处理并非由实体移动、
+     * 进入或离开鬼域直接产生的关系刷新需求。
+     *
+     * <p>
+     * 例如玩家重新登录后，
+     * 客户端已经丢失原有 Vision 状态，
+     * 此时虽然实体关系本身没有发生变化，
+     * 仍然需要重新发送一次 Vision。
+     *
+     * @param domainId 需要标记的鬼域 UUID
+     */
+    public void markRelationshipDirty(
+            UUID domainId
+    ) {
+        relationshipDirtyDomains.add(
+                domainId
         );
     }
 

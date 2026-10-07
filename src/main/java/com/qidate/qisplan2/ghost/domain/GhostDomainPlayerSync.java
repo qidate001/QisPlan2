@@ -26,6 +26,10 @@ public final class GhostDomainPlayerSync {
 
         sync(player);
 
+        GhostDomainManager
+                .get(player.serverLevel())
+                .forceVisionSync(player);
+
         QisPlan2.LOGGER.info(
                 "[GhostDomain] 玩家加入，补发鬼域: {}",
                 player.getGameProfile().getName()
@@ -79,6 +83,10 @@ public final class GhostDomainPlayerSync {
          * 再同步新维度已经存在的鬼域。
          */
         sync(player);
+
+        GhostDomainManager
+                .get(player.serverLevel())
+                .forceVisionSync(player);
 
         QisPlan2.LOGGER.info(
                 "[GhostDomain] 玩家切换维度 {} -> {}，补发鬼域: {}",

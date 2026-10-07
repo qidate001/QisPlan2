@@ -721,25 +721,29 @@ public final class GhostDomainManager {
              * ========================================================
              */
             tickBehavior(domain);
-
-            /*
-             * ========================================================
-             * 鬼域主人视觉
-             * ========================================================
-             */
-            updateVision(domain);
         }
 
         /*
          * ============================================================
-         * 鬼域主人飞行权限
+         * 处理发生实体关系变化的鬼域视觉
          * ============================================================
          */
-        for (ServerPlayer player : level.players()) {
+        Set<UUID> relationshipDirtyDomains =
+                GhostDomainEntityTracker
+                        .get(level)
+                        .consumeRelationshipDirtyDomains();
 
-            updateOwnerFlight(
-                    player
-            );
+        for (UUID domainId :
+                relationshipDirtyDomains) {
+
+            GhostDomain domain =
+                    domains.get(domainId);
+
+            if (domain == null) {
+                continue;
+            }
+
+            updateVision(domain);
         }
     }
 
@@ -1120,6 +1124,60 @@ public final class GhostDomainManager {
                         visibleEntities
                 )
         );
+    }
+
+    /**
+     * 强制重新同步指定玩家作为鬼域主人的视觉状态。
+     *
+     * <p>
+     * 玩家重新登录或重新建立客户端连接后，
+     * 客户端已经不再拥有此前的 Vision 状态。
+     *
+     * <p>
+     * 因此除了清除服务端缓存之外，
+     * 还需要将对应鬼域重新标记为 Dirty，
+     * 使下一次 ServerTick 重新发送完整 Vision。
+     *
+     * @param player 需要重新同步 Vision 的玩家
+     */
+    public void forceVisionSync(
+            ServerPlayer player
+    ) {
+
+        UUID playerUUID =
+                player.getUUID();
+
+        GhostDomainEntityTracker tracker =
+                GhostDomainEntityTracker.get(level);
+
+        for (GhostDomain domain :
+                domains.values()) {
+
+            /*
+             * 只有玩家自己作为 Source 的鬼域，
+             * 才需要重新同步这个玩家的 Vision。
+             */
+            if (!domain.getSourceUUID().equals(playerUUID)) {
+                continue;
+            }
+
+            /*
+             * 清除服务端保存的旧 Vision 状态。
+             */
+            visionStates.remove(
+                    domain.getId()
+            );
+
+            /*
+             * 标记该 Domain 的关系状态需要重新消费。
+             *
+             * 虽然实体关系本身没有发生变化，
+             * 但客户端已经丢失 Vision 状态。
+             */
+            tracker.markRelationshipDirty(
+                    domain.getId()
+            );
+        }
     }
 
 
