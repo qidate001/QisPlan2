@@ -19,19 +19,31 @@ public class ModGameRules {
      * 灵异攻击是否强制抹杀玩家
      */
     public static final GameRules.Key<GameRules.BooleanValue> GHOST_DAMAGE_INSTANTLY_KILL =
-            GameRules.register("ghostDamageInstantlyKill", GameRules.Category.MISC, GameRules.BooleanValue.create(true));
+            GameRules.register(
+                    "ghostDamageInstantlyKill",
+                    GameRules.Category.MISC,
+                    GameRules.BooleanValue.create(true)
+            );
 
     /**
      * 启用/禁用 许愿鬼
      */
     public static final GameRules.Key<GameRules.BooleanValue> ISAY_ENABLED =
-            GameRules.register("isayEnabled", GameRules.Category.MISC, GameRules.BooleanValue.create(true));
+            GameRules.register(
+                    "isayEnabled",
+                    GameRules.Category.MISC,
+                    GameRules.BooleanValue.create(true)
+            );
 
     /**
      * 鬼地毯灵异叠加花费时间
      */
     public static final GameRules.Key<GameRules.IntegerValue> GHOST_CARPET_KILL_TIME =
-            GameRules.register("ghostCarpetKillTime", GameRules.Category.MISC, GameRules.IntegerValue.create(300));
+            GameRules.register(
+                    "ghostCarpetKillTime",
+                    GameRules.Category.MISC,
+                    GameRules.IntegerValue.create(300)
+            );
 
     /**
      * 多久 Commit 一次重启数据
@@ -87,5 +99,25 @@ public class ModGameRules {
                     "ghostRebootRestoreInventory",
                     GameRules.Category.MISC,
                     GameRules.BooleanValue.create(false)
+            );
+
+    /**
+     * 灵异隔绝检测标记是否启用
+     *
+     * <p>
+     * 启用时，灵异隔绝检测标记方块会在服务器端
+     * 主动执行一次灵异隔绝检测。
+     *
+     * <p>
+     * 禁用时，标记方块不会执行任何检测行为，
+     * 因此可以安全地将其保留在建筑中，
+     * 用于结构保存、编辑以及后续再次启用检测。
+     */
+    public static final GameRules.Key<GameRules.BooleanValue>
+            GHOST_ISOLATION_MARKER_ENABLED =
+            GameRules.register(
+                    "ghostIsolationMarkerEnabled",
+                    GameRules.Category.MISC,
+                    GameRules.BooleanValue.create(true)
             );
 }

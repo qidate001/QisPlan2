@@ -131,6 +131,31 @@ public class ModBlocks {
                     new Item.Properties()
             );
 
+    // 灵异隔绝检测标记方块
+    public static final DeferredHolder<Block, GhostIsolationMarkerBlock>
+            GHOST_ISOLATION_MARKER =
+            BLOCKS.register(
+                    "ghost_isolation_marker",
+                    () -> new GhostIsolationMarkerBlock(
+                            BlockBehaviour.Properties.of()
+                                    .noLootTable()
+                                    .noOcclusion()
+                                    .strength(-1.0F, 3600000.0F)
+                    )
+            );
+
+    public static final DeferredHolder<
+            BlockEntityType<?>,
+            BlockEntityType<GhostIsolationMarkerBlockEntity>
+            > GHOST_ISOLATION_MARKER_BLOCK_ENTITY =
+            BLOCK_ENTITY_TYPES.register(
+                    "ghost_isolation_marker",
+                    () -> BlockEntityType.Builder.of(
+                            GhostIsolationMarkerBlockEntity::new,
+                            GHOST_ISOLATION_MARKER.get()
+                    ).build(null)
+            );
+
     // 鬼地毯
     public static final DeferredBlock<GhostCarpetBlock> GHOST_CARPET =
             BLOCKS.registerBlock(
