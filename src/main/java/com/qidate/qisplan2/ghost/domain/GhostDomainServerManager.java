@@ -26,12 +26,12 @@ public final class GhostDomainServerManager {
             /*
              * 更新实体与鬼域关系
              */
-            GhostDomainEntityTracker tracker =
-                    GhostDomainEntityTracker.get(level);
-
-            for (Entity entity : level.getAllEntities()) {
-                tracker.update(entity);
-            }
+//            GhostDomainEntityTracker tracker =
+//                    GhostDomainEntityTracker.get(level);
+//
+//            for (Entity entity : level.getAllEntities()) {
+//                tracker.update(entity);
+//            }
 
             /*
              * 执行鬼域自身行为

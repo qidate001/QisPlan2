@@ -8,6 +8,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.phys.AABB;
 
 import java.util.*;
 
@@ -103,6 +104,9 @@ public final class GhostDomainManager {
     public void add(GhostDomain domain) {
 
         domains.put(domain.getId(), domain);
+
+        GhostDomainEntityTracker.get(level)
+                .updateDomain(domain);
 
         domain.getBehavior().onCreate(
                 level,
@@ -266,7 +270,16 @@ public final class GhostDomainManager {
 
         if (domain.getUpdateMode() == GhostDomainUpdateMode.MANUAL) {
 
+            AABB oldArea =
+                    createDomainAABB(domain);
+
             domain.setPosition(x, y, z);
+
+            GhostDomainEntityTracker.get(level)
+                    .updateDomain(
+                            domain,
+                            oldArea
+                    );
 
             GhostDomainNetwork.sendUpdate(
                     level,
@@ -291,12 +304,37 @@ public final class GhostDomainManager {
             return;
         }
 
+        AABB oldArea =
+                createDomainAABB(domain);
+
         domain.setPosition(x, y, z);
+
+        GhostDomainEntityTracker.get(level)
+                .updateDomain(
+                        domain,
+                        oldArea
+                );
 
         GhostDomainNetwork.sendUpdate(
                 level,
                 domain,
                 false
+        );
+    }
+
+    private AABB createDomainAABB(
+            GhostDomain domain
+    ) {
+        double radius =
+                domain.getRadius();
+
+        return new AABB(
+                domain.getX() - radius,
+                domain.getY() - radius,
+                domain.getZ() - radius,
+                domain.getX() + radius,
+                domain.getY() + radius,
+                domain.getZ() + radius
         );
     }
 

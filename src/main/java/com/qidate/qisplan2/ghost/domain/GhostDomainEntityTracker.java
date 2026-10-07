@@ -5,6 +5,8 @@ import com.qidate.qisplan2.ghost.layer.GhostLayerAccess;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EntitySelector;
+import net.minecraft.world.phys.AABB;
 
 import java.util.*;
 
@@ -281,6 +283,90 @@ public final class GhostDomainEntityTracker {
                     currentEffective
             );
         }
+    }
+
+    /**
+     * 更新指定鬼域范围内的实体追踪状态。
+     *
+     * <p>
+     * 与 {@link #update(Entity)} 不同，
+     * 本方法不会扫描整个世界中的实体，
+     * 而是利用 Minecraft 原生实体空间索引，
+     * 只查询当前鬼域 AABB 范围内的实体。
+     *
+     * <p>
+     * 当前阶段主要用于替代：
+     *
+     * <pre>
+     * for (Entity entity : level.getAllEntities()) {
+     *     update(entity);
+     * }
+     * </pre>
+     *
+     * @param domain 需要更新实体关系的鬼域
+     */
+    public void updateDomain(
+            GhostDomain domain
+    ) {
+
+        double radius =
+                domain.getRadius();
+
+        AABB area =
+                new AABB(
+                        domain.getX() - radius,
+                        domain.getY() - radius,
+                        domain.getZ() - radius,
+                        domain.getX() + radius,
+                        domain.getY() + radius,
+                        domain.getZ() + radius
+                );
+
+        for (Entity entity :
+                level.getEntities(
+                        (Entity) null,
+                        area,
+                        EntitySelector.NO_SPECTATORS
+                )) {
+
+            update(entity);
+        }
+    }
+
+    /**
+     * 更新鬼域移动前后的实体关系。
+     *
+     * <p>
+     * 只查询旧鬼域范围和新鬼域范围内的实体，
+     * 不再扫描整个世界。
+     */
+    public void updateDomain(
+            GhostDomain domain,
+            AABB oldArea
+    ) {
+
+        /*
+         * 先更新旧范围。
+         *
+         * 这里可以发现已经离开鬼域的实体，
+         * 从而清理旧的实体关系。
+         */
+        for (Entity entity :
+                level.getEntities(
+                        (Entity) null,
+                        oldArea,
+                        EntitySelector.NO_SPECTATORS
+                )) {
+
+            update(entity);
+        }
+
+        /*
+         * 再更新新范围。
+         *
+         * 这里负责发现进入新鬼域范围的实体。
+         */
+        updateDomain(domain);
     }
 
     /**
@@ -643,15 +729,8 @@ public final class GhostDomainEntityTracker {
         /*
          * 鬼域层数发生变化后，
          * 重新计算当前维度所有实体与鬼域的关系。
-         *
-         * 不直接遍历 domainEntities，
-         * 因为原本无法进入该鬼域的实体
-         * 根本不会存在于 domainEntities 中。
          */
-        for (Entity entity : level.getAllEntities()) {
-
-            update(entity);
-        }
+        updateDomain(domain);
     }
 
     public boolean isInside(
