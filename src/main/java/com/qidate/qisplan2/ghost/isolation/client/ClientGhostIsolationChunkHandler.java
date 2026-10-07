@@ -33,11 +33,11 @@ public final class ClientGhostIsolationChunkHandler {
             ChunkEvent.Load event
     ) {
 
-        if (!(event.getLevel() instanceof ClientLevel)) {
-            return;
-        }
-
-        GhostIsolationGpuData.rebuild();
+//        if (!(event.getLevel() instanceof ClientLevel)) {
+//            return;
+//        }
+//
+//        GhostIsolationGpuData.rebuild();
     }
 
     /**
@@ -52,10 +52,10 @@ public final class ClientGhostIsolationChunkHandler {
             ChunkEvent.Unload event
     ) {
 
-        if (!(event.getLevel() instanceof ClientLevel)) {
-            return;
-        }
-
-        GhostIsolationGpuData.rebuild();
+//        if (!(event.getLevel() instanceof ClientLevel)) {
+//            return;
+//        }
+//
+//        GhostIsolationGpuData.rebuild();
     }
 }

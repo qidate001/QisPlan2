@@ -210,6 +210,14 @@ public final class GhostIsolationGpuData {
             for (ClientGhostIsolationCuboid cuboid :
                     region.getCuboids()) {
 
+
+                /*
+                 * ====================================================
+                 * 这代码会导致游戏崩溃！
+                 * 暂时注释
+                 * 暂无更好的替代解决方案
+                 * ====================================================
+                 */
                 /*
                  * ====================================================
                  * 客户端 Chunk 加载状态过滤
@@ -246,12 +254,12 @@ public final class GhostIsolationGpuData {
                  * 再进行 Cuboid → Chunk 裁剪。
                  * ====================================================
                  */
-                if (!isCuboidInLoadedChunk(
-                        minecraft,
-                        cuboid
-                )) {
-                    continue;
-                }
+//                if (!isCuboidInLoadedChunk(
+//                        minecraft,
+//                        cuboid
+//                )) {
+//                    continue;
+//                }
 
                 if (cuboidCount >= MAX_CUBOIDS) {
                     break;
