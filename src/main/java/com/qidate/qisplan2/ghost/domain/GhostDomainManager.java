@@ -356,11 +356,21 @@ public final class GhostDomainManager {
             return;
         }
 
+        AABB oldArea =
+                createDomainAABB(domain);
+
         domain.setPosition(
                 x,
                 y,
                 z
         );
+
+        GhostDomainEntityTracker
+                .get(level)
+                .updateDomain(
+                        domain,
+                        oldArea
+                );
 
         GhostDomainNetwork.sendUpdate(
                 level,

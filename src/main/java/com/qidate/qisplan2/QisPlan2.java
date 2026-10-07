@@ -3,6 +3,7 @@ package com.qidate.qisplan2;
 import com.mojang.blaze3d.vertex.DefaultVertexFormat;
 import com.mojang.logging.LogUtils;
 import com.qidate.qisplan2.ghost.curse.CurseRegistry;
+import com.qidate.qisplan2.ghost.domain.GhostDomainEntityEvents;
 import com.qidate.qisplan2.ghost.domain.client.renderer.GhostDomainShaderRegistry;
 import com.qidate.qisplan2.core.ModEntityAttributes;
 import com.qidate.qisplan2.core.ModRegistries;
@@ -51,6 +52,11 @@ public class QisPlan2 {
         // 注册 Shaders
         modEventBus.addListener(
                 QisPlan2::registerShaders
+        );
+
+        // 鬼域实体追踪事件
+        NeoForge.EVENT_BUS.register(
+                GhostDomainEntityEvents.class
         );
 
         // 灵异伤害类型注册

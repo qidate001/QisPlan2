@@ -6,7 +6,9 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntitySelector;
+import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.Vec3;
 
 import java.util.*;
 
@@ -46,10 +48,26 @@ public final class GhostDomainEntityTracker {
     private final Map<UUID, Set<UUID>> domainEntities =
             new HashMap<>();
 
-    private static final Map<
-            ServerLevel,
-            GhostDomainEntityTracker
-            > TRACKERS =
+    /**
+     * Chunk → 覆盖该 Chunk 的所有鬼域 UUID。
+     *
+     * <p>
+     * 用于实体更新时快速寻找附近的候选鬼域，
+     * 避免遍历当前维度全部鬼域。
+     */
+    private final Map<Long, Set<UUID>> domainsByChunk =
+            new HashMap<>();
+
+    /**
+     * GhostDomain UUID → 当前空间索引覆盖的 Chunk。
+     *
+     * <p>
+     * 用于鬼域移动或删除时快速更新空间索引。
+     */
+    private final Map<UUID, Set<Long>> domainChunks =
+            new HashMap<>();
+
+    private static final Map<ServerLevel, GhostDomainEntityTracker> TRACKERS =
             new WeakHashMap<>();
 
     public static GhostDomainEntityTracker get(
@@ -69,11 +87,231 @@ public final class GhostDomainEntityTracker {
     }
 
     /**
+     * 将鬼域加入空间索引。
+     */
+    public void addDomainToSpatialIndex(
+            GhostDomain domain
+    ) {
+
+        UUID domainId =
+                domain.getId();
+
+        /*
+         * 防止重复加入。
+         */
+        removeDomainFromSpatialIndex(domainId);
+
+        Set<Long> chunks =
+                getCoveredChunks(domain);
+
+        for (long chunkKey : chunks) {
+
+            domainsByChunk
+                    .computeIfAbsent(
+                            chunkKey,
+                            ignored -> new LinkedHashSet<>()
+                    )
+                    .add(domainId);
+        }
+
+        domainChunks.put(
+                domainId,
+                chunks
+        );
+    }
+
+    /**
+     * 从空间索引中移除鬼域。
+     */
+    private void removeDomainFromSpatialIndex(
+            UUID domainId
+    ) {
+
+        Set<Long> chunks =
+                domainChunks.remove(domainId);
+
+        if (chunks == null) {
+            return;
+        }
+
+        for (long chunkKey : chunks) {
+
+            Set<UUID> domainIds =
+                    domainsByChunk.get(chunkKey);
+
+            if (domainIds == null) {
+                continue;
+            }
+
+            domainIds.remove(domainId);
+
+            if (domainIds.isEmpty()) {
+                domainsByChunk.remove(chunkKey);
+            }
+        }
+    }
+
+    /**
+     * 更新鬼域空间索引。
+     *
+     * <p>
+     * 先删除旧索引，再根据当前鬼域范围建立新索引。
+     */
+    private void updateDomainSpatialIndex(
+            GhostDomain domain
+    ) {
+
+        addDomainToSpatialIndex(domain);
+    }
+
+    /**
+     * 获取鬼域 AABB 覆盖的所有 Chunk。
+     */
+    private Set<Long> getCoveredChunks(
+            GhostDomain domain
+    ) {
+
+        double radius =
+                domain.getRadius();
+
+        AABB area =
+                new AABB(
+                        domain.getX() - radius,
+                        domain.getY() - radius,
+                        domain.getZ() - radius,
+                        domain.getX() + radius,
+                        domain.getY() + radius,
+                        domain.getZ() + radius
+                );
+
+        int minChunkX =
+                ((int) Math.floor(area.minX)) >> 4;
+
+        int maxChunkX =
+                ((int) Math.floor(area.maxX)) >> 4;
+
+        int minChunkZ =
+                ((int) Math.floor(area.minZ)) >> 4;
+
+        int maxChunkZ =
+                ((int) Math.floor(area.maxZ)) >> 4;
+
+        Set<Long> result =
+                new LinkedHashSet<>();
+
+        for (int chunkX = minChunkX;
+             chunkX <= maxChunkX;
+             chunkX++) {
+
+            for (int chunkZ = minChunkZ;
+                 chunkZ <= maxChunkZ;
+                 chunkZ++) {
+
+                result.add(
+                        ChunkPos.asLong(
+                                chunkX,
+                                chunkZ
+                        )
+                );
+            }
+        }
+
+        return result;
+    }
+
+    /**
+     * 移除一个实体当前所有的鬼域追踪关系。
+     *
+     * <p>
+     * 用于实体不再满足 {@link GhostDomainEntityPolicy}
+     * 或实体从鬼域追踪系统中退出时的清理。
+     */
+    public void remove(
+            Entity entity
+    ) {
+
+        UUID entityUUID =
+                entity.getUUID();
+
+        /*
+         * 获取实体当前覆盖的所有鬼域。
+         */
+        Set<UUID> domains =
+                overlappingDomains.remove(
+                        entityUUID
+                );
+
+        if (domains == null
+                || domains.isEmpty()) {
+
+            effectiveDomains.remove(
+                    entityUUID
+            );
+
+            return;
+        }
+
+        /*
+         * 从每一个鬼域的反向实体索引中移除。
+         */
+        for (UUID domainId : domains) {
+
+            Set<UUID> entities =
+                    domainEntities.get(domainId);
+
+            if (entities == null) {
+                continue;
+            }
+
+            entities.remove(entityUUID);
+
+            if (entities.isEmpty()) {
+                domainEntities.remove(domainId);
+            }
+        }
+
+        /*
+         * 获取之前最终生效的鬼域。
+         */
+        UUID previousEffectiveId =
+                effectiveDomains.remove(
+                        entityUUID
+                );
+
+        if (previousEffectiveId == null) {
+            return;
+        }
+
+        GhostDomain previousEffective =
+                GhostDomainManager
+                        .get(level)
+                        .get(previousEffectiveId);
+
+        if (previousEffective == null) {
+            return;
+        }
+
+        /*
+         * 实体不再参与鬼域追踪，
+         * 因此需要正常触发离开事件。
+         */
+        onLeave(
+                entity,
+                previousEffective
+        );
+    }
+
+    /**
      * 更新一个实体当前所处的鬼域状态。
      */
     public void update(
             Entity entity
     ) {
+
+        if (!GhostDomainEntityPolicy.shouldTrack(entity)) {
+            remove(entity);
+            return;
+        }
 
         GhostDomainManager manager =
                 GhostDomainManager.get(level);
@@ -81,47 +319,86 @@ public final class GhostDomainEntityTracker {
         UUID entityUUID =
                 entity.getUUID();
 
-        /*
-         * 找出实体当前覆盖的所有鬼域。
-         */
         Set<UUID> currentDomains =
                 new LinkedHashSet<>();
 
-        for (GhostDomain domain :
-                manager.getDomains()) {
+        /*
+         * ========================================================
+         * 根据实体所在 Chunk 获取候选鬼域
+         * ========================================================
+         *
+         * 空间索引只负责缩小候选范围。
+         *
+         * 最终是否真的处于鬼域，
+         * 仍然由 domain.contains() 精确判断。
+         */
+        long chunkKey =
+                ChunkPos.asLong(
+                        entity.chunkPosition().x,
+                        entity.chunkPosition().z
+                );
+
+        Set<UUID> candidateDomainIds =
+                domainsByChunk.get(chunkKey);
+
+        if (candidateDomainIds != null
+                && !candidateDomainIds.isEmpty()) {
 
             /*
-             * 位置判断
+             * 灵异隔绝只需要对候选鬼域进行一次判断。
              */
-            if (!domain.contains(
-                    entity.getX(),
-                    entity.getY(),
-                    entity.getZ()
-            )) {
-                continue;
-            }
+            boolean isolated =
+                    GhostIsolationSystem.isIsolated(
+                            level,
+                            entity.blockPosition()
+                    );
 
-            /*
-             * 肉身鬼域抵抗
-             */
-            if (!GhostLayerAccess.canEnter(entity, domain)) {
-                continue;
-            }
+            for (UUID domainId :
+                    candidateDomainIds) {
 
-            /*
-             * 灵异隔绝
-             *
-             * 处于灵异隔绝空间中的实体，
-             * 无法被鬼域拉入。
-             */
-            if (GhostIsolationSystem.isIsolated(
-                    level,
-                    entity.blockPosition()
-            )) {
-                continue;
-            }
+                GhostDomain domain =
+                        manager.get(domainId);
 
-            currentDomains.add(domain.getId());
+                /*
+                 * 防止空间索引与鬼域生命周期
+                 * 在极端情况下暂时不同步。
+                 */
+                if (domain == null) {
+                    continue;
+                }
+
+                /*
+                 * 位置判断
+                 */
+                if (!domain.contains(
+                        entity.getX(),
+                        entity.getY(),
+                        entity.getZ()
+                )) {
+                    continue;
+                }
+
+                /*
+                 * 肉身鬼域抵抗
+                 */
+                if (!GhostLayerAccess.canEnter(
+                        entity,
+                        domain
+                )) {
+                    continue;
+                }
+
+                /*
+                 * 灵异隔绝
+                 */
+                if (isolated) {
+                    continue;
+                }
+
+                currentDomains.add(
+                        domain.getId()
+                );
+            }
         }
 
         /*
@@ -294,20 +571,16 @@ public final class GhostDomainEntityTracker {
      * 而是利用 Minecraft 原生实体空间索引，
      * 只查询当前鬼域 AABB 范围内的实体。
      *
-     * <p>
-     * 当前阶段主要用于替代：
-     *
-     * <pre>
-     * for (Entity entity : level.getAllEntities()) {
-     *     update(entity);
-     * }
-     * </pre>
-     *
      * @param domain 需要更新实体关系的鬼域
      */
     public void updateDomain(
             GhostDomain domain
     ) {
+
+        /*
+         * 更新鬼域空间索引。
+         */
+        updateDomainSpatialIndex(domain);
 
         double radius =
                 domain.getRadius();
@@ -346,10 +619,16 @@ public final class GhostDomainEntityTracker {
     ) {
 
         /*
-         * 先更新旧范围。
-         *
-         * 这里可以发现已经离开鬼域的实体，
-         * 从而清理旧的实体关系。
+         * ========================================================
+         * 更新空间索引
+         * ========================================================
+         */
+        updateDomainSpatialIndex(domain);
+
+        /*
+         * ========================================================
+         * 先更新旧范围
+         * ========================================================
          */
         for (Entity entity :
                 level.getEntities(
@@ -362,11 +641,32 @@ public final class GhostDomainEntityTracker {
         }
 
         /*
-         * 再更新新范围。
-         *
-         * 这里负责发现进入新鬼域范围的实体。
+         * ========================================================
+         * 再更新新范围
+         * ========================================================
          */
-        updateDomain(domain);
+        double radius =
+                domain.getRadius();
+
+        AABB newArea =
+                new AABB(
+                        domain.getX() - radius,
+                        domain.getY() - radius,
+                        domain.getZ() - radius,
+                        domain.getX() + radius,
+                        domain.getY() + radius,
+                        domain.getZ() + radius
+                );
+
+        for (Entity entity :
+                level.getEntities(
+                        (Entity) null,
+                        newArea,
+                        EntitySelector.NO_SPECTATORS
+                )) {
+
+            update(entity);
+        }
     }
 
     /**
@@ -385,6 +685,15 @@ public final class GhostDomainEntityTracker {
 
         UUID domainId =
                 removedDomain.getId();
+
+        /*
+         * ========================================================
+         * 清理 Chunk 空间索引
+         * ========================================================
+         */
+        removeDomainFromSpatialIndex(
+                domainId
+        );
 
         Set<UUID> entityUUIDs =
                 domainEntities.remove(domainId);
