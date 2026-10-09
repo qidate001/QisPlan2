@@ -1,9 +1,12 @@
 package com.qidate.qisplan2.core;
 
 import com.mojang.serialization.Codec;
+import com.qidate.qisplan2.ghost.module.GhostModuleData;
 import net.minecraft.core.component.DataComponentType;
 import net.minecraft.network.codec.ByteBufCodecs;
 import net.neoforged.neoforge.registries.DeferredHolder;
+
+import java.util.List;
 
 import static com.qidate.qisplan2.core.ModRegistries.DATA_COMPONENTS;
 
@@ -19,6 +22,24 @@ public class ModDataComponents {
          * 在正确的时机完成 ModDataComponents 的静态初始化。
          */
     }
+
+    // 厉鬼模块列表
+    public static final DeferredHolder<
+            DataComponentType<?>,
+            DataComponentType<List<GhostModuleData.Entry>>
+            > GHOST_MODULES =
+            DATA_COMPONENTS.register(
+                    "ghost_modules",
+                    () -> DataComponentType
+                            .<List<GhostModuleData.Entry>>builder()
+                            .persistent(GhostModuleData.CODEC)
+                            .networkSynchronized(
+                                    ByteBufCodecs.fromCodec(
+                                            GhostModuleData.CODEC
+                                    )
+                            )
+                            .build()
+            );
 
 
     // 鬼皮箱ID
