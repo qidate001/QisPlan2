@@ -1,5 +1,6 @@
 package com.qidate.qisplan2.core;
 
+import com.qidate.qisplan2.entity.ModularGhostEntity;
 import com.qidate.qisplan2.entity.TestGeckoEntity;
 import com.qidate.qisplan2.entity.calling.CallingGhost;
 import com.qidate.qisplan2.entity.ghostdoor.closing.ClosingGhost;
@@ -31,6 +32,34 @@ public class ModEntities {
          * 在正确的时机完成 ModEntities 的静态初始化。
          */
     }
+
+    // 通用模块化厉鬼
+    public static final DeferredHolder<
+            EntityType<?>,
+            EntityType<ModularGhostEntity>
+            > MODULAR_GHOST =
+            ENTITY_TYPES.register(
+                    "modular_ghost",
+                    () -> EntityType.Builder
+                            .of(
+                                    ModularGhostEntity::new,
+                                    MobCategory.MONSTER
+                            )
+                            .sized(
+                                    0.6F,
+                                    1.95F
+                            )
+                            .clientTrackingRange(8)
+                            .updateInterval(3)
+                            .build(
+                                    ResourceLocation
+                                            .fromNamespaceAndPath(
+                                                    MODID,
+                                                    "modular_ghost"
+                                            )
+                                            .toString()
+                            )
+            );
 
     // 夜游鬼
     public static final DeferredHolder<EntityType<?>, EntityType<NightWanderer>> NIGHT_WANDERER =

@@ -4,9 +4,11 @@ import com.qidate.qisplan2.core.ModTags;
 import com.qidate.qisplan2.ghost.module.event.TouchEvent;
 import com.qidate.qisplan2.ghost.module.runtime.GhostModuleRuntime;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.neoforged.neoforge.event.entity.player.AttackEntityEvent;
 import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.neoforge.event.tick.PlayerTickEvent;
 
 /**
  * Minecraft 行为到灵异语义事件的转译层。
@@ -47,5 +49,46 @@ public final class GhostModuleInteractionHandler {
                     new TouchEvent(target)
             );
         }
+    }
+
+    /**
+     * 不可触规则：持有灵异模块物品时，每秒触发一次自身触碰事件。
+     */
+    @SubscribeEvent
+    public static void onPlayerTick(PlayerTickEvent.Post event) {
+        Player player = event.getEntity();
+
+        // 仅在服务器执行
+        if (player.level().isClientSide()) {
+            return;
+        }
+
+        // 每 20 tick 触发一次
+        if (player.tickCount % 20 != 0) {
+            return;
+        }
+
+        // 只检查主手，避免背包中的物品意外触发
+        ItemStack stack = player.getMainHandItem();
+
+        if (stack.isEmpty()) {
+            return;
+        }
+
+        // 必须属于可承载灵异模块的物品
+        if (!stack.is(ModTags.Items.SUPERNATURAL_ITEMS)) {
+            return;
+        }
+
+        // 没有模块则不触发
+        if (GhostItemData.getModules(stack).isEmpty()) {
+            return;
+        }
+
+        // 将持剑者作为触碰事件的目标
+        GhostModuleRuntime.dispatch(
+                stack,
+                new TouchEvent(player)
+        );
     }
 }

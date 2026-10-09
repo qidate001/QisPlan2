@@ -1,5 +1,6 @@
 package com.qidate.qisplan2.core;
 
+import com.qidate.qisplan2.entity.ModularGhostEntity;
 import com.qidate.qisplan2.entity.TestGeckoEntity;
 import com.qidate.qisplan2.entity.calling.CallingGhost;
 import com.qidate.qisplan2.entity.ghostdoor.closing.ClosingGhost;
@@ -17,6 +18,13 @@ public final class ModEntityAttributes {
     public static void register(
             EntityAttributeCreationEvent event
     ) {
+        // 通用模块化厉鬼
+        event.put(
+                ModEntities.MODULAR_GHOST.get(),
+                ModularGhostEntity.createAttributes()
+                        .build()
+        );
+
         // 夜游鬼
         event.put(
                 ModEntities.NIGHT_WANDERER.get(),

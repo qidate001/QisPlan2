@@ -5,6 +5,7 @@ import com.qidate.qisplan2.ghost.module.GhostModule;
 import com.qidate.qisplan2.ghost.module.event.GhostEvent;
 import com.qidate.qisplan2.ghost.module.event.TouchEvent;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.entity.LivingEntity;
 
 import static com.qidate.qisplan2.QisPlan2.MODID;
 
@@ -36,11 +37,9 @@ public final class UntouchableGhostModule implements GhostModule {
             GhostEvent event,
             double intensity
     ) {
-        if (!(event instanceof TouchEvent touchEvent)) {
+        if (!(event instanceof TouchEvent(LivingEntity target))) {
             return;
         }
-
-        var target = touchEvent.target();
 
         SupernaturalDeathHandler.tryKill(
                 target,

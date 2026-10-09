@@ -3,6 +3,7 @@ package com.qidate.qisplan2;
 import com.qidate.qisplan2.client.BlackRainParticle;
 import com.qidate.qisplan2.client.GhostUmbrellaClient;
 import com.qidate.qisplan2.client.curse.CurseClientBootstrap;
+import com.qidate.qisplan2.entity.ModularGhostRenderer;
 import com.qidate.qisplan2.entity.calling.CallingGhostRenderer;
 import com.qidate.qisplan2.entity.ghostdoor.closing.ClosingGhostRenderer;
 import com.qidate.qisplan2.entity.ghostdoor.opening.OpeningGhostRenderer;
@@ -258,6 +259,12 @@ public class QisPlan2Client {
     private static void registerEntityRenderers(
             EntityRenderersEvent.RegisterRenderers event
     ) {
+        // 通用模块化厉鬼
+        event.registerEntityRenderer(
+                ModEntities.MODULAR_GHOST.get(),
+                ModularGhostRenderer::new
+        );
+
         // 夜游鬼
         event.registerEntityRenderer(
                 ModEntities.NIGHT_WANDERER.get(),

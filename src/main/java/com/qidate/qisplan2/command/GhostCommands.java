@@ -7,9 +7,14 @@ import com.mojang.brigadier.context.CommandContext;
 
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.qidate.qisplan2.core.ModAttachments;
+import com.qidate.qisplan2.core.ModTags;
 import com.qidate.qisplan2.ghost.curse.Curse;
 import com.qidate.qisplan2.ghost.curse.CurseManager;
 import com.qidate.qisplan2.ghost.curse.CurseRegistry;
+import com.qidate.qisplan2.ghost.module.GhostItemData;
+import com.qidate.qisplan2.ghost.module.GhostModule;
+import com.qidate.qisplan2.ghost.module.GhostModuleData;
+import com.qidate.qisplan2.ghost.module.GhostModuleRegistry;
 import com.qidate.qisplan2.ghost.possession.data.PossessedGhostData;
 import com.qidate.qisplan2.ghost.possession.data.PossessedGhostState;
 import com.qidate.qisplan2.ghost.possession.manager.PossessionHandler;
@@ -27,6 +32,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.item.ItemStack;
 
 import java.util.Locale;
 import java.util.Map;
@@ -306,6 +312,71 @@ public final class GhostCommands {
                                                                 GhostCommands::curseRemove
                                                         )
                                         )
+                        )
+        );
+
+        /*
+         * ========================================================
+         * /qisplan2 module list
+         * /qisplan2 module add <module>
+         * /qisplan2 module remove <module>
+         * /qisplan2 module info
+         * ========================================================
+         */
+
+        root.then(
+                Commands.literal("module")
+                        .then(
+                                Commands.literal("list")
+                                        .executes(GhostCommands::moduleList)
+                        )
+                        .then(
+                                Commands.literal("add")
+                                        .then(
+                                                Commands.argument(
+                                                                "module",
+                                                                ResourceLocationArgument.id()
+                                                        )
+                                                        .suggests(
+                                                                (context, builder) -> {
+                                                                    for (GhostModule module :
+                                                                            GhostModuleRegistry.getAll()) {
+                                                                        builder.suggest(
+                                                                                module.getId().toString()
+                                                                        );
+                                                                    }
+
+                                                                    return builder.buildFuture();
+                                                                }
+                                                        )
+                                                        .executes(GhostCommands::moduleAdd)
+                                        )
+                        )
+                        .then(
+                                Commands.literal("remove")
+                                        .then(
+                                                Commands.argument(
+                                                                "module",
+                                                                ResourceLocationArgument.id()
+                                                        )
+                                                        .suggests(
+                                                                (context, builder) -> {
+                                                                    for (GhostModule module :
+                                                                            GhostModuleRegistry.getAll()) {
+                                                                        builder.suggest(
+                                                                                module.getId().toString()
+                                                                        );
+                                                                    }
+
+                                                                    return builder.buildFuture();
+                                                                }
+                                                        )
+                                                        .executes(GhostCommands::moduleRemove)
+                                        )
+                        )
+                        .then(
+                                Commands.literal("info")
+                                        .executes(GhostCommands::moduleInfo)
                         )
         );
     }
@@ -1191,6 +1262,218 @@ public final class GhostCommands {
                 );
 
         return 1;
+    }
+
+    /**
+     * /qisplan2 module list
+     *
+     * 列出所有已注册的厉鬼模块。
+     */
+    private static int moduleList(
+            CommandContext<CommandSourceStack> context
+    ) {
+        var source = context.getSource();
+
+        var modules = GhostModuleRegistry.getAll();
+
+        if (modules.isEmpty()) {
+            source.sendSuccess(
+                    () -> Component.literal("当前没有注册任何厉鬼模块。"),
+                    false
+            );
+            return 1;
+        }
+
+        source.sendSuccess(
+                () -> Component.literal("已注册的厉鬼模块："),
+                false
+        );
+
+        for (GhostModule module : modules) {
+            source.sendSuccess(
+                    () -> Component.literal(
+                            "- " + module.getId()
+                    ),
+                    false
+            );
+        }
+
+        return modules.size();
+    }
+
+
+    /**
+     * /qisplan2 module add <module>
+     *
+     * 将指定模块装入主手灵异物品。
+     */
+    private static int moduleAdd(
+            CommandContext<CommandSourceStack> context
+    ) {
+        var source = context.getSource();
+
+        ServerPlayer player = source.getPlayer();
+
+        if (player == null) {
+            source.sendFailure(
+                    Component.literal("该命令只能由玩家执行。")
+            );
+            return 0;
+        }
+
+        ResourceLocation moduleId =
+                ResourceLocationArgument.getId(context, "module");
+
+        GhostModule module = GhostModuleRegistry.get(moduleId);
+
+        if (module == null) {
+            source.sendFailure(
+                    Component.literal("未注册的厉鬼模块：" + moduleId)
+            );
+            return 0;
+        }
+
+        ItemStack stack = player.getMainHandItem();
+
+        if (stack.isEmpty()
+                || !stack.is(ModTags.Items.SUPERNATURAL_ITEMS)) {
+            source.sendFailure(
+                    Component.literal(
+                            "请在主手持有带有 supernatural_items Tag 的灵异物品。"
+                    )
+            );
+            return 0;
+        }
+
+        GhostItemData.addModule(
+                stack,
+                moduleId,
+                1.0D
+        );
+
+        source.sendSuccess(
+                () -> Component.literal(
+                        "已将厉鬼模块 " + moduleId
+                                + " 装入物品，灵异强度：1.0"
+                ),
+                true
+        );
+
+        return 1;
+    }
+
+
+    /**
+     * /qisplan2 module remove <module>
+     *
+     * 从主手物品移除指定模块。
+     */
+    private static int moduleRemove(
+            CommandContext<CommandSourceStack> context
+    ) {
+        var source = context.getSource();
+
+        ServerPlayer player = source.getPlayer();
+
+        if (player == null) {
+            source.sendFailure(
+                    Component.literal("该命令只能由玩家执行。")
+            );
+            return 0;
+        }
+
+        ResourceLocation moduleId =
+                ResourceLocationArgument.getId(context, "module");
+
+        ItemStack stack = player.getMainHandItem();
+
+        if (stack.isEmpty()
+                || !stack.is(ModTags.Items.SUPERNATURAL_ITEMS)) {
+            source.sendFailure(
+                    Component.literal("请先手持灵异物品。")
+            );
+            return 0;
+        }
+
+        if (!GhostItemData.hasModule(stack, moduleId)) {
+            source.sendFailure(
+                    Component.literal(
+                            "该物品没有携带模块：" + moduleId
+                    )
+            );
+            return 0;
+        }
+
+        GhostItemData.removeModule(stack, moduleId);
+
+        source.sendSuccess(
+                () -> Component.literal(
+                        "已从物品中移除厉鬼模块：" + moduleId
+                ),
+                true
+        );
+
+        return 1;
+    }
+
+
+    /**
+     * /qisplan2 module info
+     *
+     * 查看主手物品携带的模块。
+     */
+    private static int moduleInfo(
+            CommandContext<CommandSourceStack> context
+    ) {
+        var source = context.getSource();
+
+        ServerPlayer player = source.getPlayer();
+
+        if (player == null) {
+            source.sendFailure(
+                    Component.literal("该命令只能由玩家执行。")
+            );
+            return 0;
+        }
+
+        ItemStack stack = player.getMainHandItem();
+
+        if (stack.isEmpty()
+                || !stack.is(ModTags.Items.SUPERNATURAL_ITEMS)) {
+            source.sendFailure(
+                    Component.literal("请先手持灵异物品。")
+            );
+            return 0;
+        }
+
+        var modules = GhostItemData.getModules(stack);
+
+        if (modules.isEmpty()) {
+            source.sendSuccess(
+                    () -> Component.literal("该物品尚未装载任何厉鬼模块。"),
+                    false
+            );
+            return 1;
+        }
+
+        source.sendSuccess(
+                () -> Component.literal("物品携带的厉鬼模块："),
+                false
+        );
+
+        for (GhostModuleData.Entry entry : modules) {
+            source.sendSuccess(
+                    () -> Component.literal(
+                            "- " + entry.id()
+                                    + "（灵异强度："
+                                    + entry.intensity()
+                                    + "）"
+                    ),
+                    false
+            );
+        }
+
+        return modules.size();
     }
 
     /*
