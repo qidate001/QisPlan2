@@ -45,7 +45,7 @@ public final class GhostModuleInteractionHandler {
         // TouchEvent 只表达触碰，不携带伤害类型。
         if (event.getTarget() instanceof LivingEntity target) {
             GhostModuleRuntime.dispatch(
-                    stack,
+                    new GhostItemModuleHost(stack),
                     new TouchEvent(target)
             );
         }
@@ -87,7 +87,7 @@ public final class GhostModuleInteractionHandler {
 
         // 将持剑者作为触碰事件的目标
         GhostModuleRuntime.dispatch(
-                stack,
+                new GhostItemModuleHost(stack),
                 new TouchEvent(player)
         );
     }

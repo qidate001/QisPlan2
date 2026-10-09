@@ -4,13 +4,12 @@ import com.qidate.qisplan2.ghost.module.event.GhostEvent;
 import net.minecraft.resources.ResourceLocation;
 
 /**
- * 厉鬼模块基础接口。
+ * 统一的厉鬼模块。
+ *
+ * 不区分物品宿主和实体宿主。
  */
 public interface GhostModule {
 
-    /**
-     * 获取模块唯一标识。
-     */
     ResourceLocation getId();
 
     /**
@@ -19,12 +18,10 @@ public interface GhostModule {
     boolean supports(GhostEvent event);
 
     /**
-     * 处理模块订阅的事件。
-     *
-     * 灵异强度等模块数据由运行时传入。
+     * 处理模块事件。
      */
     void onEvent(
-            GhostEvent event,
-            double intensity
+            GhostModuleContext context,
+            GhostEvent event
     );
 }

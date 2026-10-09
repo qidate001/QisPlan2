@@ -1,7 +1,10 @@
 
 package com.qidate.qisplan2.entity;
 
-import com.qidate.qisplan2.ghost.module.GhostEntityModuleData;
+import com.qidate.qisplan2.ghost.module.GhostModuleData;
+import com.qidate.qisplan2.ghost.module.GhostModuleHost;
+import com.qidate.qisplan2.ghost.module.event.ModuleTickEvent;
+import com.qidate.qisplan2.ghost.module.runtime.GhostModuleRuntime;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.Tag;
@@ -23,7 +26,7 @@ import static com.qidate.qisplan2.QisPlan2.MODID;
  *
  * 实体的具体身份和灵异规则由后续安装的实体模块决定。
  */
-public class ModularGhostEntity extends AbstractGhostEntity {
+public class ModularGhostEntity extends AbstractGhostEntity implements GhostModuleHost {
 
     private static final double BASE_SUPERNATURAL_STRENGTH = 5.0D;
     private static final double BASE_SUPERNATURAL_DEFENSE = 4.0D;
@@ -34,7 +37,7 @@ public class ModularGhostEntity extends AbstractGhostEntity {
     private static final String NBT_MODULE_ID = "id";
     private static final String NBT_MODULE_INTENSITY = "intensity";
 
-    private final List<GhostEntityModuleData.Entry> ghostModules =
+    private final List<GhostModuleData.Entry> ghostModules =
             new ArrayList<>();
 
     public ModularGhostEntity(
@@ -57,7 +60,8 @@ public class ModularGhostEntity extends AbstractGhostEntity {
     /**
      * 获取实体当前安装的模块。
      */
-    public List<GhostEntityModuleData.Entry> getGhostModules() {
+    @Override
+    public List<GhostModuleData.Entry> getModules() {
         return List.copyOf(ghostModules);
     }
 
@@ -80,8 +84,8 @@ public class ModularGhostEntity extends AbstractGhostEntity {
             ResourceLocation moduleId,
             double intensity
     ) {
-        GhostEntityModuleData.Entry entry =
-                new GhostEntityModuleData.Entry(moduleId, intensity);
+        GhostModuleData.Entry entry =
+                new GhostModuleData.Entry(moduleId, intensity);
 
         ghostModules.removeIf(
                 existing -> existing.id().equals(moduleId)
@@ -125,7 +129,7 @@ public class ModularGhostEntity extends AbstractGhostEntity {
 
         ListTag modulesTag = new ListTag();
 
-        for (GhostEntityModuleData.Entry entry : ghostModules) {
+        for (GhostModuleData.Entry entry : ghostModules) {
             CompoundTag moduleTag = new CompoundTag();
 
             moduleTag.putString(
@@ -179,5 +183,13 @@ public class ModularGhostEntity extends AbstractGhostEntity {
 
             addGhostModule(moduleId, intensity);
         }
+    }
+
+    @Override
+    protected void tickGhostAI() {
+        GhostModuleRuntime.dispatch(
+                this,
+                new ModuleTickEvent()
+        );
     }
 }

@@ -1,52 +1,47 @@
 package com.qidate.qisplan2.ghost.module.runtime;
 
-import com.qidate.qisplan2.ghost.module.GhostItemData;
 import com.qidate.qisplan2.ghost.module.GhostModule;
-import com.qidate.qisplan2.ghost.module.GhostModuleData;
+import com.qidate.qisplan2.ghost.module.GhostModuleContext;
+import com.qidate.qisplan2.ghost.module.GhostModuleHost;
 import com.qidate.qisplan2.ghost.module.GhostModuleRegistry;
+import com.qidate.qisplan2.ghost.module.GhostModuleData;
 import com.qidate.qisplan2.ghost.module.event.GhostEvent;
-import net.minecraft.world.item.ItemStack;
 
 import java.util.List;
 
 /**
- * 厉鬼模块运行时。
+ * 统一的厉鬼模块运行时。
  *
- * 负责读取物品携带的模块，并将事件分发给对应实现。
+ * 物品和实体均通过此处分发事件。
  */
 public final class GhostModuleRuntime {
 
     private GhostModuleRuntime() {
     }
 
-    /**
-     * 将事件分发给物品上所有订阅该事件的模块。
-     */
     public static void dispatch(
-            ItemStack stack,
+            GhostModuleHost host,
             GhostEvent event
     ) {
-        if (stack.isEmpty()) {
+        if (host == null || event == null) {
             return;
         }
 
         List<GhostModuleData.Entry> entries =
-                GhostItemData.getModules(stack);
+                List.copyOf(host.getModules());
 
         for (GhostModuleData.Entry entry : entries) {
             GhostModule module =
                     GhostModuleRegistry.get(entry.id());
 
-            // 未注册的模块暂时跳过，避免阻断其他模块。
-            if (module == null) {
+            if (module == null || !module.supports(event)) {
                 continue;
             }
 
-            if (!module.supports(event)) {
-                continue;
-            }
-
-            module.onEvent(event, entry.intensity());
+            module.onEvent(
+                    new GhostModuleContext(host, entry.intensity()),
+                    event
+            );
         }
     }
 }
