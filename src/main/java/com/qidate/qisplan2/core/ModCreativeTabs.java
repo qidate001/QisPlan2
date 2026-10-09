@@ -38,6 +38,7 @@ public class ModCreativeTabs {
                     .title(Component.translatable("itemGroup.qisplan2.qis_plan_ghost"))
                     .icon(() -> GHOST_CARPET_ITEM.get().getDefaultInstance())
                     .displayItems((parameters, output) -> {
+                        output.accept(GHOST_BLANK_SWORD);
                         output.accept(DEATH_CURSE_SWORD);
                         output.accept(GHOST_CARPET_ITEM);
                         output.accept(GHOST_STONE_BRICKS_ITEM);

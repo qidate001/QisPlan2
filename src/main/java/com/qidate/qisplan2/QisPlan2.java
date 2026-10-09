@@ -11,6 +11,8 @@ import com.qidate.qisplan2.core.QisConfig;
 import com.qidate.qisplan2.event.GhostLayerCombatHandler;
 import com.qidate.qisplan2.event.PossessionDamageHandler;
 import com.qidate.qisplan2.ghost.isolation.GhostIsolationPlayerSync;
+import com.qidate.qisplan2.ghost.module.GhostModuleInteractionHandler;
+import com.qidate.qisplan2.ghost.module.GhostModuleRegistry;
 import com.qidate.qisplan2.ghost.possession.ability.GhostAbilityInteractionHandler;
 import com.qidate.qisplan2.ghost.possession.ability.GhostAbilityRegistry;
 import com.qidate.qisplan2.ghost.domain.GhostDomainPlayerLogout;
@@ -52,6 +54,11 @@ public class QisPlan2 {
         // 注册 Shaders
         modEventBus.addListener(
                 QisPlan2::registerShaders
+        );
+
+        // 厉鬼模块交互转译
+        NeoForge.EVENT_BUS.register(
+                GhostModuleInteractionHandler.class
         );
 
         // 鬼域实体追踪事件
@@ -97,6 +104,9 @@ public class QisPlan2 {
 
         // 驭鬼事件注册
         GhostAbilityInteractionHandler.register();
+
+        // 厉鬼模块注册
+        GhostModuleRegistry.bootstrap();
 
         // 鬼门牌注册
         GhostDoorPlateTeleportHandler.register();

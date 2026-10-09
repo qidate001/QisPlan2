@@ -16,6 +16,18 @@ public class ModTags {
     public static final class Items {
 
         /**
+         * 所有能够承载厉鬼模块的灵异物品。
+         */
+        public static final TagKey<Item> SUPERNATURAL_ITEMS =
+                TagKey.create(
+                        Registries.ITEM,
+                        ResourceLocation.fromNamespaceAndPath(
+                                QisPlan2.MODID,
+                                "supernatural_items"
+                        )
+                );
+
+        /**
          * 可以在鬼墓碑上刻字的灵异物品。
          */
         public static final TagKey<Item> GHOST_TOMBSTONE_INSCRIBABLE =

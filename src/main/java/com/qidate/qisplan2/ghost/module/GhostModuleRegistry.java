@@ -1,5 +1,6 @@
 package com.qidate.qisplan2.ghost.module;
 
+import com.qidate.qisplan2.ghost.module.implementation.UntouchableGhostModule;
 import net.minecraft.resources.ResourceLocation;
 
 import java.util.Collection;
@@ -66,5 +67,14 @@ public final class GhostModuleRegistry {
         return Collections.unmodifiableCollection(
                 MODULES.values()
         );
+    }
+
+    /**
+     * 注册内置厉鬼模块。
+     *
+     * 在模组初始化阶段调用一次。
+     */
+    public static void bootstrap() {
+        register(new UntouchableGhostModule());
     }
 }

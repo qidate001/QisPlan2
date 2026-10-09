@@ -38,6 +38,25 @@ public class ModItems {
     }
 
 
+    // 通用灵异白板剑：用于承载不同的厉鬼模块
+    public static final DeferredItem<SwordItem> GHOST_BLANK_SWORD =
+            ITEMS.register(
+                    "ghost_blank_sword",
+                    () -> new SwordItem(
+                            Tiers.IRON,
+                            new Item.Properties()
+                                    .stacksTo(1)
+                                    .attributes(
+                                            SwordItem.createAttributes(
+                                                    Tiers.IRON,
+                                                    3.0F,
+                                                    -2.4F
+                                            )
+                                    )
+                    )
+            );
+
+
 
     // 鬼金币
     public static final DeferredItem<GhostCoin> GHOST_COIN =
