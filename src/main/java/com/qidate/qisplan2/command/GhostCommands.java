@@ -8,6 +8,7 @@ import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.qidate.qisplan2.core.ModAttachments;
 import com.qidate.qisplan2.core.ModTags;
+import com.qidate.qisplan2.entity.ModularGhostEntity;
 import com.qidate.qisplan2.ghost.curse.Curse;
 import com.qidate.qisplan2.ghost.curse.CurseManager;
 import com.qidate.qisplan2.ghost.curse.CurseRegistry;
@@ -32,6 +33,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.item.ItemStack;
 
 import java.util.Locale;
@@ -321,6 +323,10 @@ public final class GhostCommands {
          * /qisplan2 module add <module>
          * /qisplan2 module remove <module>
          * /qisplan2 module info
+         *
+         * /qisplan2 module entity add <targets> <module>
+         * /qisplan2 module entity remove <targets> <module>
+         * /qisplan2 module entity info <targets>
          * ========================================================
          */
 
@@ -377,6 +383,81 @@ public final class GhostCommands {
                         .then(
                                 Commands.literal("info")
                                         .executes(GhostCommands::moduleInfo)
+                        )
+                        .then(
+                                Commands.literal("entity")
+                                        .then(
+                                                Commands.literal("add")
+                                                        .then(
+                                                                Commands.argument(
+                                                                                "targets",
+                                                                                EntityArgument.entities()
+                                                                        )
+                                                                        .then(
+                                                                                Commands.argument(
+                                                                                                "module",
+                                                                                                ResourceLocationArgument.id()
+                                                                                        )
+                                                                                        .suggests(
+                                                                                                (context, builder) -> {
+                                                                                                    for (GhostModule module :
+                                                                                                            GhostModuleRegistry.getAll()) {
+                                                                                                        builder.suggest(
+                                                                                                                module.getId().toString()
+                                                                                                        );
+                                                                                                    }
+
+                                                                                                    return builder.buildFuture();
+                                                                                                }
+                                                                                        )
+                                                                                        .executes(
+                                                                                                GhostCommands::moduleEntityAdd
+                                                                                        )
+                                                                        )
+                                                        )
+                                        )
+                                        .then(
+                                                Commands.literal("remove")
+                                                        .then(
+                                                                Commands.argument(
+                                                                                "targets",
+                                                                                EntityArgument.entities()
+                                                                        )
+                                                                        .then(
+                                                                                Commands.argument(
+                                                                                                "module",
+                                                                                                ResourceLocationArgument.id()
+                                                                                        )
+                                                                                        .suggests(
+                                                                                                (context, builder) -> {
+                                                                                                    for (GhostModule module :
+                                                                                                            GhostModuleRegistry.getAll()) {
+                                                                                                        builder.suggest(
+                                                                                                                module.getId().toString()
+                                                                                                        );
+                                                                                                    }
+
+                                                                                                    return builder.buildFuture();
+                                                                                                }
+                                                                                        )
+                                                                                        .executes(
+                                                                                                GhostCommands::moduleEntityRemove
+                                                                                        )
+                                                                        )
+                                                        )
+                                        )
+                                        .then(
+                                                Commands.literal("info")
+                                                        .then(
+                                                                Commands.argument(
+                                                                                "targets",
+                                                                                EntityArgument.entities()
+                                                                        )
+                                                                        .executes(
+                                                                                GhostCommands::moduleEntityInfo
+                                                                        )
+                                                        )
+                                        )
                         )
         );
     }
@@ -1474,6 +1555,197 @@ public final class GhostCommands {
         }
 
         return modules.size();
+    }
+
+    /**
+     * /qisplan2 module entity add <targets> <module>
+     *
+     * 为选中的模块化厉鬼实体安装模块。
+     */
+    private static int moduleEntityAdd(
+            CommandContext<CommandSourceStack> context
+    ) throws CommandSyntaxException {
+        var source = context.getSource();
+
+        var targets = EntityArgument.getEntities(context, "targets");
+
+        ResourceLocation moduleId =
+                ResourceLocationArgument.getId(context, "module");
+
+        GhostModule module = GhostModuleRegistry.get(moduleId);
+
+        if (module == null) {
+            source.sendFailure(
+                    Component.literal("未注册的厉鬼模块：" + moduleId)
+            );
+            return 0;
+        }
+
+        int successCount = 0;
+        int skippedCount = 0;
+
+        for (Entity target : targets) {
+            if (!(target instanceof ModularGhostEntity ghost)) {
+                skippedCount++;
+                continue;
+            }
+
+            ghost.addGhostModule(moduleId, 1.0D);
+            successCount++;
+        }
+
+        if (successCount == 0) {
+            source.sendFailure(
+                    Component.literal(
+                            "选择的实体中没有可操作的模块化厉鬼实体。"
+                    )
+            );
+            return 0;
+        }
+
+        final int installedCount = successCount;
+        final int skipped = skippedCount;
+
+        source.sendSuccess(
+                () -> Component.literal(
+                        "已为 " + installedCount
+                                + " 个模块化厉鬼实体安装模块 "
+                                + moduleId
+                                + "，灵异强度：1.0"
+                                + (skipped > 0
+                                ? "；跳过了 " + skipped + " 个非模块化厉鬼实体。"
+                                : "")
+                ),
+                true
+        );
+
+        return successCount;
+    }
+
+    /**
+     * /qisplan2 module entity remove <targets> <module>
+     *
+     * 从选中的模块化厉鬼实体移除模块。
+     */
+    private static int moduleEntityRemove(
+            CommandContext<CommandSourceStack> context
+    ) throws CommandSyntaxException {
+        var source = context.getSource();
+
+        var targets = EntityArgument.getEntities(context, "targets");
+
+        ResourceLocation moduleId =
+                ResourceLocationArgument.getId(context, "module");
+
+        int removedCount = 0;
+        int skippedCount = 0;
+
+        for (Entity target : targets) {
+            if (!(target instanceof ModularGhostEntity ghost)) {
+                skippedCount++;
+                continue;
+            }
+
+            if (!ghost.hasGhostModule(moduleId)) {
+                continue;
+            }
+
+            ghost.removeGhostModule(moduleId);
+            removedCount++;
+        }
+
+        if (removedCount == 0) {
+            source.sendFailure(
+                    Component.literal(
+                            "没有实体移除模块 " + moduleId
+                                    + "。请检查目标类型以及实体是否安装该模块。"
+                    )
+            );
+            return 0;
+        }
+
+        final int count = removedCount;
+        final int skipped = skippedCount;
+
+        source.sendSuccess(
+                () -> Component.literal(
+                        "已从 " + count
+                                + " 个模块化厉鬼实体移除模块："
+                                + moduleId
+                                + (skipped > 0
+                                ? "；跳过了 " + skipped + " 个非模块化厉鬼实体。"
+                                : "")
+                ),
+                true
+        );
+
+        return removedCount;
+    }
+
+    /**
+     * /qisplan2 module entity info <targets>
+     *
+     * 查看选中的模块化厉鬼实体携带的模块。
+     */
+    private static int moduleEntityInfo(
+            CommandContext<CommandSourceStack> context
+    ) throws CommandSyntaxException {
+        var source = context.getSource();
+
+        var targets = EntityArgument.getEntities(context, "targets");
+
+        int entityCount = 0;
+
+        for (Entity target : targets) {
+            if (!(target instanceof ModularGhostEntity ghost)) {
+                continue;
+            }
+
+            entityCount++;
+
+            var modules = ghost.getModules();
+
+            source.sendSuccess(
+                    () -> Component.literal(
+                            "实体：" + ghost.getName().getString()
+                                    + "（UUID：" + ghost.getUUID() + "）"
+                    ),
+                    false
+            );
+
+            if (modules.isEmpty()) {
+                source.sendSuccess(
+                        () -> Component.literal(
+                                "  尚未装载任何厉鬼模块。"
+                        ),
+                        false
+                );
+                continue;
+            }
+
+            for (GhostModuleData.Entry entry : modules) {
+                source.sendSuccess(
+                        () -> Component.literal(
+                                "  - " + entry.id()
+                                        + "（灵异强度："
+                                        + entry.intensity()
+                                        + "）"
+                        ),
+                        false
+                );
+            }
+        }
+
+        if (entityCount == 0) {
+            source.sendFailure(
+                    Component.literal(
+                            "选择的实体中没有模块化厉鬼实体。"
+                    )
+            );
+            return 0;
+        }
+
+        return entityCount;
     }
 
     /*

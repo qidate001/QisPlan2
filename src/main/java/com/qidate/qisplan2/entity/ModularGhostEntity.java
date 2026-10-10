@@ -4,20 +4,20 @@ package com.qidate.qisplan2.entity;
 import com.qidate.qisplan2.ghost.module.GhostModuleData;
 import com.qidate.qisplan2.ghost.module.GhostModuleHost;
 import com.qidate.qisplan2.ghost.module.event.ModuleTickEvent;
+import com.qidate.qisplan2.ghost.module.event.TouchEvent;
 import com.qidate.qisplan2.ghost.module.runtime.GhostModuleRuntime;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.level.Level;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 
 import static com.qidate.qisplan2.QisPlan2.MODID;
 
@@ -39,6 +39,8 @@ public class ModularGhostEntity extends AbstractGhostEntity implements GhostModu
 
     private final List<GhostModuleData.Entry> ghostModules =
             new ArrayList<>();
+
+    private final Set<UUID> touchingEntities = new HashSet<>();
 
     public ModularGhostEntity(
             EntityType<? extends ModularGhostEntity> entityType,
@@ -187,9 +189,36 @@ public class ModularGhostEntity extends AbstractGhostEntity implements GhostModu
 
     @Override
     protected void tickGhostAI() {
-        GhostModuleRuntime.dispatch(
-                this,
-                new ModuleTickEvent()
-        );
+        // 保留现有的统一模块 Tick 事件
+        GhostModuleRuntime.dispatch(this, new ModuleTickEvent());
+
+        // 实体触碰检测只在服务端执行
+        if (level().isClientSide) {
+            return;
+        }
+
+        Set<UUID> currentTouchingEntities = new HashSet<>();
+
+        for (LivingEntity target : level().getEntitiesOfClass(
+                LivingEntity.class,
+                getBoundingBox(),
+                entity -> entity != this
+                        && entity.isAlive()
+                        && !entity.isSpectator()
+        )) {
+            UUID targetId = target.getUUID();
+            currentTouchingEntities.add(targetId);
+
+            // 仅在刚刚接触目标时派发一次事件
+            if (touchingEntities.add(targetId)) {
+                GhostModuleRuntime.dispatch(
+                        this,
+                        new TouchEvent(this, target)
+                );
+            }
+        }
+
+        // 目标离开碰撞范围后，允许下一次接触重新触发
+        touchingEntities.retainAll(currentTouchingEntities);
     }
 }

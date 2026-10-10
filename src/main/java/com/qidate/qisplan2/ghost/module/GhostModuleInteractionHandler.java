@@ -18,6 +18,7 @@ public final class GhostModuleInteractionHandler {
     private GhostModuleInteractionHandler() {
     }
 
+
     @SubscribeEvent
     public static void onPlayerAttack(AttackEntityEvent event) {
         // 模块规则只在服务端执行。
@@ -25,8 +26,10 @@ public final class GhostModuleInteractionHandler {
             return;
         }
 
+        var player = event.getEntity();
+
         // 当前第一版只处理玩家主手攻击。
-        ItemStack stack = event.getEntity().getMainHandItem();
+        ItemStack stack = player.getMainHandItem();
 
         if (stack.isEmpty()) {
             return;
@@ -42,11 +45,11 @@ public final class GhostModuleInteractionHandler {
             return;
         }
 
-        // TouchEvent 只表达触碰，不携带伤害类型。
+        // TouchEvent 描述触碰来源与目标，不规定具体效果。
         if (event.getTarget() instanceof LivingEntity target) {
             GhostModuleRuntime.dispatch(
                     new GhostItemModuleHost(stack),
-                    new TouchEvent(target)
+                    new TouchEvent(player, target)
             );
         }
     }
@@ -88,7 +91,7 @@ public final class GhostModuleInteractionHandler {
         // 将持剑者作为触碰事件的目标
         GhostModuleRuntime.dispatch(
                 new GhostItemModuleHost(stack),
-                new TouchEvent(player)
+                new TouchEvent(player, player)
         );
     }
 }

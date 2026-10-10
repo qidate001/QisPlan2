@@ -229,6 +229,18 @@ public class ModDamageTypes {
                     )
             );
 
+    /**
+     * 不可触之鬼灵异攻击
+     */
+    public static final ResourceKey<DamageType> UNTOUCHABLE_GHOST =
+            ResourceKey.create(
+                    Registries.DAMAGE_TYPE,
+                    ResourceLocation.fromNamespaceAndPath(
+                            QisPlan2.MODID,
+                            "untouchable_ghost"
+                    )
+            );
+
 
 
 
@@ -558,6 +570,25 @@ public class ModDamageTypes {
                         )
                         .getHolderOrThrow(
                                 GHOST_MIST
+                        ),
+                entity
+        );
+    }
+
+    /**
+     * 创建不可触之鬼灵异攻击 DamageSource。
+     *
+     * @param entity 实际发起袭击的实体
+     */
+    public static DamageSource untouchableGhost(Entity entity) {
+        return new DamageSource(
+                entity.level()
+                        .registryAccess()
+                        .registryOrThrow(
+                                Registries.DAMAGE_TYPE
+                        )
+                        .getHolderOrThrow(
+                                UNTOUCHABLE_GHOST
                         ),
                 entity
         );
