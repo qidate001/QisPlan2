@@ -1,11 +1,11 @@
 
 package com.qidate.qisplan2.entity;
 
-import com.qidate.qisplan2.ghost.module.GhostModuleData;
-import com.qidate.qisplan2.ghost.module.GhostModuleHost;
+import com.qidate.qisplan2.ghost.module.data.GhostModuleData;
+import com.qidate.qisplan2.ghost.module.GhostModuleDataModifier;
+import com.qidate.qisplan2.ghost.module.GhostModuleRuntime;
 import com.qidate.qisplan2.ghost.module.event.ModuleTickEvent;
 import com.qidate.qisplan2.ghost.module.event.TouchEvent;
-import com.qidate.qisplan2.ghost.module.runtime.GhostModuleRuntime;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.Tag;
@@ -17,7 +17,12 @@ import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.level.Level;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Objects;
+import java.util.Set;
+import java.util.UUID;
 
 import static com.qidate.qisplan2.QisPlan2.MODID;
 
@@ -26,7 +31,8 @@ import static com.qidate.qisplan2.QisPlan2.MODID;
  *
  * 实体的具体身份和灵异规则由后续安装的实体模块决定。
  */
-public class ModularGhostEntity extends AbstractGhostEntity implements GhostModuleHost {
+public class ModularGhostEntity extends AbstractGhostEntity
+        implements GhostModuleDataModifier {
 
     private static final double BASE_SUPERNATURAL_STRENGTH = 5.0D;
     private static final double BASE_SUPERNATURAL_DEFENSE = 4.0D;
@@ -73,8 +79,7 @@ public class ModularGhostEntity extends AbstractGhostEntity implements GhostModu
     public boolean hasGhostModule(ResourceLocation moduleId) {
         Objects.requireNonNull(moduleId, "moduleId");
 
-        return ghostModules.stream()
-                .anyMatch(entry -> entry.id().equals(moduleId));
+        return hasModule(moduleId);
     }
 
     /**
@@ -86,14 +91,21 @@ public class ModularGhostEntity extends AbstractGhostEntity implements GhostModu
             ResourceLocation moduleId,
             double intensity
     ) {
-        GhostModuleData.Entry entry =
-                new GhostModuleData.Entry(moduleId, intensity);
+        Objects.requireNonNull(moduleId, "moduleId");
+
+        if (!isValidIntensity(intensity)) {
+            throw new IllegalArgumentException(
+                    "Invalid ghost module intensity: " + intensity
+            );
+        }
 
         ghostModules.removeIf(
                 existing -> existing.id().equals(moduleId)
         );
 
-        ghostModules.add(entry);
+        ghostModules.add(
+                new GhostModuleData.Entry(moduleId, intensity)
+        );
     }
 
     /**
@@ -105,6 +117,75 @@ public class ModularGhostEntity extends AbstractGhostEntity implements GhostModu
         ghostModules.removeIf(
                 entry -> entry.id().equals(moduleId)
         );
+    }
+
+    @Override
+    public boolean addModule(ResourceLocation moduleId, double intensity) {
+        Objects.requireNonNull(moduleId, "moduleId");
+
+        if (!isValidIntensity(intensity)) {
+            return false;
+        }
+
+        boolean unchanged = ghostModules.stream()
+                .anyMatch(entry ->
+                        entry.id().equals(moduleId)
+                                && Double.compare(
+                                entry.intensity(),
+                                intensity
+                        ) == 0
+                );
+
+        if (unchanged) {
+            return false;
+        }
+
+        addGhostModule(moduleId, intensity);
+        return true;
+    }
+
+    @Override
+    public boolean removeModule(ResourceLocation moduleId) {
+        Objects.requireNonNull(moduleId, "moduleId");
+
+        if (!hasModule(moduleId)) {
+            return false;
+        }
+
+        removeGhostModule(moduleId);
+        return true;
+    }
+
+    @Override
+    public boolean setIntensity(
+            ResourceLocation moduleId,
+            double intensity
+    ) {
+        Objects.requireNonNull(moduleId, "moduleId");
+
+        if (!isValidIntensity(intensity) || !hasModule(moduleId)) {
+            return false;
+        }
+
+        boolean unchanged = ghostModules.stream()
+                .anyMatch(entry ->
+                        entry.id().equals(moduleId)
+                                && Double.compare(
+                                entry.intensity(),
+                                intensity
+                        ) == 0
+                );
+
+        if (unchanged) {
+            return false;
+        }
+
+        addGhostModule(moduleId, intensity);
+        return true;
+    }
+
+    private static boolean isValidIntensity(double intensity) {
+        return Double.isFinite(intensity) && intensity >= 0.0D;
     }
 
     /**
@@ -179,7 +260,7 @@ public class ModularGhostEntity extends AbstractGhostEntity implements GhostModu
                     ? moduleTag.getDouble(NBT_MODULE_INTENSITY)
                     : 1.0D;
 
-            if (!Double.isFinite(intensity) || intensity < 0.0D) {
+            if (!isValidIntensity(intensity)) {
                 continue;
             }
 

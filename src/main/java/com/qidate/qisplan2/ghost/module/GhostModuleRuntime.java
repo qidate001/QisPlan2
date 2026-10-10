@@ -1,10 +1,6 @@
-package com.qidate.qisplan2.ghost.module.runtime;
+package com.qidate.qisplan2.ghost.module;
 
-import com.qidate.qisplan2.ghost.module.GhostModule;
-import com.qidate.qisplan2.ghost.module.GhostModuleContext;
-import com.qidate.qisplan2.ghost.module.GhostModuleHost;
-import com.qidate.qisplan2.ghost.module.GhostModuleRegistry;
-import com.qidate.qisplan2.ghost.module.GhostModuleData;
+import com.qidate.qisplan2.ghost.module.data.GhostModuleData;
 import com.qidate.qisplan2.ghost.module.event.GhostEvent;
 
 import java.util.List;

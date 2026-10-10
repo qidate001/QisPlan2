@@ -1,7 +1,7 @@
 package com.qidate.qisplan2.core;
 
 import com.mojang.serialization.Codec;
-import com.qidate.qisplan2.ghost.module.GhostModuleData;
+import com.qidate.qisplan2.ghost.module.data.GhostModuleData;
 import net.minecraft.core.component.DataComponentType;
 import net.minecraft.network.codec.ByteBufCodecs;
 import net.neoforged.neoforge.registries.DeferredHolder;

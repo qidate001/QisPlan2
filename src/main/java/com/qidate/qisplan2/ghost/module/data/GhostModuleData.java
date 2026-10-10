@@ -1,4 +1,4 @@
-package com.qidate.qisplan2.ghost.module;
+package com.qidate.qisplan2.ghost.module.data;
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;

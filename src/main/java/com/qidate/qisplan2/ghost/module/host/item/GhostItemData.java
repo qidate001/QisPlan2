@@ -1,6 +1,7 @@
-package com.qidate.qisplan2.ghost.module;
+package com.qidate.qisplan2.ghost.module.host.item;
 
 import com.qidate.qisplan2.core.ModDataComponents;
+import com.qidate.qisplan2.ghost.module.data.GhostModuleData;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemStack;
 

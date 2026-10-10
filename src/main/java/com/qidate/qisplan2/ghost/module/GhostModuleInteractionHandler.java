@@ -2,7 +2,8 @@ package com.qidate.qisplan2.ghost.module;
 
 import com.qidate.qisplan2.core.ModTags;
 import com.qidate.qisplan2.ghost.module.event.TouchEvent;
-import com.qidate.qisplan2.ghost.module.runtime.GhostModuleRuntime;
+import com.qidate.qisplan2.ghost.module.host.item.GhostItemData;
+import com.qidate.qisplan2.ghost.module.host.item.GhostItemModuleHost;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
