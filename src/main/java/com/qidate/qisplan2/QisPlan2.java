@@ -2,6 +2,7 @@ package com.qidate.qisplan2;
 
 import com.mojang.blaze3d.vertex.DefaultVertexFormat;
 import com.mojang.logging.LogUtils;
+import com.qidate.qisplan2.event.GhostBlockInteractionHandler;
 import com.qidate.qisplan2.ghost.curse.CurseRegistry;
 import com.qidate.qisplan2.ghost.domain.GhostDomainEntityEvents;
 import com.qidate.qisplan2.ghost.domain.client.renderer.GhostDomainShaderRegistry;
@@ -59,6 +60,11 @@ public class QisPlan2 {
         // 厉鬼模块交互转译
         NeoForge.EVENT_BUS.register(
                 GhostModuleInteractionHandler.class
+        );
+
+        // 方块破坏事件
+        NeoForge.EVENT_BUS.register(
+                GhostBlockInteractionHandler.class
         );
 
         // 鬼域实体追踪事件

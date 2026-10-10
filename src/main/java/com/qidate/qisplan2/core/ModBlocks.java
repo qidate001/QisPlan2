@@ -2,6 +2,7 @@ package com.qidate.qisplan2.core;
 
 import com.qidate.qisplan2.block.*;
 import com.qidate.qisplan2.block.entity.*;
+import com.qidate.qisplan2.ghost.module.implementation.GhostStoneBricksModule;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.level.block.Block;
@@ -175,13 +176,15 @@ public class ModBlocks {
             ITEMS.registerSimpleBlockItem(GHOST_CARPET);
 
     // 鬼石砖
-    public static final DeferredBlock<Block> GHOST_STONE_BRICKS =
+    public static final DeferredBlock<GhostStoneBlock> GHOST_STONE_BRICKS =
             BLOCKS.register(
                     "ghost_stone_bricks",
-                    () -> new Block(
+                    () -> new GhostStoneBlock(
                             BlockBehaviour.Properties.of()
                                     .strength(1.5F, 6.0F)
-                                    .requiresCorrectToolForDrops()
+                                    .requiresCorrectToolForDrops(),
+                            GhostStoneBricksModule.ID,
+                            4.0D
                     )
             );
 
