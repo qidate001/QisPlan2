@@ -85,7 +85,7 @@ public class ModularGhostEntity extends AbstractGhostEntity
     /**
      * 安装模块。
      *
-     * 同一个模块 ID 再次添加时，会更新其灵异强度。
+     * 已存在相同 ID 的模块时，更新强度并保留其他属性。
      */
     public void addGhostModule(
             ResourceLocation moduleId,
@@ -93,19 +93,122 @@ public class ModularGhostEntity extends AbstractGhostEntity
     ) {
         Objects.requireNonNull(moduleId, "moduleId");
 
-        if (!isValidIntensity(intensity)) {
+        if (!isValidValue(intensity)) {
             throw new IllegalArgumentException(
                     "Invalid ghost module intensity: " + intensity
             );
         }
 
+        GhostModuleData.Entry existing = getModuleEntry(moduleId);
+
+        setModuleEntry(
+                new GhostModuleData.Entry(
+                        moduleId,
+                        intensity,
+                        existing == null ? 0.0D : existing.revival(),
+                        existing == null ? 0.0D : existing.shutdown()
+                )
+        );
+    }
+
+    /**
+     * 获取指定模块的完整实例数据。
+     *
+     * 不存在时返回 null。
+     */
+    private GhostModuleData.Entry getModuleEntry(
+            ResourceLocation moduleId
+    ) {
+        return ghostModules.stream()
+                .filter(entry -> entry.id().equals(moduleId))
+                .findFirst()
+                .orElse(null);
+    }
+
+    /**
+     * 添加或替换模块条目。
+     */
+    private void setModuleEntry(GhostModuleData.Entry newEntry) {
         ghostModules.removeIf(
-                existing -> existing.id().equals(moduleId)
+                entry -> entry.id().equals(newEntry.id())
         );
 
-        ghostModules.add(
-                new GhostModuleData.Entry(moduleId, intensity)
+        ghostModules.add(newEntry);
+    }
+
+    /**
+     * 修改模块复苏值，保留其他属性。
+     */
+    @Override
+    public boolean setRevival(
+            ResourceLocation moduleId,
+            double revival
+    ) {
+        Objects.requireNonNull(moduleId, "moduleId");
+
+        if (!isValidValue(revival)) {
+            return false;
+        }
+
+        GhostModuleData.Entry current = getModuleEntry(moduleId);
+
+        if (current == null
+                || Double.compare(current.revival(), revival) == 0) {
+            return false;
+        }
+
+        setModuleEntry(
+                new GhostModuleData.Entry(
+                        moduleId,
+                        current.intensity(),
+                        revival,
+                        current.shutdown()
+                )
         );
+
+        return true;
+    }
+
+    /**
+     * 修改模块死机值，保留其他属性。
+     */
+    @Override
+    public boolean setShutdown(
+            ResourceLocation moduleId,
+            double shutdown
+    ) {
+        Objects.requireNonNull(moduleId, "moduleId");
+
+        if (!isValidValue(shutdown)) {
+            return false;
+        }
+
+        GhostModuleData.Entry current = getModuleEntry(moduleId);
+
+        if (current == null
+                || Double.compare(current.shutdown(), shutdown) == 0) {
+            return false;
+        }
+
+        setModuleEntry(
+                new GhostModuleData.Entry(
+                        moduleId,
+                        current.intensity(),
+                        current.revival(),
+                        shutdown
+                )
+        );
+
+        return true;
+    }
+
+    /**
+     * 校验灵异属性数值。
+     *
+     * 当前阶段统一要求数值有限且非负。
+     */
+    private static boolean isValidValue(double value) {
+        return Double.isFinite(value) && value >= 0.0D;
     }
 
     /**
@@ -156,6 +259,11 @@ public class ModularGhostEntity extends AbstractGhostEntity
         return true;
     }
 
+
+
+    /**
+     * 修改模块强度，保留复苏值和死机值。
+     */
     @Override
     public boolean setIntensity(
             ResourceLocation moduleId,
@@ -163,24 +271,26 @@ public class ModularGhostEntity extends AbstractGhostEntity
     ) {
         Objects.requireNonNull(moduleId, "moduleId");
 
-        if (!isValidIntensity(intensity) || !hasModule(moduleId)) {
+        if (!isValidValue(intensity)) {
             return false;
         }
 
-        boolean unchanged = ghostModules.stream()
-                .anyMatch(entry ->
-                        entry.id().equals(moduleId)
-                                && Double.compare(
-                                entry.intensity(),
-                                intensity
-                        ) == 0
-                );
+        GhostModuleData.Entry current = getModuleEntry(moduleId);
 
-        if (unchanged) {
+        if (current == null
+                || Double.compare(current.intensity(), intensity) == 0) {
             return false;
         }
 
-        addGhostModule(moduleId, intensity);
+        setModuleEntry(
+                new GhostModuleData.Entry(
+                        moduleId,
+                        intensity,
+                        current.revival(),
+                        current.shutdown()
+                )
+        );
+
         return true;
     }
 
