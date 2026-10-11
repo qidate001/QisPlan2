@@ -1,5 +1,6 @@
 {
-  "itemGroup.qisplan2.qis_plan_ghost": "齐计划2：§4鬼",
+  "itemGroup.qisplan2.qis_plan_ghost": "齐计划2：§4厉鬼",
+  "itemGroup.qisplan2.qis_plan_ghost_entities": "齐计划2：§4厉鬼刷怪蛋",
   "itemGroup.qisplan2.qis_plan_ghost_items": "齐计划2：灵异材料",
   "itemGroup.qisplan2.qis_plan_else": "齐计划2：其他内容",
 
@@ -67,6 +68,10 @@
   "item.qisplan2.ghost_lake_water_bucket": "§4鬼湖水桶",
   "item.qisplan2.ghost_blood_bucket": "§4鬼血桶",
   "item.qisplan2.ghost_painting": "§4鬼画",
+  "item.qisplan2.modular_ghost_spawn_egg": "§4通用模块化厉鬼刷怪蛋",
+  "item.qisplan2.modular_ghost_spawn_egg.module": "§4%s刷怪蛋",
+  "item.qisplan2.modular_ghost_spawn_egg.loaded_module": "装载的厉鬼：%s",
+
   "item.qisplan2.night_wanderer_spawn_egg": "§4夜游鬼刷怪蛋",
   "item.qisplan2.invisible_ghost_spawn_egg": "§4不可视之鬼刷怪蛋",
   "item.qisplan2.knocking_ghost_spawn_egg": "§4敲门鬼刷怪蛋",
@@ -83,6 +88,10 @@
   "entity.qisplan2.closing_ghost": "§4关门鬼",
   "entity.qisplan2.calling_ghost": "§4喊人鬼",
   "entity.qisplan2.ghost_mist": "§4鬼雾",
+
+  "module.qisplan2.ghost_stone_bricks": "鬼石砖",
+  "module.qisplan2.invisible_ghost": "不可视之鬼",
+  "module.qisplan2.untouchable_ghost": "不可触之鬼",
 
   "ghost.qisplan2.ghost_painting": "鬼画",
   "ghost.qisplan2.night_wanderer": "夜游鬼",

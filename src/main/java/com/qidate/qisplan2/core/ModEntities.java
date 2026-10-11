@@ -33,10 +33,7 @@ public class ModEntities {
     }
 
     // 通用模块化厉鬼
-    public static final DeferredHolder<
-            EntityType<?>,
-            EntityType<ModularGhostEntity>
-            > MODULAR_GHOST =
+    public static final DeferredHolder<EntityType<?>, EntityType<ModularGhostEntity>> MODULAR_GHOST =
             ENTITY_TYPES.register(
                     "modular_ghost",
                     () -> EntityType.Builder

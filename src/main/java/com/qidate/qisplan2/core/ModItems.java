@@ -326,6 +326,18 @@ public class ModItems {
                     )
             );
 
+    // 通用模块化厉鬼刷怪蛋
+    public static final DeferredItem<SpawnEggItem> MODULAR_GHOST_SPAWN_EGG =
+            ITEMS.register(
+                    "modular_ghost_spawn_egg",
+                    () -> new SpawnEggItem(
+                            MODULAR_GHOST.get(),
+                            0xFFFFFF, // 基础颜色
+                            0x767474, // 斑点颜色
+                            new Item.Properties()
+                    )
+            );
+
     // 夜游鬼刷怪蛋
     public static final DeferredItem<SpawnEggItem> NIGHT_WANDERER_SPAWN_EGG =
             ITEMS.register(

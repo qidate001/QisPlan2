@@ -15,6 +15,9 @@ public final class GhostModuleRuntime {
     private GhostModuleRuntime() {
     }
 
+    /**
+     * 向宿主携带的模块分发事件。
+     */
     public static void dispatch(
             GhostModuleHost host,
             GhostEvent event
@@ -23,6 +26,7 @@ public final class GhostModuleRuntime {
             return;
         }
 
+        // 创建快照，避免遍历过程中模块列表变化影响本次分发。
         List<GhostModuleData.Entry> entries =
                 List.copyOf(host.getModules());
 
@@ -34,8 +38,9 @@ public final class GhostModuleRuntime {
                 continue;
             }
 
+            // 传入模块 ID，由 Context 实时读取该模块实例的数据。
             module.onEvent(
-                    new GhostModuleContext(host, entry.intensity()),
+                    new GhostModuleContext(host, entry.id()),
                     event
             );
         }

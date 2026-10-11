@@ -1,5 +1,6 @@
 {
   "itemGroup.qisplan2.qis_plan_ghost": "Qi's Plan 2: §4Ghost",
+  "itemGroup.qisplan2.qis_plan_ghost_entities": "Qi's Plan 2：§4Ghost Spawn Egg",
   "itemGroup.qisplan2.qis_plan_ghost_items": "Qi's Plan 2: Paranormal Materials",
   "itemGroup.qisplan2.qis_plan_else": "Qi's Plan 2: Other Content",
 
@@ -66,13 +67,17 @@
   "item.qisplan2.ghost_lake_water_bucket": "§4Ghost Lake Water Bucket",
   "item.qisplan2.ghost_blood_bucket": "§4Ghost Blood Bucket",
   "item.qisplan2.ghost_painting": "§4Ghost Painting",
-  "item.qisplan2.night_wanderer_spawn_egg": "§4Night wanderer spawn egg",
-  "item.qisplan2.invisible_ghost_spawn_egg": "§4Invisible ghost spawn egg",
-  "item.qisplan2.knocking_ghost_spawn_egg": "§4Knocking ghost spawn egg",
-  "item.qisplan2.opening_ghost_spawn_egg": "§4Opening ghost spawn egg",
-  "item.qisplan2.closing_ghost_spawn_egg": "§4Closing ghost spawn egg",
-  "item.qisplan2.calling_ghost_spawn_egg": "§4Calling ghost spawn egg",
-  "item.qisplan2.ghost_mist_spawn_egg": "§4Ghost mist spawn egg",
+  "item.qisplan2.modular_ghost_spawn_egg": "§4Universal Modular Ghost Spawn Egg",
+  "item.qisplan2.modular_ghost_spawn_egg.module": "§4%s Spawn Egg",
+  "item.qisplan2.modular_ghost_spawn_egg.loaded_ghost": "Loaded Ghost: %s",
+
+  "item.qisplan2.night_wanderer_spawn_egg": "§4Night Wanderer Spawn Egg",
+  "item.qisplan2.invisible_ghost_spawn_egg": "§4Invisible Ghost Spawn Egg",
+  "item.qisplan2.knocking_ghost_spawn_egg": "§4Knocking Ghost Spawn Egg",
+  "item.qisplan2.opening_ghost_spawn_egg": "§4Opening Ghost Spawn Egg",
+  "item.qisplan2.closing_ghost_spawn_egg": "§4Closing Ghost Spawn Egg",
+  "item.qisplan2.calling_ghost_spawn_egg": "§4Calling Ghost Spawn Egg",
+  "item.qisplan2.ghost_mist_spawn_egg": "§4Ghost Mist Spawn Egg",
 
   "entity.qisplan2.ghost_painting": "§4Ghost Painting",
   "entity.qisplan2.night_wanderer": "§4Night Wanderer",
@@ -82,6 +87,10 @@
   "entity.qisplan2.closing_ghost": "§4Closing Ghost",
   "entity.qisplan2.calling_ghost": "§4Calling Ghost",
   "entity.qisplan2.ghost_mist": "§4Ghost Mist",
+
+  "module.qisplan2.ghost_stone_bricks": "§4Ghost Stone Bricks",
+  "module.qisplan2.invisible_ghost": "§4Invisible Ghost",
+  "module.qisplan2.untouchable_ghost": "§4Untouchable Ghost",
 
   "ghost.qisplan2.ghost_painting": "Ghost Painting",
   "ghost.qisplan2.night_wanderer": "Night Wanderer",

@@ -57,6 +57,10 @@ public final class UntouchableGhostModule implements GhostModule {
         LivingEntity source = touchEvent.source();
         LivingEntity target = touchEvent.target();
 
+        // 不可触规则每触发一次，当前模块实例的复苏值增加 1。
+        context.setRevival(context.revival() + 1.0D);
+
+        // 保留原有的灵异袭击逻辑。
         SupernaturalDeathHandler.tryKill(
                 target,
                 ModDamageTypes.untouchableGhost(source),
