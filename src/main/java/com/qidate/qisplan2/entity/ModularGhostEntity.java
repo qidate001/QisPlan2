@@ -1,5 +1,6 @@
 package com.qidate.qisplan2.entity;
 
+import com.qidate.qisplan2.ghost.module.GhostModuleCustomDataModifier;
 import com.qidate.qisplan2.ghost.module.data.GhostModuleData;
 import com.qidate.qisplan2.ghost.module.GhostModuleDataModifier;
 import com.qidate.qisplan2.ghost.module.GhostModuleRuntime;
@@ -31,7 +32,7 @@ import static com.qidate.qisplan2.QisPlan2.MODID;
  * 实体的具体身份和灵异规则由后续安装的实体模块决定。
  */
 public class ModularGhostEntity extends AbstractGhostEntity
-        implements GhostModuleDataModifier {
+        implements GhostModuleDataModifier, GhostModuleCustomDataModifier {
 
     private static final double BASE_SUPERNATURAL_STRENGTH = 5.0D;
     private static final double BASE_SUPERNATURAL_DEFENSE = 4.0D;
@@ -42,6 +43,8 @@ public class ModularGhostEntity extends AbstractGhostEntity
 
     private static final String NBT_MODULE_ID = "id";
     private static final String NBT_MODULE_INTENSITY = "intensity";
+
+    private static final String NBT_MODULE_CUSTOM_DATA = "customData";
 
     private final List<GhostModuleData.Entry> ghostModules =
             new ArrayList<>();
@@ -106,7 +109,10 @@ public class ModularGhostEntity extends AbstractGhostEntity
                         moduleId,
                         intensity,
                         existing == null ? 0.0D : existing.revival(),
-                        existing == null ? 0.0D : existing.shutdown()
+                        existing == null ? 0.0D : existing.shutdown(),
+                        existing == null
+                                ? new CompoundTag()
+                                : existing.customData()
                 )
         );
     }
@@ -137,6 +143,53 @@ public class ModularGhostEntity extends AbstractGhostEntity
     }
 
     /**
+     * 获取指定模块实例的专属数据副本。
+     */
+    @Override
+    public CompoundTag getModuleCustomData(ResourceLocation moduleId) {
+        Objects.requireNonNull(moduleId, "moduleId");
+
+        GhostModuleData.Entry current = getModuleEntry(moduleId);
+
+        return current == null
+                ? new CompoundTag()
+                : current.customData();
+    }
+
+    /**
+     * 替换指定模块实例的专属数据。
+     *
+     * 保留该模块的全部通用属性。
+     */
+    @Override
+    public boolean setModuleCustomData(
+            ResourceLocation moduleId,
+            CompoundTag customData
+    ) {
+        Objects.requireNonNull(moduleId, "moduleId");
+        Objects.requireNonNull(customData, "customData");
+
+        GhostModuleData.Entry current = getModuleEntry(moduleId);
+
+        if (current == null
+                || current.customData().equals(customData)) {
+            return false;
+        }
+
+        setModuleEntry(
+                new GhostModuleData.Entry(
+                        moduleId,
+                        current.intensity(),
+                        current.revival(),
+                        current.shutdown(),
+                        customData
+                )
+        );
+
+        return true;
+    }
+
+    /**
      * 修改模块复苏值，保留其他属性。
      */
     @Override
@@ -162,7 +215,8 @@ public class ModularGhostEntity extends AbstractGhostEntity
                         moduleId,
                         current.intensity(),
                         revival,
-                        current.shutdown()
+                        current.shutdown(),
+                        current.customData()
                 )
         );
 
@@ -195,7 +249,8 @@ public class ModularGhostEntity extends AbstractGhostEntity
                         moduleId,
                         current.intensity(),
                         current.revival(),
-                        shutdown
+                        shutdown,
+                        current.customData()
                 )
         );
 
@@ -287,7 +342,8 @@ public class ModularGhostEntity extends AbstractGhostEntity
                         moduleId,
                         intensity,
                         current.revival(),
-                        current.shutdown()
+                        current.shutdown(),
+                        current.customData()
                 )
         );
 
@@ -345,6 +401,11 @@ public class ModularGhostEntity extends AbstractGhostEntity
                     entry.shutdown()
             );
 
+            moduleTag.put(
+                    NBT_MODULE_CUSTOM_DATA,
+                    entry.customData()
+            );
+
             modulesTag.add(moduleTag);
         }
 
@@ -394,6 +455,13 @@ public class ModularGhostEntity extends AbstractGhostEntity
                     ? moduleTag.getDouble(NBT_MODULE_SHUTDOWN)
                     : 0.0D;
 
+            CompoundTag customData = moduleTag.contains(
+                    NBT_MODULE_CUSTOM_DATA,
+                    Tag.TAG_COMPOUND
+            )
+                    ? moduleTag.getCompound(NBT_MODULE_CUSTOM_DATA)
+                    : new CompoundTag();
+
             if (!isValidIntensity(intensity)) {
                 continue;
             }
@@ -403,7 +471,8 @@ public class ModularGhostEntity extends AbstractGhostEntity
                             moduleId,
                             intensity,
                             revival,
-                            shutdown
+                            shutdown,
+                            customData
                     )
             );
         }

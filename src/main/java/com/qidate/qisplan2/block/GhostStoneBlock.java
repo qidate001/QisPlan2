@@ -1,4 +1,3 @@
-
 package com.qidate.qisplan2.block;
 
 import com.qidate.qisplan2.ghost.module.GhostModuleHost;

@@ -70,7 +70,10 @@ public final class GhostItemData {
                         moduleId,
                         intensity,
                         current == null ? 0.0D : current.revival(),
-                        current == null ? 0.0D : current.shutdown()
+                        current == null ? 0.0D : current.shutdown(),
+                        current == null
+                                ? new net.minecraft.nbt.CompoundTag()
+                                : current.customData()
                 )
         );
     }
