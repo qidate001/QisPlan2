@@ -1,6 +1,9 @@
 package com.qidate.qisplan2.ghost.module;
 
+import com.qidate.qisplan2.ghost.module.data.GhostModuleInitialData;
 import net.minecraft.resources.ResourceLocation;
+
+import java.util.Objects;
 
 /**
  * 灵异模块数据修改接口。
@@ -11,6 +14,50 @@ import net.minecraft.resources.ResourceLocation;
  * 不负责决定模块如何注册、安装或触发。
  */
 public interface GhostModuleDataModifier extends GhostModuleHost {
+
+    /**
+     * 根据模块定义创建新的模块实例。
+     *
+     * 初始属性只在模块尚未安装时使用。
+     * 如果宿主已经拥有该模块，则不覆盖其当前数据，
+     * 避免重新安装操作意外重置已经积累的复苏值等属性。
+     *
+     * 此方法通过现有的属性修改接口写入初始值，
+     * 因而不要求宿主重复实现整套初始化逻辑。
+     *
+     * @param module 模块定义
+     * @return 成功创建实例时返回 true，否则返回 false
+     */
+    default boolean addModule(GhostModule module) {
+        Objects.requireNonNull(module, "module");
+
+        ResourceLocation moduleId = Objects.requireNonNull(
+                module.getId(),
+                "module id"
+        );
+
+        // 已有实例必须保留自己的当前属性。
+        if (hasModule(moduleId)) {
+            return false;
+        }
+
+        // 从模块定义取得初始属性，而不是硬编码默认值。
+        GhostModuleInitialData initialData = Objects.requireNonNull(
+                module.getInitialData(),
+                "module initial data"
+        );
+
+        // 先创建实例，并写入初始强度。
+        if (!addModule(moduleId, initialData.intensity())) {
+            return false;
+        }
+
+        // 再初始化其他属性。
+        setRevival(moduleId, initialData.revival());
+        setShutdown(moduleId, initialData.shutdown());
+
+        return true;
+    }
 
     /**
      * 添加模块。
@@ -34,8 +81,6 @@ public interface GhostModuleDataModifier extends GhostModuleHost {
     /**
      * 修改指定模块的灵异强度。
      *
-     * 不应影响该模块的复苏值、死机值或其他属性。
-     *
      * @param moduleId 模块 ID
      * @param intensity 新的灵异强度
      * @return 数据发生变化时返回 true，否则返回 false
@@ -45,8 +90,6 @@ public interface GhostModuleDataModifier extends GhostModuleHost {
     /**
      * 修改指定模块的复苏值。
      *
-     * 不应影响该模块的灵异强度、死机值或其他属性。
-     *
      * @param moduleId 模块 ID
      * @param revival 新的复苏值
      * @return 数据发生变化时返回 true，否则返回 false
@@ -55,8 +98,6 @@ public interface GhostModuleDataModifier extends GhostModuleHost {
 
     /**
      * 修改指定模块的死机值。
-     *
-     * 不应影响该模块的灵异强度、复苏值或其他属性。
      *
      * @param moduleId 模块 ID
      * @param shutdown 新的死机值

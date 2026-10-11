@@ -4,6 +4,7 @@ import com.qidate.qisplan2.death.ModDamageTypes;
 import com.qidate.qisplan2.death.SupernaturalDeathHandler;
 import com.qidate.qisplan2.ghost.module.GhostModule;
 import com.qidate.qisplan2.ghost.module.GhostModuleContext;
+import com.qidate.qisplan2.ghost.module.data.GhostModuleInitialData;
 import com.qidate.qisplan2.ghost.module.event.BlockDestructionAttemptEvent;
 import com.qidate.qisplan2.ghost.module.event.GhostEvent;
 import com.qidate.qisplan2.ghost.module.event.ItemDestructionAttemptEvent;
@@ -23,6 +24,18 @@ public final class GhostStoneBricksModule implements GhostModule {
     @Override
     public ResourceLocation getId() {
         return ID;
+    }
+
+    /**
+     * 定义鬼石砖模块的新实例初始属性。
+     */
+    @Override
+    public GhostModuleInitialData getInitialData() {
+        return new GhostModuleInitialData(
+                5.0D,
+                0.0D,
+                0.0D
+        );
     }
 
     @Override

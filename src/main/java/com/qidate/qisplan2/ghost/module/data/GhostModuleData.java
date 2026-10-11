@@ -5,14 +5,13 @@ import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.minecraft.resources.ResourceLocation;
 
 import java.util.List;
+import java.util.Objects;
 
 /**
- * 灵异模块的数据定义。
+ * 灵异模块的实例数据。
  *
- * Entry 保存某个宿主中模块的当前属性值，
+ * 此类保存实体或物品当前持有的模块属性，
  * 不保存模块定义本身。
- *
- * 初始值由模块定义提供，创建模块实例时再复制进去。
  */
 public final class GhostModuleData {
 
@@ -20,7 +19,7 @@ public final class GhostModuleData {
     }
 
     /**
-     * 单个模块实例的数据。
+     * 单个模块实例的当前数据。
      *
      * id：模块标识。
      * intensity：当前灵异强度。
@@ -35,12 +34,44 @@ public final class GhostModuleData {
     ) {
 
         /**
-         * 兼容旧代码：尚未指定复苏值和死机值时，默认均为 0。
+         * 兼容旧代码。
+         *
+         * 未指定复苏值和死机值时，二者默认均为 0。
          */
         public Entry(ResourceLocation id, double intensity) {
             this(id, intensity, 0.0D, 0.0D);
         }
 
+        /**
+         * 根据模块定义创建新的模块实例数据。
+         *
+         * 将定义提供的初始属性复制到新的 Entry 中。
+         * 后续修改 Entry 不会改变模块定义的初始属性。
+         *
+         * @param id 模块标识
+         * @param initialData 模块定义提供的初始属性
+         * @return 新的模块实例数据
+         */
+        public static Entry fromDefinition(
+                ResourceLocation id,
+                GhostModuleInitialData initialData
+        ) {
+            Objects.requireNonNull(id, "id");
+            Objects.requireNonNull(initialData, "initialData");
+
+            return new Entry(
+                    id,
+                    initialData.intensity(),
+                    initialData.revival(),
+                    initialData.shutdown()
+            );
+        }
+
+        /**
+         * 单个模块实例的序列化格式。
+         *
+         * 当旧存档缺少新属性时，使用兼容默认值。
+         */
         public static final Codec<Entry> CODEC =
                 RecordCodecBuilder.create(instance ->
                         instance.group(
@@ -64,8 +95,7 @@ public final class GhostModuleData {
     }
 
     /**
-     * 一份数据中包含的全部模块实例。
+     * 模块实例列表的序列化格式。
      */
-    public static final Codec<List<Entry>> CODEC =
-            Entry.CODEC.listOf();
+    public static final Codec<List<Entry>> CODEC = Entry.CODEC.listOf();
 }

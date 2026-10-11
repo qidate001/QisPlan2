@@ -4,6 +4,7 @@ import com.qidate.qisplan2.death.ModDamageTypes;
 import com.qidate.qisplan2.death.SupernaturalDeathHandler;
 import com.qidate.qisplan2.ghost.module.GhostModule;
 import com.qidate.qisplan2.ghost.module.GhostModuleContext;
+import com.qidate.qisplan2.ghost.module.data.GhostModuleInitialData;
 import com.qidate.qisplan2.ghost.module.event.EntityPerceivedEvent;
 import com.qidate.qisplan2.ghost.module.event.GhostEvent;
 import net.minecraft.resources.ResourceLocation;
@@ -28,6 +29,15 @@ public final class InvisibleGhostModule implements GhostModule {
     @Override
     public ResourceLocation getId() {
         return ID;
+    }
+
+    @Override
+    public GhostModuleInitialData getInitialData() {
+        return new GhostModuleInitialData(
+                20.0D,
+                0.0D,
+                0.0D
+        );
     }
 
     @Override

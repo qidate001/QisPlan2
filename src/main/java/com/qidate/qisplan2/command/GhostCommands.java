@@ -16,6 +16,7 @@ import com.qidate.qisplan2.ghost.module.host.item.GhostItemData;
 import com.qidate.qisplan2.ghost.module.GhostModule;
 import com.qidate.qisplan2.ghost.module.data.GhostModuleData;
 import com.qidate.qisplan2.ghost.module.GhostModuleRegistry;
+import com.qidate.qisplan2.ghost.module.host.item.GhostItemModuleHost;
 import com.qidate.qisplan2.ghost.possession.data.PossessedGhostData;
 import com.qidate.qisplan2.ghost.possession.data.PossessedGhostState;
 import com.qidate.qisplan2.ghost.possession.manager.PossessionHandler;
@@ -1426,16 +1427,30 @@ public final class GhostCommands {
             return 0;
         }
 
-        GhostItemData.addModule(
-                stack,
-                moduleId,
-                1.0D
-        );
+        // 通过统一的数据修改接口安装模块，使用模块定义提供的初始属性。
+        GhostItemModuleHost host = new GhostItemModuleHost(stack);
+
+        if (!host.addModule(module)) {
+            source.sendFailure(
+                    Component.literal(
+                            "物品已持有模块 " + moduleId
+                                    + "，未重复安装。"
+                    )
+            );
+            return 0;
+        }
+
+        var initialData = module.getInitialData();
 
         source.sendSuccess(
                 () -> Component.literal(
                         "已将厉鬼模块 " + moduleId
-                                + " 装入物品，灵异强度：1.0"
+                                + " 装入物品，初始灵异强度："
+                                + initialData.intensity()
+                                + "，初始复苏值："
+                                + initialData.revival()
+                                + "，初始死机值："
+                                + initialData.shutdown()
                 ),
                 true
         );
@@ -1590,8 +1605,11 @@ public final class GhostCommands {
                 continue;
             }
 
-            ghost.addGhostModule(moduleId, 1.0D);
-            successCount++;
+            if (ghost.addModule(module)) {
+                successCount++;
+            } else {
+                skippedCount++;
+            }
         }
 
         if (successCount == 0) {
@@ -1606,12 +1624,19 @@ public final class GhostCommands {
         final int installedCount = successCount;
         final int skipped = skippedCount;
 
+        var initialData = module.getInitialData();
+
         source.sendSuccess(
                 () -> Component.literal(
                         "已为 " + installedCount
                                 + " 个模块化厉鬼实体安装模块 "
                                 + moduleId
-                                + "，灵异强度：1.0"
+                                + "，初始灵异强度："
+                                + initialData.intensity()
+                                + "，初始复苏值："
+                                + initialData.revival()
+                                + "，初始死机值："
+                                + initialData.shutdown()
                                 + (skipped > 0
                                 ? "；跳过了 " + skipped + " 个非模块化厉鬼实体。"
                                 : "")
