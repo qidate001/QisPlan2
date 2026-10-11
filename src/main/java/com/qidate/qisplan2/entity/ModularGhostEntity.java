@@ -1,4 +1,3 @@
-
 package com.qidate.qisplan2.entity;
 
 import com.qidate.qisplan2.ghost.module.data.GhostModuleData;
@@ -37,8 +36,9 @@ public class ModularGhostEntity extends AbstractGhostEntity
     private static final double BASE_SUPERNATURAL_STRENGTH = 5.0D;
     private static final double BASE_SUPERNATURAL_DEFENSE = 4.0D;
 
-    private static final String NBT_GHOST_MODULES =
-            "QisPlan2GhostModules";
+    private static final String NBT_GHOST_MODULES = "QisPlan2GhostModules";
+    private static final String NBT_MODULE_REVIVAL = "revival";
+    private static final String NBT_MODULE_SHUTDOWN = "shutdown";
 
     private static final String NBT_MODULE_ID = "id";
     private static final String NBT_MODULE_INTENSITY = "intensity";
@@ -225,6 +225,16 @@ public class ModularGhostEntity extends AbstractGhostEntity
                     entry.intensity()
             );
 
+            moduleTag.putDouble(
+                    NBT_MODULE_REVIVAL,
+                    entry.revival()
+            );
+
+            moduleTag.putDouble(
+                    NBT_MODULE_SHUTDOWN,
+                    entry.shutdown()
+            );
+
             modulesTag.add(moduleTag);
         }
 
@@ -260,11 +270,32 @@ public class ModularGhostEntity extends AbstractGhostEntity
                     ? moduleTag.getDouble(NBT_MODULE_INTENSITY)
                     : 1.0D;
 
+            double revival = moduleTag.contains(
+                    NBT_MODULE_REVIVAL,
+                    Tag.TAG_DOUBLE
+            )
+                    ? moduleTag.getDouble(NBT_MODULE_REVIVAL)
+                    : 0.0D;
+
+            double shutdown = moduleTag.contains(
+                    NBT_MODULE_SHUTDOWN,
+                    Tag.TAG_DOUBLE
+            )
+                    ? moduleTag.getDouble(NBT_MODULE_SHUTDOWN)
+                    : 0.0D;
+
             if (!isValidIntensity(intensity)) {
                 continue;
             }
 
-            addGhostModule(moduleId, intensity);
+            ghostModules.add(
+                    new GhostModuleData.Entry(
+                            moduleId,
+                            intensity,
+                            revival,
+                            shutdown
+                    )
+            );
         }
     }
 

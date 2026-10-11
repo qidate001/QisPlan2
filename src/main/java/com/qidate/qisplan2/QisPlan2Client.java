@@ -8,7 +8,6 @@ import com.qidate.qisplan2.entity.calling.CallingGhostRenderer;
 import com.qidate.qisplan2.entity.ghostdoor.closing.ClosingGhostRenderer;
 import com.qidate.qisplan2.entity.ghostdoor.opening.OpeningGhostRenderer;
 import com.qidate.qisplan2.entity.ghostmist.GhostMistRenderer;
-import com.qidate.qisplan2.entity.invisible.InvisibleGhostRenderer;
 import com.qidate.qisplan2.entity.ghostdoor.knocking.KnockingGhostRenderer;
 import com.qidate.qisplan2.entity.nightwanderer.NightWandererRenderer;
 import com.qidate.qisplan2.entity.painting.GhostPaintingRenderer;
@@ -287,12 +286,6 @@ public class QisPlan2Client {
         event.registerEntityRenderer(
                 ModEntities.CLOSING_GHOST.get(),
                 ClosingGhostRenderer::new
-        );
-
-        // 不可视之鬼
-        event.registerEntityRenderer(
-                ModEntities.INVISIBLE_GHOST.get(),
-                InvisibleGhostRenderer::new
         );
 
         // 喊人鬼

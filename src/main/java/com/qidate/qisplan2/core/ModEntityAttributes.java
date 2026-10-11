@@ -6,7 +6,6 @@ import com.qidate.qisplan2.entity.calling.CallingGhost;
 import com.qidate.qisplan2.entity.ghostdoor.closing.ClosingGhost;
 import com.qidate.qisplan2.entity.ghostdoor.opening.OpeningGhost;
 import com.qidate.qisplan2.entity.ghostmist.GhostMist;
-import com.qidate.qisplan2.entity.invisible.InvisibleGhost;
 import com.qidate.qisplan2.entity.ghostdoor.knocking.KnockingGhost;
 import com.qidate.qisplan2.entity.nightwanderer.NightWanderer;
 import net.neoforged.neoforge.event.entity.EntityAttributeCreationEvent;
@@ -29,13 +28,6 @@ public final class ModEntityAttributes {
         event.put(
                 ModEntities.NIGHT_WANDERER.get(),
                 NightWanderer.createAttributes()
-                        .build()
-        );
-
-        // 不可视之鬼
-        event.put(
-                ModEntities.INVISIBLE_GHOST.get(),
-                InvisibleGhost.createAttributes()
                         .build()
         );
 

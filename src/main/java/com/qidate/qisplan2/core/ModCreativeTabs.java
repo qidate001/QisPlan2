@@ -83,7 +83,6 @@ public class ModCreativeTabs {
                         output.accept(orokin);
 
                         output.accept(NIGHT_WANDERER_SPAWN_EGG);
-                        output.accept(INVISIBLE_GHOST_SPAWN_EGG);
                         output.accept(KNOCKING_GHOST_SPAWN_EGG);
                         output.accept(OPENING_GHOST_SPAWN_EGG);
                         output.accept(CLOSING_GHOST_SPAWN_EGG);

@@ -339,19 +339,6 @@ public class ModItems {
             );
 
 
-    // 不可见之鬼刷怪蛋
-    public static final DeferredItem<SpawnEggItem> INVISIBLE_GHOST_SPAWN_EGG =
-            ITEMS.register(
-                    "invisible_ghost_spawn_egg",
-                    () -> new SpawnEggItem(
-                            INVISIBLE_GHOST.get(),
-                            0x191919, // 基础颜色
-                            0x6B6B6B, // 斑点颜色
-                            new Item.Properties()
-                    )
-            );
-
-
     // 敲门鬼刷怪蛋
     public static final DeferredItem<SpawnEggItem> KNOCKING_GHOST_SPAWN_EGG =
             ITEMS.register(

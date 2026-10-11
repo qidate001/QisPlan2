@@ -6,7 +6,6 @@ import com.qidate.qisplan2.entity.calling.CallingGhost;
 import com.qidate.qisplan2.entity.ghostdoor.closing.ClosingGhost;
 import com.qidate.qisplan2.entity.ghostdoor.opening.OpeningGhost;
 import com.qidate.qisplan2.entity.ghostmist.GhostMist;
-import com.qidate.qisplan2.entity.invisible.InvisibleGhost;
 import com.qidate.qisplan2.entity.ghostdoor.knocking.KnockingGhost;
 import com.qidate.qisplan2.entity.nightwanderer.NightWanderer;
 import com.qidate.qisplan2.entity.painting.GhostPaintingEntity;
@@ -75,34 +74,6 @@ public class ModEntities {
                                             MODID,
                                             "night_wanderer"
                                     ).toString()
-                            )
-            );
-
-    // 不可视之鬼
-    public static final DeferredHolder<
-            EntityType<?>,
-            EntityType<InvisibleGhost>
-            > INVISIBLE_GHOST =
-            ENTITY_TYPES.register(
-                    "invisible_ghost",
-                    () -> EntityType.Builder
-                            .of(
-                                    InvisibleGhost::new,
-                                    MobCategory.MONSTER
-                            )
-                            .sized(
-                                    0.6F,
-                                    1.95F
-                            )
-                            .clientTrackingRange(8)
-                            .updateInterval(3)
-                            .build(
-                                    ResourceLocation
-                                            .fromNamespaceAndPath(
-                                                    MODID,
-                                                    "invisible_ghost"
-                                            )
-                                            .toString()
                             )
             );
 

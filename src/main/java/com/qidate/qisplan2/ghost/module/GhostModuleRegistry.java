@@ -1,6 +1,7 @@
 package com.qidate.qisplan2.ghost.module;
 
 import com.qidate.qisplan2.ghost.module.implementation.GhostStoneBricksModule;
+import com.qidate.qisplan2.ghost.module.implementation.InvisibleGhostModule;
 import com.qidate.qisplan2.ghost.module.implementation.UntouchableGhostModule;
 import net.minecraft.resources.ResourceLocation;
 
@@ -78,5 +79,6 @@ public final class GhostModuleRegistry {
     public static void bootstrap() {
         register(new UntouchableGhostModule());
         register(new GhostStoneBricksModule());
+        register(new InvisibleGhostModule());
     }
 }

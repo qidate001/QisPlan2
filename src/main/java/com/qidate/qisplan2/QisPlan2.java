@@ -14,6 +14,7 @@ import com.qidate.qisplan2.event.PossessionDamageHandler;
 import com.qidate.qisplan2.ghost.isolation.GhostIsolationPlayerSync;
 import com.qidate.qisplan2.ghost.module.GhostModuleInteractionHandler;
 import com.qidate.qisplan2.ghost.module.GhostModuleRegistry;
+import com.qidate.qisplan2.ghost.module.GhostPerceptionHandler;
 import com.qidate.qisplan2.ghost.possession.ability.GhostAbilityInteractionHandler;
 import com.qidate.qisplan2.ghost.possession.ability.GhostAbilityRegistry;
 import com.qidate.qisplan2.ghost.domain.GhostDomainPlayerLogout;
@@ -65,6 +66,11 @@ public class QisPlan2 {
         // 方块破坏事件
         NeoForge.EVENT_BUS.register(
                 GhostBlockInteractionHandler.class
+        );
+
+        // 厉鬼看见事件
+        NeoForge.EVENT_BUS.register(
+                GhostPerceptionHandler.class
         );
 
         // 鬼域实体追踪事件
