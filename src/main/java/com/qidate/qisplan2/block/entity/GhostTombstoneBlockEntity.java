@@ -2,12 +2,10 @@ package com.qidate.qisplan2.block.entity;
 
 import com.mojang.serialization.DataResult;
 import com.qidate.qisplan2.core.ModBlocks;
-import com.qidate.qisplan2.ghost.module.GhostModule;
-import com.qidate.qisplan2.ghost.module.GhostModuleCustomDataModifier;
-import com.qidate.qisplan2.ghost.module.GhostModuleDataModifier;
-import com.qidate.qisplan2.ghost.module.GhostModuleRegistry;
+import com.qidate.qisplan2.ghost.module.*;
 import com.qidate.qisplan2.ghost.module.data.GhostModuleData;
 import com.qidate.qisplan2.ghost.module.implementation.GhostTombstoneModule;
+import com.qidate.qisplan2.network.ghosttombstone.GhostTombstoneNetwork;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
@@ -15,6 +13,8 @@ import net.minecraft.nbt.NbtOps;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 
@@ -22,7 +22,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class GhostTombstoneBlockEntity extends BlockEntity
-        implements GhostModuleDataModifier, GhostModuleCustomDataModifier {
+        implements GhostModuleDataModifier,
+        GhostModuleCustomDataModifier,
+        GhostInscriptionCapability {
 
     private static final String NBT_INSCRIPTION = "Inscription";
     private static final String NBT_MODULES = "QisPlan2GhostModules";
@@ -46,6 +48,28 @@ public class GhostTombstoneBlockEntity extends BlockEntity
                 pos,
                 state
         );
+    }
+
+    @Override
+    public boolean requestInscription(LivingEntity user) {
+        if (!(user instanceof ServerPlayer serverPlayer)) {
+            return false;
+        }
+
+        if (!(level instanceof ServerLevel serverLevel)) {
+            return false;
+        }
+
+        if (serverPlayer.serverLevel() != serverLevel) {
+            return false;
+        }
+
+        GhostTombstoneNetwork.sendOpenScreen(
+                serverPlayer,
+                worldPosition
+        );
+
+        return true;
     }
 
     public String getInscription() {

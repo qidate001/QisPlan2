@@ -1,11 +1,14 @@
 package com.qidate.qisplan2.ghost.module.implementation;
 
+import com.qidate.qisplan2.core.ModTags;
+import com.qidate.qisplan2.ghost.module.GhostInscriptionCapability;
 import com.qidate.qisplan2.ghost.module.GhostModule;
 import com.qidate.qisplan2.ghost.module.GhostModuleContext;
 import com.qidate.qisplan2.ghost.module.data.GhostModuleInitialData;
 import com.qidate.qisplan2.ghost.module.event.GhostEvent;
 import com.qidate.qisplan2.ghost.module.event.GhostUseEvent;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.item.ItemStack;
 
 import static com.qidate.qisplan2.QisPlan2.MODID;
 
@@ -54,10 +57,20 @@ public final class GhostTombstoneModule implements GhostModule {
             return;
         }
 
-        // 不可触规则每触发一次，当前模块实例的复苏值增加 1。
-        context.setRevival(context.revival() + 1.0D);
+        if (!(context.host() instanceof GhostInscriptionCapability capability)) {
+            return;
+        }
 
-        // 下一步接入墓碑宿主后，在这里实现刻字规则。
-        // 物品标签判断属于模块规则，不属于通用事件分发器。
+        if (!(useEvent.user() instanceof net.minecraft.world.entity.player.Player player)) {
+            return;
+        }
+
+        ItemStack stack = player.getMainHandItem();
+
+        if (!stack.is(ModTags.Items.GHOST_TOMBSTONE_INSCRIBABLE)) {
+            return;
+        }
+
+        capability.requestInscription(useEvent.user());
     }
 }

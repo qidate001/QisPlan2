@@ -212,9 +212,6 @@ public class GhostTombstoneBlock
 
     /**
      * 右键鬼墓碑。
-     *
-     * 只有手持可以刻字的灵异物品时，
-     * 才会打开刻字界面。
      */
     @Override
     protected InteractionResult useWithoutItem(
@@ -224,94 +221,27 @@ public class GhostTombstoneBlock
             Player player,
             BlockHitResult hit
     ) {
-
-        /*
-         * ========================================================
-         * 检查手中的物品
-         * ========================================================
-         */
-
-        ItemStack stack =
-                player.getMainHandItem();
-
-        if (!stack.is(
-                ModTags.Items.GHOST_TOMBSTONE_INSCRIBABLE
-        )) {
-
-            return InteractionResult.PASS;
-        }
-
-
-        /*
-         * ========================================================
-         * 客户端
-         * ========================================================
-         *
-         * 客户端只告诉 Minecraft：
-         * 这个右键交互已经被处理。
-         *
-         * 真正打开 GUI 由服务器发包。
-         */
-
+        // 客户端只确认交互，不执行模块逻辑。
         if (level.isClientSide()) {
             return InteractionResult.SUCCESS;
         }
 
-
-        /*
-         * ========================================================
-         * 必须是服务器玩家
-         * ========================================================
-         */
-
-        if (!(player instanceof ServerPlayer serverPlayer)) {
+        if (!(player instanceof ServerPlayer)) {
             return InteractionResult.PASS;
         }
 
-
-        /*
-         * ========================================================
-         * 获取真正保存数据的墓碑位置
-         * ========================================================
-         *
-         * 上半部分没有单独保存刻字，
-         * 所以需要找到下面的 BlockEntity。
-         */
-
-        BlockPos dataPos =
-                getDataPos(
-                        pos,
-                        state
-                );
-
-
-        /*
-         * ========================================================
-         * 检查墓碑 BlockEntity
-         * ========================================================
-         */
+        // 上下两部分统一使用下半部分作为模块宿主。
+        BlockPos dataPos = getDataPos(pos, state);
 
         if (!(level.getBlockEntity(dataPos)
                 instanceof GhostTombstoneBlockEntity blockEntity)) {
-
             return InteractionResult.PASS;
         }
 
+        // 刻字规则完全交给宿主携带的模块。
         GhostModuleRuntime.dispatch(
                 blockEntity,
                 new GhostUseEvent(player)
-        );
-
-
-        /*
-         * ========================================================
-         * 打开刻字界面
-         * ========================================================
-         */
-
-        GhostTombstoneNetwork.sendOpenScreen(
-                serverPlayer,
-                dataPos
         );
 
         return InteractionResult.SUCCESS;
