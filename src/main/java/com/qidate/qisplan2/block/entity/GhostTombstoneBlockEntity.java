@@ -4,6 +4,7 @@ import com.mojang.serialization.DataResult;
 import com.qidate.qisplan2.core.ModBlocks;
 import com.qidate.qisplan2.ghost.module.*;
 import com.qidate.qisplan2.ghost.module.data.GhostModuleData;
+import com.qidate.qisplan2.ghost.module.data.GhostModuleInitialData;
 import com.qidate.qisplan2.ghost.module.implementation.GhostTombstoneModule;
 import com.qidate.qisplan2.network.ghosttombstone.GhostTombstoneNetwork;
 import net.minecraft.core.BlockPos;
@@ -26,13 +27,9 @@ public class GhostTombstoneBlockEntity extends BlockEntity
         GhostModuleCustomDataModifier,
         GhostInscriptionCapability {
 
-    private static final String NBT_INSCRIPTION = "Inscription";
     private static final String NBT_MODULES = "QisPlan2GhostModules";
-
-    /**
-     * 墓碑自身的数据：刻字。
-     */
-    private String inscription = "";
+    private static final String NBT_LEGACY_INSCRIPTION = "Inscription";
+    private static final String DATA_INSCRIPTION = "Inscription";
 
     /**
      * 墓碑承载的灵异模块数据。
@@ -72,18 +69,38 @@ public class GhostTombstoneBlockEntity extends BlockEntity
         return true;
     }
 
+    /**
+     * 获取鬼墓碑模块保存的碑文。
+     */
     public String getInscription() {
-        return inscription;
+        CompoundTag data =
+                getModuleCustomData(GhostTombstoneModule.ID);
+
+        return data.getString(DATA_INSCRIPTION);
     }
 
     /**
-     * 设置墓碑上的刻字。
+     * 设置鬼墓碑模块保存的碑文。
      */
     public void setInscription(String inscription) {
-        this.inscription = inscription == null ? "" : inscription;
+        GhostModuleData.Entry entry =
+                getModuleEntry(GhostTombstoneModule.ID);
 
-        setChanged();
-        syncBlockEntity();
+        // 模块不存在时，不读写碑文，也不自动恢复模块。
+        if (entry == null) {
+            return;
+        }
+
+        CompoundTag data = entry.customData().copy();
+        data.putString(
+                DATA_INSCRIPTION,
+                inscription == null ? "" : inscription
+        );
+
+        if (setModuleCustomData(GhostTombstoneModule.ID, data)) {
+            setChanged();
+            syncBlockEntity();
+        }
     }
 
     /**
@@ -339,8 +356,6 @@ public class GhostTombstoneBlockEntity extends BlockEntity
     ) {
         super.saveAdditional(tag, provider);
 
-        tag.putString(NBT_INSCRIPTION, inscription);
-
         DataResult<net.minecraft.nbt.Tag> result =
                 GhostModuleData.CODEC.encodeStart(
                         NbtOps.INSTANCE,
@@ -359,31 +374,61 @@ public class GhostTombstoneBlockEntity extends BlockEntity
     ) {
         super.loadAdditional(tag, provider);
 
-        inscription = tag.contains(NBT_INSCRIPTION)
-                ? tag.getString(NBT_INSCRIPTION)
-                : "";
-
         modules.clear();
 
+        // 先加载已有模块数据。
         if (tag.contains(NBT_MODULES)) {
             GhostModuleData.CODEC.parse(
                     NbtOps.INSTANCE,
                     tag.get(NBT_MODULES)
             ).result().ifPresent(modules::addAll);
+        } else {
+            /*
+             * 兼容没有模块数据的旧存档。
+             * 只有模块字段不存在时才添加默认模块。
+             * 如果存档明确保存了空模块列表，则尊重空列表。
+             */
+            GhostModule module =
+                    GhostModuleRegistry.get(GhostTombstoneModule.ID);
+
+            if (module != null) {
+                GhostModuleInitialData initial = module.getInitialData();
+
+                modules.add(
+                        new GhostModuleData.Entry(
+                                module.getId(),
+                                initial.intensity(),
+                                initial.revival(),
+                                initial.shutdown(),
+                                new CompoundTag()
+                        )
+                );
+            }
         }
 
         /*
-         * 兼容旧存档：
-         * 如果没有模块数据，则安装墓碑默认模块。
+         * 迁移旧碑文：
+         * 旧版本将碑文单独保存为 Inscription。
+         * 新版本将其放入鬼墓碑模块的自定义数据。
          */
-        if (!tag.contains(NBT_MODULES)
-                && GhostModuleRegistry.get(GhostTombstoneModule.ID) != null) {
-            addModule(
-                    GhostTombstoneModule.ID,
-                    GhostModuleRegistry.get(GhostTombstoneModule.ID)
-                            .getInitialData()
-                            .intensity()
-            );
+        if (tag.contains(NBT_LEGACY_INSCRIPTION)) {
+            int index = findModuleIndex(GhostTombstoneModule.ID);
+
+            if (index >= 0) {
+                GhostModuleData.Entry current = modules.get(index);
+                CompoundTag customData = current.customData().copy();
+
+                // 旧字段存在时，以旧字段为准完成一次性迁移。
+                customData.putString(
+                        DATA_INSCRIPTION,
+                        tag.getString(NBT_LEGACY_INSCRIPTION)
+                );
+
+                modules.set(
+                        index,
+                        current.withCustomData(customData)
+                );
+            }
         }
     }
 
@@ -392,8 +437,6 @@ public class GhostTombstoneBlockEntity extends BlockEntity
             HolderLookup.Provider registries
     ) {
         CompoundTag tag = super.getUpdateTag(registries);
-
-        tag.putString(NBT_INSCRIPTION, inscription);
 
         GhostModuleData.CODEC.encodeStart(
                 NbtOps.INSTANCE,
