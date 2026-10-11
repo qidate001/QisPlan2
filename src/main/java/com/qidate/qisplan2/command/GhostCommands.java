@@ -12,6 +12,7 @@ import com.qidate.qisplan2.entity.ModularGhostEntity;
 import com.qidate.qisplan2.ghost.curse.Curse;
 import com.qidate.qisplan2.ghost.curse.CurseManager;
 import com.qidate.qisplan2.ghost.curse.CurseRegistry;
+import com.qidate.qisplan2.ghost.module.GhostModuleDataModifier;
 import com.qidate.qisplan2.ghost.module.host.item.GhostItemData;
 import com.qidate.qisplan2.ghost.module.GhostModule;
 import com.qidate.qisplan2.ghost.module.data.GhostModuleData;
@@ -30,13 +31,17 @@ import net.minecraft.commands.Commands;
 import net.minecraft.commands.arguments.EntityArgument;
 import net.minecraft.commands.arguments.ResourceLocationArgument;
 import net.minecraft.commands.arguments.UuidArgument;
+import net.minecraft.commands.arguments.coordinates.BlockPosArgument;
+import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.block.entity.BlockEntity;
 
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.UUID;
@@ -456,6 +461,81 @@ public final class GhostCommands {
                                                                         )
                                                                         .executes(
                                                                                 GhostCommands::moduleEntityInfo
+                                                                        )
+                                                        )
+                                        )
+                        )
+                        .then(
+                                Commands.literal("block")
+                                        .then(
+                                                Commands.literal("add")
+                                                        .then(
+                                                                Commands.argument(
+                                                                                "pos",
+                                                                                BlockPosArgument.blockPos()
+                                                                        )
+                                                                        .then(
+                                                                                Commands.argument(
+                                                                                                "module",
+                                                                                                ResourceLocationArgument.id()
+                                                                                        )
+                                                                                        .suggests(
+                                                                                                (context, builder) -> {
+                                                                                                    for (GhostModule module :
+                                                                                                            GhostModuleRegistry.getAll()) {
+                                                                                                        builder.suggest(
+                                                                                                                module.getId().toString()
+                                                                                                        );
+                                                                                                    }
+
+                                                                                                    return builder.buildFuture();
+                                                                                                }
+                                                                                        )
+                                                                                        .executes(
+                                                                                                GhostCommands::moduleBlockAdd
+                                                                                        )
+                                                                        )
+                                                        )
+                                        )
+                                        .then(
+                                                Commands.literal("remove")
+                                                        .then(
+                                                                Commands.argument(
+                                                                                "pos",
+                                                                                BlockPosArgument.blockPos()
+                                                                        )
+                                                                        .then(
+                                                                                Commands.argument(
+                                                                                                "module",
+                                                                                                ResourceLocationArgument.id()
+                                                                                        )
+                                                                                        .suggests(
+                                                                                                (context, builder) -> {
+                                                                                                    for (GhostModule module :
+                                                                                                            GhostModuleRegistry.getAll()) {
+                                                                                                        builder.suggest(
+                                                                                                                module.getId().toString()
+                                                                                                        );
+                                                                                                    }
+
+                                                                                                    return builder.buildFuture();
+                                                                                                }
+                                                                                        )
+                                                                                        .executes(
+                                                                                                GhostCommands::moduleBlockRemove
+                                                                                        )
+                                                                        )
+                                                        )
+                                        )
+                                        .then(
+                                                Commands.literal("info")
+                                                        .then(
+                                                                Commands.argument(
+                                                                                "pos",
+                                                                                BlockPosArgument.blockPos()
+                                                                        )
+                                                                        .executes(
+                                                                                GhostCommands::moduleBlockInfo
                                                                         )
                                                         )
                                         )
@@ -1771,6 +1851,170 @@ public final class GhostCommands {
         }
 
         return entityCount;
+    }
+
+
+    /**
+     * /qisplan2 module block add <pos> <module>
+     *
+     * 为支持模块数据的方块实体安装模块。
+     */
+    private static int moduleBlockAdd(
+            CommandContext<CommandSourceStack> context
+    ) throws CommandSyntaxException {
+        var source = context.getSource();
+
+        BlockPos pos = BlockPosArgument.getLoadedBlockPos(context, "pos");
+
+        ResourceLocation moduleId =
+                ResourceLocationArgument.getId(context, "module");
+
+        GhostModule module = GhostModuleRegistry.get(moduleId);
+
+        if (module == null) {
+            source.sendFailure(
+                    Component.literal("未注册的厉鬼模块：" + moduleId)
+            );
+            return 0;
+        }
+
+        BlockEntity blockEntity =
+                source.getLevel().getBlockEntity(pos);
+
+        if (!(blockEntity instanceof GhostModuleDataModifier modifier)) {
+            source.sendFailure(
+                    Component.literal(
+                            "指定位置的方块实体不支持模块数据：" + pos
+                    )
+            );
+            return 0;
+        }
+
+        if (!modifier.addModule(module)) {
+            source.sendFailure(
+                    Component.literal(
+                            "安装模块失败：" + moduleId
+                                    + "。模块可能已经存在，或宿主拒绝安装。"
+                    )
+            );
+            return 0;
+        }
+
+        var initialData = module.getInitialData();
+
+        source.sendSuccess(
+                () -> Component.literal(
+                        "已在 " + pos + " 安装模块 " + moduleId
+                                + "；灵异强度：" + initialData.intensity()
+                                + "，复苏值：" + initialData.revival()
+                                + "，死机值：" + initialData.shutdown()
+                ),
+                true
+        );
+
+        return 1;
+    }
+
+    /**
+     * /qisplan2 module block remove <pos> <module>
+     *
+     * 从方块实体移除模块。
+     */
+    private static int moduleBlockRemove(
+            CommandContext<CommandSourceStack> context
+    ) throws CommandSyntaxException {
+        var source = context.getSource();
+
+        BlockPos pos = BlockPosArgument.getLoadedBlockPos(context, "pos");
+
+        ResourceLocation moduleId =
+                ResourceLocationArgument.getId(context, "module");
+
+        BlockEntity blockEntity =
+                source.getLevel().getBlockEntity(pos);
+
+        if (!(blockEntity instanceof GhostModuleDataModifier modifier)) {
+            source.sendFailure(
+                    Component.literal(
+                            "指定位置的方块实体不支持模块数据：" + pos
+                    )
+            );
+            return 0;
+        }
+
+        if (!modifier.removeModule(moduleId)) {
+            source.sendFailure(
+                    Component.literal(
+                            "移除模块失败：" + moduleId
+                                    + "。请检查该模块是否存在。"
+                    )
+            );
+            return 0;
+        }
+
+        source.sendSuccess(
+                () -> Component.literal(
+                        "已从 " + pos + " 移除模块：" + moduleId
+                ),
+                true
+        );
+
+        return 1;
+    }
+
+    /**
+     * /qisplan2 module block info <pos>
+     *
+     * 查看方块实体携带的模块。
+     */
+    private static int moduleBlockInfo(
+            CommandContext<CommandSourceStack> context
+    ) throws CommandSyntaxException {
+        var source = context.getSource();
+
+        BlockPos pos = BlockPosArgument.getLoadedBlockPos(context, "pos");
+
+        BlockEntity blockEntity =
+                source.getLevel().getBlockEntity(pos);
+
+        if (!(blockEntity instanceof GhostModuleDataModifier modifier)) {
+            source.sendFailure(
+                    Component.literal(
+                            "指定位置的方块实体不支持模块数据：" + pos
+                    )
+            );
+            return 0;
+        }
+
+        List<GhostModuleData.Entry> modules = modifier.getModules();
+
+        source.sendSuccess(
+                () -> Component.literal("方块位置：" + pos),
+                false
+        );
+
+        if (modules.isEmpty()) {
+            source.sendSuccess(
+                    () -> Component.literal("  尚未装载任何厉鬼模块。"),
+                    false
+            );
+            return 1;
+        }
+
+        for (GhostModuleData.Entry entry : modules) {
+            source.sendSuccess(
+                    () -> Component.literal(
+                            "  - " + entry.id()
+                                    + "（灵异强度：" + entry.intensity()
+                                    + "，复苏值：" + entry.revival()
+                                    + "，死机值：" + entry.shutdown()
+                                    + "）"
+                    ),
+                    false
+            );
+        }
+
+        return modules.size();
     }
 
     /*

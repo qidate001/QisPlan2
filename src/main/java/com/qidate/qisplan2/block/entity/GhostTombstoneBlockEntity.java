@@ -376,7 +376,7 @@ public class GhostTombstoneBlockEntity extends BlockEntity
          * 兼容旧存档：
          * 如果没有模块数据，则安装墓碑默认模块。
          */
-        if (modules.isEmpty()
+        if (!tag.contains(NBT_MODULES)
                 && GhostModuleRegistry.get(GhostTombstoneModule.ID) != null) {
             addModule(
                     GhostTombstoneModule.ID,
