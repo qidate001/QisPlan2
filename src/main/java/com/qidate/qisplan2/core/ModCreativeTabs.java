@@ -161,7 +161,7 @@ public class ModCreativeTabs {
 
                             // 动态物品名称
                             stack.set(
-                                    DataComponents.CUSTOM_NAME,
+                                    DataComponents.ITEM_NAME,
                                     Component.translatable(
                                             "item.qisplan2.modular_ghost_spawn_egg.module",
                                             moduleName
