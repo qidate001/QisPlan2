@@ -4,11 +4,13 @@ import com.qidate.qisplan2.ghost.module.data.GhostModuleInitialData;
 import com.qidate.qisplan2.ghost.module.event.GhostEvent;
 import net.minecraft.resources.ResourceLocation;
 
+import java.util.List;
+
 /**
  * 灵异模块定义。
  *
- * 模块负责声明自身的身份、初始属性，
- * 以及支持哪些事件、收到事件后执行什么规则。
+ * 模块负责声明自身的身份、初始属性、
+ * 规则定义以及能力定义。
  *
  * 初始属性只用于创建新的模块实例，
  * 不代表已经存在的实例当前保存的属性。
@@ -27,8 +29,6 @@ public interface GhostModule {
      * - 灵异强度：1.0
      * - 复苏值：0.0
      * - 死机值：0.0
-     *
-     * 具体模块可以覆盖此方法，定义自己的初始属性。
      */
     default GhostModuleInitialData getInitialData() {
         return new GhostModuleInitialData(
@@ -39,12 +39,37 @@ public interface GhostModule {
     }
 
     /**
+     * 获取此模块定义的规则列表。
+     *
+     * 默认没有规则，保证现有模块兼容。
+     */
+    default List<GhostRule> getRules() {
+        return List.of();
+    }
+
+    /**
+     * 获取此模块定义的能力列表。
+     *
+     * 默认没有能力，保证现有模块兼容。
+     */
+    default List<GhostAbility> getAbilities() {
+        return List.of();
+    }
+
+    /**
      * 判断模块是否支持指定事件。
+     *
+     * 迁移完成前，保留现有事件处理机制。
      */
     boolean supports(GhostEvent event);
 
     /**
-     * 执行模块的事件规则。
+     * 执行模块现有的事件处理逻辑。
+     *
+     * 后续将逐步迁移到规则运行时。
      */
-    void onEvent(GhostModuleContext context, GhostEvent event);
+    void onEvent(
+            GhostModuleContext context,
+            GhostEvent event
+    );
 }

@@ -124,6 +124,7 @@
   "death.attack.ghost_night_wanderer": "%1$s 被§4夜游鬼§r化为了漫长黑夜的一份恐惧",
   "death.attack.ghost_piano": "%1$s 被来自§4鬼钢琴§r的§4鬼音乐§r震散了意识",
   "death.attack.invisible_ghost": "%1$s 被灵异抹除了意识",
+  "death.attack.untouchable_ghost": "%1$s 身体裂成了八瓣",
   "death.attack.ghost_umbrella": "%1$s 被§4鬼雨§r变成了尸体",
   "death.attack.knocking_ghost": "%1$s 被§4敲门声诅咒§r杀死",
   "death.attack.opening_ghost": "%1$s 受到§4开门诅咒§r的影响，被§4开门鬼§r杀死",

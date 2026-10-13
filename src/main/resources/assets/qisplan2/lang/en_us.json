@@ -122,6 +122,7 @@
   "death.attack.ghost_night_wanderer": "%1$s has been transformed into a source of fear during the long, dark night by the ghosts of §4night wanderers§r",
   "death.attack.ghost_piano": "%1$s was shaken unconscious by the §4Ghost Music§r from the §4Ghost Piano§r",
   "death.attack.invisible_ghost": "%1$s consciousness was erased by supernatural forces",
+  "death.attack.untouchable_ghost": "%1$s's body was split into eight pieces",
   "death.attack.ghost_umbrella": "%1$s has been turned into a corpse by §4Ghost Rain§r.",
   "death.attack.knocking_ghost": "%1$s was killed by §4Knocking Curse§r.",
   "death.attack.opening_ghost": "%1$s was killed by the §4Opening Ghost§r under the §4Opening Curse§r",
