@@ -1,5 +1,6 @@
 package com.qidate.qisplan2.ghost.module;
 
+import com.qidate.qisplan2.ghost.module.event.GhostEvent;
 import net.minecraft.resources.ResourceLocation;
 
 import java.util.Objects;
@@ -16,7 +17,8 @@ public record GhostAbilityContext(
         GhostModuleHost host,
         ResourceLocation moduleId,
         ResourceLocation abilityId,
-        Source source
+        Source source,
+        GhostEvent event
 ) {
 
     /**

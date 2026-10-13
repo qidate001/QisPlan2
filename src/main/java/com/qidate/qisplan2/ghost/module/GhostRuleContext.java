@@ -1,6 +1,7 @@
 package com.qidate.qisplan2.ghost.module;
 
 import com.qidate.qisplan2.ghost.module.data.GhostModuleData;
+import com.qidate.qisplan2.ghost.module.event.GhostEvent;
 import net.minecraft.resources.ResourceLocation;
 
 import java.util.Objects;
@@ -80,5 +81,31 @@ public record GhostRuleContext(
      */
     public GhostModuleData.Entry getModuleData() {
         return getModuleContext().getData();
+    }
+
+    /**
+     * 请求执行当前模块定义的能力。
+     *
+     * @param abilityId 当前模块内的能力 ID
+     * @param event     触发当前规则的语义事件
+     * @return true 表示能力执行方法正常返回
+     */
+    public boolean tryExecuteAbility(
+            ResourceLocation abilityId,
+            GhostEvent event
+    ) {
+        Objects.requireNonNull(abilityId, "abilityId");
+        Objects.requireNonNull(event, "event");
+
+        GhostAbilityContext abilityContext =
+                new GhostAbilityContext(
+                        host,
+                        moduleId,
+                        abilityId,
+                        GhostAbilityContext.Source.RULE,
+                        event
+                );
+
+        return GhostAbilityExecutor.tryExecute(abilityContext);
     }
 }
