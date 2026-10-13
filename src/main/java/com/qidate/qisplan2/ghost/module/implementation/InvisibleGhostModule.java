@@ -2,13 +2,18 @@ package com.qidate.qisplan2.ghost.module.implementation;
 
 import com.qidate.qisplan2.death.ModDamageTypes;
 import com.qidate.qisplan2.death.SupernaturalDeathHandler;
+import com.qidate.qisplan2.ghost.module.GhostAbility;
+import com.qidate.qisplan2.ghost.module.GhostAbilityContext;
 import com.qidate.qisplan2.ghost.module.GhostModule;
-import com.qidate.qisplan2.ghost.module.GhostModuleContext;
+import com.qidate.qisplan2.ghost.module.GhostRule;
+import com.qidate.qisplan2.ghost.module.GhostRuleContext;
 import com.qidate.qisplan2.ghost.module.data.GhostModuleInitialData;
 import com.qidate.qisplan2.ghost.module.event.EntityPerceivedEvent;
 import com.qidate.qisplan2.ghost.module.event.GhostEvent;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.player.Player;
+
+import java.util.List;
 
 import static com.qidate.qisplan2.QisPlan2.MODID;
 
@@ -26,6 +31,24 @@ public final class InvisibleGhostModule implements GhostModule {
                     "invisible_ghost"
             );
 
+    private static final ResourceLocation PERCEPTION_RULE_ID =
+            ResourceLocation.fromNamespaceAndPath(
+                    MODID,
+                    "invisible_ghost/perception_rule"
+            );
+
+    private static final ResourceLocation ATTACK_ABILITY_ID =
+            ResourceLocation.fromNamespaceAndPath(
+                    MODID,
+                    "invisible_ghost/attack"
+            );
+
+    private static final List<GhostRule> RULES =
+            List.of(new PerceptionRule());
+
+    private static final List<GhostAbility> ABILITIES =
+            List.of(new AttackAbility());
+
     @Override
     public ResourceLocation getId() {
         return ID;
@@ -41,29 +64,82 @@ public final class InvisibleGhostModule implements GhostModule {
     }
 
     @Override
-    public boolean supports(GhostEvent event) {
-        return event instanceof EntityPerceivedEvent;
+    public List<GhostRule> getRules() {
+        return RULES;
     }
 
     @Override
-    public void onEvent(
-            GhostModuleContext context,
-            GhostEvent event
-    ) {
-        if (!(event instanceof EntityPerceivedEvent perceivedEvent)) {
-            return;
+    public List<GhostAbility> getAbilities() {
+        return ABILITIES;
+    }
+
+    private static final class PerceptionRule
+            implements GhostRule {
+
+        @Override
+        public ResourceLocation getId() {
+            return PERCEPTION_RULE_ID;
         }
 
-        if (!(perceivedEvent.observer() instanceof Player player)) {
-            return;
+        @Override
+        public boolean supports(GhostEvent event) {
+            return event instanceof EntityPerceivedEvent perceivedEvent
+                    && perceivedEvent.observer() instanceof Player;
         }
 
-        SupernaturalDeathHandler.tryKill(
-                player,
-                ModDamageTypes.invisibleGhost(
-                        perceivedEvent.target()
-                ),
-                context.intensity()
-        );
+        @Override
+        public boolean canTrigger(
+                GhostRuleContext context,
+                GhostEvent event
+        ) {
+            return supports(event);
+        }
+
+        @Override
+        public void onTrigger(
+                GhostRuleContext context,
+                GhostEvent event
+        ) {
+            context.tryExecuteAbility(
+                    ATTACK_ABILITY_ID,
+                    event
+            );
+        }
+    }
+
+    private static final class AttackAbility
+            implements GhostAbility {
+
+        @Override
+        public ResourceLocation getId() {
+            return ATTACK_ABILITY_ID;
+        }
+
+        @Override
+        public boolean canExecute(GhostAbilityContext context) {
+            return context.event() instanceof EntityPerceivedEvent event
+                    && event.observer() instanceof Player;
+        }
+
+        @Override
+        public void execute(GhostAbilityContext context) {
+            if (!context.isModuleAvailable()) {
+                return;
+            }
+
+            if (!(context.event() instanceof EntityPerceivedEvent event)) {
+                return;
+            }
+
+            if (!(event.observer() instanceof Player player)) {
+                return;
+            }
+
+            SupernaturalDeathHandler.tryKill(
+                    player,
+                    ModDamageTypes.invisibleGhost(event.target()),
+                    context.getModuleContext().intensity()
+            );
+        }
     }
 }

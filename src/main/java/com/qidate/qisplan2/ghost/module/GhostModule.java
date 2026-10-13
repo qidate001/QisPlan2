@@ -64,31 +64,4 @@ public interface GhostModule {
     default List<GhostMedium> getMedia() {
         return List.of();
     }
-
-    /**
-     * 判断模块是否支持指定事件。
-     *
-     * 迁移完成前，保留现有事件处理机制。
-     */
-    boolean supports(GhostEvent event);
-
-    /**
-     * 是否已经交由新规则运行时处理事件。
-     *
-     * false：继续使用旧 supports/onEvent 路径。
-     * true：由 GhostRuleRuntime 处理本模块的事件。
-     */
-    default boolean usesRuleRuntime() {
-        return false;
-    }
-
-    /**
-     * 执行模块现有的事件处理逻辑。
-     *
-     * 后续将逐步迁移到规则运行时。
-     */
-    void onEvent(
-            GhostModuleContext context,
-            GhostEvent event
-    );
 }

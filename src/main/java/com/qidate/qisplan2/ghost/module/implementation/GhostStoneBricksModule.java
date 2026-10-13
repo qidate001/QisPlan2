@@ -81,38 +81,6 @@ public final class GhostStoneBricksModule implements GhostModule {
         return ABILITIES;
     }
 
-    @Override
-    public boolean usesRuleRuntime() {
-        return true;
-    }
-
-    /*
-     * 旧事件接口暂时保留。
-     * 在新规则运行时正式接管事件派发之前，
-     * 不要删除或绕过旧调用链。
-     */
-
-    @Override
-    public boolean supports(GhostEvent event) {
-        return event instanceof BlockDestructionAttemptEvent
-                || event instanceof ItemDestructionAttemptEvent;
-    }
-
-    @Override
-    public void onEvent(
-            GhostModuleContext context,
-            GhostEvent event
-    ) {
-        if (event instanceof BlockDestructionAttemptEvent destructionEvent) {
-            handleBlockDestruction(context, destructionEvent);
-            return;
-        }
-
-        if (event instanceof ItemDestructionAttemptEvent destructionEvent) {
-            handleItemDestruction(context, destructionEvent);
-        }
-    }
-
     private void handleBlockDestruction(
             GhostModuleContext context,
             BlockDestructionAttemptEvent event

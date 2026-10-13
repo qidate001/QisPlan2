@@ -9,9 +9,7 @@ import java.util.List;
  * 统一的厉鬼模块运行时。
  *
  * 物品和实体均通过此处分发事件。
- *
- * 已迁移模块使用 GhostRuleRuntime；
- * 尚未迁移模块继续使用旧 supports/onEvent 接口。
+ * 所有模块统一使用 GhostRuleRuntime 处理事件。
  */
 public final class GhostModuleRuntime {
 
@@ -34,6 +32,11 @@ public final class GhostModuleRuntime {
                 List.copyOf(host.getModules());
 
         for (GhostModuleData.Entry entry : entries) {
+            // 模块可能已在本次派发过程中被移除。
+            if (!host.hasModule(entry.id())) {
+                continue;
+            }
+
             GhostModule module =
                     GhostModuleRegistry.get(entry.id());
 
@@ -41,22 +44,9 @@ public final class GhostModuleRuntime {
                 continue;
             }
 
-            if (module.usesRuleRuntime()) {
-                GhostRuleRuntime.dispatchModule(
-                        host,
-                        entry,
-                        event
-                );
-                continue;
-            }
-
-            // 未迁移模块继续使用原有事件接口。
-            if (!module.supports(event)) {
-                continue;
-            }
-
-            module.onEvent(
-                    new GhostModuleContext(host, entry.id()),
+            GhostRuleRuntime.dispatchModule(
+                    host,
+                    entry,
                     event
             );
         }

@@ -78,36 +78,6 @@ public final class UntouchableGhostModule implements GhostModule {
         return List.of(ATTACK_ABILITY);
     }
 
-    @Override
-    public boolean usesRuleRuntime() {
-        return true;
-    }
-
-    /*
-     * 兼容旧事件分发路径。
-     * 新运行时通过 usesRuleRuntime() 使用上面的规则定义。
-     */
-    @Override
-    public boolean supports(GhostEvent event) {
-        return event instanceof TouchEvent;
-    }
-
-    @Override
-    public void onEvent(GhostModuleContext context, GhostEvent event) {
-        if (!(event instanceof TouchEvent touchEvent)) {
-            return;
-        }
-
-        // 保留旧路径原有行为，避免兼容调用时改变效果。
-        context.setRevival(context.revival() + 1.0D);
-
-        SupernaturalDeathHandler.tryKill(
-                touchEvent.target(),
-                ModDamageTypes.untouchableGhost(touchEvent.source()),
-                context.intensity()
-        );
-    }
-
     /**
      * 不可触之鬼的媒介：必须有触碰事件。
      */

@@ -2,12 +2,10 @@ package com.qidate.qisplan2.block;
 
 import com.mojang.serialization.MapCodec;
 import com.qidate.qisplan2.block.entity.GhostTombstoneBlockEntity;
-import com.qidate.qisplan2.core.ModTags;
 import com.qidate.qisplan2.ghost.curse.CurseManager;
 import com.qidate.qisplan2.ghost.curse.type.ghosttombstone.GhostTombstoneCurseSource;
 import com.qidate.qisplan2.ghost.module.GhostModuleRuntime;
 import com.qidate.qisplan2.ghost.module.event.GhostUseEvent;
-import com.qidate.qisplan2.network.ghosttombstone.GhostTombstoneNetwork;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerPlayer;

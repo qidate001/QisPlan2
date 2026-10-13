@@ -1,22 +1,27 @@
 package com.qidate.qisplan2.ghost.module.implementation;
 
 import com.qidate.qisplan2.core.ModTags;
+import com.qidate.qisplan2.ghost.module.GhostAbility;
+import com.qidate.qisplan2.ghost.module.GhostAbilityContext;
 import com.qidate.qisplan2.ghost.module.GhostInscriptionCapability;
 import com.qidate.qisplan2.ghost.module.GhostModule;
-import com.qidate.qisplan2.ghost.module.GhostModuleContext;
+import com.qidate.qisplan2.ghost.module.GhostRule;
+import com.qidate.qisplan2.ghost.module.GhostRuleContext;
 import com.qidate.qisplan2.ghost.module.data.GhostModuleInitialData;
 import com.qidate.qisplan2.ghost.module.event.GhostEvent;
 import com.qidate.qisplan2.ghost.module.event.GhostUseEvent;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
+
+import java.util.List;
 
 import static com.qidate.qisplan2.QisPlan2.MODID;
 
 /**
  * 鬼墓碑模块。
  *
- * 负责定义鬼墓碑对应的灵异模块身份，
- * 并响应通用灵异使用事件。
+ * 响应灵异使用事件，并请求进行题字。
  */
 public final class GhostTombstoneModule implements GhostModule {
 
@@ -26,14 +31,29 @@ public final class GhostTombstoneModule implements GhostModule {
                     "ghost_tombstone"
             );
 
+    private static final ResourceLocation USE_RULE_ID =
+            ResourceLocation.fromNamespaceAndPath(
+                    MODID,
+                    "ghost_tombstone/use_rule"
+            );
+
+    private static final ResourceLocation INSCRIPTION_ABILITY_ID =
+            ResourceLocation.fromNamespaceAndPath(
+                    MODID,
+                    "ghost_tombstone/inscription"
+            );
+
+    private static final List<GhostRule> RULES =
+            List.of(new TombstoneUseRule());
+
+    private static final List<GhostAbility> ABILITIES =
+            List.of(new InscriptionAbility());
+
     @Override
     public ResourceLocation getId() {
         return ID;
     }
 
-    /**
-     * 定义鬼墓碑模块的新实例初始属性。
-     */
     @Override
     public GhostModuleInitialData getInitialData() {
         return new GhostModuleInitialData(
@@ -44,33 +64,95 @@ public final class GhostTombstoneModule implements GhostModule {
     }
 
     @Override
-    public boolean supports(GhostEvent event) {
-        return event instanceof GhostUseEvent;
+    public List<GhostRule> getRules() {
+        return RULES;
     }
 
     @Override
-    public void onEvent(
-            GhostModuleContext context,
-            GhostEvent event
-    ) {
-        if (!(event instanceof GhostUseEvent useEvent)) {
-            return;
+    public List<GhostAbility> getAbilities() {
+        return ABILITIES;
+    }
+
+    private static final class TombstoneUseRule
+            implements GhostRule {
+
+        @Override
+        public ResourceLocation getId() {
+            return USE_RULE_ID;
         }
 
-        if (!(context.host() instanceof GhostInscriptionCapability capability)) {
-            return;
+        @Override
+        public boolean supports(GhostEvent event) {
+            return event instanceof GhostUseEvent;
         }
 
-        if (!(useEvent.user() instanceof net.minecraft.world.entity.player.Player player)) {
-            return;
+        @Override
+        public boolean canTrigger(
+                GhostRuleContext context,
+                GhostEvent event
+        ) {
+            return event instanceof GhostUseEvent
+                    && context.getModuleContext().host()
+                    instanceof GhostInscriptionCapability;
         }
 
-        ItemStack stack = player.getMainHandItem();
+        @Override
+        public void onTrigger(
+                GhostRuleContext context,
+                GhostEvent event
+        ) {
+            context.tryExecuteAbility(
+                    INSCRIPTION_ABILITY_ID,
+                    event
+            );
+        }
+    }
 
-        if (!stack.is(ModTags.Items.GHOST_TOMBSTONE_INSCRIBABLE)) {
-            return;
+    private static final class InscriptionAbility
+            implements GhostAbility {
+
+        @Override
+        public ResourceLocation getId() {
+            return INSCRIPTION_ABILITY_ID;
         }
 
-        capability.requestInscription(useEvent.user());
+        @Override
+        public boolean canExecute(GhostAbilityContext context) {
+            return context.event() instanceof GhostUseEvent useEvent
+                    && useEvent.user() instanceof Player player
+                    && context.host() instanceof GhostInscriptionCapability
+                    && isInscribable(player.getMainHandItem());
+        }
+
+        @Override
+        public void execute(GhostAbilityContext context) {
+            if (!context.isModuleAvailable()) {
+                return;
+            }
+
+            if (!(context.event() instanceof GhostUseEvent useEvent)) {
+                return;
+            }
+
+            if (!(context.host() instanceof GhostInscriptionCapability capability)) {
+                return;
+            }
+
+            if (!(useEvent.user() instanceof Player player)) {
+                return;
+            }
+
+            ItemStack stack = player.getMainHandItem();
+
+            if (!isInscribable(stack)) {
+                return;
+            }
+
+            capability.requestInscription(useEvent.user());
+        }
+
+        private static boolean isInscribable(ItemStack stack) {
+            return stack.is(ModTags.Items.GHOST_TOMBSTONE_INSCRIBABLE);
+        }
     }
 }
