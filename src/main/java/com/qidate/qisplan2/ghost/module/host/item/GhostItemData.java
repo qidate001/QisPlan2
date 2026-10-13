@@ -1,11 +1,11 @@
 package com.qidate.qisplan2.ghost.module.host.item;
 
 import com.qidate.qisplan2.core.ModDataComponents;
+import com.qidate.qisplan2.ghost.module.data.GhostModuleContainer;
 import com.qidate.qisplan2.ghost.module.data.GhostModuleData;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemStack;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
@@ -13,7 +13,10 @@ import java.util.Objects;
  * 灵异物品数据访问接口。
  *
  * 统一管理 ItemStack 上保存的灵异模块实例数据。
- * 每个模块实例独立保存强度、复苏值和死机值。
+ * 每个模块实例独立保存强度、复苏值、死机值和专属数据。
+ *
+ * ItemStack 的 Data Components 是唯一持久化数据源。
+ * GhostModuleContainer 仅在单次操作期间使用，不长期缓存。
  */
 public final class GhostItemData {
 
@@ -52,37 +55,28 @@ public final class GhostItemData {
     /**
      * 添加模块或更新已有模块的强度。
      *
-     * 已存在的模块会保留复苏值和死机值；
-     * 新模块的复苏值和死机值默认均为 0。
+     * 已存在的模块保留复苏值、死机值和专属数据。
+     * 新模块的复苏值和死机值默认为 0。
      */
     public static void addModule(
             ItemStack stack,
             ResourceLocation moduleId,
             double intensity
     ) {
+        Objects.requireNonNull(stack, "stack");
         Objects.requireNonNull(moduleId, "moduleId");
 
-        GhostModuleData.Entry current = getModuleEntry(stack, moduleId);
+        GhostModuleContainer container = createContainer(stack);
 
-        setModuleEntry(
-                stack,
-                new GhostModuleData.Entry(
-                        moduleId,
-                        intensity,
-                        current == null ? 0.0D : current.revival(),
-                        current == null ? 0.0D : current.shutdown(),
-                        current == null
-                                ? new net.minecraft.nbt.CompoundTag()
-                                : current.customData()
-                )
-        );
+        container.addModule(moduleId, intensity);
+
+        saveContainer(stack, container);
     }
 
     /**
      * 添加或替换完整的模块实例数据。
      *
-     * 该方法是模块数据的统一写入入口：
-     * 强度、复苏值、死机值均以传入条目为准。
+     * 同一模块 ID 只保留一条数据。
      */
     public static void setModuleEntry(
             ItemStack stack,
@@ -91,35 +85,41 @@ public final class GhostItemData {
         Objects.requireNonNull(stack, "stack");
         Objects.requireNonNull(newEntry, "newEntry");
 
-        List<GhostModuleData.Entry> modules =
-                new ArrayList<>(getModules(stack));
+        GhostModuleContainer container = createContainer(stack);
 
-        // 同一模块 ID 只保留一条数据，避免出现重复模块。
-        modules.removeIf(entry ->
-                entry.id().equals(newEntry.id())
+        container.loadEntries(
+                mergeEntry(container.getModules(), newEntry)
         );
 
-        modules.add(newEntry);
-
-        stack.set(
-                ModDataComponents.GHOST_MODULES.get(),
-                List.copyOf(modules)
-        );
+        saveContainer(stack, container);
     }
 
     /**
-     * 获取指定模块的完整实例数据。
+     * 批量替换物品携带的全部模块数据。
      *
-     * 如果模块不存在，则返回 null。
+     * 使用 GhostModuleContainer 统一校验和去重，
+     * 最后一次性写回 ItemStack 的 Data Component。
      */
-    private static GhostModuleData.Entry getModuleEntry(
+    static void setModules(
             ItemStack stack,
-            ResourceLocation moduleId
+            List<GhostModuleData.Entry> modules
     ) {
-        return getModules(stack).stream()
-                .filter(entry -> entry.id().equals(moduleId))
-                .findFirst()
-                .orElse(null);
+        Objects.requireNonNull(stack, "stack");
+        Objects.requireNonNull(modules, "modules");
+
+        GhostModuleContainer container = new GhostModuleContainer();
+        container.loadEntries(modules);
+
+        List<GhostModuleData.Entry> result = container.getModules();
+
+        if (result.isEmpty()) {
+            stack.remove(ModDataComponents.GHOST_MODULES.get());
+        } else {
+            stack.set(
+                    ModDataComponents.GHOST_MODULES.get(),
+                    List.copyOf(result)
+            );
+        }
     }
 
     /**
@@ -132,22 +132,60 @@ public final class GhostItemData {
         Objects.requireNonNull(stack, "stack");
         Objects.requireNonNull(moduleId, "moduleId");
 
-        List<GhostModuleData.Entry> modules =
-                new ArrayList<>(getModules(stack));
+        GhostModuleContainer container = createContainer(stack);
 
-        modules.removeIf(entry ->
-                entry.id().equals(moduleId)
-        );
+        if (!container.hasModule(moduleId)) {
+            return;
+        }
+
+        container.removeModule(moduleId);
+
+        saveContainer(stack, container);
+    }
+
+    /**
+     * 从 ItemStack 当前的数据组件创建临时容器。
+     */
+    private static GhostModuleContainer createContainer(ItemStack stack) {
+        GhostModuleContainer container = new GhostModuleContainer();
+        container.loadEntries(getModules(stack));
+        return container;
+    }
+
+    /**
+     * 将容器中的模块列表写回 ItemStack。
+     */
+    private static void saveContainer(
+            ItemStack stack,
+            GhostModuleContainer container
+    ) {
+        List<GhostModuleData.Entry> modules = container.getModules();
 
         if (modules.isEmpty()) {
-            stack.remove(
-                    ModDataComponents.GHOST_MODULES.get()
-            );
+            stack.remove(ModDataComponents.GHOST_MODULES.get());
         } else {
             stack.set(
                     ModDataComponents.GHOST_MODULES.get(),
                     List.copyOf(modules)
             );
         }
+    }
+
+    /**
+     * 生成去重后的模块列表，并将新条目放在列表末尾。
+     *
+     * 使用完整条目替换，确保通用属性和专属数据均以新条目为准。
+     */
+    private static List<GhostModuleData.Entry> mergeEntry(
+            List<GhostModuleData.Entry> existing,
+            GhostModuleData.Entry newEntry
+    ) {
+        java.util.ArrayList<GhostModuleData.Entry> result =
+                new java.util.ArrayList<>(existing);
+
+        result.removeIf(entry -> entry.id().equals(newEntry.id()));
+        result.add(newEntry);
+
+        return List.copyOf(result);
     }
 }
