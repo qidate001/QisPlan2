@@ -57,6 +57,15 @@ public interface GhostModule {
     }
 
     /**
+     * 获取此模块定义的媒介列表。
+     *
+     * 默认没有媒介，保证现有模块兼容。
+     */
+    default List<GhostMedium> getMedia() {
+        return List.of();
+    }
+
+    /**
      * 判断模块是否支持指定事件。
      *
      * 迁移完成前，保留现有事件处理机制。

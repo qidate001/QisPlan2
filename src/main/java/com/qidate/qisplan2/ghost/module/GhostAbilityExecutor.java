@@ -1,12 +1,13 @@
 package com.qidate.qisplan2.ghost.module;
 
+import java.util.List;
 import java.util.Objects;
 
 /**
  * 统一的厉鬼能力执行器。
  *
- * 负责检查能力的执行条件，并调用能力执行逻辑。
- * 如果模块在执行过程中被移除，则跳过尚未开始的能力执行。
+ * 负责检查模块有效性、媒介限制和能力执行条件，
+ * 并在全部条件满足后执行能力。
  */
 public final class GhostAbilityExecutor {
 
@@ -24,7 +25,34 @@ public final class GhostAbilityExecutor {
     ) {
         Objects.requireNonNull(context, "context");
 
-        // 能力执行前，模块必须仍然存在。
+        // 1. 模块必须仍然存在。
+        if (!context.isModuleAvailable()) {
+            return false;
+        }
+
+        GhostModule module =
+                GhostModuleRegistry.get(context.moduleId());
+
+        if (module == null) {
+            return false;
+        }
+
+        // 2. 检查该模块声明的全部媒介。
+        // 任意媒介不允许本次调用，就禁止执行能力。
+        List<GhostMedium> media =
+                List.copyOf(module.getMedia());
+
+        for (GhostMedium medium : media) {
+            if (!context.isModuleAvailable()) {
+                return false;
+            }
+
+            if (!medium.allows(context)) {
+                return false;
+            }
+        }
+
+        // 3. 获取能力定义并检查执行条件。
         if (!context.isModuleAvailable()) {
             return false;
         }
@@ -35,11 +63,12 @@ public final class GhostAbilityExecutor {
             return false;
         }
 
-        // 前置条件判断期间，模块可能已被移除。
+        // 4. 前置条件判断期间，模块也可能被移除。
         if (!context.isModuleAvailable()) {
             return false;
         }
 
+        // 5. 执行能力。
         ability.execute(context);
         return true;
     }
