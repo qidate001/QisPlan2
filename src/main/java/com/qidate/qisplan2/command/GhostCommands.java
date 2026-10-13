@@ -333,6 +333,10 @@ public final class GhostCommands {
          * /qisplan2 module entity add <targets> <module>
          * /qisplan2 module entity remove <targets> <module>
          * /qisplan2 module entity info <targets>
+         *
+         * /qisplan2 module block add <x> <y> <z> <module>
+         * /qisplan2 module block remove <x> <y> <z> <module>
+         * /qisplan2 module block info <x> <y> <z>
          * ========================================================
          */
 

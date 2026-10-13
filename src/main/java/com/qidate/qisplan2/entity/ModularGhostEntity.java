@@ -1,6 +1,7 @@
 package com.qidate.qisplan2.entity;
 
 import com.qidate.qisplan2.ghost.module.GhostModuleCustomDataModifier;
+import com.qidate.qisplan2.ghost.module.data.GhostModuleContainer;
 import com.qidate.qisplan2.ghost.module.data.GhostModuleData;
 import com.qidate.qisplan2.ghost.module.GhostModuleDataModifier;
 import com.qidate.qisplan2.ghost.module.GhostModuleRuntime;
@@ -46,8 +47,8 @@ public class ModularGhostEntity extends AbstractGhostEntity
 
     private static final String NBT_MODULE_CUSTOM_DATA = "customData";
 
-    private final List<GhostModuleData.Entry> ghostModules =
-            new ArrayList<>();
+    private final GhostModuleContainer ghostModules =
+            new GhostModuleContainer();
 
     private final Set<UUID> touchingEntities = new HashSet<>();
 
@@ -73,7 +74,7 @@ public class ModularGhostEntity extends AbstractGhostEntity
      */
     @Override
     public List<GhostModuleData.Entry> getModules() {
-        return List.copyOf(ghostModules);
+        return ghostModules.getModules();
     }
 
     /**
@@ -81,8 +82,7 @@ public class ModularGhostEntity extends AbstractGhostEntity
      */
     public boolean hasGhostModule(ResourceLocation moduleId) {
         Objects.requireNonNull(moduleId, "moduleId");
-
-        return hasModule(moduleId);
+        return ghostModules.hasModule(moduleId);
     }
 
     /**
@@ -94,27 +94,7 @@ public class ModularGhostEntity extends AbstractGhostEntity
             ResourceLocation moduleId,
             double intensity
     ) {
-        Objects.requireNonNull(moduleId, "moduleId");
-
-        if (!isValidValue(intensity)) {
-            throw new IllegalArgumentException(
-                    "Invalid ghost module intensity: " + intensity
-            );
-        }
-
-        GhostModuleData.Entry existing = getModuleEntry(moduleId);
-
-        setModuleEntry(
-                new GhostModuleData.Entry(
-                        moduleId,
-                        intensity,
-                        existing == null ? 0.0D : existing.revival(),
-                        existing == null ? 0.0D : existing.shutdown(),
-                        existing == null
-                                ? new CompoundTag()
-                                : existing.customData()
-                )
-        );
+        ghostModules.addModule(moduleId, intensity);
     }
 
     /**
@@ -125,21 +105,7 @@ public class ModularGhostEntity extends AbstractGhostEntity
     private GhostModuleData.Entry getModuleEntry(
             ResourceLocation moduleId
     ) {
-        return ghostModules.stream()
-                .filter(entry -> entry.id().equals(moduleId))
-                .findFirst()
-                .orElse(null);
-    }
-
-    /**
-     * 添加或替换模块条目。
-     */
-    private void setModuleEntry(GhostModuleData.Entry newEntry) {
-        ghostModules.removeIf(
-                entry -> entry.id().equals(newEntry.id())
-        );
-
-        ghostModules.add(newEntry);
+        return ghostModules.getModule(moduleId);
     }
 
     /**
@@ -147,13 +113,7 @@ public class ModularGhostEntity extends AbstractGhostEntity
      */
     @Override
     public CompoundTag getModuleCustomData(ResourceLocation moduleId) {
-        Objects.requireNonNull(moduleId, "moduleId");
-
-        GhostModuleData.Entry current = getModuleEntry(moduleId);
-
-        return current == null
-                ? new CompoundTag()
-                : current.customData();
+        return ghostModules.getCustomData(moduleId);
     }
 
     /**
@@ -166,27 +126,7 @@ public class ModularGhostEntity extends AbstractGhostEntity
             ResourceLocation moduleId,
             CompoundTag customData
     ) {
-        Objects.requireNonNull(moduleId, "moduleId");
-        Objects.requireNonNull(customData, "customData");
-
-        GhostModuleData.Entry current = getModuleEntry(moduleId);
-
-        if (current == null
-                || current.customData().equals(customData)) {
-            return false;
-        }
-
-        setModuleEntry(
-                new GhostModuleData.Entry(
-                        moduleId,
-                        current.intensity(),
-                        current.revival(),
-                        current.shutdown(),
-                        customData
-                )
-        );
-
-        return true;
+        return ghostModules.setCustomData(moduleId, customData);
     }
 
     /**
@@ -197,30 +137,7 @@ public class ModularGhostEntity extends AbstractGhostEntity
             ResourceLocation moduleId,
             double revival
     ) {
-        Objects.requireNonNull(moduleId, "moduleId");
-
-        if (!isValidValue(revival)) {
-            return false;
-        }
-
-        GhostModuleData.Entry current = getModuleEntry(moduleId);
-
-        if (current == null
-                || Double.compare(current.revival(), revival) == 0) {
-            return false;
-        }
-
-        setModuleEntry(
-                new GhostModuleData.Entry(
-                        moduleId,
-                        current.intensity(),
-                        revival,
-                        current.shutdown(),
-                        current.customData()
-                )
-        );
-
-        return true;
+        return ghostModules.setRevival(moduleId, revival);
     }
 
     /**
@@ -231,30 +148,7 @@ public class ModularGhostEntity extends AbstractGhostEntity
             ResourceLocation moduleId,
             double shutdown
     ) {
-        Objects.requireNonNull(moduleId, "moduleId");
-
-        if (!isValidValue(shutdown)) {
-            return false;
-        }
-
-        GhostModuleData.Entry current = getModuleEntry(moduleId);
-
-        if (current == null
-                || Double.compare(current.shutdown(), shutdown) == 0) {
-            return false;
-        }
-
-        setModuleEntry(
-                new GhostModuleData.Entry(
-                        moduleId,
-                        current.intensity(),
-                        current.revival(),
-                        shutdown,
-                        current.customData()
-                )
-        );
-
-        return true;
+        return ghostModules.setShutdown(moduleId, shutdown);
     }
 
     /**
@@ -270,84 +164,37 @@ public class ModularGhostEntity extends AbstractGhostEntity
      * 移除模块。
      */
     public void removeGhostModule(ResourceLocation moduleId) {
-        Objects.requireNonNull(moduleId, "moduleId");
-
-        ghostModules.removeIf(
-                entry -> entry.id().equals(moduleId)
-        );
+        ghostModules.removeModule(moduleId);
     }
-
-    @Override
-    public boolean addModule(ResourceLocation moduleId, double intensity) {
-        Objects.requireNonNull(moduleId, "moduleId");
-
-        if (!isValidIntensity(intensity)) {
-            return false;
-        }
-
-        boolean unchanged = ghostModules.stream()
-                .anyMatch(entry ->
-                        entry.id().equals(moduleId)
-                                && Double.compare(
-                                entry.intensity(),
-                                intensity
-                        ) == 0
-                );
-
-        if (unchanged) {
-            return false;
-        }
-
-        addGhostModule(moduleId, intensity);
-        return true;
-    }
-
-    @Override
-    public boolean removeModule(ResourceLocation moduleId) {
-        Objects.requireNonNull(moduleId, "moduleId");
-
-        if (!hasModule(moduleId)) {
-            return false;
-        }
-
-        removeGhostModule(moduleId);
-        return true;
-    }
-
-
 
     /**
-     * 修改模块强度，保留复苏值和死机值。
+     * 安装模块或更新强度。
+     */
+    @Override
+    public boolean addModule(
+            ResourceLocation moduleId,
+            double intensity
+    ) {
+        return ghostModules.addModule(moduleId, intensity);
+    }
+
+    /**
+     * 移除指定模块。
+     */
+    @Override
+    public boolean removeModule(ResourceLocation moduleId) {
+        return ghostModules.removeModule(moduleId);
+    }
+
+    /**
+     * 修改模块强度。
      */
     @Override
     public boolean setIntensity(
             ResourceLocation moduleId,
             double intensity
     ) {
-        Objects.requireNonNull(moduleId, "moduleId");
-
-        if (!isValidValue(intensity)) {
-            return false;
-        }
-
-        GhostModuleData.Entry current = getModuleEntry(moduleId);
-
-        if (current == null
-                || Double.compare(current.intensity(), intensity) == 0) {
-            return false;
-        }
-
-        setModuleEntry(
-                new GhostModuleData.Entry(
-                        moduleId,
-                        intensity,
-                        current.revival(),
-                        current.shutdown(),
-                        current.customData()
-                )
-        );
-
-        return true;
+        return ghostModules.setIntensity(moduleId, intensity);
     }
 
     private static boolean isValidIntensity(double intensity) {
@@ -378,7 +225,7 @@ public class ModularGhostEntity extends AbstractGhostEntity
 
         ListTag modulesTag = new ListTag();
 
-        for (GhostModuleData.Entry entry : ghostModules) {
+        for (GhostModuleData.Entry entry : ghostModules.getModules()) {
             CompoundTag moduleTag = new CompoundTag();
 
             moduleTag.putString(
@@ -423,6 +270,8 @@ public class ModularGhostEntity extends AbstractGhostEntity
                 Tag.TAG_COMPOUND
         );
 
+        List<GhostModuleData.Entry> loadedModules = new ArrayList<>();
+
         for (int i = 0; i < modulesTag.size(); i++) {
             CompoundTag moduleTag = modulesTag.getCompound(i);
 
@@ -462,11 +311,13 @@ public class ModularGhostEntity extends AbstractGhostEntity
                     ? moduleTag.getCompound(NBT_MODULE_CUSTOM_DATA)
                     : new CompoundTag();
 
-            if (!isValidIntensity(intensity)) {
+            if (!Double.isFinite(intensity) || intensity < 0.0D
+                    || !Double.isFinite(revival) || revival < 0.0D
+                    || !Double.isFinite(shutdown) || shutdown < 0.0D) {
                 continue;
             }
 
-            ghostModules.add(
+            loadedModules.add(
                     new GhostModuleData.Entry(
                             moduleId,
                             intensity,
@@ -476,6 +327,8 @@ public class ModularGhostEntity extends AbstractGhostEntity
                     )
             );
         }
+
+        ghostModules.loadEntries(loadedModules);
     }
 
     @Override
