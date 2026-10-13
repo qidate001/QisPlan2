@@ -76,6 +76,16 @@ public record GhostAbilityContext(
     }
 
     /**
+     * 当前模块是否仍由宿主持有。
+     *
+     * 上下文创建后，模块仍可能被移除，
+     * 因此不能仅凭上下文创建成功就认定模块一直有效。
+     */
+    public boolean isModuleAvailable() {
+        return host.hasModule(moduleId);
+    }
+
+    /**
      * 获取当前能力定义。
      */
     public GhostAbility getAbility() {

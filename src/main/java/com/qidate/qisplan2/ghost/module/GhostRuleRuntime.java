@@ -10,14 +10,9 @@ import java.util.List;
  *
  * 负责将语义事件分发给宿主所持有模块定义中的规则。
  *
- * 当前阶段：
- * 1. 获取宿主模块快照。
- * 2. 获取模块定义中的规则快照。
- * 3. 筛选支持当前事件的规则。
- * 4. 检查规则前置条件。
- * 5. 执行满足条件的规则。
- *
- * 规则与能力的执行逻辑保持分离。
+ * 每次分发固定模块列表与规则列表，避免遍历期间集合变化。
+ * 每次执行规则前检查模块是否仍然存在。
+ * 已被移除的模块不再执行后续规则。
  */
 public final class GhostRuleRuntime {
 
@@ -35,11 +30,14 @@ public final class GhostRuleRuntime {
             return;
         }
 
-        // 固定本次派发开始时的模块列表。
         List<GhostModuleData.Entry> moduleEntries =
                 List.copyOf(host.getModules());
 
         for (GhostModuleData.Entry entry : moduleEntries) {
+            if (!host.hasModule(entry.id())) {
+                continue;
+            }
+
             GhostModule module =
                     GhostModuleRegistry.get(entry.id());
 
@@ -47,11 +45,15 @@ public final class GhostRuleRuntime {
                 continue;
             }
 
-            // 固定当前模块的规则列表，避免遍历期间列表变化。
             List<GhostRule> rules =
                     List.copyOf(module.getRules());
 
             for (GhostRule rule : rules) {
+                // 模块可能在之前的规则执行期间被移除。
+                if (!host.hasModule(entry.id())) {
+                    break;
+                }
+
                 if (!rule.supports(event)) {
                     continue;
                 }
@@ -65,6 +67,11 @@ public final class GhostRuleRuntime {
 
                 if (!rule.canTrigger(context, event)) {
                     continue;
+                }
+
+                // canTrigger 也可能产生副作用，因此执行前再次检查。
+                if (!host.hasModule(entry.id())) {
+                    break;
                 }
 
                 rule.onTrigger(context, event);
@@ -84,15 +91,25 @@ public final class GhostRuleRuntime {
             return;
         }
 
-        GhostModule module = GhostModuleRegistry.get(entry.id());
+        if (!host.hasModule(entry.id())) {
+            return;
+        }
+
+        GhostModule module =
+                GhostModuleRegistry.get(entry.id());
 
         if (module == null) {
             return;
         }
 
-        List<GhostRule> rules = List.copyOf(module.getRules());
+        List<GhostRule> rules =
+                List.copyOf(module.getRules());
 
         for (GhostRule rule : rules) {
+            if (!host.hasModule(entry.id())) {
+                break;
+            }
+
             if (!rule.supports(event)) {
                 continue;
             }
@@ -106,6 +123,10 @@ public final class GhostRuleRuntime {
 
             if (!rule.canTrigger(context, event)) {
                 continue;
+            }
+
+            if (!host.hasModule(entry.id())) {
+                break;
             }
 
             rule.onTrigger(context, event);

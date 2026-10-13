@@ -97,6 +97,11 @@ public record GhostRuleContext(
         Objects.requireNonNull(abilityId, "abilityId");
         Objects.requireNonNull(event, "event");
 
+        // 当前模块已被移除，不再尝试创建能力上下文。
+        if (!host.hasModule(moduleId)) {
+            return false;
+        }
+
         GhostAbilityContext abilityContext =
                 new GhostAbilityContext(
                         host,
