@@ -85,11 +85,21 @@ public final class GhostAbilityExecutor {
             applyStimulation(context, stimulation);
         }
 
-        // 7. 执行能力并取得效果结果。
-        boolean effectSucceeded =
-                ability.executeWithResult(context);
+        // 7. 创建实际执行上下文。
+        GhostAbilityContext executionContext = context;
 
-        // 8. ON_EFFECT_SUCCESS：只有效果成功才结算。
+        if (timing
+                == GhostAbilityStimulation.Timing.MANUAL_CHECKPOINT) {
+            executionContext = context.withStimulationCheckpoint(
+                    createManualCheckpoint(context, stimulation)
+            );
+        }
+
+        // 8. 执行能力并取得效果结果。
+        boolean effectSucceeded =
+                ability.executeWithResult(executionContext);
+
+        // 9. ON_EFFECT_SUCCESS：只有效果成功才结算。
         if (timing
                 == GhostAbilityStimulation.Timing.ON_EFFECT_SUCCESS
                 && effectSucceeded) {
@@ -116,6 +126,12 @@ public final class GhostAbilityExecutor {
             return false;
         }
 
+        // 不可变宿主不接受能力刺激。
+        // 能力本身仍可执行，只跳过复苏值结算。
+        if (!context.host().allowsAbilityRevivalStimulation()) {
+            return false;
+        }
+
         if (stimulation.revivalAmount() <= 0.0D) {
             return true;
         }
@@ -123,5 +139,31 @@ public final class GhostAbilityExecutor {
         return context.getModuleContext().addRevival(
                 stimulation.revivalAmount()
         );
+    }
+
+    /**
+     * 为手动检查点创建一次性结算处理器。
+     *
+     * 每次能力调用拥有独立的结算标记。
+     * 同一次调用即使重复请求检查点，也只会尝试结算一次。
+     *
+     * 只有模块仍然存在时才提交刺激。
+     */
+    private static Runnable createManualCheckpoint(
+            GhostAbilityContext context,
+            GhostAbilityStimulation stimulation
+    ) {
+        boolean[] settled = {false};
+
+        return () -> {
+            if (settled[0]) {
+                return;
+            }
+
+            // 先标记，避免结算过程重入导致重复提交。
+            settled[0] = true;
+
+            applyStimulation(context, stimulation);
+        };
     }
 }

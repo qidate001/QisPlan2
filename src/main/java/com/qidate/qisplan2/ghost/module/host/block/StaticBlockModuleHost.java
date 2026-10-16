@@ -34,6 +34,16 @@ public final class StaticBlockModuleHost implements GhostModuleHost {
         );
     }
 
+    /**
+     * 静态方块宿主的模块数据不可变。
+     *
+     * 不允许能力刺激修改复苏值。
+     */
+    @Override
+    public boolean allowsAbilityRevivalStimulation() {
+        return false;
+    }
+
     @Override
     public List<GhostModuleData.Entry> getModules() {
         return modules;

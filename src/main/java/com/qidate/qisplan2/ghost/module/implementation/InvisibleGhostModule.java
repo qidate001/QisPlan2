@@ -2,11 +2,7 @@ package com.qidate.qisplan2.ghost.module.implementation;
 
 import com.qidate.qisplan2.death.ModDamageTypes;
 import com.qidate.qisplan2.death.SupernaturalDeathHandler;
-import com.qidate.qisplan2.ghost.module.GhostAbility;
-import com.qidate.qisplan2.ghost.module.GhostAbilityContext;
-import com.qidate.qisplan2.ghost.module.GhostModule;
-import com.qidate.qisplan2.ghost.module.GhostRule;
-import com.qidate.qisplan2.ghost.module.GhostRuleContext;
+import com.qidate.qisplan2.ghost.module.*;
 import com.qidate.qisplan2.ghost.module.data.GhostModuleInitialData;
 import com.qidate.qisplan2.ghost.module.event.EntityPerceivedEvent;
 import com.qidate.qisplan2.ghost.module.event.GhostEvent;
@@ -115,6 +111,16 @@ public final class InvisibleGhostModule implements GhostModule {
         }
 
         @Override
+        public GhostAbilityStimulation getStimulation(
+                GhostAbilityContext context
+        ) {
+            return new GhostAbilityStimulation(
+                    1.0D,
+                    GhostAbilityStimulation.Timing.ON_EFFECT_SUCCESS
+            );
+        }
+
+        @Override
         public boolean canExecute(GhostAbilityContext context) {
             return context.event() instanceof EntityPerceivedEvent event
                     && event.observer() instanceof Player;
@@ -122,19 +128,26 @@ public final class InvisibleGhostModule implements GhostModule {
 
         @Override
         public void execute(GhostAbilityContext context) {
+            executeWithResult(context);
+        }
+
+        @Override
+        public boolean executeWithResult(
+                GhostAbilityContext context
+        ) {
             if (!context.isModuleAvailable()) {
-                return;
+                return false;
             }
 
             if (!(context.event() instanceof EntityPerceivedEvent event)) {
-                return;
+                return false;
             }
 
             if (!(event.observer() instanceof Player player)) {
-                return;
+                return false;
             }
 
-            SupernaturalDeathHandler.tryKill(
+            return SupernaturalDeathHandler.tryKill(
                     player,
                     ModDamageTypes.invisibleGhost(event.target()),
                     context.getModuleContext().intensity()
