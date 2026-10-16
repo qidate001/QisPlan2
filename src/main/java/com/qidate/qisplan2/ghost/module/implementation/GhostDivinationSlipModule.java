@@ -18,7 +18,9 @@ import com.qidate.qisplan2.ghost.possession.manager.PossessionHandler;
 import com.qidate.qisplan2.network.divinationslip.GhostDivinationNetwork;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.entity.LivingEntity;
 
 import java.util.List;
 import java.util.UUID;
@@ -145,19 +147,9 @@ public final class GhostDivinationSlipModule implements GhostModule {
         }
 
         @Override
-        public GhostAbilityStimulation getStimulation(
-                GhostAbilityContext context
-        ) {
-            return new GhostAbilityStimulation(
-                    1.0D,
-                    GhostAbilityStimulation.Timing.ON_EFFECT_SUCCESS
-            );
-        }
-
-        @Override
         public boolean canExecute(GhostAbilityContext context) {
             return context.event() instanceof GhostUseEvent useEvent
-                    && useEvent.user() instanceof ServerPlayer;
+                    && useEvent.user().level() instanceof ServerLevel;
         }
 
         @Override
@@ -175,17 +167,18 @@ public final class GhostDivinationSlipModule implements GhostModule {
                 return false;
             }
 
-            if (!(useEvent.user() instanceof ServerPlayer player)) {
+            LivingEntity user = useEvent.user();
+
+            if (!(user.level() instanceof ServerLevel)) {
                 return false;
             }
 
-            // 0：生，1：死，2：鬼。
-            int result = player.getRandom().nextInt(3);
+            int result = user.getRandom().nextInt(3);
 
             return switch (result) {
-                case 0 -> useLife(player);
-                case 1 -> useDeath(player);
-                case 2 -> useGhost(player);
+                case 0 -> useLife(user);
+                case 1 -> useDeath(user);
+                case 2 -> useGhost(user);
                 default -> false;
             };
         }
@@ -197,21 +190,29 @@ public final class GhostDivinationSlipModule implements GhostModule {
      * ========================================
      */
 
-    private static boolean useLife(ServerPlayer player) {
-        GhostDivinationNetwork.sendResult(player, 0);
+    private static boolean useLife(LivingEntity user) {
+        // 只有玩家需要接收结果展示特效。
+        sendResultIfPlayer(user, 0);
+
+        if (!(user.level() instanceof ServerLevel serverLevel)) {
+            return false;
+        }
 
         int strength = LIFE_STRENGTH;
 
-        PossessedGhostState state = PossessionHandler.getState(
-                player,
-                GhostDivinationSlipAbility.ID
-        );
+        // 驭鬼者的死机状态只适用于玩家。
+        if (user instanceof ServerPlayer player) {
+            PossessedGhostState state = PossessionHandler.getState(
+                    player,
+                    GhostDivinationSlipAbility.ID
+            );
 
-        if (state != null && state.stunTicks() > 0) {
-            strength = LIFE_STRENGTH_STUN;
+            if (state != null && state.stunTicks() > 0) {
+                strength = LIFE_STRENGTH_STUN;
+            }
         }
 
-        GhostDivinationCurse existing = getLifeCurse(player.getUUID());
+        GhostDivinationCurse existing = getLifeCurse(user.getUUID());
 
         if (existing != null) {
             existing.addTime(LIFE_DURATION);
@@ -231,17 +232,17 @@ public final class GhostDivinationSlipModule implements GhostModule {
         initialState.putInt("RemainingTicks", LIFE_DURATION);
 
         Curse curse = curseType.create(
-                player.getUUID(),
+                user.getUUID(),
                 source,
                 initialState
         );
 
-        CurseManager.add(player.server, curse);
+        CurseManager.add(serverLevel.getServer(), curse);
         return true;
     }
 
     /**
-     * 获取玩家当前的生签诅咒。
+     * 获取指定实体当前的生签诅咒。
      */
     private static GhostDivinationCurse getLifeCurse(UUID target) {
         for (Curse curse : CurseManager.getByTarget(target)) {
@@ -259,10 +260,9 @@ public final class GhostDivinationSlipModule implements GhostModule {
      * ========================================
      */
 
-    private static boolean useGhost(ServerPlayer player) {
-        GhostDivinationNetwork.sendResult(player, 2);
-
+    private static boolean useGhost(LivingEntity user) {
         // 鬼签目前没有额外效果。
+        sendResultIfPlayer(user, 2);
         return true;
     }
 
@@ -272,30 +272,46 @@ public final class GhostDivinationSlipModule implements GhostModule {
      * ========================================
      */
 
-    private static boolean useDeath(ServerPlayer player) {
-        GhostDivinationNetwork.sendResult(player, 1);
+    private static boolean useDeath(LivingEntity user) {
+        sendResultIfPlayer(user, 1);
 
-        GhostDivinationCurse lifeCurse = getLifeCurse(player.getUUID());
+        if (!(user.level() instanceof ServerLevel serverLevel)) {
+            return false;
+        }
+
+        GhostDivinationCurse lifeCurse = getLifeCurse(user.getUUID());
 
         if (lifeCurse != null) {
             CurseManager.remove(
-                    player.server,
+                    serverLevel.getServer(),
                     lifeCurse.getId()
             );
 
-            PossessionHandler.testStun(
-                    player,
-                    GhostDivinationSlipAbility.ID,
-                    STUN_TIME
-            );
+            // 只有玩家才有驭鬼者状态及对应的死机逻辑。
+            if (user instanceof ServerPlayer player) {
+                PossessionHandler.testStun(
+                        player,
+                        GhostDivinationSlipAbility.ID,
+                        STUN_TIME
+                );
+            }
 
             return true;
         }
 
         return SupernaturalDeathHandler.tryKill(
-                player,
-                ModDamageTypes.ghostDivinationSlip(player),
+                user,
+                ModDamageTypes.ghostDivinationSlip(user),
                 DEATH_STRENGTH
         );
+    }
+
+    /**
+     * 仅向玩家发送鬼签结果展示特效。
+     */
+    private static void sendResultIfPlayer(LivingEntity user, int result) {
+        if (user instanceof ServerPlayer player) {
+            GhostDivinationNetwork.sendResult(player, result);
+        }
     }
 }
