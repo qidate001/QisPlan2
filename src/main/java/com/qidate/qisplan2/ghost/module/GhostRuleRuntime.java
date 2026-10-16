@@ -12,7 +12,7 @@ import java.util.List;
  *
  * 每次分发固定模块列表与规则列表，避免遍历期间集合变化。
  * 每次执行规则前检查模块是否仍然存在。
- * 已被移除的模块不再执行后续规则。
+ * 已被移除或处于沉睡状态的模块不执行自身规则。
  */
 public final class GhostRuleRuntime {
 
@@ -34,7 +34,7 @@ public final class GhostRuleRuntime {
                 List.copyOf(host.getModules());
 
         for (GhostModuleData.Entry entry : moduleEntries) {
-            if (!host.hasModule(entry.id())) {
+            if (!canRunRules(host, entry.id())) {
                 continue;
             }
 
@@ -49,8 +49,8 @@ public final class GhostRuleRuntime {
                     List.copyOf(module.getRules());
 
             for (GhostRule rule : rules) {
-                // 模块可能在之前的规则执行期间被移除。
-                if (!host.hasModule(entry.id())) {
+                // 模块可能在之前的规则执行期间被移除或进入沉睡。
+                if (!canRunRules(host, entry.id())) {
                     break;
                 }
 
@@ -69,8 +69,8 @@ public final class GhostRuleRuntime {
                     continue;
                 }
 
-                // canTrigger 也可能产生副作用，因此执行前再次检查。
-                if (!host.hasModule(entry.id())) {
+                // canTrigger 也可能改变模块状态。
+                if (!canRunRules(host, entry.id())) {
                     break;
                 }
 
@@ -91,7 +91,7 @@ public final class GhostRuleRuntime {
             return;
         }
 
-        if (!host.hasModule(entry.id())) {
+        if (!canRunRules(host, entry.id())) {
             return;
         }
 
@@ -106,7 +106,7 @@ public final class GhostRuleRuntime {
                 List.copyOf(module.getRules());
 
         for (GhostRule rule : rules) {
-            if (!host.hasModule(entry.id())) {
+            if (!canRunRules(host, entry.id())) {
                 break;
             }
 
@@ -125,11 +125,33 @@ public final class GhostRuleRuntime {
                 continue;
             }
 
-            if (!host.hasModule(entry.id())) {
+            if (!canRunRules(host, entry.id())) {
                 break;
             }
 
             rule.onTrigger(context, event);
         }
+    }
+
+    /**
+     * 检查模块是否存在且没有沉睡。
+     *
+     * 每次从宿主读取最新模块数据，避免使用旧快照中的状态。
+     */
+    private static boolean canRunRules(
+            GhostModuleHost host,
+            net.minecraft.resources.ResourceLocation moduleId
+    ) {
+        if (!host.hasModule(moduleId)) {
+            return false;
+        }
+
+        for (GhostModuleData.Entry currentEntry : host.getModules()) {
+            if (currentEntry.id().equals(moduleId)) {
+                return !currentEntry.sleeping();
+            }
+        }
+
+        return false;
     }
 }

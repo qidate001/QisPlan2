@@ -72,6 +72,45 @@ public record GhostModuleContext(
     }
 
     /**
+     * 增加当前模块的复苏值。
+     *
+     * 复苏值不会低于 0，也不会超过模块定义的最大复苏值。
+     *
+     * @param amount 增加量
+     * @return 是否成功提交复苏值
+     */
+    public boolean addRevival(double amount) {
+        if (!Double.isFinite(amount) || amount < 0.0D) {
+            throw new IllegalArgumentException(
+                    "Revival amount must be finite and non-negative"
+            );
+        }
+
+        GhostModule module = GhostModuleRegistry.get(moduleId);
+
+        if (module == null || !host.hasModule(moduleId)) {
+            return false;
+        }
+
+        double maxRevival = module.getMaxRevival();
+
+        if (!Double.isFinite(maxRevival) || maxRevival < 0.0D) {
+            throw new IllegalStateException(
+                    "Invalid maximum revival for module: " + moduleId
+            );
+        }
+
+        double currentRevival = revival();
+
+        double newRevival = Math.min(
+                maxRevival,
+                Math.max(0.0D, currentRevival) + amount
+        );
+
+        return setRevival(newRevival);
+    }
+
+    /**
      * 获取当前模块的专属数据副本。
      */
     public CompoundTag getCustomData() {

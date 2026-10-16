@@ -2,13 +2,7 @@ package com.qidate.qisplan2.ghost.module.implementation;
 
 import com.qidate.qisplan2.death.ModDamageTypes;
 import com.qidate.qisplan2.death.SupernaturalDeathHandler;
-import com.qidate.qisplan2.ghost.module.GhostAbility;
-import com.qidate.qisplan2.ghost.module.GhostAbilityContext;
-import com.qidate.qisplan2.ghost.module.GhostModule;
-import com.qidate.qisplan2.ghost.module.GhostModuleContext;
-import com.qidate.qisplan2.ghost.module.GhostMedium;
-import com.qidate.qisplan2.ghost.module.GhostRule;
-import com.qidate.qisplan2.ghost.module.GhostRuleContext;
+import com.qidate.qisplan2.ghost.module.*;
 import com.qidate.qisplan2.ghost.module.data.GhostModuleInitialData;
 import com.qidate.qisplan2.ghost.module.event.GhostEvent;
 import com.qidate.qisplan2.ghost.module.event.TouchEvent;
@@ -150,28 +144,39 @@ public final class UntouchableGhostModule implements GhostModule {
         }
 
         @Override
+        public GhostAbilityStimulation getStimulation(
+                GhostAbilityContext context
+        ) {
+            return new GhostAbilityStimulation(
+                    1.0D,
+                    GhostAbilityStimulation.Timing.ON_EFFECT_SUCCESS
+            );
+        }
+
+        @Override
         public boolean canExecute(GhostAbilityContext context) {
             return context.event() instanceof TouchEvent;
         }
 
         @Override
         public void execute(GhostAbilityContext context) {
+            executeWithResult(context);
+        }
+
+        @Override
+        public boolean executeWithResult(GhostAbilityContext context) {
             if (!context.isModuleAvailable()) {
-                return;
+                return false;
             }
 
             if (!(context.event() instanceof TouchEvent touchEvent)) {
-                return;
+                return false;
             }
 
             GhostModuleContext moduleContext =
                     context.getModuleContext();
 
-            moduleContext.setRevival(
-                    moduleContext.revival() + 1.0D
-            );
-
-            SupernaturalDeathHandler.tryKill(
+            return SupernaturalDeathHandler.tryKill(
                     touchEvent.target(),
                     ModDamageTypes.untouchableGhost(
                             touchEvent.source()

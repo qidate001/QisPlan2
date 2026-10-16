@@ -68,7 +68,7 @@ public class SupernaturalDeathHandler {
 
 
     /**
-     * 尝试执行一次灵异死亡。
+     * 尝试执行一次灵异袭击。
      *
      * @param entity 目标
      * @param damageSource 灵异攻击伤害来源
