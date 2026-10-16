@@ -155,7 +155,7 @@ public final class GhostDivinationSlipModule implements GhostModule {
 
             LivingEntity user = useEvent.user();
 
-            if (!(user.level() instanceof ServerLevel)) {
+            if (!(user.level() instanceof ServerLevel serverLevel)) {
                 return;
             }
 
@@ -174,13 +174,46 @@ public final class GhostDivinationSlipModule implements GhostModule {
                         LIFE_STRENGTH
                 );
 
-                case DEATH_RESULT -> context.submitAbilityInfluence(
-                        USE_ABILITY_ID,
-                        resultEvent,
-                        user.getUUID(),
-                        GhostInfluenceType.ATTACK,
-                        DEATH_STRENGTH
-                );
+
+                case DEATH_RESULT -> {
+                    /*
+                     * 如果目标已有有效的生签诅咒，
+                     * 将其守护行为加入当前事件的影响批次。
+                     */
+                    for (var curse : CurseManager.getByTarget(user.getUUID())) {
+                        if (!(curse instanceof GhostDivinationCurse lifeCurse)) {
+                            continue;
+                        }
+
+                        if (!lifeCurse.isValid(serverLevel.getServer())) {
+                            continue;
+                        }
+
+                        context.submitInfluence(
+                                user.getUUID(),
+                                GhostInfluenceType.PROTECTION,
+                                lifeCurse.getStrength(),
+                                () -> {
+                                }
+                        );
+
+                        // 鬼签模块对同一目标只保留一个生签诅咒。
+                        break;
+                    }
+
+                    /*
+                     * 再提交死签袭击。
+                     * 两种影响由同一个会话统一裁决。
+                     */
+                    context.submitAbilityInfluence(
+                            USE_ABILITY_ID,
+                            resultEvent,
+                            user.getUUID(),
+                            GhostInfluenceType.ATTACK,
+                            DEATH_STRENGTH
+                    );
+                }
+
 
                 case GHOST_RESULT -> {
                     // 鬼签不参与保护/攻击竞争。

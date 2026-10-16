@@ -4,10 +4,12 @@ import com.qidate.qisplan2.ghost.module.GhostModuleHost;
 import net.minecraft.resources.ResourceLocation;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -63,8 +65,14 @@ public final class GhostInfluenceSession {
         }
 
         return sourceIds
-                .computeIfAbsent(host, ignored -> new java.util.HashMap<>())
-                .computeIfAbsent(moduleId, ignored -> UUID.randomUUID());
+                .computeIfAbsent(
+                        host,
+                        ignored -> new java.util.HashMap<>()
+                )
+                .computeIfAbsent(
+                        moduleId,
+                        ignored -> UUID.randomUUID()
+                );
     }
 
     /**
@@ -102,7 +110,11 @@ public final class GhostInfluenceSession {
     }
 
     /**
-     * 结束会话：统一裁决、应用死机状态，再执行获准效果。
+     * 结束会话：
+     * 1. 统一裁决；
+     * 2. 应用全部死机结果；
+     * 3. 取消本批次死机模块的所有已接受效果；
+     * 4. 执行其余获准效果。
      *
      * @return 成功设置死机状态的模块实例数量
      */
@@ -118,21 +130,64 @@ public final class GhostInfluenceSession {
         List<GhostInfluence> influences = batch.getInfluences();
         List<GhostInfluenceResolution> results = batch.resolve();
 
+        /*
+         * 第一阶段：应用所有死机结果。
+         *
+         * 此时尚未执行任何已接受效果，
+         * 保证后续效果不会先于死机状态应用。
+         */
         int deadlockedCount = GhostInfluenceApplier.apply(
                 influences,
                 results
         );
 
+        /*
+         * 第二阶段：记录本批次被判定死机的宿主模块。
+         *
+         * 使用宿主对象身份比较，而不是 equals()，
+         * 避免不同宿主实例因相等性实现而被混为一谈。
+         */
+        Set<DeadlockedModule> deadlockedModules = new HashSet<>();
+
+        for (int i = 0; i < results.size(); i++) {
+            if (results.get(i) != GhostInfluenceResolution.DEADLOCKED) {
+                continue;
+            }
+
+            GhostInfluence influence = influences.get(i);
+
+            deadlockedModules.add(
+                    new DeadlockedModule(
+                            influence.host(),
+                            influence.moduleId()
+                    )
+            );
+        }
+
+        /*
+         * 第三阶段：执行已接受效果。
+         *
+         * 只要该宿主模块在本批次任意一条影响中被判定死机，
+         * 就跳过它在本批次提交的全部已接受效果。
+         */
         for (int i = 0; i < results.size(); i++) {
             if (results.get(i) != GhostInfluenceResolution.ACCEPTED) {
                 continue;
             }
 
             GhostInfluenceSubmission submission = submissions.get(i);
-
-            // 模块可能已被之前的效果移除。
             GhostInfluence influence = submission.influence();
 
+            if (deadlockedModules.contains(
+                    new DeadlockedModule(
+                            influence.host(),
+                            influence.moduleId()
+                    )
+            )) {
+                continue;
+            }
+
+            // 模块可能已被其他效果移除。
             if (!influence.host().hasModule(influence.moduleId())) {
                 continue;
             }
@@ -157,5 +212,42 @@ public final class GhostInfluenceSession {
         }
 
         return id;
+    }
+
+    /**
+     * 用宿主对象身份与模块 ID 唯一标识一个模块实例。
+     */
+    private static final class DeadlockedModule {
+
+        private final GhostModuleHost host;
+        private final ResourceLocation moduleId;
+
+        private DeadlockedModule(
+                GhostModuleHost host,
+                ResourceLocation moduleId
+        ) {
+            this.host = host;
+            this.moduleId = moduleId;
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            if (this == obj) {
+                return true;
+            }
+
+            if (!(obj instanceof DeadlockedModule other)) {
+                return false;
+            }
+
+            return host == other.host
+                    && moduleId.equals(other.moduleId);
+        }
+
+        @Override
+        public int hashCode() {
+            return 31 * System.identityHashCode(host)
+                    + moduleId.hashCode();
+        }
     }
 }
