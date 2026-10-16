@@ -120,12 +120,17 @@ public abstract class AbstractModularGhostBlockEntity
         return true;
     }
 
+    /**
+     * 修改模块沉睡状态，保留其他属性。
+     */
     @Override
-    public boolean setShutdown(
+    public boolean setSleeping(
             ResourceLocation moduleId,
-            double shutdown
+            boolean sleeping
     ) {
-        if (!ghostModules.setShutdown(moduleId, shutdown)) {
+        Objects.requireNonNull(moduleId, "moduleId");
+
+        if (!ghostModules.setSleeping(moduleId, sleeping)) {
             return false;
         }
 

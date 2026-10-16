@@ -9,23 +9,22 @@ package com.qidate.qisplan2.ghost.module.data;
  * 模块实例创建后，其属性可以独立变化，
  * 不会反向修改这份初始数据定义。
  *
- * 后续增加新的灵异属性时，可以在这里统一扩展。
+ * 当前仅包含灵异强度和初始复苏值。
+ * 沉睡与死机属于独立的实例状态，不属于初始数值属性。
  */
 public record GhostModuleInitialData(
         double intensity,
-        double revival,
-        double shutdown
+        double revival
 ) {
 
     /**
      * 创建初始数据时进行基本校验。
      *
-     * 当前三个属性均要求是非负有限数值。
+     * 两个属性均要求是非负有限数值。
      */
     public GhostModuleInitialData {
         validate("intensity", intensity);
         validate("revival", revival);
-        validate("shutdown", shutdown);
     }
 
     /**

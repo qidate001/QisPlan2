@@ -79,8 +79,8 @@ public final class GhostModuleContainer {
                         moduleId,
                         intensity,
                         current.revival(),
-                        current.shutdown(),
-                        current.customData().copy()
+                        current.sleeping(),
+                        current.customData()
                 );
 
         putEntry(replacement);
@@ -142,8 +142,8 @@ public final class GhostModuleContainer {
                         current.id(),
                         intensity,
                         current.revival(),
-                        current.shutdown(),
-                        current.customData().copy()
+                        current.sleeping(),
+                        current.customData()
                 )
         );
 
@@ -161,7 +161,10 @@ public final class GhostModuleContainer {
         GhostModuleData.Entry current = getModule(moduleId);
 
         if (current == null
-                || Double.compare(current.revival(), revival) == 0) {
+                || Double.compare(
+                current.revival(),
+                revival
+        ) == 0) {
             return false;
         }
 
@@ -170,39 +173,33 @@ public final class GhostModuleContainer {
                         current.id(),
                         current.intensity(),
                         revival,
-                        current.shutdown(),
-                        current.customData().copy()
+                        current.sleeping(),
+                        current.customData()
                 )
         );
 
         return true;
     }
 
-    public boolean setShutdown(
+    /**
+     * 设置模块实例的沉睡状态。
+     *
+     * 沉睡状态独立于复苏值，不会自动改变复苏值。
+     */
+    public boolean setSleeping(
             ResourceLocation moduleId,
-            double shutdown
+            boolean sleeping
     ) {
-        if (!isValidValue(shutdown)) {
-            return false;
-        }
+        Objects.requireNonNull(moduleId, "moduleId");
 
         GhostModuleData.Entry current = getModule(moduleId);
 
         if (current == null
-                || Double.compare(current.shutdown(), shutdown) == 0) {
+                || current.sleeping() == sleeping) {
             return false;
         }
 
-        putEntry(
-                new GhostModuleData.Entry(
-                        current.id(),
-                        current.intensity(),
-                        current.revival(),
-                        shutdown,
-                        current.customData().copy()
-                )
-        );
-
+        putEntry(current.withSleeping(sleeping));
         return true;
     }
 
@@ -217,7 +214,7 @@ public final class GhostModuleContainer {
 
         return current == null
                 ? new CompoundTag()
-                : current.customData().copy();
+                : current.customData();
     }
 
     /**
@@ -268,8 +265,7 @@ public final class GhostModuleContainer {
             }
 
             if (!isValidValue(entry.intensity())
-                    || !isValidValue(entry.revival())
-                    || !isValidValue(entry.shutdown())) {
+                    || !isValidValue(entry.revival())) {
                 continue;
             }
 
@@ -278,8 +274,8 @@ public final class GhostModuleContainer {
                             entry.id(),
                             entry.intensity(),
                             entry.revival(),
-                            entry.shutdown(),
-                            entry.customData().copy()
+                            entry.sleeping(),
+                            entry.customData()
                     )
             );
         }

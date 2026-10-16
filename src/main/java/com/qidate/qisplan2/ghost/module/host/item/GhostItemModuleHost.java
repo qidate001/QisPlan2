@@ -114,18 +114,18 @@ public final class GhostItemModuleHost
     }
 
     /**
-     * 修改模块死机值，保留其他数据。
+     * 修改模块沉睡状态，保留其他属性。
      */
     @Override
-    public boolean setShutdown(
+    public boolean setSleeping(
             ResourceLocation moduleId,
-            double shutdown
+            boolean sleeping
     ) {
         Objects.requireNonNull(moduleId, "moduleId");
 
         GhostModuleContainer container = createContainer();
 
-        if (!container.setShutdown(moduleId, shutdown)) {
+        if (!container.setSleeping(moduleId, sleeping)) {
             return false;
         }
 

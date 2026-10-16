@@ -56,13 +56,6 @@ public record GhostModuleContext(
     }
 
     /**
-     * 获取当前模块的死机值。
-     */
-    public double shutdown() {
-        return getData().shutdown();
-    }
-
-    /**
      * 修改当前模块的灵异强度。
      *
      * 只有支持修改数据的宿主才能执行修改。
@@ -76,13 +69,6 @@ public record GhostModuleContext(
      */
     public boolean setRevival(double value) {
         return getModifier().setRevival(moduleId, value);
-    }
-
-    /**
-     * 修改当前模块的死机值。
-     */
-    public boolean setShutdown(double value) {
-        return getModifier().setShutdown(moduleId, value);
     }
 
     /**

@@ -25,14 +25,14 @@ public final class GhostModuleData {
      * id：模块标识。
      * intensity：当前灵异强度。
      * revival：当前复苏值。
-     * shutdown：当前死机值。
+     * sleeping：当前是否处于沉睡状态。
      * customData：当前模块实例的专属数据。
      */
     public record Entry(
             ResourceLocation id,
             double intensity,
             double revival,
-            double shutdown,
+            boolean sleeping,
             CompoundTag customData
     ) {
 
@@ -45,27 +45,50 @@ public final class GhostModuleData {
         }
 
         /**
-         * 兼容旧代码：只提供模块 ID 和强度。
+         * 兼容只提供模块 ID 和强度的调用。
          */
         public Entry(ResourceLocation id, double intensity) {
-            this(id, intensity, 0.0D, 0.0D, new CompoundTag());
+            this(
+                    id,
+                    intensity,
+                    0.0D,
+                    false,
+                    new CompoundTag()
+            );
         }
 
         /**
-         * 兼容现有代码：未提供专属数据时使用空容器。
+         * 兼容只提供模块 ID、强度和复苏值的调用。
          */
         public Entry(
                 ResourceLocation id,
                 double intensity,
-                double revival,
-                double shutdown
+                double revival
         ) {
             this(
                     id,
                     intensity,
                     revival,
-                    shutdown,
+                    false,
                     new CompoundTag()
+            );
+        }
+
+        /**
+         * 兼容尚未提供沉睡状态的调用。
+         */
+        public Entry(
+                ResourceLocation id,
+                double intensity,
+                double revival,
+                CompoundTag customData
+        ) {
+            this(
+                    id,
+                    intensity,
+                    revival,
+                    false,
+                    customData
             );
         }
 
@@ -78,22 +101,37 @@ public final class GhostModuleData {
         }
 
         /**
-         * 创建一份专属数据已更新的新模块实例数据。
-         *
-         * 通用属性保持不变。
+         * 创建一份专属数据已更新的新实例数据。
+         * 其他通用属性保持不变。
          */
         public Entry withCustomData(CompoundTag newCustomData) {
             return new Entry(
                     id,
                     intensity,
                     revival,
-                    shutdown,
+                    sleeping,
                     newCustomData
             );
         }
 
         /**
+         * 创建一份沉睡状态已更新的新实例数据。
+         * 其他通用属性保持不变。
+         */
+        public Entry withSleeping(boolean newSleeping) {
+            return new Entry(
+                    id,
+                    intensity,
+                    revival,
+                    newSleeping,
+                    customData
+            );
+        }
+
+        /**
          * 根据模块定义创建新的模块实例数据。
+         *
+         * 新实例默认不处于沉睡状态。
          */
         public static Entry fromDefinition(
                 ResourceLocation id,
@@ -106,7 +144,7 @@ public final class GhostModuleData {
                     id,
                     initialData.intensity(),
                     initialData.revival(),
-                    initialData.shutdown(),
+                    false,
                     new CompoundTag()
             );
         }
@@ -114,7 +152,8 @@ public final class GhostModuleData {
         /**
          * 单个模块实例的序列化格式。
          *
-         * 旧存档没有新增字段时，使用兼容默认值。
+         * 旧存档缺少 sleeping 字段时，默认不处于沉睡状态。
+         * 已废弃的 shutdown 字段不会参与新状态的恢复。
          */
         public static final Codec<Entry> CODEC =
                 RecordCodecBuilder.create(instance ->
@@ -131,9 +170,9 @@ public final class GhostModuleData {
                                         .optionalFieldOf("revival", 0.0D)
                                         .forGetter(Entry::revival),
 
-                                Codec.DOUBLE
-                                        .optionalFieldOf("shutdown", 0.0D)
-                                        .forGetter(Entry::shutdown),
+                                Codec.BOOL
+                                        .optionalFieldOf("sleeping", false)
+                                        .forGetter(Entry::sleeping),
 
                                 CompoundTag.CODEC
                                         .optionalFieldOf(

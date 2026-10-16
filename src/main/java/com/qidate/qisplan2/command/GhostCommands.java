@@ -1533,8 +1533,6 @@ public final class GhostCommands {
                                 + initialData.intensity()
                                 + "，初始复苏值："
                                 + initialData.revival()
-                                + "，初始死机值："
-                                + initialData.shutdown()
                 ),
                 true
         );
@@ -1719,8 +1717,6 @@ public final class GhostCommands {
                                 + initialData.intensity()
                                 + "，初始复苏值："
                                 + initialData.revival()
-                                + "，初始死机值："
-                                + initialData.shutdown()
                                 + (skipped > 0
                                 ? "；跳过了 " + skipped + " 个非模块化厉鬼实体。"
                                 : "")
@@ -1911,7 +1907,6 @@ public final class GhostCommands {
                         "已在 " + pos + " 安装模块 " + moduleId
                                 + "；灵异强度：" + initialData.intensity()
                                 + "，复苏值：" + initialData.revival()
-                                + "，死机值：" + initialData.shutdown()
                 ),
                 true
         );
@@ -2011,7 +2006,6 @@ public final class GhostCommands {
                             "  - " + entry.id()
                                     + "（灵异强度：" + entry.intensity()
                                     + "，复苏值：" + entry.revival()
-                                    + "，死机值：" + entry.shutdown()
                                     + "）"
                     ),
                     false

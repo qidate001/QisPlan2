@@ -60,7 +60,10 @@ public final class UntouchableGhostModule implements GhostModule {
 
     @Override
     public GhostModuleInitialData getInitialData() {
-        return new GhostModuleInitialData(20.0D, 0.0D, 0.0D);
+        return new GhostModuleInitialData(
+                20.0D,
+                0.0D
+        );
     }
 
     @Override

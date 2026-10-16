@@ -58,7 +58,6 @@ public final class GhostTombstoneModule implements GhostModule {
     public GhostModuleInitialData getInitialData() {
         return new GhostModuleInitialData(
                 25.0D,
-                0.0D,
                 0.0D
         );
     }

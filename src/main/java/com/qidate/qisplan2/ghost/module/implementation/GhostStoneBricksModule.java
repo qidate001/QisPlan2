@@ -66,7 +66,6 @@ public final class GhostStoneBricksModule implements GhostModule {
     public GhostModuleInitialData getInitialData() {
         return new GhostModuleInitialData(
                 5.0D,
-                0.0D,
                 0.0D
         );
     }

@@ -58,7 +58,6 @@ public final class InvisibleGhostModule implements GhostModule {
     public GhostModuleInitialData getInitialData() {
         return new GhostModuleInitialData(
                 20.0D,
-                0.0D,
                 0.0D
         );
     }

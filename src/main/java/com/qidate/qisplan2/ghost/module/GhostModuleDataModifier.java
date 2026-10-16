@@ -19,11 +19,10 @@ public interface GhostModuleDataModifier extends GhostModuleHost {
      * 根据模块定义创建新的模块实例。
      *
      * 初始属性只在模块尚未安装时使用。
-     * 如果宿主已经拥有该模块，则不覆盖其当前数据，
-     * 避免重新安装操作意外重置已经积累的复苏值等属性。
+     * 如果宿主已经拥有该模块，则不覆盖其当前数据。
      *
-     * 此方法通过现有的属性修改接口写入初始值，
-     * 因而不要求宿主重复实现整套初始化逻辑。
+     * 新实例默认不处于沉睡状态。
+     * 沉睡状态由实例数据容器负责初始化。
      *
      * @param module 模块定义
      * @return 成功创建实例时返回 true，否则返回 false
@@ -52,9 +51,8 @@ public interface GhostModuleDataModifier extends GhostModuleHost {
             return false;
         }
 
-        // 再初始化其他属性。
+        // 再初始化初始复苏值。
         setRevival(moduleId, initialData.revival());
-        setShutdown(moduleId, initialData.shutdown());
 
         return true;
     }
@@ -97,11 +95,15 @@ public interface GhostModuleDataModifier extends GhostModuleHost {
     boolean setRevival(ResourceLocation moduleId, double revival);
 
     /**
-     * 修改指定模块的死机值。
+     * 修改指定模块的沉睡状态。
+     *
+     * 沉睡状态独立于复苏值：
+     * 修改沉睡状态不会自动改变复苏值，
+     * 也不会自动决定厉鬼何时苏醒。
      *
      * @param moduleId 模块 ID
-     * @param shutdown 新的死机值
+     * @param sleeping 是否处于沉睡状态
      * @return 数据发生变化时返回 true，否则返回 false
      */
-    boolean setShutdown(ResourceLocation moduleId, double shutdown);
+    boolean setSleeping(ResourceLocation moduleId, boolean sleeping);
 }

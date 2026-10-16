@@ -40,11 +40,10 @@ public class ModularGhostEntity extends AbstractGhostEntity
 
     private static final String NBT_GHOST_MODULES = "QisPlan2GhostModules";
     private static final String NBT_MODULE_REVIVAL = "revival";
-    private static final String NBT_MODULE_SHUTDOWN = "shutdown";
 
     private static final String NBT_MODULE_ID = "id";
     private static final String NBT_MODULE_INTENSITY = "intensity";
-
+    private static final String NBT_MODULE_SLEEPING = "sleeping";
     private static final String NBT_MODULE_CUSTOM_DATA = "customData";
 
     private final GhostModuleContainer ghostModules =
@@ -141,14 +140,14 @@ public class ModularGhostEntity extends AbstractGhostEntity
     }
 
     /**
-     * 修改模块死机值，保留其他属性。
+     * 修改模块沉睡状态，保留其他属性。
      */
     @Override
-    public boolean setShutdown(
+    public boolean setSleeping(
             ResourceLocation moduleId,
-            double shutdown
+            boolean sleeping
     ) {
-        return ghostModules.setShutdown(moduleId, shutdown);
+        return ghostModules.setSleeping(moduleId, sleeping);
     }
 
     /**
@@ -243,9 +242,9 @@ public class ModularGhostEntity extends AbstractGhostEntity
                     entry.revival()
             );
 
-            moduleTag.putDouble(
-                    NBT_MODULE_SHUTDOWN,
-                    entry.shutdown()
+            moduleTag.putBoolean(
+                    NBT_MODULE_SLEEPING,
+                    entry.sleeping()
             );
 
             moduleTag.put(
@@ -297,12 +296,9 @@ public class ModularGhostEntity extends AbstractGhostEntity
                     ? moduleTag.getDouble(NBT_MODULE_REVIVAL)
                     : 0.0D;
 
-            double shutdown = moduleTag.contains(
-                    NBT_MODULE_SHUTDOWN,
-                    Tag.TAG_DOUBLE
-            )
-                    ? moduleTag.getDouble(NBT_MODULE_SHUTDOWN)
-                    : 0.0D;
+            boolean sleeping = moduleTag.getBoolean(
+                    NBT_MODULE_SLEEPING
+            );
 
             CompoundTag customData = moduleTag.contains(
                     NBT_MODULE_CUSTOM_DATA,
@@ -312,8 +308,7 @@ public class ModularGhostEntity extends AbstractGhostEntity
                     : new CompoundTag();
 
             if (!Double.isFinite(intensity) || intensity < 0.0D
-                    || !Double.isFinite(revival) || revival < 0.0D
-                    || !Double.isFinite(shutdown) || shutdown < 0.0D) {
+                    || !Double.isFinite(revival) || revival < 0.0D) {
                 continue;
             }
 
@@ -322,7 +317,7 @@ public class ModularGhostEntity extends AbstractGhostEntity
                             moduleId,
                             intensity,
                             revival,
-                            shutdown,
+                            sleeping,
                             customData
                     )
             );
