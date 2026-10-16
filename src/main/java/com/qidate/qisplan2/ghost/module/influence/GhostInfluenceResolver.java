@@ -24,6 +24,14 @@ import java.util.UUID;
  */
 public final class GhostInfluenceResolver {
 
+    /**
+     * 守护与袭击的强度比较容错比例。
+     *
+     * 最高强度差距不超过较大值的 7% 时，
+     * 视为强度相当。
+     */
+    private static final double INTENSITY_TOLERANCE = 0.07D;
+
     private GhostInfluenceResolver() {
     }
 
@@ -93,27 +101,23 @@ public final class GhostInfluenceResolver {
             return;
         }
 
-        int comparison = Double.compare(maxProtection, maxAttack);
+        if (!isIntensityEquivalent(maxProtection, maxAttack)) {
+            if (maxProtection > maxAttack) {
+                suppressType(
+                        entries,
+                        results,
+                        group,
+                        GhostInfluenceType.ATTACK
+                );
+            } else {
+                suppressType(
+                        entries,
+                        results,
+                        group,
+                        GhostInfluenceType.PROTECTION
+                );
+            }
 
-        // 保护更强：压制所有袭击。
-        if (comparison > 0) {
-            suppressType(
-                    entries,
-                    results,
-                    group,
-                    GhostInfluenceType.ATTACK
-            );
-            return;
-        }
-
-        // 袭击更强：压制所有保护。
-        if (comparison < 0) {
-            suppressType(
-                    entries,
-                    results,
-                    group,
-                    GhostInfluenceType.PROTECTION
-            );
             return;
         }
 
@@ -222,6 +226,23 @@ public final class GhostInfluenceResolver {
                 );
             }
         }
+    }
+
+    /**
+     * 判断两种最高强度是否处于容错范围内。
+     */
+    private static boolean isIntensityEquivalent(
+            double protection,
+            double attack
+    ) {
+        double max = Math.max(protection, attack);
+
+        if (max == 0.0D) {
+            return true;
+        }
+
+        return Math.abs(protection - attack)
+                / max <= INTENSITY_TOLERANCE;
     }
 
     private record ConflictKey(long batchId, UUID targetId) {

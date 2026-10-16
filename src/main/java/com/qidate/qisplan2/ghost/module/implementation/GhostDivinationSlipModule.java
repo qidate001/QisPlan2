@@ -15,6 +15,7 @@ import com.qidate.qisplan2.ghost.module.ability.GhostAbilityContext;
 import com.qidate.qisplan2.ghost.module.data.GhostModuleInitialData;
 import com.qidate.qisplan2.ghost.module.event.GhostEvent;
 import com.qidate.qisplan2.ghost.module.event.GhostUseEvent;
+import com.qidate.qisplan2.ghost.module.influence.GhostInfluenceProvider;
 import com.qidate.qisplan2.ghost.module.influence.GhostInfluenceType;
 import com.qidate.qisplan2.ghost.possession.ability.divinationslip.GhostDivinationSlipAbility;
 import com.qidate.qisplan2.ghost.possession.data.PossessedGhostState;
@@ -177,33 +178,32 @@ public final class GhostDivinationSlipModule implements GhostModule {
 
                 case DEATH_RESULT -> {
                     /*
-                     * 如果目标已有有效的生签诅咒，
-                     * 将其守护行为加入当前事件的影响批次。
+                     * 收集目标当前有效的、能够提供灵异影响的诅咒。
+                     *
+                     * 影响类型和强度均由提供者自行声明。
+                     * 来源身份仍由当前 GhostRuleContext 统一分配，
+                     * 保证与本次死签攻击参与同一批次裁决。
                      */
-                    for (var curse : CurseManager.getByTarget(user.getUUID())) {
-                        if (!(curse instanceof GhostDivinationCurse lifeCurse)) {
+                    for (Curse curse : CurseManager.getByTarget(user.getUUID())) {
+                        if (!(curse instanceof GhostInfluenceProvider provider)) {
                             continue;
                         }
 
-                        if (!lifeCurse.isValid(serverLevel.getServer())) {
+                        if (!curse.isValid(serverLevel.getServer())) {
                             continue;
                         }
 
                         context.submitInfluence(
                                 user.getUUID(),
-                                GhostInfluenceType.PROTECTION,
-                                lifeCurse.getStrength(),
+                                provider.getInfluenceType(),
+                                provider.getInfluenceIntensity(),
                                 () -> {
                                 }
                         );
-
-                        // 鬼签模块对同一目标只保留一个生签诅咒。
-                        break;
                     }
 
                     /*
-                     * 再提交死签袭击。
-                     * 两种影响由同一个会话统一裁决。
+                     * 提交死签攻击，由统一影响系统进行裁决。
                      */
                     context.submitAbilityInfluence(
                             USE_ABILITY_ID,

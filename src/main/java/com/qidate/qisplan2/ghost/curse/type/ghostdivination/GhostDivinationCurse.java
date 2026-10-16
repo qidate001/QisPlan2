@@ -1,13 +1,16 @@
 package com.qidate.qisplan2.ghost.curse.type.ghostdivination;
 
 import com.qidate.qisplan2.ghost.curse.AbstractCurse;
+import com.qidate.qisplan2.ghost.module.influence.GhostInfluenceProvider;
+import com.qidate.qisplan2.ghost.module.influence.GhostInfluenceType;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
 
 import java.util.UUID;
 
 public class GhostDivinationCurse
-        extends AbstractCurse {
+        extends AbstractCurse
+        implements GhostInfluenceProvider {
 
     /**
      * 生签诅咒类型。
@@ -91,5 +94,15 @@ public class GhostDivinationCurse
             MinecraftServer server
     ) {
         tickDuration();
+    }
+
+    @Override
+    public GhostInfluenceType getInfluenceType() {
+        return GhostInfluenceType.PROTECTION;
+    }
+
+    @Override
+    public double getInfluenceIntensity() {
+        return getStrength();
     }
 }
