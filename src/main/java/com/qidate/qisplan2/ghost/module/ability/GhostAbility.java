@@ -1,4 +1,4 @@
-package com.qidate.qisplan2.ghost.module;
+package com.qidate.qisplan2.ghost.module.ability;
 
 import net.minecraft.resources.ResourceLocation;
 

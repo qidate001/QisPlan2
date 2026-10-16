@@ -1,5 +1,6 @@
 package com.qidate.qisplan2.ghost.module;
 
+import com.qidate.qisplan2.ghost.module.ability.GhostAbilityContext;
 import net.minecraft.resources.ResourceLocation;
 
 /**

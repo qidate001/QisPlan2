@@ -2,6 +2,8 @@ package com.qidate.qisplan2.ghost.module;
 
 import com.qidate.qisplan2.ghost.module.data.GhostModuleData;
 import com.qidate.qisplan2.ghost.module.event.GhostEvent;
+import com.qidate.qisplan2.ghost.module.influence.GhostInfluenceSession;
+import net.minecraft.resources.ResourceLocation;
 
 import java.util.List;
 
@@ -9,10 +11,7 @@ import java.util.List;
  * 统一的厉鬼规则运行时。
  *
  * 负责将语义事件分发给宿主所持有模块定义中的规则。
- *
- * 每次分发固定模块列表与规则列表，避免遍历期间集合变化。
- * 每次执行规则前检查模块是否仍然存在。
- * 已被移除或处于沉睡状态的模块不执行自身规则。
+ * 同一次事件中的规则可以共享灵异影响会话。
  */
 public final class GhostRuleRuntime {
 
@@ -21,12 +20,49 @@ public final class GhostRuleRuntime {
 
     /**
      * 向宿主持有的所有模块规则分发事件。
+     *
+     * 兼容旧调用：本方法自行创建会话，并在分发完成后裁决。
+     * 若调用方需要让多个模块共享同一会话，应使用
+     * 带有 session 参数的重载。
      */
     public static void dispatch(
             GhostModuleHost host,
             GhostEvent event
     ) {
         if (host == null || event == null) {
+            return;
+        }
+
+        GhostInfluenceSession session =
+                new GhostInfluenceSession();
+
+        try {
+            List<GhostModuleData.Entry> moduleEntries =
+                    List.copyOf(host.getModules());
+
+            for (GhostModuleData.Entry entry : moduleEntries) {
+                if (!canRunRules(host, entry.id())) {
+                    continue;
+                }
+
+                dispatchModule(host, entry, event, session);
+            }
+        } finally {
+            session.resolveAndApply();
+        }
+    }
+
+    /**
+     * 向宿主持有的所有模块规则分发事件。
+     *
+     * 使用调用方提供的会话，不在此处自行裁决。
+     */
+    public static void dispatch(
+            GhostModuleHost host,
+            GhostEvent event,
+            GhostInfluenceSession session
+    ) {
+        if (host == null || event == null || session == null) {
             return;
         }
 
@@ -38,49 +74,14 @@ public final class GhostRuleRuntime {
                 continue;
             }
 
-            GhostModule module =
-                    GhostModuleRegistry.get(entry.id());
-
-            if (module == null) {
-                continue;
-            }
-
-            List<GhostRule> rules =
-                    List.copyOf(module.getRules());
-
-            for (GhostRule rule : rules) {
-                // 模块可能在之前的规则执行期间被移除或进入沉睡。
-                if (!canRunRules(host, entry.id())) {
-                    break;
-                }
-
-                if (!rule.supports(event)) {
-                    continue;
-                }
-
-                GhostRuleContext context =
-                        new GhostRuleContext(
-                                host,
-                                entry.id(),
-                                rule.getId()
-                        );
-
-                if (!rule.canTrigger(context, event)) {
-                    continue;
-                }
-
-                // canTrigger 也可能改变模块状态。
-                if (!canRunRules(host, entry.id())) {
-                    break;
-                }
-
-                rule.onTrigger(context, event);
-            }
+            dispatchModule(host, entry, event, session);
         }
     }
 
     /**
      * 只向指定模块的规则分发事件。
+     *
+     * 兼容旧调用：本方法自行创建会话，并在分发完成后裁决。
      */
     public static void dispatchModule(
             GhostModuleHost host,
@@ -88,6 +89,32 @@ public final class GhostRuleRuntime {
             GhostEvent event
     ) {
         if (host == null || entry == null || event == null) {
+            return;
+        }
+
+        GhostInfluenceSession session =
+                new GhostInfluenceSession();
+
+        try {
+            dispatchModule(host, entry, event, session);
+        } finally {
+            session.resolveAndApply();
+        }
+    }
+
+    /**
+     * 向指定模块分发事件，并使用共享会话。
+     *
+     * 本方法不负责结束会话，由最外层调用方统一裁决。
+     */
+    public static void dispatchModule(
+            GhostModuleHost host,
+            GhostModuleData.Entry entry,
+            GhostEvent event,
+            GhostInfluenceSession session
+    ) {
+        if (host == null || entry == null
+                || event == null || session == null) {
             return;
         }
 
@@ -118,13 +145,15 @@ public final class GhostRuleRuntime {
                     new GhostRuleContext(
                             host,
                             entry.id(),
-                            rule.getId()
+                            rule.getId(),
+                            session
                     );
 
             if (!rule.canTrigger(context, event)) {
                 continue;
             }
 
+            // canTrigger 也可能改变模块状态。
             if (!canRunRules(host, entry.id())) {
                 break;
             }
@@ -135,12 +164,10 @@ public final class GhostRuleRuntime {
 
     /**
      * 检查模块是否存在，且没有沉睡或死机。
-     *
-     * 每次从宿主读取最新模块数据，避免使用旧快照中的状态。
      */
     private static boolean canRunRules(
             GhostModuleHost host,
-            net.minecraft.resources.ResourceLocation moduleId
+            ResourceLocation moduleId
     ) {
         if (!host.hasModule(moduleId)) {
             return false;

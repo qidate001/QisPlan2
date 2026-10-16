@@ -7,10 +7,15 @@ import com.qidate.qisplan2.ghost.curse.CurseManager;
 import com.qidate.qisplan2.ghost.curse.type.ghostdivination.GhostDivinationCurse;
 import com.qidate.qisplan2.ghost.curse.type.ghostdivination.GhostDivinationCurseSource;
 import com.qidate.qisplan2.ghost.curse.type.ghostdivination.GhostDivinationCurseType;
-import com.qidate.qisplan2.ghost.module.*;
+import com.qidate.qisplan2.ghost.module.GhostModule;
+import com.qidate.qisplan2.ghost.module.GhostRule;
+import com.qidate.qisplan2.ghost.module.GhostRuleContext;
+import com.qidate.qisplan2.ghost.module.ability.GhostAbility;
+import com.qidate.qisplan2.ghost.module.ability.GhostAbilityContext;
 import com.qidate.qisplan2.ghost.module.data.GhostModuleInitialData;
 import com.qidate.qisplan2.ghost.module.event.GhostEvent;
 import com.qidate.qisplan2.ghost.module.event.GhostUseEvent;
+import com.qidate.qisplan2.ghost.module.influence.GhostInfluenceType;
 import com.qidate.qisplan2.ghost.possession.ability.divinationslip.GhostDivinationSlipAbility;
 import com.qidate.qisplan2.ghost.possession.data.PossessedGhostState;
 import com.qidate.qisplan2.ghost.possession.manager.PossessionHandler;
@@ -26,14 +31,6 @@ import java.util.UUID;
 
 import static com.qidate.qisplan2.QisPlan2.MODID;
 
-/**
- * 鬼签模块。
- *
- * 响应灵异使用事件，随机产生生、死、鬼三种结果。
- *
- * 本模块不依赖具体宿主类型。
- * 模块实例数据由宿主负责保存。
- */
 public final class GhostDivinationSlipModule implements GhostModule {
 
     public static final ResourceLocation ID =
@@ -53,6 +50,10 @@ public final class GhostDivinationSlipModule implements GhostModule {
                     MODID,
                     "ghost_divination_slip/use"
             );
+
+    private static final int LIFE_RESULT = 0;
+    private static final int DEATH_RESULT = 1;
+    private static final int GHOST_RESULT = 2;
 
     private static final int LIFE_DURATION = 5 * 60 * 20;
 
@@ -96,6 +97,29 @@ public final class GhostDivinationSlipModule implements GhostModule {
     }
 
     /**
+     * 一次已经确定签文结果的内部事件。
+     *
+     * 防止延迟执行时重新随机。
+     */
+    private record DivinationSlipResultEvent(
+            LivingEntity user,
+            int result
+    ) implements GhostEvent {
+
+        private DivinationSlipResultEvent {
+            if (user == null) {
+                throw new NullPointerException("user");
+            }
+
+            if (result < LIFE_RESULT || result > GHOST_RESULT) {
+                throw new IllegalArgumentException(
+                        "Invalid divination slip result: " + result
+                );
+            }
+        }
+    }
+
+    /**
      * 鬼签使用规则。
      */
     private static final class DivinationSlipUseRule
@@ -116,7 +140,8 @@ public final class GhostDivinationSlipModule implements GhostModule {
                 GhostRuleContext context,
                 GhostEvent event
         ) {
-            return event instanceof GhostUseEvent;
+            return event instanceof GhostUseEvent useEvent
+                    && useEvent.user().level() instanceof ServerLevel;
         }
 
         @Override
@@ -124,18 +149,60 @@ public final class GhostDivinationSlipModule implements GhostModule {
                 GhostRuleContext context,
                 GhostEvent event
         ) {
-            context.tryExecuteAbility(
-                    USE_ABILITY_ID,
-                    event
-            );
+            if (!(event instanceof GhostUseEvent useEvent)) {
+                return;
+            }
+
+            LivingEntity user = useEvent.user();
+
+            if (!(user.level() instanceof ServerLevel)) {
+                return;
+            }
+
+            // 本次事件只随机一次，后续使用固定结果。
+            int result = user.getRandom().nextInt(3);
+
+            DivinationSlipResultEvent resultEvent =
+                    new DivinationSlipResultEvent(user, result);
+
+            switch (result) {
+                case LIFE_RESULT -> context.submitAbilityInfluence(
+                        USE_ABILITY_ID,
+                        resultEvent,
+                        user.getUUID(),
+                        GhostInfluenceType.PROTECTION,
+                        LIFE_STRENGTH
+                );
+
+                case DEATH_RESULT -> context.submitAbilityInfluence(
+                        USE_ABILITY_ID,
+                        resultEvent,
+                        user.getUUID(),
+                        GhostInfluenceType.ATTACK,
+                        DEATH_STRENGTH
+                );
+
+                case GHOST_RESULT -> {
+                    // 鬼签不参与保护/攻击竞争。
+                    // 保持原有的无额外效果语义。
+                    context.tryExecuteAbility(
+                            USE_ABILITY_ID,
+                            resultEvent
+                    );
+                }
+
+                default -> {
+                    // 随机范围受限，此处仅作防御性处理。
+                }
+            }
         }
     }
 
     /**
-     * 鬼签使用能力。
+     * 执行已经确定结果的鬼签能力。
      *
-     * 通过 executeWithResult 返回效果执行结果，
-     * 由 GhostAbilityExecutor 统一处理能力复苏刺激。
+     * 生签与死签的能力效果由统一裁决控制。
+     * 复苏刺激仍由 GhostAbilityExecutor 负责。
      */
     private static final class DivinationSlipUseAbility
             implements GhostAbility {
@@ -147,8 +214,8 @@ public final class GhostDivinationSlipModule implements GhostModule {
 
         @Override
         public boolean canExecute(GhostAbilityContext context) {
-            return context.event() instanceof GhostUseEvent useEvent
-                    && useEvent.user().level() instanceof ServerLevel;
+            return context.event() instanceof DivinationSlipResultEvent resultEvent
+                    && resultEvent.user().level() instanceof ServerLevel;
         }
 
         @Override
@@ -162,22 +229,21 @@ public final class GhostDivinationSlipModule implements GhostModule {
                 return false;
             }
 
-            if (!(context.event() instanceof GhostUseEvent useEvent)) {
+            if (!(context.event()
+                    instanceof DivinationSlipResultEvent resultEvent)) {
                 return false;
             }
 
-            LivingEntity user = useEvent.user();
+            LivingEntity user = resultEvent.user();
 
             if (!(user.level() instanceof ServerLevel)) {
                 return false;
             }
 
-            int result = user.getRandom().nextInt(3);
-
-            return switch (result) {
-                case 0 -> useLife(user);
-                case 1 -> useDeath(user);
-                case 2 -> useGhost(user);
+            return switch (resultEvent.result()) {
+                case LIFE_RESULT -> useLife(user);
+                case DEATH_RESULT -> useDeath(user);
+                case GHOST_RESULT -> useGhost(user);
                 default -> false;
             };
         }
@@ -190,8 +256,7 @@ public final class GhostDivinationSlipModule implements GhostModule {
      */
 
     private static boolean useLife(LivingEntity user) {
-        // 只有玩家需要接收结果展示特效。
-        sendResultIfPlayer(user, 0);
+        sendResultIfPlayer(user, LIFE_RESULT);
 
         if (!(user.level() instanceof ServerLevel serverLevel)) {
             return false;
@@ -261,7 +326,7 @@ public final class GhostDivinationSlipModule implements GhostModule {
 
     private static boolean useGhost(LivingEntity user) {
         // 鬼签目前没有额外效果。
-        sendResultIfPlayer(user, 2);
+        sendResultIfPlayer(user, GHOST_RESULT);
         return true;
     }
 
@@ -272,31 +337,7 @@ public final class GhostDivinationSlipModule implements GhostModule {
      */
 
     private static boolean useDeath(LivingEntity user) {
-        sendResultIfPlayer(user, 1);
-
-        if (!(user.level() instanceof ServerLevel serverLevel)) {
-            return false;
-        }
-
-        GhostDivinationCurse lifeCurse = getLifeCurse(user.getUUID());
-
-        if (lifeCurse != null) {
-            CurseManager.remove(
-                    serverLevel.getServer(),
-                    lifeCurse.getId()
-            );
-
-            // 只有玩家才有驭鬼者状态及对应的死机逻辑。
-            if (user instanceof ServerPlayer player) {
-                PossessionHandler.testStun(
-                        player,
-                        GhostDivinationSlipAbility.ID,
-                        STUN_TIME
-                );
-            }
-
-            return true;
-        }
+        sendResultIfPlayer(user, DEATH_RESULT);
 
         return SupernaturalDeathHandler.tryKill(
                 user,
@@ -308,7 +349,10 @@ public final class GhostDivinationSlipModule implements GhostModule {
     /**
      * 仅向玩家发送鬼签结果展示特效。
      */
-    private static void sendResultIfPlayer(LivingEntity user, int result) {
+    private static void sendResultIfPlayer(
+            LivingEntity user,
+            int result
+    ) {
         if (user instanceof ServerPlayer player) {
             GhostDivinationNetwork.sendResult(player, result);
         }

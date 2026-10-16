@@ -1,8 +1,8 @@
 package com.qidate.qisplan2.ghost.module.implementation;
 
 import com.qidate.qisplan2.core.ModTags;
-import com.qidate.qisplan2.ghost.module.GhostAbility;
-import com.qidate.qisplan2.ghost.module.GhostAbilityContext;
+import com.qidate.qisplan2.ghost.module.ability.GhostAbility;
+import com.qidate.qisplan2.ghost.module.ability.GhostAbilityContext;
 import com.qidate.qisplan2.ghost.module.GhostInscriptionCapability;
 import com.qidate.qisplan2.ghost.module.GhostModule;
 import com.qidate.qisplan2.ghost.module.GhostRule;

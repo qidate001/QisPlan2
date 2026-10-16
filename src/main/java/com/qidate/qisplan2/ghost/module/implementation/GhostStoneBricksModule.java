@@ -2,8 +2,8 @@ package com.qidate.qisplan2.ghost.module.implementation;
 
 import com.qidate.qisplan2.death.ModDamageTypes;
 import com.qidate.qisplan2.death.SupernaturalDeathHandler;
-import com.qidate.qisplan2.ghost.module.GhostAbility;
-import com.qidate.qisplan2.ghost.module.GhostAbilityContext;
+import com.qidate.qisplan2.ghost.module.ability.GhostAbility;
+import com.qidate.qisplan2.ghost.module.ability.GhostAbilityContext;
 import com.qidate.qisplan2.ghost.module.GhostModule;
 import com.qidate.qisplan2.ghost.module.GhostModuleContext;
 import com.qidate.qisplan2.ghost.module.GhostRule;

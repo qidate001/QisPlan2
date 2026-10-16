@@ -1,4 +1,9 @@
-package com.qidate.qisplan2.ghost.module;
+package com.qidate.qisplan2.ghost.module.ability;
+
+import com.qidate.qisplan2.ghost.module.GhostMedium;
+import com.qidate.qisplan2.ghost.module.GhostModule;
+import com.qidate.qisplan2.ghost.module.GhostModuleRegistry;
+import com.qidate.qisplan2.ghost.module.GhostRevivalPolicy;
 
 import java.util.List;
 import java.util.Objects;
@@ -189,5 +194,46 @@ public final class GhostAbilityExecutor {
 
             applyStimulation(context, stimulation);
         };
+    }
+
+    /**
+     * 检查能力当前是否具备执行资格，并准备一个延迟执行任务。
+     *
+     * 返回 null：当前不能执行。
+     * 返回 Runnable：调用方可以在裁决通过后执行该任务。
+     *
+     * 延迟任务执行时会再次经过 tryExecute()，
+     * 因此不会绕过原有的模块、媒介和能力检查。
+     */
+    public static Runnable prepareDeferred(
+            GhostAbilityContext context
+    ) {
+        if (context == null || !context.isModuleAvailable()) {
+            return null;
+        }
+
+        GhostModule module =
+                GhostModuleRegistry.get(context.moduleId());
+
+        if (module == null) {
+            return null;
+        }
+
+        // 保留现有媒介许可检查。
+        for (GhostMedium medium : module.getMedia()) {
+            if (!medium.allows(context)) {
+                return null;
+            }
+        }
+
+        // 保留现有能力可执行性检查。
+        GhostAbility ability = context.getAbility();
+
+        if (ability == null || !ability.canExecute(context)) {
+            return null;
+        }
+
+        // 仅准备任务，不在此处执行能力效果。
+        return () -> tryExecute(context);
     }
 }

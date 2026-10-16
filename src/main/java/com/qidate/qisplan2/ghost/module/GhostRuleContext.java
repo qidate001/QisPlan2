@@ -1,7 +1,12 @@
 package com.qidate.qisplan2.ghost.module;
 
+import com.qidate.qisplan2.ghost.module.ability.GhostAbilityContext;
+import com.qidate.qisplan2.ghost.module.ability.GhostAbilityExecutor;
 import com.qidate.qisplan2.ghost.module.data.GhostModuleData;
 import com.qidate.qisplan2.ghost.module.event.GhostEvent;
+import com.qidate.qisplan2.ghost.module.influence.GhostInfluence;
+import com.qidate.qisplan2.ghost.module.influence.GhostInfluenceSession;
+import com.qidate.qisplan2.ghost.module.influence.GhostInfluenceType;
 import net.minecraft.resources.ResourceLocation;
 
 import java.util.Objects;
@@ -18,8 +23,17 @@ import java.util.Objects;
 public record GhostRuleContext(
         GhostModuleHost host,
         ResourceLocation moduleId,
-        ResourceLocation ruleId
+        ResourceLocation ruleId,
+        GhostInfluenceSession influenceSession
 ) {
+
+    public GhostRuleContext(
+            GhostModuleHost host,
+            ResourceLocation moduleId,
+            ResourceLocation ruleId
+    ) {
+        this(host, moduleId, ruleId, null);
+    }
 
     public GhostRuleContext {
         Objects.requireNonNull(host, "host");
@@ -49,6 +63,115 @@ public record GhostRuleContext(
                             + moduleId + "/" + ruleId
             );
         }
+    }
+
+    /**
+     * 当前规则是否处于统一灵异影响裁决会话中。
+     */
+    public boolean hasInfluenceSession() {
+        return influenceSession != null
+                && !influenceSession.isFinished();
+    }
+
+    /**
+     * 获取当前模块在本次事件中的稳定来源标识。
+     */
+    public java.util.UUID getInfluenceSourceId() {
+        if (!hasInfluenceSession()) {
+            throw new IllegalStateException(
+                    "No active ghost influence session"
+            );
+        }
+
+        return influenceSession.getSourceId(host, moduleId);
+    }
+
+    /**
+     * 提交一条灵异影响及其裁决通过后的效果。
+     *
+     * 注意：本方法只提交，不会立即执行 acceptedEffect。
+     */
+    public void submitInfluence(
+            java.util.UUID targetId,
+            GhostInfluenceType type,
+            double intensity,
+            Runnable acceptedEffect
+    ) {
+        Objects.requireNonNull(targetId, "targetId");
+        Objects.requireNonNull(type, "type");
+        Objects.requireNonNull(acceptedEffect, "acceptedEffect");
+
+        if (!hasInfluenceSession()) {
+            throw new IllegalStateException(
+                    "Cannot submit influence without an active session"
+            );
+        }
+
+        GhostInfluence influence = new GhostInfluence(
+                host,
+                moduleId,
+                ruleId,
+                targetId,
+                type,
+                intensity,
+                getInfluenceSourceId(),
+                influenceSession.getBatchId()
+        );
+
+        influenceSession.submit(influence, acceptedEffect);
+    }
+
+    /**
+     * 提交一个灵异影响，并在裁决通过后执行指定能力。
+     *
+     * 能力准备失败时，不提交影响。
+     *
+     * @return 是否成功提交影响
+     */
+    public boolean submitAbilityInfluence(
+            ResourceLocation abilityId,
+            GhostEvent event,
+            java.util.UUID targetId,
+            GhostInfluenceType type,
+            double intensity
+    ) {
+        Objects.requireNonNull(abilityId, "abilityId");
+        Objects.requireNonNull(event, "event");
+        Objects.requireNonNull(targetId, "targetId");
+        Objects.requireNonNull(type, "type");
+
+        if (!hasInfluenceSession()) {
+            return false;
+        }
+
+        if (!host.hasModule(moduleId)) {
+            return false;
+        }
+
+        GhostAbilityContext abilityContext =
+                new GhostAbilityContext(
+                        host,
+                        moduleId,
+                        abilityId,
+                        GhostAbilityContext.Source.RULE,
+                        event
+                );
+
+        Runnable deferredAbility =
+                GhostAbilityExecutor.prepareDeferred(abilityContext);
+
+        if (deferredAbility == null) {
+            return false;
+        }
+
+        submitInfluence(
+                targetId,
+                type,
+                intensity,
+                deferredAbility
+        );
+
+        return true;
     }
 
     /**

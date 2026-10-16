@@ -1,5 +1,8 @@
 package com.qidate.qisplan2.ghost.module;
 
+import com.qidate.qisplan2.ghost.module.ability.GhostAbilityContext;
+import com.qidate.qisplan2.ghost.module.ability.GhostAbilityStimulation;
+
 /**
  * 厉鬼模块的复苏刺激结算策略。
  *

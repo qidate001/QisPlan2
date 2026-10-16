@@ -1,30 +1,32 @@
 package com.qidate.qisplan2.ghost.module.influence;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
+import java.util.UUID;
 
 /**
  * 灵异影响统一裁决器。
  *
- * 只计算裁决结果，不应用游戏效果。
+ * 按批次和目标分组，整体比较保护与袭击的最高强度。
+ * 本类只计算裁决结果，不执行游戏效果。
+ *
+ * 裁决规则：
+ * 1. 只有一种影响类型时，该类型的影响全部接受。
+ * 2. 两种影响强度不同时，较弱类型的影响全部被压制。
+ * 3. 两种影响最高强度相同时：
+ *    - 同源的保护与袭击冲突，双方 DEADLOCKED。
+ *    - 不同源的保护与袭击冲突，双方 CONTESTED。
+ *    - 低于最高冲突强度的影响 SUPPRESSED。
+ * 4. DEADLOCKED 优先于 CONTESTED，避免同一影响被后续冲突覆盖。
  */
 public final class GhostInfluenceResolver {
 
     private GhostInfluenceResolver() {
     }
 
-    /**
-     * 裁决一批灵异影响。
-     *
-     * 当前规则：
-     * 1. 只比较相同批次、相同目标、类型相反的影响。
-     * 2. 同源、同强度：双方死机。
-     * 3. 强度不同：较弱的一方被压制。
-     * 4. 不同来源、相同强度：标记为待解决冲突。
-     *
-     * 注意：多条影响之间的复杂竞争规则仍需进一步完善。
-     */
     public static List<GhostInfluenceResolution> resolve(
             List<GhostInfluence> influences
     ) {
@@ -39,83 +41,189 @@ public final class GhostInfluenceResolver {
             results.add(GhostInfluenceResolution.ACCEPTED);
         }
 
+        Map<ConflictKey, List<Integer>> groups = new HashMap<>();
+
         for (int i = 0; i < entries.size(); i++) {
-            GhostInfluence first = entries.get(i);
+            GhostInfluence influence = entries.get(i);
 
-            for (int j = i + 1; j < entries.size(); j++) {
-                GhostInfluence second = entries.get(j);
+            ConflictKey key = new ConflictKey(
+                    influence.batchId(),
+                    influence.targetId()
+            );
 
-                if (!sameConflictGroup(first, second)) {
-                    continue;
-                }
+            groups.computeIfAbsent(
+                    key,
+                    ignored -> new ArrayList<>()
+            ).add(i);
+        }
 
-                GhostInfluenceResolution firstResult = results.get(i);
-                GhostInfluenceResolution secondResult = results.get(j);
-
-                // 已经确定死机的影响不再被后续比较覆盖。
-                if (firstResult == GhostInfluenceResolution.DEADLOCKED
-                        || secondResult == GhostInfluenceResolution.DEADLOCKED) {
-                    continue;
-                }
-
-                int strengthComparison = Double.compare(
-                        first.intensity(),
-                        second.intensity()
-                );
-
-                if (strengthComparison == 0) {
-                    if (first.sourceId().equals(second.sourceId())) {
-                        results.set(
-                                i,
-                                GhostInfluenceResolution.DEADLOCKED
-                        );
-                        results.set(
-                                j,
-                                GhostInfluenceResolution.DEADLOCKED
-                        );
-                    } else {
-                        results.set(
-                                i,
-                                GhostInfluenceResolution.CONTESTED
-                        );
-                        results.set(
-                                j,
-                                GhostInfluenceResolution.CONTESTED
-                        );
-                    }
-
-                    continue;
-                }
-
-                if (strengthComparison > 0) {
-                    if (secondResult
-                            != GhostInfluenceResolution.DEADLOCKED) {
-                        results.set(
-                                j,
-                                GhostInfluenceResolution.SUPPRESSED
-                        );
-                    }
-                } else {
-                    if (firstResult
-                            != GhostInfluenceResolution.DEADLOCKED) {
-                        results.set(
-                                i,
-                                GhostInfluenceResolution.SUPPRESSED
-                        );
-                    }
-                }
-            }
+        for (List<Integer> group : groups.values()) {
+            resolveGroup(entries, results, group);
         }
 
         return List.copyOf(results);
     }
 
-    private static boolean sameConflictGroup(
-            GhostInfluence first,
-            GhostInfluence second
+    private static void resolveGroup(
+            List<GhostInfluence> entries,
+            List<GhostInfluenceResolution> results,
+            List<Integer> group
     ) {
-        return first.batchId() == second.batchId()
-                && first.targetId().equals(second.targetId())
-                && first.type() != second.type();
+        double maxProtection = -1.0D;
+        double maxAttack = -1.0D;
+
+        for (int index : group) {
+            GhostInfluence influence = entries.get(index);
+
+            if (influence.type() == GhostInfluenceType.PROTECTION) {
+                maxProtection = Math.max(
+                        maxProtection,
+                        influence.intensity()
+                );
+            } else if (influence.type() == GhostInfluenceType.ATTACK) {
+                maxAttack = Math.max(
+                        maxAttack,
+                        influence.intensity()
+                );
+            }
+        }
+
+        // 没有袭击，或没有保护，不存在对立冲突。
+        if (maxAttack < 0.0D || maxProtection < 0.0D) {
+            return;
+        }
+
+        int comparison = Double.compare(maxProtection, maxAttack);
+
+        // 保护更强：压制所有袭击。
+        if (comparison > 0) {
+            suppressType(
+                    entries,
+                    results,
+                    group,
+                    GhostInfluenceType.ATTACK
+            );
+            return;
+        }
+
+        // 袭击更强：压制所有保护。
+        if (comparison < 0) {
+            suppressType(
+                    entries,
+                    results,
+                    group,
+                    GhostInfluenceType.PROTECTION
+            );
+            return;
+        }
+
+        // 两种类型的最高强度相同。
+        // 先压制所有低于最高冲突强度的影响。
+        List<Integer> topProtection = new ArrayList<>();
+        List<Integer> topAttack = new ArrayList<>();
+
+        for (int index : group) {
+            GhostInfluence influence = entries.get(index);
+
+            if (influence.type() == GhostInfluenceType.PROTECTION) {
+                if (Double.compare(
+                        influence.intensity(),
+                        maxProtection
+                ) == 0) {
+                    topProtection.add(index);
+                } else {
+                    results.set(
+                            index,
+                            GhostInfluenceResolution.SUPPRESSED
+                    );
+                }
+            } else if (influence.type() == GhostInfluenceType.ATTACK) {
+                if (Double.compare(
+                        influence.intensity(),
+                        maxAttack
+                ) == 0) {
+                    topAttack.add(index);
+                } else {
+                    results.set(
+                            index,
+                            GhostInfluenceResolution.SUPPRESSED
+                    );
+                }
+            }
+        }
+
+        // 记录哪些最高强度影响参与了同源冲突。
+        boolean[] deadlocked = new boolean[entries.size()];
+
+        for (int protectionIndex : topProtection) {
+            GhostInfluence protection = entries.get(protectionIndex);
+
+            for (int attackIndex : topAttack) {
+                GhostInfluence attack = entries.get(attackIndex);
+
+                if (protection.sourceId().equals(attack.sourceId())) {
+                    deadlocked[protectionIndex] = true;
+                    deadlocked[attackIndex] = true;
+                }
+            }
+        }
+
+        // 先统一写入 DEADLOCKED。
+        for (int index : topProtection) {
+            if (deadlocked[index]) {
+                results.set(
+                        index,
+                        GhostInfluenceResolution.DEADLOCKED
+                );
+            }
+        }
+
+        for (int index : topAttack) {
+            if (deadlocked[index]) {
+                results.set(
+                        index,
+                        GhostInfluenceResolution.DEADLOCKED
+                );
+            }
+        }
+
+        // 没有参与同源冲突的最高强度影响，属于未解决的不同源冲突。
+        // 不执行其保护或袭击效果。
+        for (int index : topProtection) {
+            if (!deadlocked[index]) {
+                results.set(
+                        index,
+                        GhostInfluenceResolution.CONTESTED
+                );
+            }
+        }
+
+        for (int index : topAttack) {
+            if (!deadlocked[index]) {
+                results.set(
+                        index,
+                        GhostInfluenceResolution.CONTESTED
+                );
+            }
+        }
+    }
+
+    private static void suppressType(
+            List<GhostInfluence> entries,
+            List<GhostInfluenceResolution> results,
+            List<Integer> group,
+            GhostInfluenceType losingType
+    ) {
+        for (int index : group) {
+            if (entries.get(index).type() == losingType) {
+                results.set(
+                        index,
+                        GhostInfluenceResolution.SUPPRESSED
+                );
+            }
+        }
+    }
+
+    private record ConflictKey(long batchId, UUID targetId) {
     }
 }

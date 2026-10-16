@@ -1,4 +1,4 @@
-package com.qidate.qisplan2.ghost.module;
+package com.qidate.qisplan2.ghost.module.ability;
 
 /**
  * 灵异能力的复苏刺激声明。

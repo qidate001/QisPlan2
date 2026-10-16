@@ -1,5 +1,6 @@
 package com.qidate.qisplan2.ghost.module.host.item;
 
+import com.qidate.qisplan2.ghost.module.GhostModuleRuntime;
 import com.qidate.qisplan2.ghost.module.event.GhostUseEvent;
 import com.qidate.qisplan2.ghost.module.GhostRuleRuntime;
 import net.minecraft.world.InteractionHand;
@@ -51,7 +52,7 @@ public class GhostBlankSwordItem extends SwordItem {
         if (!level.isClientSide) {
             GhostItemModuleHost host = new GhostItemModuleHost(stack);
 
-            GhostRuleRuntime.dispatch(
+            GhostModuleRuntime.dispatch(
                     host,
                     new GhostUseEvent(player)
             );

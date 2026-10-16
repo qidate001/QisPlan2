@@ -1,5 +1,9 @@
-package com.qidate.qisplan2.ghost.module;
+package com.qidate.qisplan2.ghost.module.ability;
 
+import com.qidate.qisplan2.ghost.module.GhostModule;
+import com.qidate.qisplan2.ghost.module.GhostModuleContext;
+import com.qidate.qisplan2.ghost.module.GhostModuleHost;
+import com.qidate.qisplan2.ghost.module.GhostModuleRegistry;
 import com.qidate.qisplan2.ghost.module.event.GhostEvent;
 import net.minecraft.resources.ResourceLocation;
 
