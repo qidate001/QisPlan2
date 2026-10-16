@@ -1,6 +1,7 @@
 package com.qidate.qisplan2.core;
 
 import com.mojang.serialization.Codec;
+import com.qidate.qisplan2.ghost.module.host.item.GhostBlankSwordItem;
 import com.qidate.qisplan2.item.*;
 import com.qidate.qisplan2.item.candle.RedGhostCandleItem;
 import com.qidate.qisplan2.item.candle.WhiteGhostCandleItem;
@@ -39,20 +40,12 @@ public class ModItems {
 
 
     // 通用灵异白板剑：用于承载不同的厉鬼模块
-    public static final DeferredItem<SwordItem> GHOST_BLANK_SWORD =
+    public static final DeferredItem<GhostBlankSwordItem> GHOST_BLANK_SWORD =
             ITEMS.register(
                     "ghost_blank_sword",
-                    () -> new SwordItem(
-                            Tiers.IRON,
+                    () -> new GhostBlankSwordItem(
                             new Item.Properties()
                                     .stacksTo(1)
-                                    .attributes(
-                                            SwordItem.createAttributes(
-                                                    Tiers.IRON,
-                                                    3.0F,
-                                                    -2.4F
-                                            )
-                                    )
                     )
             );
 

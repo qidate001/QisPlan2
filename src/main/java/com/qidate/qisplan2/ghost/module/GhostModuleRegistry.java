@@ -1,9 +1,6 @@
 package com.qidate.qisplan2.ghost.module;
 
-import com.qidate.qisplan2.ghost.module.implementation.GhostStoneBricksModule;
-import com.qidate.qisplan2.ghost.module.implementation.GhostTombstoneModule;
-import com.qidate.qisplan2.ghost.module.implementation.InvisibleGhostModule;
-import com.qidate.qisplan2.ghost.module.implementation.UntouchableGhostModule;
+import com.qidate.qisplan2.ghost.module.implementation.*;
 import net.minecraft.resources.ResourceLocation;
 
 import java.util.Collection;
@@ -82,5 +79,6 @@ public final class GhostModuleRegistry {
         register(new GhostStoneBricksModule());
         register(new InvisibleGhostModule());
         register(new GhostTombstoneModule());
+        register(new GhostDivinationSlipModule());
     }
 }
