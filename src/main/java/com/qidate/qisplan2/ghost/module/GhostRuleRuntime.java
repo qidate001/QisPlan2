@@ -134,7 +134,7 @@ public final class GhostRuleRuntime {
     }
 
     /**
-     * 检查模块是否存在且没有沉睡。
+     * 检查模块是否存在，且没有沉睡或死机。
      *
      * 每次从宿主读取最新模块数据，避免使用旧快照中的状态。
      */
@@ -148,7 +148,8 @@ public final class GhostRuleRuntime {
 
         for (GhostModuleData.Entry currentEntry : host.getModules()) {
             if (currentEntry.id().equals(moduleId)) {
-                return !currentEntry.sleeping();
+                return !currentEntry.sleeping()
+                        && !currentEntry.deadlocked();
             }
         }
 

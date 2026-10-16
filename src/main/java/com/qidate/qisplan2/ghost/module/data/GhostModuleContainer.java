@@ -76,12 +76,13 @@ public final class GhostModuleContainer {
                         intensity
                 )
                         : new GhostModuleData.Entry(
-                        moduleId,
-                        intensity,
-                        current.revival(),
-                        current.sleeping(),
-                        current.customData()
-                );
+                                moduleId,
+                                intensity,
+                                current.revival(),
+                                current.sleeping(),
+                                current.deadlocked(),
+                                current.customData()
+                        );
 
         putEntry(replacement);
         return true;
@@ -143,6 +144,7 @@ public final class GhostModuleContainer {
                         intensity,
                         current.revival(),
                         current.sleeping(),
+                        current.deadlocked(),
                         current.customData()
                 )
         );
@@ -174,6 +176,7 @@ public final class GhostModuleContainer {
                         current.intensity(),
                         revival,
                         current.sleeping(),
+                        current.deadlocked(),
                         current.customData()
                 )
         );
@@ -200,6 +203,28 @@ public final class GhostModuleContainer {
         }
 
         putEntry(current.withSleeping(sleeping));
+        return true;
+    }
+
+    /**
+     * 设置模块实例的死机状态。
+     *
+     * 死机状态独立于复苏值和沉睡状态。
+     */
+    public boolean setDeadlocked(
+            ResourceLocation moduleId,
+            boolean deadlocked
+    ) {
+        Objects.requireNonNull(moduleId, "moduleId");
+
+        GhostModuleData.Entry current = getModule(moduleId);
+
+        if (current == null
+                || current.deadlocked() == deadlocked) {
+            return false;
+        }
+
+        putEntry(current.withDeadlocked(deadlocked));
         return true;
     }
 
@@ -275,6 +300,7 @@ public final class GhostModuleContainer {
                             entry.intensity(),
                             entry.revival(),
                             entry.sleeping(),
+                            entry.deadlocked(),
                             entry.customData()
                     )
             );

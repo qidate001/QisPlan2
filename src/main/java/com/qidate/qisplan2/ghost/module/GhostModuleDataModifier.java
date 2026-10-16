@@ -106,4 +106,18 @@ public interface GhostModuleDataModifier extends GhostModuleHost {
      * @return 数据发生变化时返回 true，否则返回 false
      */
     boolean setSleeping(ResourceLocation moduleId, boolean sleeping);
+
+    /**
+     * 修改指定模块的死机状态。
+     *
+     * 死机状态独立于复苏值和沉睡状态。
+     *
+     * @param moduleId 模块 ID
+     * @param deadlocked 是否处于死机状态
+     * @return 数据发生变化时返回 true，否则返回 false
+     */
+    boolean setDeadlocked(
+            ResourceLocation moduleId,
+            boolean deadlocked
+    );
 }

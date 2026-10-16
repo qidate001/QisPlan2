@@ -33,6 +33,7 @@ public final class GhostModuleData {
             double intensity,
             double revival,
             boolean sleeping,
+            boolean deadlocked,
             CompoundTag customData
     ) {
 
@@ -93,6 +94,28 @@ public final class GhostModuleData {
         }
 
         /**
+         * 兼容尚未提供死机状态的调用。
+         *
+         * 新建或旧代码构造的实例默认不处于死机状态。
+         */
+        public Entry(
+                ResourceLocation id,
+                double intensity,
+                double revival,
+                boolean sleeping,
+                CompoundTag customData
+        ) {
+            this(
+                    id,
+                    intensity,
+                    revival,
+                    sleeping,
+                    false,
+                    customData
+            );
+        }
+
+        /**
          * 返回专属数据的副本，避免外部直接修改内部状态。
          */
         @Override
@@ -110,6 +133,7 @@ public final class GhostModuleData {
                     intensity,
                     revival,
                     sleeping,
+                    deadlocked,
                     newCustomData
             );
         }
@@ -124,6 +148,22 @@ public final class GhostModuleData {
                     intensity,
                     revival,
                     newSleeping,
+                    deadlocked,
+                    customData
+            );
+        }
+
+        /**
+         * 创建一份死机状态已更新的新实例数据。
+         * 其他通用属性保持不变。
+         */
+        public Entry withDeadlocked(boolean newDeadlocked) {
+            return new Entry(
+                    id,
+                    intensity,
+                    revival,
+                    sleeping,
+                    newDeadlocked,
                     customData
             );
         }
@@ -173,6 +213,10 @@ public final class GhostModuleData {
                                 Codec.BOOL
                                         .optionalFieldOf("sleeping", false)
                                         .forGetter(Entry::sleeping),
+
+                                Codec.BOOL
+                                        .optionalFieldOf("deadlocked", false)
+                                        .forGetter(Entry::deadlocked),
 
                                 CompoundTag.CODEC
                                         .optionalFieldOf(

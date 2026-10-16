@@ -134,6 +134,26 @@ public final class GhostItemModuleHost
     }
 
     /**
+     * 修改模块死机状态，保留其他属性。
+     */
+    @Override
+    public boolean setDeadlocked(
+            ResourceLocation moduleId,
+            boolean deadlocked
+    ) {
+        Objects.requireNonNull(moduleId, "moduleId");
+
+        GhostModuleContainer container = createContainer();
+
+        if (!container.setDeadlocked(moduleId, deadlocked)) {
+            return false;
+        }
+
+        saveContainer(container);
+        return true;
+    }
+
+    /**
      * 获取指定模块的专属数据副本。
      *
      * 模块不存在时返回空容器，不创建模块。
@@ -150,7 +170,7 @@ public final class GhostItemModuleHost
     /**
      * 替换指定模块的专属数据。
      *
-     * 保留模块的强度、复苏值和死机值。
+     * 保留模块的强度、复苏值、沉睡和死机状态。
      */
     @Override
     public boolean setModuleCustomData(

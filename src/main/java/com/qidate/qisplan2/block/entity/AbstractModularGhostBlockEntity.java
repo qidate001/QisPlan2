@@ -138,6 +138,24 @@ public abstract class AbstractModularGhostBlockEntity
         return true;
     }
 
+    /**
+     * 修改模块死机状态，保留其他属性。
+     */
+    @Override
+    public boolean setDeadlocked(
+            ResourceLocation moduleId,
+            boolean deadlocked
+    ) {
+        Objects.requireNonNull(moduleId, "moduleId");
+
+        if (!ghostModules.setDeadlocked(moduleId, deadlocked)) {
+            return false;
+        }
+
+        markModuleDataChanged();
+        return true;
+    }
+
     @Override
     public CompoundTag getModuleCustomData(
             ResourceLocation moduleId

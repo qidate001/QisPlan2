@@ -45,6 +45,7 @@ public class ModularGhostEntity extends AbstractGhostEntity
     private static final String NBT_MODULE_INTENSITY = "intensity";
     private static final String NBT_MODULE_SLEEPING = "sleeping";
     private static final String NBT_MODULE_CUSTOM_DATA = "customData";
+    private static final String NBT_MODULE_DEADLOCKED = "deadlocked";
 
     private final GhostModuleContainer ghostModules =
             new GhostModuleContainer();
@@ -151,6 +152,17 @@ public class ModularGhostEntity extends AbstractGhostEntity
     }
 
     /**
+     * 修改模块死机状态，保留其他属性。
+     */
+    @Override
+    public boolean setDeadlocked(
+            ResourceLocation moduleId,
+            boolean deadlocked
+    ) {
+        return ghostModules.setDeadlocked(moduleId, deadlocked);
+    }
+
+    /**
      * 校验灵异属性数值。
      *
      * 当前阶段统一要求数值有限且非负。
@@ -247,6 +259,11 @@ public class ModularGhostEntity extends AbstractGhostEntity
                     entry.sleeping()
             );
 
+            moduleTag.putBoolean(
+                    NBT_MODULE_DEADLOCKED,
+                    entry.deadlocked()
+            );
+
             moduleTag.put(
                     NBT_MODULE_CUSTOM_DATA,
                     entry.customData()
@@ -300,6 +317,10 @@ public class ModularGhostEntity extends AbstractGhostEntity
                     NBT_MODULE_SLEEPING
             );
 
+            boolean deadlocked = moduleTag.getBoolean(
+                    NBT_MODULE_DEADLOCKED
+            );
+
             CompoundTag customData = moduleTag.contains(
                     NBT_MODULE_CUSTOM_DATA,
                     Tag.TAG_COMPOUND
@@ -318,6 +339,7 @@ public class ModularGhostEntity extends AbstractGhostEntity
                             intensity,
                             revival,
                             sleeping,
+                            deadlocked,
                             customData
                     )
             );
