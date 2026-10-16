@@ -89,4 +89,20 @@ public interface GhostModule {
     default List<GhostMedium> getMedia() {
         return List.of();
     }
+
+    /**
+     * 获取该厉鬼模块的复苏刺激结算策略。
+     *
+     * 复苏策略负责判断一次能力刺激是否允许结算。
+     *
+     * 它与宿主的可变性限制不同：
+     * - 宿主限制决定数据能不能被修改。
+     * - 复苏策略决定当前这次刺激能不能结算。
+     *
+     * 默认允许结算，以保持现有模块的行为不变。
+     * 后续接入死机系统后，可以由具体模块提供自己的策略。
+     */
+    default GhostRevivalPolicy getRevivalPolicy() {
+        return GhostRevivalPolicy.allowAll();
+    }
 }

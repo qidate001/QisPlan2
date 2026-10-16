@@ -114,28 +114,52 @@ public final class GhostAbilityExecutor {
     }
 
     /**
-     * 统一提交复苏刺激。
+     * 尝试结算一次能力带来的复苏刺激。
      *
-     * 模块被移除时不再结算。
+     * 只有同时满足以下条件，才允许修改复苏值：
+     * 1. 模块仍然可用。
+     * 2. 宿主允许能力刺激修改复苏值。
+     * 3. 模块自身的复苏策略允许本次刺激结算。
+     * 4. 刺激值大于零时，宿主能够成功执行复苏值修改。
+     *
+     * 本方法只负责复苏刺激结算，不负责执行能力效果，
+     * 也不负责改变模块的沉睡状态或死机状态。
      */
     private static boolean applyStimulation(
             GhostAbilityContext context,
             GhostAbilityStimulation stimulation
     ) {
+        // 模块不可用时，不允许结算复苏刺激。
         if (!context.isModuleAvailable()) {
             return false;
         }
 
         // 不可变宿主不接受能力刺激。
-        // 能力本身仍可执行，只跳过复苏值结算。
         if (!context.host().allowsAbilityRevivalStimulation()) {
             return false;
         }
 
+        // 获取模块定义。
+        GhostModule module = GhostModuleRegistry.get(context.moduleId());
+
+        if (module == null) {
+            return false;
+        }
+
+        // 检查模块自身的复苏策略。
+        GhostRevivalPolicy policy = module.getRevivalPolicy();
+
+        if (policy == null
+                || !policy.allowsStimulation(context, stimulation)) {
+            return false;
+        }
+
+        // 零刺激不需要修改复苏值。
         if (stimulation.revivalAmount() <= 0.0D) {
             return true;
         }
 
+        // 由统一上下文负责修改复苏值。
         return context.getModuleContext().addRevival(
                 stimulation.revivalAmount()
         );
