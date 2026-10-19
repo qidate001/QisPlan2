@@ -7,10 +7,15 @@ import com.qidate.qisplan2.ghost.module.influence.GhostInfluenceSession;
 import java.util.List;
 
 /**
- * 统一的厉鬼模块运行时。
+ * 灵异模块运行时。
  *
- * 物品和实体均通过此处分发事件。
- * 同一次事件分发中的所有模块共享同一个灵异影响会话。
+ * 负责完整的模块事件分发流程：
+ * 1. 为一次事件创建共享的 GhostInfluenceSession。
+ * 2. 遍历宿主当前拥有的模块。
+ * 3. 将各模块交给 GhostRuleRuntime 执行规则。
+ * 4. 所有模块执行完成后，统一裁决并应用灵异影响。
+ *
+ * 这是模块事件分发的统一入口。
  */
 public final class GhostModuleRuntime {
 

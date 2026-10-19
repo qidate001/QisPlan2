@@ -8,10 +8,20 @@ import net.minecraft.resources.ResourceLocation;
 import java.util.List;
 
 /**
- * 统一的厉鬼规则运行时。
+ * 灵异规则运行时。
  *
- * 负责将语义事件分发给宿主所持有模块定义中的规则。
- * 同一次事件中的规则可以共享灵异影响会话。
+ * 负责执行指定模块在当前事件中符合条件的规则。
+ *
+ * 职责范围：
+ * 1. 检查模块是否允许执行规则。
+ * 2. 获取模块及其规则列表。
+ * 3. 检查规则是否支持当前事件，以及是否满足触发条件。
+ * 4. 执行满足条件的规则，并将共享的影响会话传递给规则上下文。
+ *
+ * 本类不负责完整事件分发，不创建或裁决灵异影响会话，
+ * 也不负责遍历宿主的全部模块。
+ *
+ * 完整事件分发由 GhostModuleRuntime 负责。
  */
 public final class GhostRuleRuntime {
 
@@ -19,93 +29,14 @@ public final class GhostRuleRuntime {
     }
 
     /**
-     * 向宿主持有的所有模块规则分发事件。
+     * 执行指定模块在当前事件中符合条件的规则。
      *
-     * 兼容旧调用：本方法自行创建会话，并在分发完成后裁决。
-     * 若调用方需要让多个模块共享同一会话，应使用
-     * 带有 session 参数的重载。
-     */
-    public static void dispatch(
-            GhostModuleHost host,
-            GhostEvent event
-    ) {
-        if (host == null || event == null) {
-            return;
-        }
-
-        GhostInfluenceSession session =
-                new GhostInfluenceSession();
-
-        try {
-            List<GhostModuleData.Entry> moduleEntries =
-                    List.copyOf(host.getModules());
-
-            for (GhostModuleData.Entry entry : moduleEntries) {
-                if (!canRunRules(host, entry.id())) {
-                    continue;
-                }
-
-                dispatchModule(host, entry, event, session);
-            }
-        } finally {
-            session.resolveAndApply();
-        }
-    }
-
-    /**
-     * 向宿主持有的所有模块规则分发事件。
+     * 只负责规则筛选与执行，不负责创建会话或裁决影响。
      *
-     * 使用调用方提供的会话，不在此处自行裁决。
-     */
-    public static void dispatch(
-            GhostModuleHost host,
-            GhostEvent event,
-            GhostInfluenceSession session
-    ) {
-        if (host == null || event == null || session == null) {
-            return;
-        }
-
-        List<GhostModuleData.Entry> moduleEntries =
-                List.copyOf(host.getModules());
-
-        for (GhostModuleData.Entry entry : moduleEntries) {
-            if (!canRunRules(host, entry.id())) {
-                continue;
-            }
-
-            dispatchModule(host, entry, event, session);
-        }
-    }
-
-    /**
-     * 只向指定模块的规则分发事件。
-     *
-     * 兼容旧调用：本方法自行创建会话，并在分发完成后裁决。
-     */
-    public static void dispatchModule(
-            GhostModuleHost host,
-            GhostModuleData.Entry entry,
-            GhostEvent event
-    ) {
-        if (host == null || entry == null || event == null) {
-            return;
-        }
-
-        GhostInfluenceSession session =
-                new GhostInfluenceSession();
-
-        try {
-            dispatchModule(host, entry, event, session);
-        } finally {
-            session.resolveAndApply();
-        }
-    }
-
-    /**
-     * 向指定模块分发事件，并使用共享会话。
-     *
-     * 本方法不负责结束会话，由最外层调用方统一裁决。
+     * @param host 模块宿主
+     * @param entry 当前模块的数据条目
+     * @param event 当前事件
+     * @param session 当前事件共享的灵异影响会话
      */
     public static void dispatchModule(
             GhostModuleHost host,
