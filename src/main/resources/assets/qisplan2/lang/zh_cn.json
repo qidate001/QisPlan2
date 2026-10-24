@@ -12,6 +12,12 @@
   "gamerule.isayEnabled": "启用§4许愿鬼",
   "gamerule.ghostCarpetKillTime": "§4鬼地毯§r灵异叠加耗时",
   "gamerule.ghostDamageInstantlyKill": "灵异攻击强制抹杀",
+  "gamerule.ghostRebootCommitInterval": "灵异攻击强制抹杀",
+  "gamerule.ghostRebootMaxCommits": "重启最大存在多少个 Commit",
+  "gamerule.ghostRebootStepInterval": "重启回溯的速度",
+  "gamerule.ghostRebootRestorePosition": "重启是否回档玩家的位置和视角",
+  "gamerule.ghostRebootRestoreInventory": "重启回档玩家背包",
+  "gamerule.ghostIsolationMarkerEnabled": "灵异隔绝检测标记是否启用",
 
   "key.categories.qisplan2": "齐计划2",
   "key.qisplan2.possession_screen": "驭鬼者状态",
@@ -93,6 +99,7 @@
   "module.qisplan2.invisible_ghost": "不可视之鬼",
   "module.qisplan2.untouchable_ghost": "不可触之鬼",
   "module.qisplan2.ghost_tombstone": "鬼墓碑",
+  "module.qisplan2.ghost_divination_slip": "鬼签",
 
   "ghost.qisplan2.ghost_painting": "鬼画",
   "ghost.qisplan2.night_wanderer": "夜游鬼",

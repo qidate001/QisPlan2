@@ -12,6 +12,12 @@
   "gamerule.isayEnabled": "Enable §4Wish Ghost",
   "gamerule.ghostCarpetKillTime": "§4Haunted Carpet§r Time-Consuming Overlay",
   "gamerule.ghostDamageInstantlyKill": "Ghost damage instantly kills",
+  "gamerule.ghostRebootCommitInterval": "Forced erasure of ghost attacks",
+  "gamerule.ghostRebootMaxCommits": "Maximum number of commits retained after restart",
+  "gamerule.ghostRebootStepInterval": "Restart rewind speed",
+  "gamerule.ghostRebootRestorePosition": "Whether restart restores the player's position and camera angle",
+  "gamerule.ghostRebootRestoreInventory": "Restart restores the player's inventory",
+  "gamerule.ghostIsolationMarkerEnabled": "Whether the ghost isolation detection marker is enabled",
 
   "key.categories.qisplan2": "Qis Plan 2",
   "key.qisplan2.possession_screen": "Ghost Controller Status",
@@ -92,6 +98,7 @@
   "module.qisplan2.invisible_ghost": "Invisible Ghost",
   "module.qisplan2.untouchable_ghost": "Untouchable Ghost",
   "module.qisplan2.ghost_tombstone": "Ghost Tombstone",
+  "module.qisplan2.ghost_divination_slip": "Ghost Divination Slip",
 
   "ghost.qisplan2.ghost_painting": "Ghost Painting",
   "ghost.qisplan2.night_wanderer": "Night Wanderer",
