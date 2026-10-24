@@ -160,13 +160,21 @@ public final class GhostDivinationSlipModule implements GhostModule {
                     new DivinationSlipResultEvent(user, result);
 
             switch (result) {
-                case LIFE_RESULT -> context.submitAbilityInfluence(
-                        USE_ABILITY_ID,
-                        resultEvent,
-                        user.getUUID(),
-                        GhostInfluenceType.PROTECTION,
-                        context.getModuleContext().intensity()
-                );
+                case LIFE_RESULT -> {
+                    GhostInfluenceCollector.collectCurses(
+                            context,
+                            user.getUUID(),
+                            serverLevel.getServer()
+                    );
+
+                    context.submitAbilityInfluence(
+                            USE_ABILITY_ID,
+                            resultEvent,
+                            user.getUUID(),
+                            GhostInfluenceType.PROTECTION,
+                            context.getModuleContext().intensity()
+                    );
+                }
 
 
                 case DEATH_RESULT -> {

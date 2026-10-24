@@ -1,6 +1,7 @@
 package com.qidate.qisplan2.ghost.module.influence;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -10,17 +11,17 @@ import java.util.UUID;
 /**
  * 灵异影响统一裁决器。
  *
- * 按批次和目标分组，整体比较保护与袭击的最高强度。
- * 本类只计算裁决结果，不执行游戏效果。
+ * 按批次和目标分组，仅对已注册为互斥关系的影响类型进行裁决。
  *
- * 裁决规则：
- * 1. 只有一种影响类型时，该类型的影响全部接受。
- * 2. 两种影响强度不同时，较弱类型的影响全部被压制。
- * 3. 两种影响最高强度相同时：
- *    - 同源的保护与袭击冲突，双方 DEADLOCKED。
- *    - 不同源的保护与袭击冲突，双方 CONTESTED。
- *    - 低于最高冲突强度的影响 SUPPRESSED。
- * 4. DEADLOCKED 优先于 CONTESTED，避免同一影响被后续冲突覆盖。
+ * PROTECTION 与 ATTACK 采用逐层抵挡：
+ * 1. 防护按强度从高到低排列。
+ * 2. 袭击依次面对防护。
+ * 3. 袭击强于防护时，防护被击穿，袭击保留剩余强度。
+ * 4. 防护强于袭击时，袭击被抵挡，防护保留剩余强度。
+ * 5. 强度相当时，同源导致死机，异源进入争夺。
+ * 6. 死机立即终止该目标本批次的后续攻防计算。
+ *
+ * 本类只计算裁决结果，不执行游戏效果。
  */
 public final class GhostInfluenceResolver {
 
@@ -77,152 +78,145 @@ public final class GhostInfluenceResolver {
             List<GhostInfluenceResolution> results,
             List<Integer> group
     ) {
-        double maxProtection = -1.0D;
-        double maxAttack = -1.0D;
+        List<Integer> protections = new ArrayList<>();
+        List<Integer> attacks = new ArrayList<>();
 
         for (int index : group) {
             GhostInfluence influence = entries.get(index);
 
             if (influence.type() == GhostInfluenceType.PROTECTION) {
-                maxProtection = Math.max(
-                        maxProtection,
-                        influence.intensity()
-                );
+                protections.add(index);
             } else if (influence.type() == GhostInfluenceType.ATTACK) {
-                maxAttack = Math.max(
-                        maxAttack,
-                        influence.intensity()
-                );
+                attacks.add(index);
             }
         }
 
-        // 没有袭击，或没有保护，不存在对立冲突。
-        if (maxAttack < 0.0D || maxProtection < 0.0D) {
+        if (protections.isEmpty() || attacks.isEmpty()) {
             return;
         }
 
-        if (!isIntensityEquivalent(maxProtection, maxAttack)) {
-            if (maxProtection > maxAttack) {
-                suppressType(
-                        entries,
-                        results,
-                        group,
-                        GhostInfluenceType.ATTACK
-                );
-            } else {
-                suppressType(
-                        entries,
-                        results,
-                        group,
-                        GhostInfluenceType.PROTECTION
-                );
-            }
+        // 当前按防护原始强度从高到低排序。
+        // 相同强度时使用输入列表中的先后顺序，保证结果稳定。
+        protections.sort(
+                Comparator
+                        .<Integer>comparingDouble(
+                                index -> entries.get(index).intensity()
+                        )
+                        .reversed()
+                        .thenComparingInt(Integer::intValue)
+        );
 
-            return;
+        // 每条防护维护独立的剩余强度。
+        Map<Integer, Double> remainingProtection = new HashMap<>();
+
+        for (int index : protections) {
+            remainingProtection.put(
+                    index,
+                    entries.get(index).intensity()
+            );
         }
 
-        // 两种类型的最高强度相同。
-        // 先压制所有低于最高冲突强度的影响。
-        List<Integer> topProtection = new ArrayList<>();
-        List<Integer> topAttack = new ArrayList<>();
+        // 每条袭击按输入顺序处理。
+        // 每条袭击依次面对从高到低排列的防护。
+        for (int attackIndex : attacks) {
+            GhostInfluence attack = entries.get(attackIndex);
+            double remainingAttack = attack.intensity();
 
-        for (int index : group) {
-            GhostInfluence influence = entries.get(index);
+            boolean attackStopped = false;
 
-            if (influence.type() == GhostInfluenceType.PROTECTION) {
-                if (Double.compare(
-                        influence.intensity(),
-                        maxProtection
-                ) == 0) {
-                    topProtection.add(index);
-                } else {
+            for (int protectionIndex : protections) {
+                if (attackStopped) {
+                    break;
+                }
+
+                double defenseStrength =
+                        remainingProtection.get(protectionIndex);
+
+                if (defenseStrength <= 0.0D) {
+                    continue;
+                }
+
+                GhostInfluence protection =
+                        entries.get(protectionIndex);
+
+                if (remainingAttack <= 0.0D) {
+                    break;
+                }
+
+                if (isIntensityEquivalent(
+                        remainingAttack,
+                        defenseStrength
+                )) {
+                    if (protection.sourceId().equals(
+                            attack.sourceId()
+                    )) {
+                        results.set(
+                                protectionIndex,
+                                GhostInfluenceResolution.DEADLOCKED
+                        );
+
+                        results.set(
+                                attackIndex,
+                                GhostInfluenceResolution.DEADLOCKED
+                        );
+
+                        // 同源死机：立即停止该目标本批次的后续攻防。
+                        return;
+                    }
+
                     results.set(
-                            index,
+                            protectionIndex,
+                            GhostInfluenceResolution.CONTESTED
+                    );
+
+                    results.set(
+                            attackIndex,
+                            GhostInfluenceResolution.CONTESTED
+                    );
+
+                    remainingProtection.put(protectionIndex, 0.0D);
+
+                    attackStopped = true;
+                    break;
+                }
+
+                if (remainingAttack > defenseStrength) {
+                    // 袭击击穿当前防护，保留剩余袭击强度。
+                    remainingAttack -= defenseStrength;
+
+                    remainingProtection.put(
+                            protectionIndex,
+                            0.0D
+                    );
+
+                    results.set(
+                            protectionIndex,
                             GhostInfluenceResolution.SUPPRESSED
                     );
-                }
-            } else if (influence.type() == GhostInfluenceType.ATTACK) {
-                if (Double.compare(
-                        influence.intensity(),
-                        maxAttack
-                ) == 0) {
-                    topAttack.add(index);
                 } else {
+                    // 当前防护抵挡住袭击，防护保留剩余强度。
+                    double remainingDefense =
+                            defenseStrength - remainingAttack;
+
+                    remainingProtection.put(
+                            protectionIndex,
+                            remainingDefense
+                    );
+
                     results.set(
-                            index,
+                            attackIndex,
                             GhostInfluenceResolution.SUPPRESSED
                     );
+
+                    attackStopped = true;
                 }
             }
-        }
 
-        // 记录哪些最高强度影响参与了同源冲突。
-        boolean[] deadlocked = new boolean[entries.size()];
-
-        for (int protectionIndex : topProtection) {
-            GhostInfluence protection = entries.get(protectionIndex);
-
-            for (int attackIndex : topAttack) {
-                GhostInfluence attack = entries.get(attackIndex);
-
-                if (protection.sourceId().equals(attack.sourceId())) {
-                    deadlocked[protectionIndex] = true;
-                    deadlocked[attackIndex] = true;
-                }
-            }
-        }
-
-        // 先统一写入 DEADLOCKED。
-        for (int index : topProtection) {
-            if (deadlocked[index]) {
+            if (!attackStopped && remainingAttack > 0.0D) {
+                // 所有防护均被击穿，袭击仍有剩余强度。
                 results.set(
-                        index,
-                        GhostInfluenceResolution.DEADLOCKED
-                );
-            }
-        }
-
-        for (int index : topAttack) {
-            if (deadlocked[index]) {
-                results.set(
-                        index,
-                        GhostInfluenceResolution.DEADLOCKED
-                );
-            }
-        }
-
-        // 没有参与同源冲突的最高强度影响，属于未解决的不同源冲突。
-        // 不执行其保护或袭击效果。
-        for (int index : topProtection) {
-            if (!deadlocked[index]) {
-                results.set(
-                        index,
-                        GhostInfluenceResolution.CONTESTED
-                );
-            }
-        }
-
-        for (int index : topAttack) {
-            if (!deadlocked[index]) {
-                results.set(
-                        index,
-                        GhostInfluenceResolution.CONTESTED
-                );
-            }
-        }
-    }
-
-    private static void suppressType(
-            List<GhostInfluence> entries,
-            List<GhostInfluenceResolution> results,
-            List<Integer> group,
-            GhostInfluenceType losingType
-    ) {
-        for (int index : group) {
-            if (entries.get(index).type() == losingType) {
-                results.set(
-                        index,
-                        GhostInfluenceResolution.SUPPRESSED
+                        attackIndex,
+                        GhostInfluenceResolution.ACCEPTED
                 );
             }
         }
@@ -232,17 +226,17 @@ public final class GhostInfluenceResolver {
      * 判断两种最高强度是否处于容错范围内。
      */
     private static boolean isIntensityEquivalent(
-            double protection,
-            double attack
+            double first,
+            double second
     ) {
-        double max = Math.max(protection, attack);
+        double max = Math.max(first, second);
 
         if (max == 0.0D) {
             return true;
         }
 
-        return Math.abs(protection - attack)
-                / max <= INTENSITY_TOLERANCE;
+        return Math.abs(first - second) / max
+                <= INTENSITY_TOLERANCE;
     }
 
     private record ConflictKey(long batchId, UUID targetId) {

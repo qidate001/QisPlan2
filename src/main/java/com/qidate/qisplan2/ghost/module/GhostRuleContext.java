@@ -10,6 +10,7 @@ import com.qidate.qisplan2.ghost.module.influence.GhostInfluenceType;
 import net.minecraft.resources.ResourceLocation;
 
 import java.util.Objects;
+import java.util.UUID;
 
 /**
  * 单次规则执行的上下文。
@@ -76,7 +77,7 @@ public record GhostRuleContext(
     /**
      * 获取当前模块在本次事件中的稳定来源标识。
      */
-    public java.util.UUID getInfluenceSourceId() {
+    public UUID getInfluenceSourceId() {
         if (!hasInfluenceSession()) {
             throw new IllegalStateException(
                     "No active ghost influence session"
@@ -92,7 +93,7 @@ public record GhostRuleContext(
      * 注意：本方法只提交，不会立即执行 acceptedEffect。
      */
     public void submitInfluence(
-            java.util.UUID targetId,
+            UUID targetId,
             GhostInfluenceType type,
             double intensity,
             Runnable acceptedEffect
@@ -131,7 +132,7 @@ public record GhostRuleContext(
     public boolean submitAbilityInfluence(
             ResourceLocation abilityId,
             GhostEvent event,
-            java.util.UUID targetId,
+            UUID targetId,
             GhostInfluenceType type,
             double intensity
     ) {
