@@ -87,10 +87,11 @@ public record GhostRuleContext(
         return influenceSession.getSourceId(host, moduleId);
     }
 
+
     /**
      * 提交一条灵异影响及其裁决通过后的效果。
      *
-     * 注意：本方法只提交，不会立即执行 acceptedEffect。
+     * 默认不执行额外的死机清理操作。
      */
     public void submitInfluence(
             UUID targetId,
@@ -98,9 +99,36 @@ public record GhostRuleContext(
             double intensity,
             Runnable acceptedEffect
     ) {
+        submitInfluence(
+                targetId,
+                type,
+                intensity,
+                acceptedEffect,
+                () -> {
+                }
+        );
+    }
+
+    /**
+     * 提交一条灵异影响及其后续效果。
+     *
+     * @param targetId 影响目标
+     * @param type 影响类型
+     * @param intensity 影响强度
+     * @param acceptedEffect 裁决通过后执行的效果
+     * @param deadlockedEffect 该影响进入死机状态后执行的清理操作
+     */
+    public void submitInfluence(
+            UUID targetId,
+            GhostInfluenceType type,
+            double intensity,
+            Runnable acceptedEffect,
+            Runnable deadlockedEffect
+    ) {
         Objects.requireNonNull(targetId, "targetId");
         Objects.requireNonNull(type, "type");
         Objects.requireNonNull(acceptedEffect, "acceptedEffect");
+        Objects.requireNonNull(deadlockedEffect, "deadlockedEffect");
 
         if (!hasInfluenceSession()) {
             throw new IllegalStateException(
@@ -119,7 +147,11 @@ public record GhostRuleContext(
                 influenceSession.getBatchId()
         );
 
-        influenceSession.submit(influence, acceptedEffect);
+        influenceSession.submit(
+                influence,
+                acceptedEffect,
+                deadlockedEffect
+        );
     }
 
     /**

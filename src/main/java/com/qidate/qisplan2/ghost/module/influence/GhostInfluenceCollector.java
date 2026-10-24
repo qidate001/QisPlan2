@@ -11,12 +11,10 @@ import java.util.UUID;
 /**
  * 通用灵异影响收集器。
  *
- * <p>
- * 负责收集目标身上由诅咒提供的灵异影响，
- * 并将其提交到当前规则的影响裁决会话。
+ * 负责收集目标身上所有有效、能够提供灵异影响的诅咒，
+ * 并提交到当前规则的影响裁决会话。
  *
- * <p>
- * 本类不负责冲突裁决，也不直接执行影响效果。
+ * 不负责裁决，也不直接执行保护或袭击效果。
  */
 public final class GhostInfluenceCollector {
 
@@ -26,9 +24,11 @@ public final class GhostInfluenceCollector {
     /**
      * 收集目标身上所有有效、能够提供灵异影响的诅咒。
      *
+     * 诅咒参与死机时，注销对应的具体诅咒实例。
+     *
      * @param context 当前规则上下文
-     * @param target  影响目标
-     * @param server  当前服务器
+     * @param target 影响目标
+     * @param server 当前服务器
      * @return 成功提交的影响数量
      */
     public static int collectCurses(
@@ -60,7 +60,11 @@ public final class GhostInfluenceCollector {
                     provider.getInfluenceType(),
                     provider.getInfluenceIntensity(),
                     () -> {
-                    }
+                    },
+                    () -> CurseManager.remove(
+                            server,
+                            curse.getId()
+                    )
             );
 
             submitted++;

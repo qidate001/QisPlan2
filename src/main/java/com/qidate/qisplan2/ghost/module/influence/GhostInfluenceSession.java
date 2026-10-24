@@ -78,14 +78,31 @@ public final class GhostInfluenceSession {
     /**
      * 提交影响及其裁决通过后的效果。
      *
-     * 本方法不会执行 acceptedEffect。
+     * 默认没有额外的死机清理操作。
      */
     public void submit(
             GhostInfluence influence,
             Runnable acceptedEffect
     ) {
+        submit(
+                influence,
+                acceptedEffect,
+                () -> {
+                }
+        );
+    }
+
+    /**
+     * 提交影响、获准效果以及死机清理操作。
+     */
+    public void submit(
+            GhostInfluence influence,
+            Runnable acceptedEffect,
+            Runnable deadlockedEffect
+    ) {
         Objects.requireNonNull(influence, "influence");
         Objects.requireNonNull(acceptedEffect, "acceptedEffect");
+        Objects.requireNonNull(deadlockedEffect, "deadlockedEffect");
 
         if (finished) {
             throw new IllegalStateException(
@@ -104,16 +121,18 @@ public final class GhostInfluenceSession {
         submissions.add(
                 new GhostInfluenceSubmission(
                         influence,
-                        acceptedEffect
+                        acceptedEffect,
+                        deadlockedEffect
                 )
         );
     }
 
+
     /**
      * 结束会话：
      * 1. 统一裁决；
-     * 2. 应用全部死机结果；
-     * 3. 取消本批次死机模块的所有已接受效果；
+     * 2. 应用死机状态；
+     * 3. 执行死机影响的清理操作；
      * 4. 执行其余获准效果。
      *
      * @return 成功设置死机状态的模块实例数量
@@ -130,46 +149,22 @@ public final class GhostInfluenceSession {
         List<GhostInfluence> influences = batch.getInfluences();
         List<GhostInfluenceResolution> results = batch.resolve();
 
-        /*
-         * 第一阶段：应用所有死机结果。
-         *
-         * 此时尚未执行任何已接受效果，
-         * 保证后续效果不会先于死机状态应用。
-         */
+        // 第一阶段：先应用全部死机状态。
         int deadlockedCount = GhostInfluenceApplier.apply(
                 influences,
                 results
         );
 
-        /*
-         * 第二阶段：记录本批次被判定死机的宿主模块。
-         *
-         * 使用宿主对象身份比较，而不是 equals()，
-         * 避免不同宿主实例因相等性实现而被混为一谈。
-         */
-        Set<DeadlockedModule> deadlockedModules = new HashSet<>();
-
+        // 第二阶段：清理参与死机的具体影响。
         for (int i = 0; i < results.size(); i++) {
             if (results.get(i) != GhostInfluenceResolution.DEADLOCKED) {
                 continue;
             }
 
-            GhostInfluence influence = influences.get(i);
-
-            deadlockedModules.add(
-                    new DeadlockedModule(
-                            influence.host(),
-                            influence.moduleId()
-                    )
-            );
+            submissions.get(i).executeDeadlockedEffect();
         }
 
-        /*
-         * 第三阶段：执行已接受效果。
-         *
-         * 只要该宿主模块在本批次任意一条影响中被判定死机，
-         * 就跳过它在本批次提交的全部已接受效果。
-         */
+        // 第三阶段：只执行仍然获准的效果。
         for (int i = 0; i < results.size(); i++) {
             if (results.get(i) != GhostInfluenceResolution.ACCEPTED) {
                 continue;
@@ -178,16 +173,6 @@ public final class GhostInfluenceSession {
             GhostInfluenceSubmission submission = submissions.get(i);
             GhostInfluence influence = submission.influence();
 
-            if (deadlockedModules.contains(
-                    new DeadlockedModule(
-                            influence.host(),
-                            influence.moduleId()
-                    )
-            )) {
-                continue;
-            }
-
-            // 模块可能已被其他效果移除。
             if (!influence.host().hasModule(influence.moduleId())) {
                 continue;
             }

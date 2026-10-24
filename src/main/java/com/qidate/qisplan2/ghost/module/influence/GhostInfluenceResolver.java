@@ -164,17 +164,17 @@ public final class GhostInfluenceResolver {
                         return;
                     }
 
+                    // 异源同强度：防护直接抵挡袭击。
+                    // 防护生效，袭击被压制；防护不消耗剩余强度。
                     results.set(
                             protectionIndex,
-                            GhostInfluenceResolution.CONTESTED
+                            GhostInfluenceResolution.ACCEPTED
                     );
 
                     results.set(
                             attackIndex,
-                            GhostInfluenceResolution.CONTESTED
+                            GhostInfluenceResolution.SUPPRESSED
                     );
-
-                    remainingProtection.put(protectionIndex, 0.0D);
 
                     attackStopped = true;
                     break;
