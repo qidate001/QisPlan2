@@ -1,12 +1,12 @@
 package com.qidate.qisplan2.block;
 
 import com.mojang.serialization.MapCodec;
-import com.qidate.qisplan2.QisPlan2;
 import com.qidate.qisplan2.block.entity.GhostPianoBlockEntity;
 import com.qidate.qisplan2.core.ModBlocks;
 import com.qidate.qisplan2.event.GhostPianoMusicHandler;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
@@ -61,30 +61,15 @@ public class GhostPianoBlock extends BaseEntityBlock {
             );
 
     private static final VoxelShape SHAPE =
-            box(
-                    0,
-                    0,
-                    0,
-                    16,
-                    22,
-                    16
-            );
+            box(0, 0, 0, 16, 22, 16);
 
-    public GhostPianoBlock(
-            Properties properties
-    ) {
+    public GhostPianoBlock(Properties properties) {
         super(properties);
 
         registerDefaultState(
                 stateDefinition.any()
-                        .setValue(
-                                FACING,
-                                Direction.NORTH
-                        )
-                        .setValue(
-                                PART,
-                                Part.LEFT
-                        )
+                        .setValue(FACING, Direction.NORTH)
+                        .setValue(PART, Part.LEFT)
         );
     }
 
@@ -97,10 +82,7 @@ public class GhostPianoBlock extends BaseEntityBlock {
     protected void createBlockStateDefinition(
             StateDefinition.Builder<Block, BlockState> builder
     ) {
-        builder.add(
-                FACING,
-                PART
-        );
+        builder.add(FACING, PART);
     }
 
     @Override
@@ -114,29 +96,17 @@ public class GhostPianoBlock extends BaseEntityBlock {
                 facing.getClockWise();
 
         BlockPos otherPos =
-                context.getClickedPos()
-                        .relative(right);
+                context.getClickedPos().relative(right);
 
-        /*
-         * 第二个方块放不下，
-         * 整个钢琴就不允许放置。
-         */
         if (!context.getLevel()
                 .getBlockState(otherPos)
                 .canBeReplaced(context)) {
-
             return null;
         }
 
         return defaultBlockState()
-                .setValue(
-                        FACING,
-                        facing
-                )
-                .setValue(
-                        PART,
-                        Part.LEFT
-                );
+                .setValue(FACING, facing)
+                .setValue(PART, Part.LEFT);
     }
 
     @Override
@@ -155,7 +125,7 @@ public class GhostPianoBlock extends BaseEntityBlock {
                 stack
         );
 
-        if (level.isClientSide()) {
+        if (!(level instanceof ServerLevel)) {
             return;
         }
 
@@ -165,26 +135,32 @@ public class GhostPianoBlock extends BaseEntityBlock {
         Direction right =
                 facing.getClockWise();
 
-        BlockPos otherPos =
+        BlockPos rightPos =
                 pos.relative(right);
 
         /*
-         * 放置 RIGHT。
+         * 放置右半边。
          */
         level.setBlock(
-                otherPos,
-                state.setValue(
-                        PART,
-                        Part.RIGHT
-                ),
+                rightPos,
+                state.setValue(PART, Part.RIGHT),
                 3
         );
 
         /*
-         * 不在这里注册钢琴。
-         *
-         * 注册交给 BlockEntity ticker。
+         * 只初始化左半边的模块宿主。
          */
+        if (level.getBlockEntity(pos)
+                instanceof GhostPianoBlockEntity blockEntity) {
+
+            blockEntity.ensureDefaultModule();
+
+            /*
+             * 放置时执行隔绝检测。
+             * 后续 Tick 不会再次调用 isIsolated()。
+             */
+            blockEntity.initializeIsolationOnPlacement();
+        }
     }
 
     @Override
@@ -195,32 +171,21 @@ public class GhostPianoBlock extends BaseEntityBlock {
             Player player
     ) {
         if (!level.isClientSide()
-                && level instanceof net.minecraft.server.level.ServerLevel serverLevel) {
+                && level instanceof ServerLevel serverLevel) {
 
-            if (state.getValue(PART)
-                    == Part.LEFT) {
-
+            if (state.getValue(PART) == Part.LEFT) {
                 GhostPianoMusicHandler.unregisterPiano(
                         serverLevel,
                         pos
                 );
 
-                destroyOtherHalf(
-                        level,
-                        pos,
-                        state
-                );
-
+                destroyOtherHalf(level, pos, state);
             } else {
-
                 Direction right =
-                        state.getValue(FACING)
-                                .getClockWise();
+                        state.getValue(FACING).getClockWise();
 
                 BlockPos leftPos =
-                        pos.relative(
-                                right.getOpposite()
-                        );
+                        pos.relative(right.getOpposite());
 
                 GhostPianoMusicHandler.unregisterPiano(
                         serverLevel,
@@ -228,15 +193,10 @@ public class GhostPianoBlock extends BaseEntityBlock {
                 );
 
                 BlockState leftState =
-                        level.getBlockState(
-                                leftPos
-                        );
+                        level.getBlockState(leftPos);
 
                 if (leftState.is(this)) {
-                    level.destroyBlock(
-                            leftPos,
-                            false
-                    );
+                    level.destroyBlock(leftPos, false);
                 }
             }
         }
@@ -255,22 +215,16 @@ public class GhostPianoBlock extends BaseEntityBlock {
             BlockState state
     ) {
         Direction right =
-                state.getValue(FACING)
-                        .getClockWise();
+                state.getValue(FACING).getClockWise();
 
         BlockPos otherPos =
                 pos.relative(right);
 
         BlockState otherState =
-                level.getBlockState(
-                        otherPos
-                );
+                level.getBlockState(otherPos);
 
         if (otherState.is(this)) {
-            level.destroyBlock(
-                    otherPos,
-                    false
-            );
+            level.destroyBlock(otherPos, false);
         }
     }
 
@@ -279,10 +233,7 @@ public class GhostPianoBlock extends BaseEntityBlock {
             BlockPos pos,
             BlockState state
     ) {
-        return new GhostPianoBlockEntity(
-                pos,
-                state
-        );
+        return new GhostPianoBlockEntity(pos, state);
     }
 
     @Override
@@ -295,8 +246,7 @@ public class GhostPianoBlock extends BaseEntityBlock {
             return null;
         }
 
-        if (state.getValue(PART)
-                != Part.LEFT) {
+        if (state.getValue(PART) != Part.LEFT) {
             return null;
         }
 
@@ -318,9 +268,7 @@ public class GhostPianoBlock extends BaseEntityBlock {
     }
 
     @Override
-    protected RenderShape getRenderShape(
-            BlockState state
-    ) {
+    protected RenderShape getRenderShape(BlockState state) {
         return RenderShape.MODEL;
     }
 

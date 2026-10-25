@@ -80,5 +80,6 @@ public final class GhostModuleRegistry {
         register(new InvisibleGhostModule());
         register(new GhostTombstoneModule());
         register(new GhostDivinationSlipModule());
+        register(new GhostPianoModule());
     }
 }
