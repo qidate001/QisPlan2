@@ -3,7 +3,6 @@ package com.qidate.qisplan2.block;
 import com.mojang.serialization.MapCodec;
 import com.qidate.qisplan2.block.entity.GhostPianoBlockEntity;
 import com.qidate.qisplan2.core.ModBlocks;
-import com.qidate.qisplan2.event.GhostPianoMusicHandler;
 import com.qidate.qisplan2.ghost.module.sound.GhostSoundManager;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;

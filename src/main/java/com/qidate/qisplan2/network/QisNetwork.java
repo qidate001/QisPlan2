@@ -8,7 +8,6 @@ import com.qidate.qisplan2.network.ghostdomain.GhostDomainNetwork;
 import com.qidate.qisplan2.network.ghostdoor.GhostDoorPlateNetwork;
 import com.qidate.qisplan2.network.ghosteye.GhostEyeNetwork;
 import com.qidate.qisplan2.network.ghostmist.GhostMistNetwork;
-import com.qidate.qisplan2.network.ghostpiano.GhostPianoNetwork;
 import com.qidate.qisplan2.network.ghostsound.GhostSoundNetwork;
 import com.qidate.qisplan2.network.ghosttombstone.GhostTombstoneNetwork;
 import com.qidate.qisplan2.network.possession.GhostPossessionNetwork;
@@ -106,13 +105,5 @@ public final class QisNetwork {
          */
 
         GhostTombstoneNetwork.register(event);
-
-        /*
-         * ========================================================
-         * 鬼钢琴
-         * ========================================================
-         */
-
-        GhostPianoNetwork.register(event);
     }
 }

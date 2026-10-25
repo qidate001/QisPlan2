@@ -2,7 +2,6 @@ package com.qidate.qisplan2.ghost.module.implementation;
 
 import com.qidate.qisplan2.death.ModDamageTypes;
 import com.qidate.qisplan2.death.SupernaturalDeathHandler;
-import com.qidate.qisplan2.event.GhostPianoMusicHandler;
 import com.qidate.qisplan2.ghost.module.GhostModule;
 import com.qidate.qisplan2.ghost.module.GhostRule;
 import com.qidate.qisplan2.ghost.module.GhostRuleContext;
@@ -12,11 +11,13 @@ import com.qidate.qisplan2.ghost.module.data.GhostModuleInitialData;
 import com.qidate.qisplan2.ghost.module.event.GhostEvent;
 import com.qidate.qisplan2.ghost.module.event.GhostSoundEvent;
 import com.qidate.qisplan2.ghost.module.influence.GhostInfluenceType;
+import com.qidate.qisplan2.ghost.module.sound.GhostSoundBlockers;
 import com.qidate.qisplan2.ghost.module.sound.GhostSoundDefinition;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.resources.ResourceLocation;
 
 import java.util.List;
+import java.util.UUID;
 
 import static com.qidate.qisplan2.QisPlan2.MODID;
 
@@ -115,7 +116,7 @@ public final class GhostPianoModule implements GhostModule {
                                 "ghost_piano_music"
                         ),
                         32.0D,
-                        GhostPianoMusicHandler::isGhostMusicBlocker
+                        GhostSoundBlockers::isGhostPianoBlocker
                 )
         );
     }
@@ -134,7 +135,7 @@ public final class GhostPianoModule implements GhostModule {
      *
      * @return 有效 UUID；不存在或格式错误时返回 null
      */
-    public static java.util.UUID getInitialRegionId(
+    public static UUID getInitialRegionId(
             CompoundTag customData
     ) {
         String value =
@@ -145,7 +146,7 @@ public final class GhostPianoModule implements GhostModule {
         }
 
         try {
-            return java.util.UUID.fromString(value);
+            return UUID.fromString(value);
         } catch (IllegalArgumentException ignored) {
             return null;
         }
