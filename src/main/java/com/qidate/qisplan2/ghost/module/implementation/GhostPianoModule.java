@@ -2,6 +2,7 @@ package com.qidate.qisplan2.ghost.module.implementation;
 
 import com.qidate.qisplan2.death.ModDamageTypes;
 import com.qidate.qisplan2.death.SupernaturalDeathHandler;
+import com.qidate.qisplan2.event.GhostPianoMusicHandler;
 import com.qidate.qisplan2.ghost.module.GhostModule;
 import com.qidate.qisplan2.ghost.module.GhostRule;
 import com.qidate.qisplan2.ghost.module.GhostRuleContext;
@@ -11,6 +12,7 @@ import com.qidate.qisplan2.ghost.module.data.GhostModuleInitialData;
 import com.qidate.qisplan2.ghost.module.event.GhostEvent;
 import com.qidate.qisplan2.ghost.module.event.GhostSoundEvent;
 import com.qidate.qisplan2.ghost.module.influence.GhostInfluenceType;
+import com.qidate.qisplan2.ghost.module.sound.GhostSoundDefinition;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.resources.ResourceLocation;
 
@@ -99,6 +101,26 @@ public final class GhostPianoModule implements GhostModule {
     }
 
     /**
+     * 鬼钢琴模块提供的声音能力。
+     *
+     * 声音传播规则属于模块定义，不再由鬼钢琴方块实体决定。
+     */
+    @Override
+    public List<GhostSoundDefinition> getSounds() {
+        return List.of(
+                new GhostSoundDefinition(
+                        ID,
+                        ResourceLocation.fromNamespaceAndPath(
+                                MODID,
+                                "ghost_piano_music"
+                        ),
+                        32.0D,
+                        GhostPianoMusicHandler::isGhostMusicBlocker
+                )
+        );
+    }
+
+    /**
      * 读取放置时记录的隔绝状态。
      */
     public static boolean wasInitiallyIsolated(
@@ -184,6 +206,9 @@ public final class GhostPianoModule implements GhostModule {
             );
         }
     }
+
+
+
 
     /**
      * 鬼钢琴音乐中断能力。

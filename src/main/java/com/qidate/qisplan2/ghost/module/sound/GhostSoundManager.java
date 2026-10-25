@@ -3,6 +3,9 @@ package com.qidate.qisplan2.ghost.module.sound;
 import com.qidate.qisplan2.ghost.module.GhostModuleHost;
 import com.qidate.qisplan2.ghost.module.GhostModuleRuntime;
 import com.qidate.qisplan2.ghost.module.event.GhostSoundEvent;
+import com.qidate.qisplan2.network.ghostsound.GhostSoundNetwork;
+import com.qidate.qisplan2.network.payload.PlayGhostSoundPayload;
+import com.qidate.qisplan2.network.payload.StopGhostSoundPayload;
 import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
@@ -13,6 +16,7 @@ import net.minecraft.world.phys.Vec3;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.neoforge.event.tick.ServerTickEvent;
 
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -118,6 +122,7 @@ public final class GhostSoundManager {
                 key,
                 level,
                 host,
+                null,
                 soundType,
                 new Vec3(
                         immutablePos.getX() + 0.5D,
@@ -188,6 +193,7 @@ public final class GhostSoundManager {
                 key,
                 level,
                 host,
+                null,
                 soundType,
                 position,
                 range,
@@ -221,6 +227,112 @@ public final class GhostSoundManager {
                 GhostSoundPlayback.NONE
         );
     }
+
+
+    /**
+     * 注册模块声明的方块声音源。
+     *
+     * 声音位置使用方块中心附近的固定坐标。
+     * 播放协议后续统一接入通用声音网络层。
+     */
+    public static void registerModuleBlockSource(
+            ServerLevel level,
+            BlockPos blockPos,
+            GhostModuleHost host,
+            ResourceLocation moduleId,
+            ResourceLocation soundType,
+            ResourceLocation soundEvent,
+            double range,
+            Predicate<BlockState> blocker
+    ) {
+        if (level == null || blockPos == null || host == null
+                || moduleId == null || soundType == null
+                || blocker == null || !isValidRange(range)) {
+            return;
+        }
+
+        BlockPos immutablePos = blockPos.immutable();
+
+        SourceKey key = SourceKey.moduleBlock(
+                level.dimension().location(),
+                immutablePos,
+                moduleId,
+                soundType
+        );
+
+        UUID networkSourceId = createNetworkSourceId(key);
+
+        GhostSoundPlayback playback = new GhostSoundPlayback() {
+            @Override
+            public void start(ServerPlayer player) {
+                GhostSoundNetwork.sendPlay(
+                        player,
+                        new PlayGhostSoundPayload(
+                                networkSourceId,
+                                level.dimension().location(),
+                                soundEvent,
+                                immutablePos.getX() + 0.5D,
+                                immutablePos.getY() + 0.7D,
+                                immutablePos.getZ() + 0.5D
+                        )
+                );
+            }
+
+            @Override
+            public void stop(ServerPlayer player) {
+                GhostSoundNetwork.sendStop(
+                        player,
+                        new StopGhostSoundPayload(
+                                networkSourceId,
+                                level.dimension().location()
+                        )
+                );
+            }
+        };
+
+        SoundSource source = new SoundSource(
+                key,
+                level,
+                host,
+                moduleId,
+                soundType,
+                new Vec3(
+                        immutablePos.getX() + 0.5D,
+                        immutablePos.getY() + 0.7D,
+                        immutablePos.getZ() + 0.5D
+                ),
+                range,
+                blocker,
+                playback
+        );
+
+        SOURCES.put(key, source);
+    }
+
+    /**
+     * 注销指定模块在指定方块位置声明的声音源。
+     */
+    public static void unregisterModuleBlockSource(
+            ServerLevel level,
+            BlockPos blockPos,
+            ResourceLocation moduleId,
+            ResourceLocation soundType
+    ) {
+        if (level == null || blockPos == null
+                || moduleId == null || soundType == null) {
+            return;
+        }
+
+        unregisterSource(
+                SourceKey.moduleBlock(
+                        level.dimension().location(),
+                        blockPos,
+                        moduleId,
+                        soundType
+                )
+        );
+    }
+
 
     private static boolean isValidRange(double range) {
         return Double.isFinite(range) && range >= 0.0D;
@@ -717,7 +829,9 @@ public final class GhostSoundManager {
     private record SourceKey(
             ResourceLocation dimension,
             BlockPos blockPos,
-            UUID entityId
+            UUID entityId,
+            ResourceLocation moduleId,
+            ResourceLocation soundType
     ) {
         private static SourceKey block(
                 ResourceLocation dimension,
@@ -726,6 +840,8 @@ public final class GhostSoundManager {
             return new SourceKey(
                     dimension,
                     pos.immutable(),
+                    null,
+                    null,
                     null
             );
         }
@@ -737,7 +853,24 @@ public final class GhostSoundManager {
             return new SourceKey(
                     dimension,
                     null,
-                    entityId
+                    entityId,
+                    null,
+                    null
+            );
+        }
+
+        private static SourceKey moduleBlock(
+                ResourceLocation dimension,
+                BlockPos pos,
+                ResourceLocation moduleId,
+                ResourceLocation soundType
+        ) {
+            return new SourceKey(
+                    dimension,
+                    pos.immutable(),
+                    null,
+                    moduleId,
+                    soundType
             );
         }
     }
@@ -749,11 +882,24 @@ public final class GhostSoundManager {
             SourceKey key,
             ServerLevel level,
             GhostModuleHost host,
+            ResourceLocation moduleId,
             ResourceLocation soundType,
             Vec3 position,
             double range,
             Predicate<BlockState> blocker,
             GhostSoundPlayback playback
     ) {
+    }
+
+    private static UUID createNetworkSourceId(SourceKey key) {
+        String identity = key.dimension()
+                + "|" + key.blockPos()
+                + "|" + key.entityId()
+                + "|" + key.moduleId()
+                + "|" + key.soundType();
+
+        return UUID.nameUUIDFromBytes(
+                identity.getBytes(StandardCharsets.UTF_8)
+        );
     }
 }

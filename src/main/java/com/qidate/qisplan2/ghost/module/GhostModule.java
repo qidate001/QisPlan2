@@ -2,6 +2,7 @@ package com.qidate.qisplan2.ghost.module;
 
 import com.qidate.qisplan2.ghost.module.ability.GhostAbility;
 import com.qidate.qisplan2.ghost.module.data.GhostModuleInitialData;
+import com.qidate.qisplan2.ghost.module.sound.GhostSoundDefinition;
 import net.minecraft.resources.ResourceLocation;
 
 import java.util.List;
@@ -105,5 +106,14 @@ public interface GhostModule {
      */
     default GhostRevivalPolicy getRevivalPolicy() {
         return GhostRevivalPolicy.allowAll();
+    }
+
+    /**
+     * 获取该模块声明的声音能力。
+     *
+     * 默认没有声音能力，保证现有模块兼容。
+     */
+    default List<GhostSoundDefinition> getSounds() {
+        return List.of();
     }
 }

@@ -9,6 +9,7 @@ import com.qidate.qisplan2.network.ghostdoor.GhostDoorPlateNetwork;
 import com.qidate.qisplan2.network.ghosteye.GhostEyeNetwork;
 import com.qidate.qisplan2.network.ghostmist.GhostMistNetwork;
 import com.qidate.qisplan2.network.ghostpiano.GhostPianoNetwork;
+import com.qidate.qisplan2.network.ghostsound.GhostSoundNetwork;
 import com.qidate.qisplan2.network.ghosttombstone.GhostTombstoneNetwork;
 import com.qidate.qisplan2.network.possession.GhostPossessionNetwork;
 import net.neoforged.bus.api.SubscribeEvent;
@@ -49,6 +50,14 @@ public final class QisNetwork {
          */
 
         CurseNetwork.register(event);
+
+        /*
+         * ========================================================
+         * 通用灵异声音
+         * ========================================================
+         */
+
+        GhostSoundNetwork.register(event);
 
         /*
          * ========================================================

@@ -5,6 +5,7 @@ import com.qidate.qisplan2.ghost.module.GhostModuleCustomDataModifier;
 import com.qidate.qisplan2.ghost.module.GhostModuleDataModifier;
 import com.qidate.qisplan2.ghost.module.data.GhostModuleContainer;
 import com.qidate.qisplan2.ghost.module.data.GhostModuleData;
+import com.qidate.qisplan2.ghost.module.sound.GhostModuleSoundManager;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
@@ -14,6 +15,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
+import com.qidate.qisplan2.ghost.module.sound.GhostSoundManager;
 
 import java.util.List;
 import java.util.Objects;
@@ -79,6 +81,10 @@ public abstract class AbstractModularGhostBlockEntity
         }
 
         markModuleDataChanged();
+
+        // 模块已经添加，依据当前模块集合更新声音能力。
+        GhostModuleSoundManager.syncHost(this);
+
         return true;
     }
 
@@ -86,12 +92,43 @@ public abstract class AbstractModularGhostBlockEntity
     public boolean removeModule(ResourceLocation moduleId) {
         Objects.requireNonNull(moduleId, "moduleId");
 
+        // 不存在的模块不应影响任何声音源。
+        if (!ghostModules.hasModule(moduleId)) {
+            return false;
+        }
+
+        // 模块仍然存在时，先处理它的声源和可能产生的中断事件。
+        GhostModuleSoundManager.unregisterHost(this);
+
         if (!ghostModules.removeModule(moduleId)) {
+            GhostModuleSoundManager.syncHost(this);
             return false;
         }
 
         markModuleDataChanged();
+        GhostModuleSoundManager.syncHost(this);
+
         return true;
+    }
+
+    @Override
+    public void onLoad() {
+        super.onLoad();
+
+        if (level instanceof ServerLevel) {
+            GhostModuleSoundManager.syncHost(this);
+        }
+    }
+
+    @Override
+    public void setRemoved() {
+        /*
+         * 在宿主完全移除前注销声音。
+         * 此时模块数据仍然可读。
+         */
+        GhostModuleSoundManager.unregisterHost(this);
+
+        super.setRemoved();
     }
 
     @Override

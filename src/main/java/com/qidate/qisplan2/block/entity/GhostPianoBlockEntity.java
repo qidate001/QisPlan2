@@ -2,20 +2,16 @@ package com.qidate.qisplan2.block.entity;
 
 import com.qidate.qisplan2.block.GhostPianoBlock;
 import com.qidate.qisplan2.core.ModBlocks;
-import com.qidate.qisplan2.event.GhostPianoMusicHandler;
 import com.qidate.qisplan2.ghost.isolation.GhostIsolationSystem;
 import com.qidate.qisplan2.ghost.module.GhostModule;
 import com.qidate.qisplan2.ghost.module.GhostModuleRegistry;
 import com.qidate.qisplan2.ghost.module.data.GhostModuleContainer;
 import com.qidate.qisplan2.ghost.module.data.GhostModuleInitialData;
 import com.qidate.qisplan2.ghost.module.implementation.GhostPianoModule;
-import com.qidate.qisplan2.ghost.module.sound.GhostSoundManager;
-import com.qidate.qisplan2.ghost.module.sound.GhostSoundPlayback;
-import com.qidate.qisplan2.network.ghostpiano.GhostPianoNetwork;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
-import net.minecraft.nbt.CompoundTag;
 import net.minecraft.core.particles.ParticleTypes;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
@@ -25,10 +21,12 @@ import java.util.UUID;
 /**
  * 鬼钢琴方块实体。
  *
- * 作为统一模块化灵异宿主：
+ * 负责：
  * 1. 管理默认鬼钢琴模块。
  * 2. 在放置时初始化隔绝信息。
- * 3. 负责旧有的钢琴注册与音符粒子表现。
+ * 3. 生成钢琴音符粒子。
+ *
+ * 音乐传播与播放完全交由模块声明和通用声音系统处理。
  */
 public class GhostPianoBlockEntity
         extends AbstractModularGhostBlockEntity {
@@ -76,7 +74,6 @@ public class GhostPianoBlockEntity
     /**
      * 初始化放置时的隔绝信息。
      *
-     * isIsolated() 只在本方法中执行，并且由方块放置流程调用。
      * 通过 customData 中的标记避免重复初始化。
      */
     public void initializeIsolationOnPlacement() {
@@ -109,8 +106,7 @@ public class GhostPianoBlockEntity
                 );
 
         /*
-         * isIsolated() 可能已经建立 Region。
-         * 这里只查询现存 Region，不再次触发空间检测。
+         * 查询已经建立的 Region，不重复执行空间检测。
          */
         UUID regionId =
                 GhostIsolationSystem.getRegionId(
@@ -145,8 +141,8 @@ public class GhostPianoBlockEntity
     /**
      * 服务端 Tick。
      *
-     * 只有左半边负责注册钢琴与生成音符粒子。
-     * 隔绝初始化不放在 Tick 中。
+     * 只有左半边生成音符粒子。
+     * 声音源的注册与注销由通用模块声音系统负责。
      */
     public static void serverTick(
             Level level,
@@ -162,36 +158,6 @@ public class GhostPianoBlockEntity
                 != GhostPianoBlock.Part.LEFT) {
             return;
         }
-
-        /*
-         * 注册鬼钢琴声音源。
-         *
-         * 每次注册使用相同的维度与方块位置作为稳定标识。
-         * 只有左半边拥有声音源。
-         */
-        GhostSoundManager.registerBlockSource(
-                serverLevel,
-                pos,
-                blockEntity,
-                GhostPianoModule.ID,
-                32.0D,
-                GhostPianoMusicHandler::isGhostMusicBlocker,
-                new GhostSoundPlayback() {
-                    @Override
-                    public void start(
-                            net.minecraft.server.level.ServerPlayer player
-                    ) {
-                        GhostPianoNetwork.sendStart(player, pos);
-                    }
-
-                    @Override
-                    public void stop(
-                            net.minecraft.server.level.ServerPlayer player
-                    ) {
-                        GhostPianoNetwork.sendStop(player, pos);
-                    }
-                }
-        );
 
         /*
          * 平均约每 5 tick 生成一次音符粒子。
