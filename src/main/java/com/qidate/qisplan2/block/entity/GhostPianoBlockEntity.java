@@ -9,6 +9,9 @@ import com.qidate.qisplan2.ghost.module.GhostModuleRegistry;
 import com.qidate.qisplan2.ghost.module.data.GhostModuleContainer;
 import com.qidate.qisplan2.ghost.module.data.GhostModuleInitialData;
 import com.qidate.qisplan2.ghost.module.implementation.GhostPianoModule;
+import com.qidate.qisplan2.ghost.module.sound.GhostSoundManager;
+import com.qidate.qisplan2.ghost.module.sound.GhostSoundPlayback;
+import com.qidate.qisplan2.network.ghostpiano.GhostPianoNetwork;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
@@ -161,11 +164,33 @@ public class GhostPianoBlockEntity
         }
 
         /*
-         * 保留旧有音乐管理器的钢琴注册行为。
+         * 注册鬼钢琴声音源。
+         *
+         * 每次注册使用相同的维度与方块位置作为稳定标识。
+         * 只有左半边拥有声音源。
          */
-        GhostPianoMusicHandler.registerPiano(
+        GhostSoundManager.registerBlockSource(
                 serverLevel,
-                pos
+                pos,
+                blockEntity,
+                GhostPianoModule.ID,
+                32.0D,
+                GhostPianoMusicHandler::isGhostMusicBlocker,
+                new GhostSoundPlayback() {
+                    @Override
+                    public void start(
+                            net.minecraft.server.level.ServerPlayer player
+                    ) {
+                        GhostPianoNetwork.sendStart(player, pos);
+                    }
+
+                    @Override
+                    public void stop(
+                            net.minecraft.server.level.ServerPlayer player
+                    ) {
+                        GhostPianoNetwork.sendStop(player, pos);
+                    }
+                }
         );
 
         /*

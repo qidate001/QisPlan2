@@ -445,7 +445,7 @@ public final class GhostPianoMusicHandler {
     /**
      * 判断方块是否阻挡鬼音乐。
      */
-    private static boolean isGhostMusicBlocker(
+    public static boolean isGhostMusicBlocker(
             BlockState state
     ) {
         /*

@@ -15,6 +15,7 @@ import com.qidate.qisplan2.ghost.isolation.GhostIsolationPlayerSync;
 import com.qidate.qisplan2.ghost.module.GhostModuleInteractionHandler;
 import com.qidate.qisplan2.ghost.module.GhostModuleRegistry;
 import com.qidate.qisplan2.ghost.module.GhostPerceptionHandler;
+import com.qidate.qisplan2.ghost.module.sound.GhostSoundManager;
 import com.qidate.qisplan2.ghost.possession.ability.GhostAbilityInteractionHandler;
 import com.qidate.qisplan2.ghost.possession.ability.GhostAbilityRegistry;
 import com.qidate.qisplan2.ghost.domain.GhostDomainPlayerLogout;
@@ -106,6 +107,11 @@ public class QisPlan2 {
         // 鬼域互动隔离
         NeoForge.EVENT_BUS.register(
                 GhostLayerInteractionHandler.class
+        );
+
+        // 灵异声音管理器
+        NeoForge.EVENT_BUS.register(
+                GhostSoundManager.class
         );
 
         // 驭鬼注册表注册

@@ -9,7 +9,7 @@ import com.qidate.qisplan2.ghost.module.ability.GhostAbility;
 import com.qidate.qisplan2.ghost.module.ability.GhostAbilityContext;
 import com.qidate.qisplan2.ghost.module.data.GhostModuleInitialData;
 import com.qidate.qisplan2.ghost.module.event.GhostEvent;
-import com.qidate.qisplan2.ghost.module.event.GhostSoundInterruptionEvent;
+import com.qidate.qisplan2.ghost.module.event.GhostSoundEvent;
 import com.qidate.qisplan2.ghost.module.influence.GhostInfluenceType;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.resources.ResourceLocation;
@@ -132,6 +132,12 @@ public final class GhostPianoModule implements GhostModule {
 
 
 
+    /**
+     * 鬼钢琴音乐中断规则。
+     *
+     * 只处理由声音管理器确认的音乐中断事件。
+     * 不负责检测听觉范围，也不负责判断其他声源是否仍然存在。
+     */
     private static final class GhostPianoMusicRule
             implements GhostRule {
 
@@ -142,8 +148,9 @@ public final class GhostPianoModule implements GhostModule {
 
         @Override
         public boolean supports(GhostEvent event) {
-            return event instanceof GhostSoundInterruptionEvent soundEvent
-                    && soundEvent.soundType().equals(ID);
+            return event instanceof GhostSoundEvent soundEvent
+                    && soundEvent.soundType().equals(ID)
+                    && soundEvent.type() == GhostSoundEvent.Type.INTERRUPTED;
         }
 
         @Override
@@ -151,7 +158,9 @@ public final class GhostPianoModule implements GhostModule {
                 GhostRuleContext context,
                 GhostEvent event
         ) {
-            return event instanceof GhostSoundInterruptionEvent soundEvent
+            return event instanceof GhostSoundEvent soundEvent
+                    && soundEvent.soundType().equals(ID)
+                    && soundEvent.type() == GhostSoundEvent.Type.INTERRUPTED
                     && soundEvent.listener().isAlive()
                     && soundEvent.listener().level()
                     instanceof net.minecraft.server.level.ServerLevel;
@@ -162,7 +171,7 @@ public final class GhostPianoModule implements GhostModule {
                 GhostRuleContext context,
                 GhostEvent event
         ) {
-            if (!(event instanceof GhostSoundInterruptionEvent soundEvent)) {
+            if (!(event instanceof GhostSoundEvent soundEvent)) {
                 return;
             }
 
@@ -176,8 +185,11 @@ public final class GhostPianoModule implements GhostModule {
         }
     }
 
-
-
+    /**
+     * 鬼钢琴音乐中断能力。
+     *
+     * 只有统一影响裁决允许执行时，才发动超自然攻击。
+     */
     private static final class GhostPianoMusicAbility
             implements GhostAbility {
 
@@ -188,9 +200,9 @@ public final class GhostPianoModule implements GhostModule {
 
         @Override
         public boolean canExecute(GhostAbilityContext context) {
-            return context.event()
-                    instanceof GhostSoundInterruptionEvent soundEvent
+            return context.event() instanceof GhostSoundEvent soundEvent
                     && soundEvent.soundType().equals(ID)
+                    && soundEvent.type() == GhostSoundEvent.Type.INTERRUPTED
                     && soundEvent.listener().isAlive()
                     && soundEvent.listener().level()
                     instanceof net.minecraft.server.level.ServerLevel;
@@ -207,14 +219,11 @@ public final class GhostPianoModule implements GhostModule {
                 return false;
             }
 
-            if (!(context.event()
-                    instanceof GhostSoundInterruptionEvent soundEvent)) {
+            if (!(context.event() instanceof GhostSoundEvent soundEvent)) {
                 return false;
             }
 
-            if (!soundEvent.listener().isAlive()
-                    || !(soundEvent.listener().level()
-                    instanceof net.minecraft.server.level.ServerLevel)) {
+            if (!canExecute(context)) {
                 return false;
             }
 

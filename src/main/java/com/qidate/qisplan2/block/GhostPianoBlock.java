@@ -4,6 +4,7 @@ import com.mojang.serialization.MapCodec;
 import com.qidate.qisplan2.block.entity.GhostPianoBlockEntity;
 import com.qidate.qisplan2.core.ModBlocks;
 import com.qidate.qisplan2.event.GhostPianoMusicHandler;
+import com.qidate.qisplan2.ghost.module.sound.GhostSoundManager;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerLevel;
@@ -174,7 +175,7 @@ public class GhostPianoBlock extends BaseEntityBlock {
                 && level instanceof ServerLevel serverLevel) {
 
             if (state.getValue(PART) == Part.LEFT) {
-                GhostPianoMusicHandler.unregisterPiano(
+                GhostSoundManager.unregisterBlockSource(
                         serverLevel,
                         pos
                 );
@@ -186,11 +187,6 @@ public class GhostPianoBlock extends BaseEntityBlock {
 
                 BlockPos leftPos =
                         pos.relative(right.getOpposite());
-
-                GhostPianoMusicHandler.unregisterPiano(
-                        serverLevel,
-                        leftPos
-                );
 
                 BlockState leftState =
                         level.getBlockState(leftPos);
