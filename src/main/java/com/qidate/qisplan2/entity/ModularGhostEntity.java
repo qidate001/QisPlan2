@@ -7,6 +7,7 @@ import com.qidate.qisplan2.ghost.module.GhostModuleDataModifier;
 import com.qidate.qisplan2.ghost.module.GhostModuleRuntime;
 import com.qidate.qisplan2.ghost.module.event.ModuleTickEvent;
 import com.qidate.qisplan2.ghost.module.event.TouchEvent;
+import com.qidate.qisplan2.ghost.module.sound.GhostModuleSoundManager;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.Tag;
@@ -95,6 +96,15 @@ public class ModularGhostEntity extends AbstractGhostEntity
             double intensity
     ) {
         ghostModules.addModule(moduleId, intensity);
+        syncModuleSounds();
+    }
+
+    /**
+     * 移除模块。
+     */
+    public void removeGhostModule(ResourceLocation moduleId) {
+        ghostModules.removeModule(moduleId);
+        syncModuleSounds();
     }
 
     /**
@@ -106,6 +116,15 @@ public class ModularGhostEntity extends AbstractGhostEntity
             ResourceLocation moduleId
     ) {
         return ghostModules.getModule(moduleId);
+    }
+
+    /**
+     * 同步实体模块声明的声音。
+     */
+    private void syncModuleSounds() {
+        if (!level().isClientSide) {
+            GhostModuleSoundManager.syncEntityHost(this);
+        }
     }
 
     /**
@@ -172,13 +191,6 @@ public class ModularGhostEntity extends AbstractGhostEntity
     }
 
     /**
-     * 移除模块。
-     */
-    public void removeGhostModule(ResourceLocation moduleId) {
-        ghostModules.removeModule(moduleId);
-    }
-
-    /**
      * 安装模块或更新强度。
      */
     @Override
@@ -186,7 +198,13 @@ public class ModularGhostEntity extends AbstractGhostEntity
             ResourceLocation moduleId,
             double intensity
     ) {
-        return ghostModules.addModule(moduleId, intensity);
+        boolean changed = ghostModules.addModule(moduleId, intensity);
+
+        if (changed) {
+            syncModuleSounds();
+        }
+
+        return changed;
     }
 
     /**
@@ -194,7 +212,22 @@ public class ModularGhostEntity extends AbstractGhostEntity
      */
     @Override
     public boolean removeModule(ResourceLocation moduleId) {
-        return ghostModules.removeModule(moduleId);
+        boolean changed = ghostModules.removeModule(moduleId);
+
+        if (changed) {
+            syncModuleSounds();
+        }
+
+        return changed;
+    }
+
+    @Override
+    public void remove(RemovalReason reason) {
+        if (!level().isClientSide) {
+            GhostModuleSoundManager.unregisterEntityHost(this);
+        }
+
+        super.remove(reason);
     }
 
     /**
@@ -357,6 +390,9 @@ public class ModularGhostEntity extends AbstractGhostEntity
         if (level().isClientSide) {
             return;
         }
+
+        // 更新实体声音源的位置。
+        syncModuleSounds();
 
         Set<UUID> currentTouchingEntities = new HashSet<>();
 

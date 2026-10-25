@@ -11,7 +11,6 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.util.Mth;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.bus.api.SubscribeEvent;
@@ -197,30 +196,6 @@ public final class GhostSoundManager {
         SOURCES.put(key, source);
     }
 
-    /**
-     * 兼容旧的七参数实体声音源注册调用。
-     */
-    public static void registerEntitySource(
-            ServerLevel level,
-            UUID entityId,
-            GhostModuleHost host,
-            ResourceLocation soundType,
-            Vec3 position,
-            double range,
-            Predicate<BlockState> blocker
-    ) {
-        registerEntitySource(
-                level,
-                entityId,
-                host,
-                soundType,
-                position,
-                range,
-                blocker,
-                GhostSoundPlayback.NONE
-        );
-    }
-
 
     /**
      * 注册模块声明的方块声音源。
@@ -300,6 +275,84 @@ public final class GhostSoundManager {
     }
 
     /**
+     * 注册或更新模块声明的实体声音源。
+     *
+     * 声源使用实体 UUID、模块 ID 和声音类型作为稳定标识。
+     * 实体移动时重复注册同一个标识，只更新声源位置和配置。
+     */
+    public static void registerModuleEntitySource(
+            ServerLevel level,
+            UUID entityId,
+            GhostModuleHost host,
+            ResourceLocation moduleId,
+            ResourceLocation soundType,
+            ResourceLocation soundEvent,
+            Vec3 position,
+            double range
+    ) {
+        if (level == null || entityId == null || host == null
+                || moduleId == null || soundType == null
+                || soundEvent == null || position == null
+                || !isValidRange(range)) {
+            return;
+        }
+
+        SourceKey key = SourceKey.moduleEntity(
+                level.dimension().location(),
+                entityId,
+                moduleId,
+                soundType
+        );
+
+        UUID networkSourceId = createNetworkSourceId(key);
+
+        // 保存本次注册时的位置。
+        // 实体移动后重新注册，会生成使用新位置的播放适配器。
+        Vec3 soundPosition = position;
+
+        GhostSoundPlayback playback = new GhostSoundPlayback() {
+            @Override
+            public void start(ServerPlayer player) {
+                GhostSoundNetwork.sendPlay(
+                        player,
+                        new PlayGhostSoundPayload(
+                                networkSourceId,
+                                level.dimension().location(),
+                                soundEvent,
+                                soundPosition.x,
+                                soundPosition.y,
+                                soundPosition.z
+                        )
+                );
+            }
+
+            @Override
+            public void stop(ServerPlayer player) {
+                GhostSoundNetwork.sendStop(
+                        player,
+                        new StopGhostSoundPayload(
+                                networkSourceId,
+                                level.dimension().location()
+                        )
+                );
+            }
+        };
+
+        SoundSource source = new SoundSource(
+                key,
+                level,
+                host,
+                moduleId,
+                soundType,
+                soundPosition,
+                range,
+                playback
+        );
+
+        SOURCES.put(key, source);
+    }
+
+    /**
      * 注销指定模块在指定方块位置声明的声音源。
      */
     public static void unregisterModuleBlockSource(
@@ -317,6 +370,30 @@ public final class GhostSoundManager {
                 SourceKey.moduleBlock(
                         level.dimension().location(),
                         blockPos,
+                        moduleId,
+                        soundType
+                )
+        );
+    }
+
+    /**
+     * 注销指定实体上，指定模块声明的声音源。
+     */
+    public static void unregisterModuleEntitySource(
+            ServerLevel level,
+            UUID entityId,
+            ResourceLocation moduleId,
+            ResourceLocation soundType
+    ) {
+        if (level == null || entityId == null
+                || moduleId == null || soundType == null) {
+            return;
+        }
+
+        unregisterSource(
+                SourceKey.moduleEntity(
+                        level.dimension().location(),
+                        entityId,
                         moduleId,
                         soundType
                 )
@@ -861,6 +938,21 @@ public final class GhostSoundManager {
                     dimension,
                     pos.immutable(),
                     null,
+                    moduleId,
+                    soundType
+            );
+        }
+
+        private static SourceKey moduleEntity(
+                ResourceLocation dimension,
+                UUID entityId,
+                ResourceLocation moduleId,
+                ResourceLocation soundType
+        ) {
+            return new SourceKey(
+                    dimension,
+                    null,
+                    entityId,
                     moduleId,
                     soundType
             );
