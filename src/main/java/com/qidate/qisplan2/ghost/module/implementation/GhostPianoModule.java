@@ -11,7 +11,6 @@ import com.qidate.qisplan2.ghost.module.data.GhostModuleInitialData;
 import com.qidate.qisplan2.ghost.module.event.GhostEvent;
 import com.qidate.qisplan2.ghost.module.event.GhostSoundEvent;
 import com.qidate.qisplan2.ghost.module.influence.GhostInfluenceType;
-import com.qidate.qisplan2.ghost.module.sound.GhostSoundBlockers;
 import com.qidate.qisplan2.ghost.module.sound.GhostSoundDefinition;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.resources.ResourceLocation;
@@ -115,8 +114,7 @@ public final class GhostPianoModule implements GhostModule {
                                 MODID,
                                 "ghost_piano_music"
                         ),
-                        32.0D,
-                        GhostSoundBlockers::isGhostPianoBlocker
+                        32.0D
                 )
         );
     }

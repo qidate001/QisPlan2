@@ -1,10 +1,8 @@
 package com.qidate.qisplan2.ghost.module.sound;
 
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.world.level.block.state.BlockState;
 
 import java.util.Objects;
-import java.util.function.Predicate;
 
 /**
  * 灵异模块声明的声音能力定义。
@@ -17,13 +15,11 @@ import java.util.function.Predicate;
 public record GhostSoundDefinition(
         ResourceLocation soundType,
         ResourceLocation soundEvent,
-        double range,
-        Predicate<BlockState> blocker
+        double range
 ) {
     public GhostSoundDefinition {
         Objects.requireNonNull(soundType, "soundType");
         Objects.requireNonNull(soundEvent, "soundEvent");
-        Objects.requireNonNull(blocker, "blocker");
 
         if (!Double.isFinite(range) || range < 0.0D) {
             throw new IllegalArgumentException(

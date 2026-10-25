@@ -72,11 +72,9 @@ public final class GhostModuleSoundManager {
 
                 ResourceLocation moduleId = entry.id();
 
-                Predicate<BlockState> blocker = definition.blocker();
-
                 /*
-                 * 注册身份必须包含模块 ID 与声音类别。
-                 * 同一方块宿主可携带多个声明声音的模块。
+                 * 注册身份包含模块 ID 与声音类别。
+                 * 同一方块宿主可以携带多个声明声音的模块。
                  */
                 GhostSoundManager.registerModuleBlockSource(
                         level,
@@ -85,12 +83,14 @@ public final class GhostModuleSoundManager {
                         moduleId,
                         definition.soundType(),
                         definition.soundEvent(),
-                        definition.range(),
-                        blocker
+                        definition.range()
                 );
 
                 registrations.add(
-                        new SoundRegistration(moduleId, definition.soundType())
+                        new SoundRegistration(
+                                moduleId,
+                                definition.soundType()
+                        )
                 );
             }
         }

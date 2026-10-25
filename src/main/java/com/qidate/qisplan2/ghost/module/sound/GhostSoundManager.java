@@ -1,5 +1,6 @@
 package com.qidate.qisplan2.ghost.module.sound;
 
+import com.qidate.qisplan2.ghost.isolation.GhostIsolationSystem;
 import com.qidate.qisplan2.ghost.module.GhostModuleHost;
 import com.qidate.qisplan2.ghost.module.GhostModuleRuntime;
 import com.qidate.qisplan2.ghost.module.event.GhostSoundEvent;
@@ -17,13 +18,7 @@ import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.neoforge.event.tick.ServerTickEvent;
 
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 import java.util.function.Predicate;
 
 /**
@@ -130,7 +125,6 @@ public final class GhostSoundManager {
                         immutablePos.getZ() + 0.5D
                 ),
                 range,
-                blocker,
                 playback == null ? GhostSoundPlayback.NONE : playback
         );
 
@@ -197,7 +191,6 @@ public final class GhostSoundManager {
                 soundType,
                 position,
                 range,
-                blocker,
                 playback == null ? GhostSoundPlayback.NONE : playback
         );
 
@@ -242,12 +235,10 @@ public final class GhostSoundManager {
             ResourceLocation moduleId,
             ResourceLocation soundType,
             ResourceLocation soundEvent,
-            double range,
-            Predicate<BlockState> blocker
+            double range
     ) {
         if (level == null || blockPos == null || host == null
-                || moduleId == null || soundType == null
-                || blocker == null || !isValidRange(range)) {
+                || moduleId == null || soundType == null || !isValidRange(range)) {
             return;
         }
 
@@ -302,7 +293,6 @@ public final class GhostSoundManager {
                         immutablePos.getZ() + 0.5D
                 ),
                 range,
-                blocker,
                 playback
         );
 
@@ -636,9 +626,14 @@ public final class GhostSoundManager {
     /**
      * 判断玩家是否能听到指定声音源。
      *
-     * 距离以声源位置到玩家眼睛位置计算。
-     * 传播路径每约 0.5 格检查一次遮挡方块。
+     * 传播规则：
+     * 1. 声音必须处于最大传播距离内。
+     * 2. 声源与玩家必须属于同一个灵异隔绝 Region。
+     *
+     * Region 查询只使用 GhostIsolationSystem.getRegionId()，
+     * 不主动触发新的空间检测。
      */
+
     private static boolean canHear(
             SoundSource source,
             ServerPlayer player
@@ -646,43 +641,40 @@ public final class GhostSoundManager {
         Vec3 start = source.position();
         Vec3 end = player.getEyePosition();
 
+        // 检查声音传播距离。
         if (start.distanceToSqr(end)
                 > source.range() * source.range()) {
             return false;
         }
 
-        double distance = start.distanceTo(end);
+        ServerLevel level = source.level();
 
-        int steps = Math.max(
-                1,
-                (int) Math.ceil(distance / 0.5D)
+        BlockPos sourcePos = BlockPos.containing(
+                start.x,
+                start.y,
+                start.z
         );
 
-        for (int i = 1; i < steps; i++) {
-            double t = (double) i / steps;
+        BlockPos listenerPos = BlockPos.containing(
+                end.x,
+                end.y,
+                end.z
+        );
 
-            BlockPos pos = BlockPos.containing(
-                    Mth.lerp(t, start.x, end.x),
-                    Mth.lerp(t, start.y, end.y),
-                    Mth.lerp(t, start.z, end.z)
-            );
-
-            /*
-             * 不在未加载区块中强制读取方块。
-             * 未加载的区域无法可靠地执行遮挡检测，因此视为不可听。
-             */
-            if (!source.level().hasChunkAt(pos)) {
-                return false;
-            }
-
-            if (source.blocker().test(
-                    source.level().getBlockState(pos)
-            )) {
-                return false;
-            }
+        // 无法确认空间归属时，不传播声音。
+        if (!level.hasChunkAt(sourcePos)
+                || !level.hasChunkAt(listenerPos)) {
+            return false;
         }
 
-        return true;
+        UUID sourceRegionId =
+                GhostIsolationSystem.getRegionId(level, sourcePos);
+
+        UUID listenerRegionId =
+                GhostIsolationSystem.getRegionId(level, listenerPos);
+
+        // 只有处于同一个 Isolation，声音才可以传播。
+        return Objects.equals(sourceRegionId, listenerRegionId);
     }
 
     // =========================================================
@@ -886,7 +878,6 @@ public final class GhostSoundManager {
             ResourceLocation soundType,
             Vec3 position,
             double range,
-            Predicate<BlockState> blocker,
             GhostSoundPlayback playback
     ) {
     }

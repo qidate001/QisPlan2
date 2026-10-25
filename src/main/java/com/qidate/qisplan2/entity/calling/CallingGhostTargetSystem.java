@@ -1,6 +1,5 @@
 package com.qidate.qisplan2.entity.calling;
 
-import com.qidate.qisplan2.QisPlan2;
 import com.qidate.qisplan2.core.ModBlocks;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
@@ -11,8 +10,6 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.block.DoorBlock;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
-
-import java.util.UUID;
 
 /**
  * 管理喊人鬼的目标系统。
