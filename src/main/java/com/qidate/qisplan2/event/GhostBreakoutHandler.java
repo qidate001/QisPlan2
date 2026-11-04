@@ -1,9 +1,11 @@
 package com.qidate.qisplan2.event;
 
 import com.qidate.qisplan2.QisPlan2;
-import com.qidate.qisplan2.core.ModEntities;
 import com.qidate.qisplan2.death.QisDeathHandler;
 import com.qidate.qisplan2.entity.AbstractGhostEntity;
+import com.qidate.qisplan2.entity.ModularGhostEntity;
+import com.qidate.qisplan2.ghost.module.implementation.ClosingGhostModule;
+import com.qidate.qisplan2.ghost.module.implementation.OpeningGhostModule;
 import com.qidate.qisplan2.ghost.possession.data.PossessedGhostState;
 import com.qidate.qisplan2.ghost.possession.manager.PossessionHandler;
 
@@ -195,6 +197,30 @@ public final class GhostBreakoutHandler {
         AbstractGhostEntity ghost =
                 entityType.create(level);
 
+        if (ghost == null) {
+            QisPlan2.LOGGER.warn(
+                    "[QisPlan2] 无法让厉鬼破体：创建实体失败 {}",
+                    ghostId
+            );
+            return;
+        }
+
+        // 开门鬼与关门鬼统一使用模块化宿主；破体时按驾驭 ID 安装完整模块。
+        // 破体后的死机时间仍由下方根据驾驭复苏值计算，模块强度使用厉鬼初始值。
+        if (ghost instanceof ModularGhostEntity modularGhost) {
+            if (ghostId.equals(OpeningGhostModule.ID)) {
+                modularGhost.addGhostModule(
+                        OpeningGhostModule.ID,
+                        OpeningGhostModule.INITIAL_INTENSITY
+                );
+            } else if (ghostId.equals(ClosingGhostModule.ID)) {
+                modularGhost.addGhostModule(
+                        ClosingGhostModule.ID,
+                        ClosingGhostModule.INITIAL_INTENSITY
+                );
+            }
+        }
+
         /*
          * ========================================================
          * 生成位置
@@ -267,44 +293,4 @@ public final class GhostBreakoutHandler {
     }
 
 
-    /**
-     * Ability ID → 实体类型。
-     *
-     * 目前先覆盖已经做好的几个鬼。
-     */
-    private static EntityType<? extends AbstractGhostEntity>
-    getEntityType(
-            ResourceLocation ghostId
-    ) {
-
-        if (ghostId.equals(
-                "qisplan2:opening_ghost"
-        )) {
-
-            return ModEntities.OPENING_GHOST.get();
-        }
-
-        if (ghostId.equals(
-                "qisplan2:closing_ghost"
-        )) {
-
-            return ModEntities.CLOSING_GHOST.get();
-        }
-
-        if (ghostId.equals(
-                "qisplan2:knocking_ghost"
-        )) {
-
-            return ModEntities.KNOCKING_GHOST.get();
-        }
-
-        if (ghostId.equals(
-                "qisplan2:night_wanderer"
-        )) {
-
-            return ModEntities.NIGHT_WANDERER.get();
-        }
-
-        return null;
-    }
 }

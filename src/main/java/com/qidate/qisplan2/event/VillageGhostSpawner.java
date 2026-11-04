@@ -2,6 +2,9 @@ package com.qidate.qisplan2.event;
 
 import com.qidate.qisplan2.QisPlan2;
 import com.qidate.qisplan2.core.ModEntities;
+import com.qidate.qisplan2.entity.ModularGhostEntity;
+import com.qidate.qisplan2.ghost.module.implementation.ClosingGhostModule;
+import com.qidate.qisplan2.ghost.module.implementation.OpeningGhostModule;
 import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.level.ServerLevel;
@@ -328,32 +331,42 @@ public class VillageGhostSpawner {
                 ground.above();
 
 
-        /*
-         * 三种鬼随机选择。
-         */
+        // 在两种门鬼和敲门鬼之间随机选择。
         int type =
                 level.random.nextInt(3);
 
 
         Entity entity;
 
-
+        /*
+         * 开门鬼与关门鬼使用统一的模块化实体宿主，
+         * 通过安装不同的完整厉鬼模块区分身份；
+         * 敲门鬼尚未迁移，暂时继续由原实体实现承载。
+         */
         switch (type) {
 
             case 0 -> {
-
-                entity =
-                        ModEntities.OPENING_GHOST
-                                .get()
-                                .create(level);
+                ModularGhostEntity ghost =
+                        ModEntities.MODULAR_GHOST.get().create(level);
+                if (ghost != null) {
+                    ghost.addGhostModule(
+                            OpeningGhostModule.ID,
+                            OpeningGhostModule.INITIAL_INTENSITY
+                    );
+                }
+                entity = ghost;
             }
 
             case 1 -> {
-
-                entity =
-                        ModEntities.CLOSING_GHOST
-                                .get()
-                                .create(level);
+                ModularGhostEntity ghost =
+                        ModEntities.MODULAR_GHOST.get().create(level);
+                if (ghost != null) {
+                    ghost.addGhostModule(
+                            ClosingGhostModule.ID,
+                            ClosingGhostModule.INITIAL_INTENSITY
+                    );
+                }
+                entity = ghost;
             }
 
             default -> {

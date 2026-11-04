@@ -38,33 +38,33 @@ public final class GhostModuleRuntime {
             return;
         }
 
+        dispatch(List.of(host), event);
+    }
+
+    /**
+     * 在同一个共享影响批次中，将一个世界事件派发给多个主机。
+     */
+    public static void dispatch(
+            List<? extends GhostModuleHost> hosts,
+            GhostEvent event
+    ) {
+        if (hosts == null || event == null || hosts.isEmpty()) {
+            return;
+        }
+
         GhostInfluenceSession session =
                 new GhostInfluenceSession();
 
         try {
-            // 固定本次派发开始时的模块列表。
-            List<GhostModuleData.Entry> entries =
-                    List.copyOf(host.getModules());
-
-            for (GhostModuleData.Entry entry : entries) {
-                // 模块可能已在本次派发过程中被移除。
-                if (!host.hasModule(entry.id())) {
-                    continue;
+            for (GhostModuleHost host : List.copyOf(hosts)) {
+                if (host == null) continue;
+                List<GhostModuleData.Entry> entries = List.copyOf(host.getModules());
+                for (GhostModuleData.Entry entry : entries) {
+                    if (!host.hasModule(entry.id())) continue;
+                    GhostModule module = GhostModuleRegistry.get(entry.id());
+                    if (module == null) continue;
+                    GhostRuleRuntime.dispatchModule(host, entry, event, session);
                 }
-
-                GhostModule module =
-                        GhostModuleRegistry.get(entry.id());
-
-                if (module == null) {
-                    continue;
-                }
-
-                GhostRuleRuntime.dispatchModule(
-                        host,
-                        entry,
-                        event,
-                        session
-                );
             }
         } finally {
             // 即使某条规则抛出异常，也不能遗留一个

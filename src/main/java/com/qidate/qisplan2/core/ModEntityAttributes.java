@@ -3,8 +3,6 @@ package com.qidate.qisplan2.core;
 import com.qidate.qisplan2.entity.ModularGhostEntity;
 import com.qidate.qisplan2.entity.TestGeckoEntity;
 import com.qidate.qisplan2.entity.calling.CallingGhost;
-import com.qidate.qisplan2.entity.ghostdoor.closing.ClosingGhost;
-import com.qidate.qisplan2.entity.ghostdoor.opening.OpeningGhost;
 import com.qidate.qisplan2.entity.ghostmist.GhostMist;
 import com.qidate.qisplan2.entity.ghostdoor.knocking.KnockingGhost;
 import com.qidate.qisplan2.entity.nightwanderer.NightWanderer;
@@ -35,20 +33,6 @@ public final class ModEntityAttributes {
         event.put(
                 ModEntities.KNOCKING_GHOST.get(),
                 KnockingGhost.createAttributes()
-                        .build()
-        );
-
-        // 开门鬼
-        event.put(
-                ModEntities.OPENING_GHOST.get(),
-                OpeningGhost.createAttributes()
-                        .build()
-        );
-
-        // 关门鬼
-        event.put(
-                ModEntities.CLOSING_GHOST.get(),
-                ClosingGhost.createAttributes()
                         .build()
         );
 

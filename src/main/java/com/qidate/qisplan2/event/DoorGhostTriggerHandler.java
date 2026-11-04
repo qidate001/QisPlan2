@@ -1,9 +1,11 @@
 package com.qidate.qisplan2.event;
 
-import com.qidate.qisplan2.entity.ghostdoor.AbstractDoorTriggerGhost;
-import com.qidate.qisplan2.entity.ghostdoor.closing.ClosingGhost;
-import com.qidate.qisplan2.entity.ghostdoor.opening.OpeningGhost;
+import com.qidate.qisplan2.entity.ModularGhostEntity;
 import com.qidate.qisplan2.ghost.possession.ability.ghostdoor.GhostDoorAbilityHandler;
+import com.qidate.qisplan2.ghost.module.GhostModuleRuntime;
+import com.qidate.qisplan2.ghost.module.event.DoorChangedEvent;
+import com.qidate.qisplan2.ghost.module.implementation.ClosingGhostModule;
+import com.qidate.qisplan2.ghost.module.implementation.OpeningGhostModule;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.LivingEntity;
@@ -25,7 +27,7 @@ public final class DoorGhostTriggerHandler {
      * 100 格球形范围。
      */
     private static final double TRIGGER_RADIUS =
-            AbstractDoorTriggerGhost.TRIGGER_RADIUS;
+            100.0D;
 
     /**
      * 处理一次门的开关事件。
@@ -118,72 +120,18 @@ public final class DoorGhostTriggerHandler {
                 TRIGGER_RADIUS
                         * TRIGGER_RADIUS;
 
-        /*
-         * ========================================================
-         * 开门
-         * ========================================================
-         */
-        if (opening) {
-
-            List<OpeningGhost> ghosts =
-                    level.getEntitiesOfClass(
-                            OpeningGhost.class,
-                            searchBox,
-                            ghost ->
-                                    ghost.isAlive()
-                                            && !ghost.isRemoved()
-                                            && ghost.distanceToSqr(
-                                            centerX,
-                                            centerY,
-                                            centerZ
-                                    ) <= maxDistanceSqr
-                    );
-
-            /*
-             * 找到的每一只开门鬼都触发。
-             */
-            for (OpeningGhost ghost : ghosts) {
-
-                ghost.triggerDoorEvent(
-                        source,
-                        doorPos,
-                        doorState
-                );
-            }
-
-            return;
-        }
-
-        /*
-         * ========================================================
-         * 关门
-         * ========================================================
-         */
-        List<ClosingGhost> ghosts =
-                level.getEntitiesOfClass(
-                        ClosingGhost.class,
-                        searchBox,
-                        ghost ->
-                                ghost.isAlive()
-                                        && !ghost.isRemoved()
-                                        && ghost.distanceToSqr(
-                                        centerX,
-                                        centerY,
-                                        centerZ
-                                ) <= maxDistanceSqr
-                );
-
-        /*
-         * 找到的每一只关门鬼都触发。
-         */
-        for (ClosingGhost ghost : ghosts) {
-
-            ghost.triggerDoorEvent(
-                    source,
-                    doorPos,
-                    doorState
-            );
-        }
+        List<ModularGhostEntity> ghosts = level.getEntitiesOfClass(
+                ModularGhostEntity.class,
+                searchBox,
+                ghost -> ghost.isAlive() && !ghost.isRemoved()
+                        && (ghost.hasGhostModule(OpeningGhostModule.ID)
+                        || ghost.hasGhostModule(ClosingGhostModule.ID))
+                        && ghost.distanceToSqr(centerX, centerY, centerZ) <= maxDistanceSqr
+        );
+        GhostModuleRuntime.dispatch(
+                ghosts,
+                new DoorChangedEvent(source, doorPos, doorState, opening)
+        );
     }
 
     /**

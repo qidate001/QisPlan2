@@ -1,17 +1,23 @@
 package com.qidate.qisplan2.core;
 
 import com.mojang.serialization.Codec;
+import com.qidate.qisplan2.entity.ModularGhostEntity;
+import com.qidate.qisplan2.ghost.module.data.GhostModuleData;
 import com.qidate.qisplan2.ghost.module.host.item.GhostBlankSwordItem;
+import com.qidate.qisplan2.ghost.module.implementation.ClosingGhostModule;
+import com.qidate.qisplan2.ghost.module.implementation.OpeningGhostModule;
 import com.qidate.qisplan2.item.*;
 import com.qidate.qisplan2.item.candle.RedGhostCandleItem;
 import com.qidate.qisplan2.item.candle.WhiteGhostCandleItem;
 import net.minecraft.Util;
+import net.minecraft.core.component.DataComponents;
 import net.minecraft.core.component.DataComponentType;
 import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.world.item.*;
 import net.minecraft.world.item.crafting.Ingredient;
+import net.minecraft.world.item.component.CustomData;
 import net.neoforged.neoforge.common.SimpleTier;
 import net.neoforged.neoforge.registries.DeferredHolder;
 import net.neoforged.neoforge.registries.DeferredItem;
@@ -21,8 +27,6 @@ import java.util.List;
 
 import static com.qidate.qisplan2.QisPlan2.MODID;
 import static com.qidate.qisplan2.core.ModEntities.*;
-import static com.qidate.qisplan2.core.ModEntities.CLOSING_GHOST;
-import static com.qidate.qisplan2.core.ModEntities.OPENING_GHOST;
 import static com.qidate.qisplan2.core.ModRegistries.*;
 
 public class ModItems {
@@ -357,29 +361,53 @@ public class ModItems {
             );
 
 
-    // 开门鬼刷怪蛋
+    // 兼容保留原开门鬼刷怪蛋物品 ID，但生成统一宿主并预装开门鬼模块。
     public static final DeferredItem<SpawnEggItem>
             OPENING_GHOST_SPAWN_EGG =
             ITEMS.register(
                     "opening_ghost_spawn_egg",
                     () -> new SpawnEggItem(
-                            OPENING_GHOST.get(),
+                            MODULAR_GHOST.get(),
                             0x191919,
                             0x4A90E2,
-                            new Item.Properties()
+                            new Item.Properties().component(
+                                    DataComponents.ENTITY_DATA,
+                                    CustomData.of(
+                                            ModularGhostEntity.createSpawnData(
+                                                    List.of(
+                                                            new GhostModuleData.Entry(
+                                                                    OpeningGhostModule.ID,
+                                                                    OpeningGhostModule.INITIAL_INTENSITY
+                                                            )
+                                                    )
+                                            )
+                                    )
+                            )
                     )
             );
 
-    // 关门鬼刷怪蛋
+    // 兼容保留原关门鬼刷怪蛋物品 ID，但生成统一宿主并预装关门鬼模块。
     public static final DeferredItem<SpawnEggItem>
             CLOSING_GHOST_SPAWN_EGG =
             ITEMS.register(
                     "closing_ghost_spawn_egg",
                     () -> new SpawnEggItem(
-                            CLOSING_GHOST.get(),
+                            MODULAR_GHOST.get(),
                             0x191919,
                             0xB44AFF,
-                            new Item.Properties()
+                            new Item.Properties().component(
+                                    DataComponents.ENTITY_DATA,
+                                    CustomData.of(
+                                            ModularGhostEntity.createSpawnData(
+                                                    List.of(
+                                                            new GhostModuleData.Entry(
+                                                                    ClosingGhostModule.ID,
+                                                                    ClosingGhostModule.INITIAL_INTENSITY
+                                                            )
+                                                    )
+                                            )
+                                    )
+                            )
                     )
             );
 

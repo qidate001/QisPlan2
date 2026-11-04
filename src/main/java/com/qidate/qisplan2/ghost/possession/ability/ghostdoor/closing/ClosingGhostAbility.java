@@ -33,8 +33,7 @@ public final class ClosingGhostAbility
 
     @Override
     public EntityType<? extends AbstractGhostEntity> entityType() {
-
-        return ModEntities.CLOSING_GHOST.get();
+        return ModEntities.MODULAR_GHOST.get();
     }
 
     @Override

@@ -1,6 +1,8 @@
 package com.qidate.qisplan2.core;
 
+import com.qidate.qisplan2.QisPlan2;
 import com.qidate.qisplan2.entity.painting.GhostPaintingVariants;
+import com.qidate.qisplan2.entity.ModularGhostEntity;
 import com.qidate.qisplan2.ghost.module.GhostModule;
 import com.qidate.qisplan2.ghost.module.GhostModuleDataModifier;
 import com.qidate.qisplan2.ghost.module.GhostModuleRegistry;
@@ -138,12 +140,23 @@ public class ModCreativeTabs {
                             boolean added = host.addModule(module);
 
                             if (!added) {
-                                com.qidate.qisplan2.QisPlan2.LOGGER.warn(
+                                QisPlan2.LOGGER.warn(
                                         "无法为模块化厉鬼刷怪蛋写入模块实例数据：{}",
                                         module.getId()
                                 );
                             } else {
-                                com.qidate.qisplan2.QisPlan2.LOGGER.info(
+                                // ENTITY_DATA 才会由刷怪蛋传入新生实体；
+                                // GHOST_MODULES 组件仍保留在物品上供编辑和展示使用。
+                                stack.set(
+                                        DataComponents.ENTITY_DATA,
+                                        CustomData.of(
+                                                ModularGhostEntity.createSpawnData(
+                                                        GhostItemData.getModules(stack)
+                                                )
+                                        )
+                                );
+
+                                QisPlan2.LOGGER.info(
                                         "已为模块化厉鬼刷怪蛋写入模块实例数据：{}，当前数据：{}",
                                         module.getId(),
                                         GhostItemData.getModules(stack)
@@ -185,8 +198,6 @@ public class ModCreativeTabs {
                         // 其他刷怪蛋暂时保持原样。
                         output.accept(NIGHT_WANDERER_SPAWN_EGG);
                         output.accept(KNOCKING_GHOST_SPAWN_EGG);
-                        output.accept(OPENING_GHOST_SPAWN_EGG);
-                        output.accept(CLOSING_GHOST_SPAWN_EGG);
                         output.accept(CALLING_GHOST_SPAWN_EGG);
                         output.accept(GHOST_MIST_SPAWN_EGG);
                     })

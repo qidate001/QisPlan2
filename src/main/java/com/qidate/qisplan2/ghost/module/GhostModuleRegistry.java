@@ -76,6 +76,8 @@ public final class GhostModuleRegistry {
      */
     public static void bootstrap() {
         register(new UntouchableGhostModule());
+        register(new OpeningGhostModule());
+        register(new ClosingGhostModule());
         register(new GhostStoneBricksModule());
         register(new InvisibleGhostModule());
         register(new GhostTombstoneModule());

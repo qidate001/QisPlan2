@@ -3,8 +3,6 @@ package com.qidate.qisplan2.core;
 import com.qidate.qisplan2.entity.ModularGhostEntity;
 import com.qidate.qisplan2.entity.TestGeckoEntity;
 import com.qidate.qisplan2.entity.calling.CallingGhost;
-import com.qidate.qisplan2.entity.ghostdoor.closing.ClosingGhost;
-import com.qidate.qisplan2.entity.ghostdoor.opening.OpeningGhost;
 import com.qidate.qisplan2.entity.ghostmist.GhostMist;
 import com.qidate.qisplan2.entity.ghostdoor.knocking.KnockingGhost;
 import com.qidate.qisplan2.entity.nightwanderer.NightWanderer;
@@ -32,7 +30,7 @@ public class ModEntities {
          */
     }
 
-    // 通用模块化厉鬼
+    // 所有已迁移的实体厉鬼共用此实体类型，具体身份与行为由其模块决定。
     public static final DeferredHolder<EntityType<?>, EntityType<ModularGhostEntity>> MODULAR_GHOST =
             ENTITY_TYPES.register(
                     "modular_ghost",
@@ -94,54 +92,6 @@ public class ModEntities {
                                     ResourceLocation.fromNamespaceAndPath(
                                             MODID,
                                             "knocking_ghost"
-                                    ).toString()
-                            )
-            );
-
-    // 开门鬼
-    public static final Supplier<
-            EntityType<OpeningGhost>
-            > OPENING_GHOST =
-            ENTITY_TYPES.register(
-                    "opening_ghost",
-                    () -> EntityType.Builder
-                            .of(
-                                    OpeningGhost::new,
-                                    MobCategory.MONSTER
-                            )
-                            .sized(
-                                    0.8F,
-                                    1.95F
-                            )
-                            .clientTrackingRange(64)
-                            .build(
-                                    ResourceLocation.fromNamespaceAndPath(
-                                            MODID,
-                                            "opening_ghost"
-                                    ).toString()
-                            )
-            );
-
-    // 关门鬼
-    public static final Supplier<
-            EntityType<ClosingGhost>
-            > CLOSING_GHOST =
-            ENTITY_TYPES.register(
-                    "closing_ghost",
-                    () -> EntityType.Builder
-                            .of(
-                                    ClosingGhost::new,
-                                    MobCategory.MONSTER
-                            )
-                            .sized(
-                                    0.8F,
-                                    1.95F
-                            )
-                            .clientTrackingRange(64)
-                            .build(
-                                    ResourceLocation.fromNamespaceAndPath(
-                                            MODID,
-                                            "closing_ghost"
                                     ).toString()
                             )
             );

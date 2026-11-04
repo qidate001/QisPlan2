@@ -1,10 +1,8 @@
 package com.qidate.qisplan2.entity;
 
-import com.qidate.qisplan2.ghost.module.GhostModuleCustomDataModifier;
+import com.qidate.qisplan2.ghost.module.*;
 import com.qidate.qisplan2.ghost.module.data.GhostModuleContainer;
 import com.qidate.qisplan2.ghost.module.data.GhostModuleData;
-import com.qidate.qisplan2.ghost.module.GhostModuleDataModifier;
-import com.qidate.qisplan2.ghost.module.GhostModuleRuntime;
 import com.qidate.qisplan2.ghost.module.event.ModuleTickEvent;
 import com.qidate.qisplan2.ghost.module.event.TouchEvent;
 import com.qidate.qisplan2.ghost.module.sound.GhostModuleSoundManager;
@@ -47,6 +45,37 @@ public class ModularGhostEntity extends AbstractGhostEntity
     private static final String NBT_MODULE_SLEEPING = "sleeping";
     private static final String NBT_MODULE_CUSTOM_DATA = "customData";
     private static final String NBT_MODULE_DEADLOCKED = "deadlocked";
+
+    /**
+     * 为模块化厉鬼刷怪蛋创建实体数据。
+     *
+     * 刷怪蛋会通过 ENTITY_DATA 将此数据交给新实体；
+     * 字段格式与实体存档一致，因此新宿主读取数据时
+     * 可以直接还原完整的模块实例状态。
+     */
+    public static CompoundTag createSpawnData(
+            List<GhostModuleData.Entry> modules
+    ) {
+        ListTag modulesTag = new ListTag();
+
+        for (GhostModuleData.Entry entry : modules) {
+            CompoundTag moduleTag = new CompoundTag();
+            moduleTag.putString(NBT_MODULE_ID, entry.id().toString());
+            moduleTag.putDouble(NBT_MODULE_INTENSITY, entry.intensity());
+            moduleTag.putDouble(NBT_MODULE_REVIVAL, entry.revival());
+            moduleTag.putBoolean(NBT_MODULE_SLEEPING, entry.sleeping());
+            moduleTag.putBoolean(NBT_MODULE_DEADLOCKED, entry.deadlocked());
+            moduleTag.put(NBT_MODULE_CUSTOM_DATA, entry.customData().copy());
+            modulesTag.add(moduleTag);
+        }
+
+        CompoundTag entityData = new CompoundTag();
+        // ENTITY_DATA 在刷怪蛋上采用完整实体存档格式，必须包含宿主实体类型 ID；
+        // 缺少该字段时，客户端读取刷怪蛋组件会因无法确定实体类型而崩溃。
+        entityData.putString("id", MODID + ":modular_ghost");
+        entityData.put(NBT_GHOST_MODULES, modulesTag);
+        return entityData;
+    }
 
     private final GhostModuleContainer ghostModules =
             new GhostModuleContainer();
@@ -96,6 +125,7 @@ public class ModularGhostEntity extends AbstractGhostEntity
             double intensity
     ) {
         ghostModules.addModule(moduleId, intensity);
+        refreshSupernaturalDefense();
         syncModuleSounds();
     }
 
@@ -104,7 +134,32 @@ public class ModularGhostEntity extends AbstractGhostEntity
      */
     public void removeGhostModule(ResourceLocation moduleId) {
         ghostModules.removeModule(moduleId);
+        refreshSupernaturalDefense();
         syncModuleSounds();
+    }
+
+    /**
+     * 根据当前模块定义刷新宿主的灵异防御。
+     *
+     * 模块负责声明完整厉鬼的防御基础值；宿主只负责汇总，
+     * 因此安装或移除模块时不会依赖专用实体类型来设置属性。
+     */
+    private void refreshSupernaturalDefense() {
+        double defense = BASE_SUPERNATURAL_DEFENSE;
+
+        for (GhostModuleData.Entry entry : ghostModules.getModules()) {
+            GhostModule module = GhostModuleRegistry.get(entry.id());
+            if (module == null) {
+                continue;
+            }
+
+            double moduleDefense = module.getSupernaturalDefense();
+            if (Double.isFinite(moduleDefense) && moduleDefense >= 0.0D) {
+                defense = Math.max(defense, moduleDefense);
+            }
+        }
+
+        GhostAttributeSystem.setSupernaturalDefense(this, defense);
     }
 
     /**
@@ -201,6 +256,7 @@ public class ModularGhostEntity extends AbstractGhostEntity
         boolean changed = ghostModules.addModule(moduleId, intensity);
 
         if (changed) {
+            refreshSupernaturalDefense();
             syncModuleSounds();
         }
 
@@ -215,6 +271,7 @@ public class ModularGhostEntity extends AbstractGhostEntity
         boolean changed = ghostModules.removeModule(moduleId);
 
         if (changed) {
+            refreshSupernaturalDefense();
             syncModuleSounds();
         }
 
@@ -250,6 +307,11 @@ public class ModularGhostEntity extends AbstractGhostEntity
      */
     @Override
     public ResourceLocation getGhostId() {
+        // 一个模块定义代表一只完整厉鬼，因此宿主身份取首个已安装模块的 ID。
+        if (!ghostModules.getModules().isEmpty()) {
+            return ghostModules.getModules().getFirst().id();
+        }
+
         return ResourceLocation.fromNamespaceAndPath(
                 MODID,
                 "modular_ghost"
@@ -379,6 +441,8 @@ public class ModularGhostEntity extends AbstractGhostEntity
         }
 
         ghostModules.loadEntries(loadedModules);
+        refreshSupernaturalDefense();
+
     }
 
     @Override

@@ -33,8 +33,7 @@ public final class OpeningGhostAbility
 
     @Override
     public EntityType<? extends AbstractGhostEntity> entityType() {
-
-        return ModEntities.OPENING_GHOST.get();
+        return ModEntities.MODULAR_GHOST.get();
     }
 
     @Override
