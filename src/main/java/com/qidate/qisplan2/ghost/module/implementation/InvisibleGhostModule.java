@@ -9,6 +9,7 @@ import com.qidate.qisplan2.ghost.module.ability.GhostAbilityStimulation;
 import com.qidate.qisplan2.ghost.module.data.GhostModuleInitialData;
 import com.qidate.qisplan2.ghost.module.event.EntityPerceivedEvent;
 import com.qidate.qisplan2.ghost.module.event.GhostEvent;
+import com.qidate.qisplan2.ghost.module.influence.GhostInfluenceType;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.player.Player;
 
@@ -98,9 +99,17 @@ public final class InvisibleGhostModule implements GhostModule {
                 GhostRuleContext context,
                 GhostEvent event
         ) {
-            context.tryExecuteAbility(
+            if (!(event instanceof EntityPerceivedEvent perceivedEvent)
+                    || !(perceivedEvent.observer() instanceof Player player)) {
+                return;
+            }
+
+            context.submitAbilityInfluence(
                     ATTACK_ABILITY_ID,
-                    event
+                    event,
+                    player.getUUID(),
+                    GhostInfluenceType.ATTACK,
+                    context.getModuleContext().intensity()
             );
         }
     }

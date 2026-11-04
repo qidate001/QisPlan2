@@ -229,13 +229,13 @@ void main() {
     ) {
 
         float sqrtD =
-        sqrt(discriminant);
+            sqrt(discriminant);
 
         float tEnter =
-        -b - sqrtD;
+            -b - sqrtD;
 
         float tExit =
-        -b + sqrtD;
+            -b + sqrtD;
 
 
         // =====================================================
@@ -249,10 +249,10 @@ void main() {
             // =====================================================
 
             tEnter =
-            max(
+                max(
                     tEnter,
                     0.0
-            );
+                );
 
 
             // =====================================================
@@ -260,10 +260,10 @@ void main() {
             // =====================================================
 
             float visibleExit =
-            min(
+                min(
                     tExit,
                     sceneDistance
-            );
+                );
 
 
             // =====================================================
@@ -273,10 +273,10 @@ void main() {
             if (visibleExit > tEnter) {
 
                 float domainLength =
-                visibleExit - tEnter;
+                    visibleExit - tEnter;
 
                 inside =
-                clamp(
+                    clamp(
                         domainLength
                         /
                         (
@@ -285,7 +285,7 @@ void main() {
                         ),
                         0.0,
                         1.0
-                );
+                    );
             }
         }
     }
@@ -317,16 +317,16 @@ void main() {
 
     vec3 red =
         vec3(
-                1.0,
-                0.0,
-                0.0
+            1.0,
+            0.0,
+            0.0
         );
 
     vec3 ghostColor =
         mix(
-                scene.rgb,
-                red,
-                redStrength
+            scene.rgb,
+            red,
+            redStrength
         );
 
 
@@ -336,16 +336,16 @@ void main() {
 
     float ghostStrength =
         clamp(
-                inside * 1.6,
-                0.0,
-                1.0
+            inside * 1.6,
+            0.0,
+            1.0
         );
 
     vec3 finalColor =
         mix(
-                scene.rgb,
-                ghostColor,
-                ghostStrength
+            scene.rgb,
+            ghostColor,
+            ghostStrength
         );
 
 
@@ -355,7 +355,7 @@ void main() {
 
     fragColor =
         vec4(
-                finalColor,
-                scene.a
+            finalColor,
+            scene.a
         );
 }

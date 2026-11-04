@@ -12,6 +12,7 @@ import com.qidate.qisplan2.ghost.module.data.GhostModuleInitialData;
 import com.qidate.qisplan2.ghost.module.event.BlockDestructionAttemptEvent;
 import com.qidate.qisplan2.ghost.module.event.GhostEvent;
 import com.qidate.qisplan2.ghost.module.event.ItemDestructionAttemptEvent;
+import com.qidate.qisplan2.ghost.module.influence.GhostInfluenceType;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.player.Player;
 
@@ -148,13 +149,26 @@ public final class GhostStoneBricksModule implements GhostModule {
                 GhostRuleContext context,
                 GhostEvent event
         ) {
-            if (event instanceof BlockDestructionAttemptEvent) {
-                context.tryExecuteAbility(BLOCK_DESTRUCTION_ABILITY_ID, event);
+            if (event instanceof BlockDestructionAttemptEvent destructionEvent) {
+                context.submitAbilityInfluence(
+                        BLOCK_DESTRUCTION_ABILITY_ID,
+                        event,
+                        destructionEvent.getPlayer().getUUID(),
+                        GhostInfluenceType.ATTACK,
+                        context.getModuleContext().intensity()
+                );
                 return;
             }
 
-            if (event instanceof ItemDestructionAttemptEvent) {
-                context.tryExecuteAbility(ITEM_DESTRUCTION_ABILITY_ID, event);
+            if (event instanceof ItemDestructionAttemptEvent destructionEvent
+                    && destructionEvent.getHolder() instanceof Player player) {
+                context.submitAbilityInfluence(
+                        ITEM_DESTRUCTION_ABILITY_ID,
+                        event,
+                        player.getUUID(),
+                        GhostInfluenceType.ATTACK,
+                        context.getModuleContext().intensity()
+                );
             }
         }
     }

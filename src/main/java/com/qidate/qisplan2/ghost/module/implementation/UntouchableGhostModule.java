@@ -9,6 +9,7 @@ import com.qidate.qisplan2.ghost.module.ability.GhostAbilityStimulation;
 import com.qidate.qisplan2.ghost.module.data.GhostModuleInitialData;
 import com.qidate.qisplan2.ghost.module.event.GhostEvent;
 import com.qidate.qisplan2.ghost.module.event.TouchEvent;
+import com.qidate.qisplan2.ghost.module.influence.GhostInfluenceType;
 import net.minecraft.resources.ResourceLocation;
 
 import java.util.List;
@@ -128,9 +129,16 @@ public final class UntouchableGhostModule implements GhostModule {
                 return;
             }
 
-            context.tryExecuteAbility(
+            if (!(event instanceof TouchEvent touchEvent)) {
+                return;
+            }
+
+            context.submitAbilityInfluence(
                     ATTACK_ABILITY_ID,
-                    event
+                    event,
+                    touchEvent.target().getUUID(),
+                    GhostInfluenceType.ATTACK,
+                    context.getModuleContext().intensity()
             );
         }
     }
