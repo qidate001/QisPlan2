@@ -8,9 +8,11 @@ import com.qidate.qisplan2.ghost.curse.CurseManager;
 import com.qidate.qisplan2.ghost.curse.type.ghostdivination.GhostDivinationCurse;
 import com.qidate.qisplan2.ghost.curse.type.ghostdivination.GhostDivinationCurseSource;
 import com.qidate.qisplan2.ghost.curse.type.ghostdivination.GhostDivinationCurseType;
+import com.qidate.qisplan2.ghost.module.implementation.GhostDivinationSlipModule;
 import com.qidate.qisplan2.ghost.possession.data.PossessedGhostState;
 import com.qidate.qisplan2.ghost.possession.manager.PossessionHandler;
 import com.qidate.qisplan2.network.divinationslip.GhostDivinationNetwork;
+import java.util.UUID;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.ItemStack;
@@ -81,7 +83,7 @@ public final class GhostDivinationSlipSystem {
         PossessedGhostState state =
                 PossessionHandler.getState(
                         player,
-                        GhostDivinationSlipAbility.ID
+                        GhostDivinationSlipModule.ID
                 );
 
         if (state != null
@@ -177,7 +179,7 @@ public final class GhostDivinationSlipSystem {
      * 获取玩家当前的生签诅咒。
      */
     public static GhostDivinationCurse getLifeCurse(
-            java.util.UUID target
+            UUID target
     ) {
 
         for (Curse curse :
@@ -247,7 +249,7 @@ public final class GhostDivinationSlipSystem {
 
             PossessionHandler.testStun(
                     player,
-                    GhostDivinationSlipAbility.ID,
+                    GhostDivinationSlipModule.ID,
                     STUN_TIME
             );
 

@@ -1,21 +1,19 @@
 package com.qidate.qisplan2.ghost.module.implementation;
 
 import com.qidate.qisplan2.core.ModTags;
-import com.qidate.qisplan2.ghost.module.ability.GhostAbility;
-import com.qidate.qisplan2.ghost.module.ability.GhostAbilityContext;
 import com.qidate.qisplan2.ghost.module.GhostInscriptionCapability;
 import com.qidate.qisplan2.ghost.module.GhostModule;
 import com.qidate.qisplan2.ghost.module.GhostRule;
 import com.qidate.qisplan2.ghost.module.GhostRuleContext;
+import com.qidate.qisplan2.ghost.module.ability.GhostAbility;
+import com.qidate.qisplan2.ghost.module.ability.GhostAbilityContext;
 import com.qidate.qisplan2.ghost.module.data.GhostModuleInitialData;
 import com.qidate.qisplan2.ghost.module.event.GhostEvent;
 import com.qidate.qisplan2.ghost.module.event.GhostUseEvent;
+import java.util.List;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
-
-import java.util.List;
-
 import static com.qidate.qisplan2.QisPlan2.MODID;
 
 /**
@@ -68,7 +66,7 @@ public final class GhostTombstoneModule implements GhostModule {
     }
 
     @Override
-    public List<GhostAbility> getAbilities() {
+    public List<GhostAbility> getIntrinsicAbilities() {
         return ABILITIES;
     }
 

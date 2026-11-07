@@ -1,19 +1,16 @@
 package com.qidate.qisplan2.ghost.domain.type.eye;
 
 import com.qidate.qisplan2.QisPlan2;
-import com.qidate.qisplan2.ghost.possession.ability.GhostAbilityContext;
+import com.qidate.qisplan2.ghost.domain.*;
+import com.qidate.qisplan2.ghost.module.host.player.PlayerGhostModuleContext;
+import com.qidate.qisplan2.ghost.module.implementation.eye.GhostEyeModule;
 import com.qidate.qisplan2.ghost.possession.data.PossessedGhostData;
 import com.qidate.qisplan2.ghost.possession.data.PossessedGhostDomainData;
 import com.qidate.qisplan2.ghost.possession.manager.PossessionHandler;
-import com.qidate.qisplan2.ghost.possession.ability.ghosteye.GhostEyeAbility;
-import com.qidate.qisplan2.ghost.domain.*;
+import java.util.UUID;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
-
-import java.util.HashSet;
-import java.util.Set;
-import java.util.UUID;
 
 /**
  * 鬼眼鬼域控制器。
@@ -49,7 +46,7 @@ public final class GhostEyeDomainController {
      * </p>
      */
     public static void tick(
-            GhostAbilityContext context
+            PlayerGhostModuleContext context
     ) {
         ServerPlayer player =
                 context.player();
@@ -62,7 +59,7 @@ public final class GhostEyeDomainController {
 
         if (!PossessionHandler.hasGhost(
                 player,
-                GhostEyeAbility.ID
+                GhostEyeModule.ID
         )) {
             close(player);
             return;
@@ -109,7 +106,7 @@ public final class GhostEyeDomainController {
          */
         if (!PossessionHandler.hasGhost(
                 player,
-                GhostEyeAbility.ID
+                GhostEyeModule.ID
         )) {
             return;
         }
@@ -120,7 +117,7 @@ public final class GhostEyeDomainController {
         PossessedGhostData data =
                 PossessionHandler.getData(
                         player,
-                        GhostEyeAbility.ID
+                        GhostEyeModule.ID
                 );
 
         if (data == null) {
@@ -208,7 +205,7 @@ public final class GhostEyeDomainController {
     ) {
         if (!PossessionHandler.hasGhost(
                 player,
-                GhostEyeAbility.ID
+                GhostEyeModule.ID
         )) {
             return;
         }
@@ -216,7 +213,7 @@ public final class GhostEyeDomainController {
         PossessedGhostData data =
                 PossessionHandler.getData(
                         player,
-                        GhostEyeAbility.ID
+                        GhostEyeModule.ID
                 );
 
         if (data == null) {
@@ -250,7 +247,7 @@ public final class GhostEyeDomainController {
 
         PossessionHandler.setData(
                 player,
-                GhostEyeAbility.ID,
+                GhostEyeModule.ID,
                 newData
         );
 
@@ -286,7 +283,7 @@ public final class GhostEyeDomainController {
         PossessedGhostData data =
                 PossessionHandler.getData(
                         player,
-                        GhostEyeAbility.ID
+                        GhostEyeModule.ID
                 );
 
         boolean wasOpen = false;
@@ -310,7 +307,7 @@ public final class GhostEyeDomainController {
 
                     PossessionHandler.setData(
                             player,
-                            GhostEyeAbility.ID,
+                            GhostEyeModule.ID,
                             newData
                     );
                 }
@@ -337,7 +334,7 @@ public final class GhostEyeDomainController {
         PossessedGhostData data =
                 PossessionHandler.getData(
                         player,
-                        GhostEyeAbility.ID
+                        GhostEyeModule.ID
                 );
 
         if (data == null) {
@@ -386,7 +383,7 @@ public final class GhostEyeDomainController {
         PossessedGhostData data =
                 PossessionHandler.getData(
                         player,
-                        GhostEyeAbility.ID
+                        GhostEyeModule.ID
                 );
 
         if (data == null) {

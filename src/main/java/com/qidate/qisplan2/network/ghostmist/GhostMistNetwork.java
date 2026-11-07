@@ -1,7 +1,7 @@
 package com.qidate.qisplan2.network.ghostmist;
 
 import com.qidate.qisplan2.ghost.domain.type.mist.GhostMistDomainController;
-import com.qidate.qisplan2.ghost.possession.ability.ghostmist.GhostMistAbility;
+import com.qidate.qisplan2.ghost.module.implementation.mist.GhostMistModule;
 import com.qidate.qisplan2.ghost.possession.manager.PossessionHandler;
 import com.qidate.qisplan2.network.payload.GhostMistTogglePayload;
 import net.minecraft.server.level.ServerPlayer;
@@ -56,7 +56,7 @@ public final class GhostMistNetwork {
              */
             if (!PossessionHandler.hasGhost(
                     player,
-                    GhostMistAbility.ID
+                    GhostMistModule.ID
             )) {
                 return;
             }

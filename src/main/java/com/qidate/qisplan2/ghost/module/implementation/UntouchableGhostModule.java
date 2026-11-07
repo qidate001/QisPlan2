@@ -10,10 +10,8 @@ import com.qidate.qisplan2.ghost.module.data.GhostModuleInitialData;
 import com.qidate.qisplan2.ghost.module.event.GhostEvent;
 import com.qidate.qisplan2.ghost.module.event.TouchEvent;
 import com.qidate.qisplan2.ghost.module.influence.GhostInfluenceType;
-import net.minecraft.resources.ResourceLocation;
-
 import java.util.List;
-
+import net.minecraft.resources.ResourceLocation;
 import static com.qidate.qisplan2.QisPlan2.MODID;
 
 public final class UntouchableGhostModule implements GhostModule {
@@ -75,7 +73,7 @@ public final class UntouchableGhostModule implements GhostModule {
     }
 
     @Override
-    public List<GhostAbility> getAbilities() {
+    public List<GhostAbility> getIntrinsicAbilities() {
         return List.of(ATTACK_ABILITY);
     }
 

@@ -1,22 +1,19 @@
 package com.qidate.qisplan2.core;
 
 import com.mojang.serialization.Codec;
-import com.mojang.serialization.codecs.RecordCodecBuilder;
-import com.qidate.qisplan2.ghost.possession.data.PossessedGhostData;
-import com.qidate.qisplan2.ghost.possession.data.PossessedGhostState;
 import com.qidate.qisplan2.ghost.layer.GhostLayerData;
+import com.qidate.qisplan2.ghost.module.data.GhostModuleData;
 import com.qidate.qisplan2.ghost.partition.PartitionReturnData;
+import com.qidate.qisplan2.ghost.possession.data.PossessedGhostData;
 import com.qidate.qisplan2.ghost.possession.manager.SuppressionAllocation;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.function.Supplier;
 import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.resources.ResourceLocation;
 import net.neoforged.neoforge.attachment.AttachmentType;
 import net.neoforged.neoforge.registries.DeferredHolder;
-
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
 import static com.qidate.qisplan2.core.ModRegistries.ATTACHMENT_TYPES;
 
 public class ModAttachments {
@@ -33,7 +30,7 @@ public class ModAttachments {
     }
 
     /**
-     * 玩家当前驾驭的鬼及其完整持久数据。
+     * 旧驭鬼存档迁移入口。运行时统一使用 PLAYER_GHOST_MODULES，此附件仅用于读取旧存档。
      *
      * Key：
      *     鬼的 ResourceLocation
@@ -51,7 +48,7 @@ public class ModAttachments {
                     "possessed_ghosts",
                     () -> AttachmentType
                             .<Map<ResourceLocation, PossessedGhostData>>builder(
-                                    (java.util.function.Supplier<
+                                    (Supplier<
                                             Map<ResourceLocation, PossessedGhostData>
                                             >)
                                             HashMap::new
@@ -74,6 +71,13 @@ public class ModAttachments {
             );
 
 
+    /** 玩家直接保存模块实例，与实体、方块和物品使用同一种数据结构。 */
+    public static final DeferredHolder<AttachmentType<?>, AttachmentType<List<GhostModuleData.Entry>>> PLAYER_GHOST_MODULES =
+            ATTACHMENT_TYPES.register("player_ghost_modules", () -> AttachmentType
+                    .<List<GhostModuleData.Entry>>builder(() -> List.of())
+                    .serialize(GhostModuleData.CODEC)
+                    .sync(ByteBufCodecs.fromCodecWithRegistries(GhostModuleData.CODEC))
+                    .build());
 
     // 必死诅咒层数（0~10，同步到客户端供骷髅条显示）
     public static final DeferredHolder<AttachmentType<?>, AttachmentType<Integer>> DEATH_CURSE_COUNT =
@@ -155,7 +159,7 @@ public class ModAttachments {
                     "ghost_suppression_allocation",
                     () -> AttachmentType
                             .<Map<ResourceLocation, Map<ResourceLocation, List<SuppressionAllocation>>>>builder(
-                                    (java.util.function.Supplier<
+                                    (Supplier<
                                             Map<ResourceLocation, Map<ResourceLocation, List<SuppressionAllocation>>>
                                             >) HashMap::new
                             )

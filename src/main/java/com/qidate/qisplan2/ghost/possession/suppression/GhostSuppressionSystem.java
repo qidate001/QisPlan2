@@ -1,17 +1,16 @@
 package com.qidate.qisplan2.ghost.possession.suppression;
 
-import com.qidate.qisplan2.ghost.possession.ability.GhostAbilityRegistry;
-import com.qidate.qisplan2.ghost.possession.ability.PossessedGhostAbility;
+import com.qidate.qisplan2.ghost.module.GhostModule;
+import com.qidate.qisplan2.ghost.module.GhostModuleRegistry;
 import com.qidate.qisplan2.ghost.possession.classification.GhostClassification;
 import com.qidate.qisplan2.ghost.possession.classification.GhostTag;
 import com.qidate.qisplan2.ghost.possession.data.PossessedGhostState;
 import com.qidate.qisplan2.ghost.possession.manager.GhostSuppressionAllocationHandler;
 import com.qidate.qisplan2.ghost.possession.manager.PossessionHandler;
 import com.qidate.qisplan2.ghost.possession.manager.SuppressionAllocation;
+import java.util.List;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.player.Player;
-
-import java.util.List;
 
 public final class GhostSuppressionSystem {
 
@@ -36,8 +35,8 @@ public final class GhostSuppressionSystem {
      * 声明自己的分类。
      */
     public static boolean canSuppress(
-            PossessedGhostAbility source,
-            PossessedGhostAbility target
+            GhostModule source,
+            GhostModule target
     ) {
 
         if (source == null || target == null) {
@@ -91,8 +90,8 @@ public final class GhostSuppressionSystem {
             Player player,
             ResourceLocation sourceGhost,
             ResourceLocation targetGhost,
-            PossessedGhostAbility sourceAbility,
-            PossessedGhostAbility targetAbility,
+            GhostModule sourceAbility,
+            GhostModule targetAbility,
             List<SuppressionAllocation> allocations
     ) {
 
@@ -341,8 +340,8 @@ public final class GhostSuppressionSystem {
             return 0.0D;
         }
 
-        PossessedGhostAbility targetAbility =
-                GhostAbilityRegistry.get(
+        GhostModule targetAbility =
+                GhostModuleRegistry.get(
                         targetGhost
                 );
 
@@ -389,8 +388,8 @@ public final class GhostSuppressionSystem {
             ResourceLocation sourceGhost =
                     sourceEntry.getKey();
 
-            PossessedGhostAbility sourceAbility =
-                    GhostAbilityRegistry.get(
+            GhostModule sourceAbility =
+                    GhostModuleRegistry.get(
                             sourceGhost
                     );
 
@@ -433,8 +432,8 @@ public final class GhostSuppressionSystem {
                     continue;
                 }
 
-                PossessedGhostAbility allocatedTargetAbility =
-                        GhostAbilityRegistry.get(
+                GhostModule allocatedTargetAbility =
+                        GhostModuleRegistry.get(
                                 allocatedTargetGhost
                         );
 

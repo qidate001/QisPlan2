@@ -1,9 +1,10 @@
 package com.qidate.qisplan2.client.hud;
 
 import com.qidate.qisplan2.QisPlan2;
-import com.qidate.qisplan2.core.ModAttachments;
+import com.qidate.qisplan2.ghost.module.host.player.PlayerGhostData;
 import com.qidate.qisplan2.ghost.possession.data.PossessedGhostData;
 import com.qidate.qisplan2.ghost.possession.data.PossessedGhostState;
+import java.util.Map;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.resources.ResourceLocation;
@@ -11,8 +12,6 @@ import net.minecraft.util.Mth;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.client.event.RenderGuiEvent;
-
-import java.util.Map;
 
 @EventBusSubscriber(
         modid = QisPlan2.MODID
@@ -93,9 +92,7 @@ public class PossessionHudOverlay {
 
 
         Map<ResourceLocation, PossessedGhostData> ghosts =
-                minecraft.player.getData(
-                        ModAttachments.POSSESSED_GHOSTS
-                );
+                PlayerGhostData.views(minecraft.player);
 
 
         if (ghosts.isEmpty()) {

@@ -1,6 +1,8 @@
 package com.qidate.qisplan2.entity;
 
 import com.qidate.qisplan2.death.SupernaturalCombatHandler;
+import com.qidate.qisplan2.death.SupernaturalEntity;
+import com.qidate.qisplan2.entity.ai.ModuleScheduledGoal;
 import com.qidate.qisplan2.ghost.GhostAvoidanceSystem;
 import com.qidate.qisplan2.ghost.module.*;
 import com.qidate.qisplan2.ghost.module.data.GhostModuleContainer;
@@ -9,6 +11,7 @@ import com.qidate.qisplan2.ghost.module.event.ModuleTickEvent;
 import com.qidate.qisplan2.ghost.module.event.TouchEvent;
 import com.qidate.qisplan2.ghost.module.sound.GhostModuleSoundManager;
 import com.qidate.qisplan2.ghost.possession.GhostPossessionInteractionSystem;
+import java.util.*;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.Tag;
@@ -19,19 +22,12 @@ import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
+import net.minecraft.world.entity.PathfinderMob;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.ai.goal.Goal;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
-
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Objects;
-import java.util.Set;
-import java.util.UUID;
-
 import static com.qidate.qisplan2.QisPlan2.MODID;
 
 /**
@@ -39,8 +35,8 @@ import static com.qidate.qisplan2.QisPlan2.MODID;
  *
  * 实体的具体身份和灵异规则由后续安装的实体模块决定。
  */
-public class ModularGhostEntity extends net.minecraft.world.entity.PathfinderMob
-        implements GhostModuleDataModifier, GhostModuleCustomDataModifier, com.qidate.qisplan2.death.SupernaturalEntity {
+public class ModularGhostEntity extends PathfinderMob
+        implements GhostModuleDataModifier, GhostModuleCustomDataModifier, SupernaturalEntity {
 
     private static final double BASE_SUPERNATURAL_DEFENSE = 4.0D;
 
@@ -130,6 +126,21 @@ public class ModularGhostEntity extends net.minecraft.world.entity.PathfinderMob
     }
 
     /**
+     * 跨宿主迁移时安装完整实例。
+     * 先恢复全部专属数据，再创建行为，避免行为初始化读取到默认数据。
+     * 同一宿主不允许覆盖已有的同名模块。
+     */
+    public boolean importGhostModule(GhostModuleData.Entry entry) {
+        if (hasGhostModule(entry.id())) return false;
+        List<GhostModuleData.Entry> entries = new ArrayList<>(getModules());
+        entries.add(entry);
+        ghostModules.loadEntries(entries);
+        refreshModuleBindings();
+        syncModuleSounds();
+        return true;
+    }
+
+    /**
      * 移除模块。
      */
     public void removeGhostModule(ResourceLocation moduleId) {
@@ -142,8 +153,8 @@ public class ModularGhostEntity extends net.minecraft.world.entity.PathfinderMob
      * 当前宿主已挂载的模块行为实例。
      * 按模块 ID 管理运行时资源；模块移除时停止行为并释放对应外部资源。
      */
-    private final java.util.Map<ResourceLocation, List<Goal>> moduleGoals =
-            new java.util.HashMap<>();
+    private final Map<ResourceLocation, List<Goal>> moduleGoals =
+            new HashMap<>();
 
     /** 同步模块提供的行为；重新读取存档和重复安装不会重复挂载同一组行为。 */
     private void refreshModuleGoals() {
@@ -163,10 +174,10 @@ public class ModularGhostEntity extends net.minecraft.world.entity.PathfinderMob
             var definitions = module.createEntityGoals(this);
             List<Goal> goals = new ArrayList<>();
             for (int i = 0; i < definitions.size(); i++) {
-                var scheduled = new com.qidate.qisplan2.entity.ai.ModuleScheduledGoal(
+                var scheduled = new ModuleScheduledGoal(
                         this, entry.id(), i, definitions.get(i),
                         () -> moduleGoals.values().stream().flatMap(List::stream)
-                                .map(goal -> (com.qidate.qisplan2.entity.ai.ModuleScheduledGoal)goal).toList());
+                                .map(goal -> (ModuleScheduledGoal)goal).toList());
                 goals.add(scheduled);
                 // 跨模块优先级交给包装器按实时强度判断，避免原版固定数字优先级阻止强者抢占。
                 goalSelector.addGoal(1, scheduled);

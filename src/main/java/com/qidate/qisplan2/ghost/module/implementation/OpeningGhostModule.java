@@ -3,6 +3,8 @@ package com.qidate.qisplan2.ghost.module.implementation;
 import com.qidate.qisplan2.death.ModDamageTypes;
 import com.qidate.qisplan2.death.SupernaturalDeathHandler;
 import com.qidate.qisplan2.entity.ModularGhostEntity;
+import com.qidate.qisplan2.ghost.corrosion.CorrosionType;
+import com.qidate.qisplan2.ghost.corrosion.GhostCorrosion;
 import com.qidate.qisplan2.ghost.module.*;
 import com.qidate.qisplan2.ghost.module.ability.GhostAbility;
 import com.qidate.qisplan2.ghost.module.ability.GhostAbilityContext;
@@ -10,13 +12,15 @@ import com.qidate.qisplan2.ghost.module.data.GhostModuleInitialData;
 import com.qidate.qisplan2.ghost.module.event.DoorChangedEvent;
 import com.qidate.qisplan2.ghost.module.event.GhostEvent;
 import com.qidate.qisplan2.ghost.module.influence.GhostInfluenceType;
+import com.qidate.qisplan2.ghost.possession.classification.GhostClassification;
+import com.qidate.qisplan2.ghost.possession.classification.GhostTag;
+import java.util.List;
 import net.minecraft.core.Direction;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.level.block.DoorBlock;
 import net.minecraft.world.level.block.state.BlockState;
-import java.util.List;
 import static com.qidate.qisplan2.QisPlan2.MODID;
 
 /**
@@ -41,7 +45,7 @@ public final class OpeningGhostModule implements GhostModule {
     @Override public double getSupernaturalDefense() { return 6.0D; }
     @Override public List<GhostMedium> getMedia() { return MEDIA; }
     @Override public List<GhostRule> getRules() { return RULES; }
-    @Override public List<GhostAbility> getAbilities() { return ABILITIES; }
+    @Override public List<GhostAbility> getIntrinsicAbilities() { return ABILITIES; }
 
     /** 只接受门从关闭变为打开的事件，避免其他方块变化触发开门鬼规则。 */
     private static boolean isOpenEvent(GhostEvent event) {
@@ -131,4 +135,48 @@ public final class OpeningGhostModule implements GhostModule {
         ghost.setTarget(null);
         ghost.setAggressive(false);
     }
+
+
+    private static final GhostCorrosion CORROSION =
+            GhostCorrosion.builder()
+                    .add(CorrosionType.GLOBAL, 10)
+                    .add(CorrosionType.HAND, 20)
+                    .build();
+
+
+    @Override
+    public double minimumStrengthRatio() {
+        return 1.0D / 3.0D;
+    }
+
+    @Override
+    public GhostCorrosion corrosion() {
+        return CORROSION;
+    }
+
+    @Override
+    public GhostClassification classification() {
+
+        return GhostClassification.of(
+                GhostTag.ENTITY,
+                GhostTag.EXISTENCE_FORM,
+                GhostTag.DOOR
+        );
+    }
+
+    @Override
+    public GhostClassification suppressionTargets() {
+        return GhostClassification.empty();
+    }
+
+    @Override
+    public int suppressionUnits() {
+        return 1;
+    }
+
+    @Override
+    public double suppressionUnitStrength() {
+        return 20.0D;
+    }
+
 }

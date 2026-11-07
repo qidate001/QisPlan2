@@ -3,23 +3,22 @@ package com.qidate.qisplan2.client.screen.PossessionScreen;
 import com.qidate.qisplan2.QisPlan2;
 import com.qidate.qisplan2.client.curse.ClientCurseState;
 import com.qidate.qisplan2.client.curse.CurseClientRegistry;
-import com.qidate.qisplan2.core.ModAttachments;
 import com.qidate.qisplan2.core.QisConfig;
 import com.qidate.qisplan2.ghost.corrosion.CorrosionMatrix;
 import com.qidate.qisplan2.ghost.corrosion.CorrosionType;
-import com.qidate.qisplan2.ghost.possession.ability.GhostAbilityRegistry;
-import com.qidate.qisplan2.ghost.possession.ability.PossessedGhostAbility;
+import com.qidate.qisplan2.ghost.module.GhostModule;
+import com.qidate.qisplan2.ghost.module.GhostModuleRegistry;
+import com.qidate.qisplan2.ghost.module.host.player.PlayerGhostData;
 import com.qidate.qisplan2.ghost.possession.data.PossessedGhostData;
 import com.qidate.qisplan2.ghost.possession.data.PossessedGhostState;
 import com.qidate.qisplan2.ghost.possession.manager.PossessionHandler;
 import com.qidate.qisplan2.ghost.possession.suppression.GhostSuppressionSystem;
+import java.util.Map;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
-
-import java.util.Map;
 
 /**
  * 驭鬼者状态页渲染器。
@@ -260,7 +259,6 @@ public class PossessionStatusRenderer {
     private static final ResourceLocation HAND = body("hand");
     private static final ResourceLocation FOOT = body("foot");
     private static final ResourceLocation BONE = body("bone");
-
 
 
     // =========================================================
@@ -507,9 +505,7 @@ public class PossessionStatusRenderer {
                 minecraft.player;
 
         Map<ResourceLocation, PossessedGhostData> ghosts =
-                player.getData(
-                        ModAttachments.POSSESSED_GHOSTS
-                );
+                PlayerGhostData.views(player);
 
         // =====================================================
         // 当前玩家状态
@@ -916,8 +912,8 @@ public class PossessionStatusRenderer {
         // 鬼图标
         // =====================================================
 
-        PossessedGhostAbility ability =
-                GhostAbilityRegistry.get(
+        GhostModule ability =
+                GhostModuleRegistry.get(
                         ghostId
                 );
 
@@ -1120,7 +1116,7 @@ public class PossessionStatusRenderer {
      */
     private void drawGhostIcon(
             GuiGraphics graphics,
-            PossessedGhostAbility ability,
+            GhostModule ability,
             int x,
             int y,
             int size
@@ -1840,10 +1836,7 @@ public class PossessionStatusRenderer {
 
         return Math.max(
                 0,
-                minecraft.player
-                        .getData(
-                                ModAttachments.POSSESSED_GHOSTS
-                        )
+                PlayerGhostData.views(minecraft.player)
                         .size()
                         * cardStep
                         - 8
@@ -1955,7 +1948,7 @@ public class PossessionStatusRenderer {
      * 获取鬼的显示名称。
      *
      * <p>
-     * 如果鬼已经注册到 {@link GhostAbilityRegistry}，
+     * 如果鬼已经注册到 {@link GhostModuleRegistry}，
      * 则使用能力定义中的显示名称。
      *
      * <p>
@@ -1966,8 +1959,8 @@ public class PossessionStatusRenderer {
             ResourceLocation id
     ) {
 
-        PossessedGhostAbility ability =
-                GhostAbilityRegistry.get(id);
+        GhostModule ability =
+                GhostModuleRegistry.get(id);
 
         if (ability != null) {
 

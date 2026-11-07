@@ -3,17 +3,17 @@ package com.qidate.qisplan2.ghost.domain.type.mist;
 import com.qidate.qisplan2.death.ModDamageTypes;
 import com.qidate.qisplan2.death.SupernaturalDeathHandler;
 import com.qidate.qisplan2.entity.ModularGhostEntity;
-import com.qidate.qisplan2.ghost.module.GhostModuleRuntime;
-import com.qidate.qisplan2.ghost.module.event.GhostDomainExposureEvent;
-import com.qidate.qisplan2.ghost.module.implementation.mist.GhostMistModule;
 import com.qidate.qisplan2.ghost.domain.GhostDomain;
 import com.qidate.qisplan2.ghost.domain.GhostDomainBehavior;
+import com.qidate.qisplan2.ghost.module.GhostModuleRuntime;
+import com.qidate.qisplan2.ghost.module.event.GhostDomainExposureEvent;
+import com.qidate.qisplan2.ghost.module.host.player.PlayerGhostModuleHost;
+import com.qidate.qisplan2.ghost.module.implementation.mist.GhostMistModule;
+import java.util.Set;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
-
-import java.util.Set;
 
 /**
  * ========================================
@@ -165,6 +165,12 @@ public final class GhostMistDomainBehavior
                     GhostModuleRuntime.dispatch(host, new GhostDomainExposureEvent(
                             domain.getId(), host, target, strength * ATTACK_STRENGTH_DIVISOR));
                 }
+                continue;
+            }
+            if (source instanceof ServerPlayer player) {
+                var host = new PlayerGhostModuleHost(player);
+                GhostModuleRuntime.dispatch(host, new GhostDomainExposureEvent(
+                        domain.getId(), player, target, strength * ATTACK_STRENGTH_DIVISOR));
                 continue;
             }
 

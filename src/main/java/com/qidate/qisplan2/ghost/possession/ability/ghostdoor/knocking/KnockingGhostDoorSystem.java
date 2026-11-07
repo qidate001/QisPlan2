@@ -1,17 +1,19 @@
 package com.qidate.qisplan2.ghost.possession.ability.ghostdoor.knocking;
 
-import com.qidate.qisplan2.entity.ModularGhostEntity;
-import com.qidate.qisplan2.ghost.module.GhostModuleRuntime;
-import com.qidate.qisplan2.ghost.module.event.DoorKnockHeardEvent;
-import com.qidate.qisplan2.ghost.module.implementation.knocking.KnockingGhostModule;
-
 import com.qidate.qisplan2.block.GhostDoorBlock;
 import com.qidate.qisplan2.core.ModSounds;
 import com.qidate.qisplan2.death.ModDamageTypes;
 import com.qidate.qisplan2.death.SupernaturalDeathHandler;
-
+import com.qidate.qisplan2.entity.ModularGhostEntity;
+import com.qidate.qisplan2.ghost.module.GhostModuleHosts;
+import com.qidate.qisplan2.ghost.module.GhostModuleRuntime;
+import com.qidate.qisplan2.ghost.module.event.DoorKnockHeardEvent;
+import com.qidate.qisplan2.ghost.module.host.player.PlayerGhostModuleHost;
+import com.qidate.qisplan2.ghost.module.implementation.knocking.KnockingGhostModule;
+import java.util.*;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.tags.BlockTags;
 import net.minecraft.world.entity.Entity;
@@ -23,12 +25,10 @@ import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.world.level.block.state.properties.DoubleBlockHalf;
 import net.minecraft.world.phys.AABB;
 
-import java.util.*;
-
 /**
  * 敲门鬼公共规则系统。
  *
- * 模块化本体 与驾驭后的 KnockingGhostAbility
+ * 模块化本体 与驾驭后的 KnockingGhostModule
  * 都通过这里执行“敲门”。
  */
 public final class KnockingGhostDoorSystem {
@@ -207,7 +207,6 @@ public final class KnockingGhostDoorSystem {
     }
 
 
-
     /**
      * 实际执行敲门。
      */
@@ -223,6 +222,9 @@ public final class KnockingGhostDoorSystem {
         // 延迟鬼门回声同样检查原宿主，避免卸载模块后仍继续传播。
         if (!source.isAlive() || (source instanceof ModularGhostEntity host
                 && !KnockingGhostModule.isActive(host))) return KnockResult.failed();
+        if (source instanceof ServerPlayer player
+                && !GhostModuleHosts.available(new PlayerGhostModuleHost(player), KnockingGhostModule.ID))
+            return KnockResult.failed();
         doorPos =
                 doorPos.immutable();
 
@@ -446,6 +448,9 @@ public final class KnockingGhostDoorSystem {
             // 听声事实在此刻产生；模块规则自行决定是否安排后续袭击。
             if (source instanceof ModularGhostEntity host) {
                 GhostModuleRuntime.dispatch(host, new DoorKnockHeardEvent(source, doorPos, entity));
+            } else if (source instanceof ServerPlayer player) {
+                GhostModuleRuntime.dispatch(new PlayerGhostModuleHost(player),
+                        new DoorKnockHeardEvent(source, doorPos, entity));
             } else {
             PENDING_ATTACKS.add(
                     new PendingKnockAttack(

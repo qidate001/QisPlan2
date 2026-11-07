@@ -1,49 +1,42 @@
 package com.qidate.qisplan2.ghost.possession.manager;
 
-import com.qidate.qisplan2.core.ModAttachments;
 import com.qidate.qisplan2.death.QisDeathHandler;
 import com.qidate.qisplan2.event.GhostBreakoutHandler;
 import com.qidate.qisplan2.ghost.corrosion.CorrosionMatrix;
 import com.qidate.qisplan2.ghost.corrosion.CorrosionType;
 import com.qidate.qisplan2.ghost.corrosion.GhostCorrosion;
-import com.qidate.qisplan2.ghost.possession.ability.GhostAbilityContext;
-import com.qidate.qisplan2.ghost.possession.ability.GhostAbilityRegistry;
-import com.qidate.qisplan2.ghost.possession.ability.PossessedGhostAbility;
-import com.qidate.qisplan2.ghost.possession.ability.nightwanderer.NightWandererAbility;
+import com.qidate.qisplan2.ghost.module.GhostModule;
+import com.qidate.qisplan2.ghost.module.GhostModuleCombatState;
+import com.qidate.qisplan2.ghost.module.GhostModuleRegistry;
+import com.qidate.qisplan2.ghost.module.GhostModuleRuntime;
+import com.qidate.qisplan2.ghost.module.ability.GhostAbilityContext;
+import com.qidate.qisplan2.ghost.module.ability.GhostAbilityExecutor;
+import com.qidate.qisplan2.ghost.module.data.GhostModuleData;
+import com.qidate.qisplan2.ghost.module.event.ModuleTickEvent;
+import com.qidate.qisplan2.ghost.module.host.player.PlayerAbilityParameters;
+import com.qidate.qisplan2.ghost.module.host.player.PlayerGhostData;
+import com.qidate.qisplan2.ghost.module.host.player.PlayerGhostModuleContext;
+import com.qidate.qisplan2.ghost.module.host.player.PlayerGhostModuleHost;
+import com.qidate.qisplan2.ghost.module.host.player.PlayerModuleAbility;
+import com.qidate.qisplan2.ghost.module.host.player.PlayerModuleEvents;
 import com.qidate.qisplan2.ghost.possession.data.PossessedGhostData;
-import com.qidate.qisplan2.ghost.possession.data.PossessedGhostDomainData;
 import com.qidate.qisplan2.ghost.possession.data.PossessedGhostState;
 import com.qidate.qisplan2.ghost.possession.suppression.GhostSuppressionSystem;
+import java.util.EnumMap;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import net.minecraft.core.BlockPos;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 
-import java.util.EnumMap;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Optional;
-
 public final class PossessionHandler {
 
     private PossessionHandler() {
     }
-
-
-    /*
-     * ============================================================
-     * 兼容旧代码
-     * ============================================================
-     */
-
-    /**
-     * 兼容旧代码的夜游鬼 ID。
-     */
-    @Deprecated
-    public static final ResourceLocation NIGHT_WANDERER =
-            NightWandererAbility.ID;
-
 
     /*
      * ============================================================
@@ -56,9 +49,7 @@ public final class PossessionHandler {
     ) {
 
         Map<ResourceLocation, PossessedGhostData> ghosts =
-                player.getData(
-                        ModAttachments.POSSESSED_GHOSTS
-                );
+                PlayerGhostData.views(player);
 
 
         double bodyCorrosion =
@@ -86,8 +77,8 @@ public final class PossessionHandler {
         for (ResourceLocation ghost :
                 ghosts.keySet()) {
 
-            PossessedGhostAbility ability =
-                    GhostAbilityRegistry.get(ghost);
+            GhostModule ability =
+                    GhostModuleRegistry.get(ghost);
 
             if (ability == null) {
                 continue;
@@ -161,16 +152,14 @@ public final class PossessionHandler {
 
 
         Map<ResourceLocation, PossessedGhostData> ghosts =
-                player.getData(
-                        ModAttachments.POSSESSED_GHOSTS
-                );
+                PlayerGhostData.views(player);
 
 
         for (ResourceLocation ghost :
                 ghosts.keySet()) {
 
-            PossessedGhostAbility ability =
-                    GhostAbilityRegistry.get(ghost);
+            GhostModule ability =
+                    GhostModuleRegistry.get(ghost);
 
 
             if (ability == null) {
@@ -262,12 +251,10 @@ public final class PossessionHandler {
 
 
         for (ResourceLocation ghost :
-                player.getData(
-                        ModAttachments.POSSESSED_GHOSTS
-                ).keySet()) {
+                PlayerGhostData.views(player).keySet()) {
 
-            PossessedGhostAbility ability =
-                    GhostAbilityRegistry.get(ghost);
+            GhostModule ability =
+                    GhostModuleRegistry.get(ghost);
 
 
             if (ability == null) {
@@ -450,106 +437,11 @@ public final class PossessionHandler {
             ServerPlayer player,
             ResourceLocation ghost
     ) {
-
-        if (!GhostAbilityRegistry.contains(
-                ghost
-        )) {
-
-            return false;
-        }
-
-
-        Map<ResourceLocation, PossessedGhostData> oldData =
-                player.getData(
-                        ModAttachments.POSSESSED_GHOSTS
-                );
-
-
-        if (oldData.containsKey(ghost)) {
-            return false;
-        }
-
-
-        PossessedGhostAbility ability =
-                GhostAbilityRegistry.get(
-                        ghost
-                );
-
-
-        if (ability == null) {
-            return false;
-        }
-
-
-        /*
-         * ========================================================
-         * 创建完整持久数据。
-         *
-         * initialStrength：
-         *     初始化厉鬼本体强度。
-         *
-         * initialDomainData：
-         *     初始化这只厉鬼的鬼域数据。
-         *
-         * 注意：
-         *     并不是所有厉鬼都有鬼域，
-         *     因此 domain 由 Ability 自己决定是否存在。
-         * ========================================================
-         */
-
-        PossessedGhostData data =
-                PossessedGhostData.create(
-                        ability.initialStrength()
-                );
-
-
-        Optional<PossessedGhostDomainData> initialDomainData =
-                ability.initialDomainData();
-
-
-        if (initialDomainData.isPresent()) {
-
-            data =
-                    data.withDomain(
-                            initialDomainData.get()
-                    );
-        }
-
-
-        Map<ResourceLocation, PossessedGhostData> newData =
-                new HashMap<>(
-                        oldData
-                );
-
-
-        newData.put(
-                ghost,
-                data
-        );
-
-
-        player.setData(
-                ModAttachments.POSSESSED_GHOSTS,
-                newData
-        );
-
-
-        /*
-         * ========================================================
-         * 通知 Ability。
-         * ========================================================
-         */
-
-        ability.onPossess(
-                new GhostAbilityContext(
-                        player,
-                        ghost,
-                        data
-                )
-        );
-
-
-        return true;
+        GhostModule module = GhostModuleRegistry.get(ghost);
+        if (module == null) return false;
+        var initial = module.getInitialData();
+        return possess(player, new GhostModuleData.Entry(ghost, initial.intensity(), initial.revival(), false, false,
+                new CompoundTag()));
     }
 
 
@@ -559,15 +451,23 @@ public final class PossessionHandler {
      * ============================================================
      */
 
+    /** 将完整的模块实例交给玩家，不再按驾驭 Ability 重新生成一份数据。 */
+    public static boolean possess(ServerPlayer player, GhostModuleData.Entry entry) {
+        GhostModule module = GhostModuleRegistry.get(entry.id());
+        if (module == null || !player.isAlive()) return false;
+        var host = new PlayerGhostModuleHost(player);
+        if (!host.importModule(entry)) return false;
+        module.onPossess(new PlayerGhostModuleContext(player, entry.id(), getData(player, entry.id())));
+        return true;
+    }
+
     public static boolean release(
             ServerPlayer player,
             ResourceLocation ghost
     ) {
 
         Map<ResourceLocation, PossessedGhostData> oldData =
-                player.getData(
-                        ModAttachments.POSSESSED_GHOSTS
-                );
+                PlayerGhostData.views(player);
 
 
         PossessedGhostData data =
@@ -579,8 +479,8 @@ public final class PossessionHandler {
         }
 
 
-        PossessedGhostAbility ability =
-                GhostAbilityRegistry.get(
+        GhostModule ability =
+                GhostModuleRegistry.get(
                         ghost
                 );
 
@@ -588,7 +488,7 @@ public final class PossessionHandler {
         if (ability != null) {
 
             ability.onRelease(
-                    new GhostAbilityContext(
+                    new PlayerGhostModuleContext(
                             player,
                             ghost,
                             data
@@ -608,8 +508,7 @@ public final class PossessionHandler {
         );
 
 
-        player.setData(
-                ModAttachments.POSSESSED_GHOSTS,
+        PlayerGhostData.writeViews(player,
                 newData
         );
 
@@ -635,9 +534,7 @@ public final class PossessionHandler {
             ResourceLocation ghost
     ) {
 
-        return player.getData(
-                ModAttachments.POSSESSED_GHOSTS
-        ).containsKey(ghost);
+        return PlayerGhostData.views(player).containsKey(ghost);
     }
 
 
@@ -649,9 +546,7 @@ public final class PossessionHandler {
             ResourceLocation ghost
     ) {
 
-        return player.getData(
-                ModAttachments.POSSESSED_GHOSTS
-        ).get(ghost);
+        return PlayerGhostData.views(player).get(ghost);
     }
 
 
@@ -692,9 +587,7 @@ public final class PossessionHandler {
     ) {
 
         return new HashMap<>(
-                player.getData(
-                        ModAttachments.POSSESSED_GHOSTS
-                )
+                PlayerGhostData.views(player)
         );
     }
 
@@ -721,9 +614,7 @@ public final class PossessionHandler {
 
 
         for (var entry :
-                player.getData(
-                        ModAttachments.POSSESSED_GHOSTS
-                ).entrySet()) {
+                PlayerGhostData.views(player).entrySet()) {
 
             result.put(
                     entry.getKey(),
@@ -742,11 +633,7 @@ public final class PossessionHandler {
     public static void clearAll(
             ServerPlayer player
     ) {
-
-        player.setData(
-                ModAttachments.POSSESSED_GHOSTS,
-                new HashMap<>()
-        );
+        for (var entry : List.copyOf(new PlayerGhostModuleHost(player).getModules())) release(player, entry.id());
     }
 
 
@@ -762,16 +649,14 @@ public final class PossessionHandler {
             PossessedGhostData data
     ) {
 
-        if (data == null) {
+        if (data == null || !new PlayerGhostModuleHost(player).hasModule(ghost)) {
             return;
         }
 
 
         Map<ResourceLocation, PossessedGhostData> newData =
                 new HashMap<>(
-                        player.getData(
-                                ModAttachments.POSSESSED_GHOSTS
-                        )
+                        PlayerGhostData.views(player)
                 );
 
 
@@ -781,8 +666,7 @@ public final class PossessionHandler {
         );
 
 
-        player.setData(
-                ModAttachments.POSSESSED_GHOSTS,
+        PlayerGhostData.writeViews(player,
                 newData
         );
     }
@@ -841,10 +725,7 @@ public final class PossessionHandler {
     }
 
 
-    public static EnumMap<
-            CorrosionType,
-            Integer
-            > getAllCorrosion(
+    public static EnumMap<CorrosionType, Integer> getAllCorrosion(
             ServerPlayer player
     ) {
 
@@ -913,16 +794,14 @@ public final class PossessionHandler {
 
 
         Map<ResourceLocation, PossessedGhostData> ghosts =
-                player.getData(
-                        ModAttachments.POSSESSED_GHOSTS
-                );
+                PlayerGhostData.views(player);
 
 
         for (ResourceLocation ghost :
                 ghosts.keySet()) {
 
-            PossessedGhostAbility ability =
-                    GhostAbilityRegistry.get(
+            GhostModule ability =
+                    GhostModuleRegistry.get(
                             ghost
                     );
 
@@ -1017,8 +896,8 @@ public final class PossessionHandler {
         }
 
 
-        PossessedGhostAbility ability =
-                GhostAbilityRegistry.get(
+        GhostModule ability =
+                GhostModuleRegistry.get(
                         ghost
                 );
 
@@ -1326,211 +1205,26 @@ public final class PossessionHandler {
     public static void tick(
             ServerPlayer player
     ) {
-
-        Map<ResourceLocation, PossessedGhostData> oldData =
-                player.getData(
-                        ModAttachments.POSSESSED_GHOSTS
-                );
-
-
-        if (oldData.isEmpty()) {
-            return;
-        }
-
-
-        Map<ResourceLocation, PossessedGhostData> data =
-                new HashMap<>(
-                        oldData
-                );
-
-
-        boolean changed =
-                false;
-
-
-        for (var entry :
-                oldData.entrySet()) {
-
-            ResourceLocation ghost =
-                    entry.getKey();
-
-
-            PossessedGhostData oldGhostData =
-                    entry.getValue();
-
-
-            PossessedGhostState state =
-                    oldGhostData.state();
-
-
-            double revival =
-                    state.revival();
-
-
-            double shallowStun =
-                    state.shallowStun();
-
-
-            long stunTicks =
-                    state.stunTicks();
-
-
-            boolean permanentStun =
-                    state.permanentStun();
-
-
-            /*
-             * ====================================================
-             * 永久死机
-             * ====================================================
-             */
-
-            if (permanentStun) {
-
-                /*
-                 * 什么都不处理。
-                 */
-            }
-
-
-            /*
-             * ====================================================
-             * 普通死机
-             * ====================================================
-             */
-
-            else if (stunTicks > 0) {
-
-                stunTicks--;
-
-                changed = true;
-            }
-
-
-            /*
-             * ====================================================
-             * 复苏达到 100%
-             * ====================================================
-             */
-
-            if (revival >= 1.0D) {
-
-                GhostBreakoutHandler.breakout(
-                        player
-                );
-
-
-                QisDeathHandler.forceKillAndCleanup(
-                        player
-                );
-
-
+        var host = new PlayerGhostModuleHost(player);
+        GhostModuleCombatState.tick(host);
+        for (var entry : List.copyOf(host.getModules())) {
+            GhostModule module = GhostModuleRegistry.get(entry.id());
+            if (module == null || !host.hasModule(entry.id())) continue;
+            if (entry.revival() >= module.getMaxRevival()) {
+                GhostBreakoutHandler.breakout(player);
+                QisDeathHandler.forceKillAndCleanup(player);
                 return;
             }
-
-
-            /*
-             * ====================================================
-             * 保存通用状态。
-             * ====================================================
-             */
-
-            PossessedGhostState newState =
-                    new PossessedGhostState(
-                            revival,
-                            state.strength(),
-                            shallowStun,
-                            stunTicks,
-                            permanentStun,
-                            state.lastAbilityUseTick()
-                    );
-
-
-            PossessedGhostData newData =
-                    oldGhostData.withState(
-                            newState
-                    );
-
-
-            data.put(
-                    ghost,
-                    newData
-            );
-
-
-            /*
-             * ====================================================
-             * 调用具体鬼的 Ability。
-             * ====================================================
-             */
-
-            PossessedGhostAbility ability =
-                    GhostAbilityRegistry.get(
-                            ghost
-                    );
-
-
-            if (ability != null) {
-
-                GhostAbilityContext context =
-                        new GhostAbilityContext(
-                                player,
-                                ghost,
-                                newData
-                        );
-
-
-                ability.tick(
-                        context
-                );
-
-
-                PossessedGhostData afterAbility =
-                        context.data();
-
-
-                if (afterAbility != newData) {
-
-                    changed = true;
-                }
-
-
-                data.put(
-                        ghost,
-                        afterAbility
-                );
+            if (GhostModuleCombatState.available(entry)) {
+                module.onPlayerTick(new PlayerGhostModuleContext(player, entry.id(), getData(player, entry.id())));
+            } else {
+                // 临时停用也要收回鬼域、移速等玩家运行时效果，实例数据保持不变。
+                module.onPlayerSuspended(new PlayerGhostModuleContext(player, entry.id(), getData(player, entry.id())));
             }
-
-
-            /*
-             * ====================================================
-             * 判断通用状态是否改变。
-             * ====================================================
-             */
-
-            if (revival != state.revival()
-                    || shallowStun != state.shallowStun()
-                    || stunTicks != state.stunTicks()
-                    || permanentStun != state.permanentStun()) {
-
-                changed = true;
-            }
+            if (!player.isAlive()) return;
         }
-
-
-        /*
-         * ========================================================
-         * 统一提交。
-         * ========================================================
-         */
-
-        if (changed) {
-
-            player.setData(
-                    ModAttachments.POSSESSED_GHOSTS,
-                    data
-            );
-        }
+        GhostModuleRuntime.dispatch(host, new ModuleTickEvent());
+        PlayerModuleEvents.tickTouch(player, host);
     }
 
 
@@ -1545,56 +1239,11 @@ public final class PossessionHandler {
             ResourceLocation ghost,
             LivingEntity target
     ) {
-
-        PossessedGhostData data =
-                getData(
-                        player,
-                        ghost
-                );
-
-
-        if (data == null) {
-            return false;
-        }
-
-
-        PossessedGhostAbility ability =
-                GhostAbilityRegistry.get(
-                        ghost
-                );
-
-
-        if (ability == null) {
-            return false;
-        }
-
-
-        GhostAbilityContext context =
-                new GhostAbilityContext(
-                        player,
-                        ghost,
-                        data,
-                        target
-                );
-
-
-        boolean success =
-                ability.use(
-                        context
-                );
-
-
-        if (success) {
-
-            setData(
-                    player,
-                    ghost,
-                    context.data()
-            );
-        }
-
-
-        return success;
+        GhostModule module = GhostModuleRegistry.get(ghost);
+        var host = new PlayerGhostModuleHost(player);
+        if (module == null || !host.hasModule(ghost)) return false;
+        return GhostAbilityExecutor.tryExecuteWithResult(new GhostAbilityContext(host, ghost, PlayerModuleAbility.id(module),
+                GhostAbilityContext.Source.POSSESSION, null, () -> {}, new PlayerAbilityParameters(target, null)));
     }
 
 
@@ -1609,56 +1258,11 @@ public final class PossessionHandler {
             ResourceLocation ghost,
             BlockPos pos
     ) {
-
-        PossessedGhostData data =
-                getData(
-                        player,
-                        ghost
-                );
-
-
-        if (data == null) {
-            return false;
-        }
-
-
-        PossessedGhostAbility ability =
-                GhostAbilityRegistry.get(
-                        ghost
-                );
-
-
-        if (ability == null) {
-            return false;
-        }
-
-
-        GhostAbilityContext context =
-                new GhostAbilityContext(
-                        player,
-                        ghost,
-                        data
-                );
-
-
-        boolean success =
-                ability.useOnBlock(
-                        context,
-                        pos
-                );
-
-
-        if (success) {
-
-            setData(
-                    player,
-                    ghost,
-                    context.data()
-            );
-        }
-
-
-        return success;
+        GhostModule module = GhostModuleRegistry.get(ghost);
+        var host = new PlayerGhostModuleHost(player);
+        if (module == null || !host.hasModule(ghost)) return false;
+        return GhostAbilityExecutor.tryExecuteWithResult(new GhostAbilityContext(host, ghost, PlayerModuleAbility.id(module),
+                GhostAbilityContext.Source.POSSESSION, null, () -> {}, new PlayerAbilityParameters(null, pos)));
     }
 
 
@@ -1684,9 +1288,7 @@ public final class PossessionHandler {
 
 
         Map<ResourceLocation, PossessedGhostData> oldData =
-                player.getData(
-                        ModAttachments.POSSESSED_GHOSTS
-                );
+                PlayerGhostData.views(player);
 
 
         if (oldData.isEmpty()) {
@@ -1739,8 +1341,7 @@ public final class PossessionHandler {
 
         if (count > 0) {
 
-            player.setData(
-                    ModAttachments.POSSESSED_GHOSTS,
+            PlayerGhostData.writeViews(player,
                     data
             );
         }

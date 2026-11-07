@@ -1,32 +1,17 @@
 package com.qidate.qisplan2.event;
 
-import com.qidate.qisplan2.ghost.module.implementation.mist.GhostMistModule;
-import com.qidate.qisplan2.ghost.module.implementation.mist.GhostMistState;
-import com.qidate.qisplan2.ghost.possession.data.PossessedGhostDomainData;
-
-import com.qidate.qisplan2.ghost.module.implementation.knocking.KnockingGhostModule;
-import com.qidate.qisplan2.ghost.module.implementation.nightwanderer.NightWandererModule;
-
 import com.qidate.qisplan2.QisPlan2;
+import com.qidate.qisplan2.core.ModEntities;
 import com.qidate.qisplan2.death.QisDeathHandler;
-import com.qidate.qisplan2.entity.ModularGhostEntity;
-import com.qidate.qisplan2.ghost.module.implementation.ClosingGhostModule;
-import com.qidate.qisplan2.ghost.module.implementation.OpeningGhostModule;
-import com.qidate.qisplan2.ghost.possession.data.PossessedGhostState;
+import com.qidate.qisplan2.ghost.module.GhostModuleCombatState;
+import com.qidate.qisplan2.ghost.module.GhostModuleRegistry;
+import com.qidate.qisplan2.ghost.module.host.player.PlayerGhostModuleHost;
 import com.qidate.qisplan2.ghost.possession.manager.PossessionHandler;
-
-import com.qidate.qisplan2.ghost.possession.ability.GhostAbilityRegistry;
-import com.qidate.qisplan2.ghost.possession.ability.PossessedGhostAbility;
-import net.minecraft.resources.ResourceLocation;
-import net.minecraft.server.level.ServerLevel;
+import java.util.List;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
-
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.neoforge.event.entity.living.LivingDeathEvent;
-
-import java.util.Map;
 
 public final class GhostBreakoutHandler {
 
@@ -42,7 +27,6 @@ public final class GhostBreakoutHandler {
      */
     private static final long MAX_STUN_TICKS =
             1000L;
-
 
 
     @SubscribeEvent
@@ -72,238 +56,23 @@ public final class GhostBreakoutHandler {
      * 1. 正常死亡事件
      * 2. 厉鬼复苏达到 100% 的强制死亡
      */
-    public static void breakout(
-            ServerPlayer player
-    ) {
-
-        if (!(player.level()
-                instanceof ServerLevel level)) {
-
-            return;
-        }
-
-        Map<
-                ResourceLocation,
-                PossessedGhostState
-                > states =
-                PossessionHandler.getAllStates(
-                        player
-                );
-
-        if (states.isEmpty()) {
-            return;
-        }
-
-        /*
-         * ========================================================
-         * 记录死亡位置。
-         * ========================================================
-         */
-
-        double x =
-                player.getX();
-
-        double y =
-                player.getY();
-
-        double z =
-                player.getZ();
-
-        float yRot =
-                player.getYRot();
-
-        float xRot =
-                player.getXRot();
-
-        /*
-         * ========================================================
-         * 逐只破体。
-         * ========================================================
-         */
-
-        for (Map.Entry<
-                ResourceLocation,
-                PossessedGhostState
-                > entry :
-                states.entrySet()) {
-
-            var persistentData = PossessionHandler.getData(player, entry.getKey());
-            spawnBrokenGhost(
-                    level,
-                    entry.getKey(),
-                    entry.getValue(),
-                    persistentData == null ? null : persistentData.domain().orElse(null),
-                    x,
-                    y,
-                    z,
-                    yRot,
-                    xRot
-            );
-        }
-
-        /*
-         * ========================================================
-         * 清空玩家驾驭状态。
-         * ========================================================
-         */
-
-        PossessionHandler.clearAll(
-                player
-        );
-
-        QisPlan2.LOGGER.info(
-                "[QisPlan2] 玩家 {} 触发厉鬼破体：{} 只",
-                player.getName().getString(),
-                states.size()
-        );
-    }
-
-
-    /**
-     * 从玩家身体中生成一只普通厉鬼。
-     */
-    private static void spawnBrokenGhost(
-            ServerLevel level,
-            ResourceLocation ghostId,
-            PossessedGhostState state,
-            PossessedGhostDomainData domainData,
-            double x,
-            double y,
-            double z,
-            float yRot,
-            float xRot
-    ) {
-
-        PossessedGhostAbility ability =
-                GhostAbilityRegistry.get(
-                        ghostId
-                );
-
-        if (ability == null) {
-            QisPlan2.LOGGER.warn(
-                    "[QisPlan2] 无法让厉鬼破体：找不到 Ability {}",
-                    ghostId
-            );
-            return;
-        }
-
-        EntityType<? extends ModularGhostEntity>
-                entityType =
-                ability.entityType();
-
-        if (entityType == null) {
-            QisPlan2.LOGGER.warn(
-                    "[QisPlan2] 无法让厉鬼破体：Ability {} 没有对应实体类型",
-                    ghostId
-            );
-            return;
-        }
-
-        ModularGhostEntity ghost =
-                entityType.create(level);
-
-        if (ghost == null) {
-            QisPlan2.LOGGER.warn(
-                    "[QisPlan2] 无法让厉鬼破体：创建实体失败 {}",
-                    ghostId
-            );
-            return;
-        }
-
-        // 开门鬼与关门鬼统一使用模块化宿主；破体时按驾驭 ID 安装完整模块。
-        // 破体后的死机时间仍由下方根据驾驭复苏值计算，模块强度使用厉鬼初始值。
-        if (ghost != null) {
-            ModularGhostEntity modularGhost = ghost;
-            if (ghostId.equals(OpeningGhostModule.ID)) {
-                modularGhost.addGhostModule(
-                        OpeningGhostModule.ID,
-                        OpeningGhostModule.INITIAL_INTENSITY
-                );
-            } else if (ghostId.equals(GhostMistModule.ID)) {
-                modularGhost.addGhostModule(GhostMistModule.ID, state.strength());
-                // 破体继承玩家所驾驭鬼雾的成长数据，不能重新退回初始鬼域。
-                if (domainData != null) GhostMistState.save(modularGhost,
-                        domainData.strength(), domainData.radius(), domainData.layer());
-            } else if (ghostId.equals(NightWandererModule.ID)) {
-                modularGhost.addGhostModule(NightWandererModule.ID, NightWandererModule.INITIAL_INTENSITY);
-            } else if (ghostId.equals(KnockingGhostModule.ID)) {
-                modularGhost.addGhostModule(KnockingGhostModule.ID, KnockingGhostModule.INITIAL_INTENSITY);
-            } else if (ghostId.equals(ClosingGhostModule.ID)) {
-                modularGhost.addGhostModule(
-                        ClosingGhostModule.ID,
-                        ClosingGhostModule.INITIAL_INTENSITY
-                );
+    public static void breakout(ServerPlayer player) {
+        var host = new PlayerGhostModuleHost(player);
+        var entries = List.copyOf(host.getModules());
+        for (var entry : entries) {
+            var ghost = ModEntities.MODULAR_GHOST.get().create(player.serverLevel());
+            if (ghost == null) continue;
+            if (!ghost.importGhostModule(entry)) continue;
+            var module = GhostModuleRegistry.get(entry.id());
+            double max = module == null ? 100 : Math.max(1, module.getMaxRevival());
+            int delay = (int)Math.max(0, Math.round((1 - entry.revival() / max) * MAX_STUN_TICKS));
+            int previous = GhostModuleCombatState.ticks(entry);
+            ghost.setSupernaturalStunTicks(Math.max(previous, delay));
+            ghost.moveTo(player.getX(), player.getY(), player.getZ(), player.getYRot(), player.getXRot());
+            if (player.serverLevel().addFreshEntity(ghost)) {
+                // 成功放入世界后才从玩家移除，避免创建失败时丢失模块。
+                PossessionHandler.release(player, entry.id());
             }
         }
-
-        /*
-         * ========================================================
-         * 生成位置
-         * ========================================================
-         */
-
-        ghost.moveTo(
-                x,
-                y,
-                z,
-                yRot,
-                xRot
-        );
-
-
-        /*
-         * ========================================================
-         * 计算死机时间。
-         *
-         * revival:
-         *
-         * 0.0 -> 1000 tick
-         * 0.8 -> 200 tick
-         * 1.0 -> 0 tick
-         * ========================================================
-         */
-
-        long stunTicks =
-                Math.round(
-                        (1.0D - state.revival())
-                                * MAX_STUN_TICKS
-                );
-
-        stunTicks =
-                Math.max(
-                        0L,
-                        stunTicks
-                );
-
-        /*
-         * ========================================================
-         * 设置普通死机。
-         * ========================================================
-         */
-
-        if (stunTicks > 0L) {
-
-            ghost.setSupernaturalStunTicks(
-                    (int) stunTicks
-            );
-        }
-
-        /*
-         * ========================================================
-         * 加入世界。
-         * ========================================================
-         */
-
-        level.addFreshEntity(
-                ghost
-        );
-
-        QisPlan2.LOGGER.info(
-                "[QisPlan2] 厉鬼破体：ghost={}，复苏={}%，死机={} tick ({} 秒)",
-                ghostId,
-                state.revival() * 100.0D,
-                stunTicks,
-                stunTicks / 20.0D
-        );
     }
 }

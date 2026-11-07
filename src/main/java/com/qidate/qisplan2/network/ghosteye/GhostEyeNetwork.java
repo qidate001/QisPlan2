@@ -1,11 +1,11 @@
 package com.qidate.qisplan2.network.ghosteye;
 
-import com.qidate.qisplan2.ghost.possession.manager.PossessionHandler;
-import com.qidate.qisplan2.ghost.possession.ability.ghosteye.GhostEyeAbility;
 import com.qidate.qisplan2.ghost.domain.GhostDomain;
 import com.qidate.qisplan2.ghost.domain.GhostDomainManager;
 import com.qidate.qisplan2.ghost.domain.type.eye.GhostEyeDomainController;
 import com.qidate.qisplan2.ghost.layer.GhostLayerHandler;
+import com.qidate.qisplan2.ghost.module.implementation.eye.GhostEyeModule;
+import com.qidate.qisplan2.ghost.possession.manager.PossessionHandler;
 import com.qidate.qisplan2.ghost.reboot.GhostRebootManager;
 import com.qidate.qisplan2.ghost.reboot.GhostRebootSources;
 import com.qidate.qisplan2.network.payload.GhostEyeLayerChangePayload;
@@ -106,7 +106,7 @@ public final class GhostEyeNetwork {
             GhostDomain domain =
                     manager.getBySourceAndType(
                             player.getUUID(),
-                            GhostEyeAbility.ID
+                            GhostEyeModule.ID
                     );
 
             if (domain == null) {
@@ -191,7 +191,7 @@ public final class GhostEyeNetwork {
              */
             if (!PossessionHandler.hasGhost(
                     player,
-                    GhostEyeAbility.ID
+                    GhostEyeModule.ID
             )) {
 
                 return;
@@ -256,7 +256,7 @@ public final class GhostEyeNetwork {
              */
             if (!PossessionHandler.hasGhost(
                     player,
-                    GhostEyeAbility.ID
+                    GhostEyeModule.ID
             )) {
 
                 return;
@@ -296,7 +296,7 @@ public final class GhostEyeNetwork {
                     player,
                     GhostRebootSources.ghost(
                             player.getUUID(),
-                            GhostEyeAbility.ID
+                            GhostEyeModule.ID
                     )
             );
         });

@@ -1,7 +1,6 @@
 package com.qidate.qisplan2.ghost.possession.ability;
 
-import com.qidate.qisplan2.ghost.possession.ability.ghostdoor.knocking.KnockingGhostAbility;
-
+import com.qidate.qisplan2.ghost.module.implementation.knocking.KnockingGhostModule;
 import com.qidate.qisplan2.ghost.possession.manager.PossessionHandler;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.ItemStack;
@@ -70,7 +69,7 @@ public final class GhostAbilityInteractionHandler {
          */
         if (!PossessionHandler.hasGhost(
                 player,
-                KnockingGhostAbility.ID
+                KnockingGhostModule.ID
         )) {
             return;
         }
@@ -83,7 +82,7 @@ public final class GhostAbilityInteractionHandler {
         boolean success =
                 PossessionHandler.useAbilityOnBlock(
                         player,
-                        KnockingGhostAbility.ID,
+                        KnockingGhostModule.ID,
                         event.getPos()
                 );
 

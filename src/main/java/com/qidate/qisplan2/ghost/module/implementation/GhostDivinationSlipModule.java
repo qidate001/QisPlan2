@@ -1,35 +1,43 @@
 package com.qidate.qisplan2.ghost.module.implementation;
 
+import com.qidate.qisplan2.QisPlan2;
 import com.qidate.qisplan2.death.ModDamageTypes;
 import com.qidate.qisplan2.death.SupernaturalDeathHandler;
+import com.qidate.qisplan2.ghost.corrosion.CorrosionType;
+import com.qidate.qisplan2.ghost.corrosion.GhostCorrosion;
 import com.qidate.qisplan2.ghost.curse.Curse;
 import com.qidate.qisplan2.ghost.curse.CurseManager;
 import com.qidate.qisplan2.ghost.curse.type.ghostdivination.GhostDivinationCurse;
 import com.qidate.qisplan2.ghost.curse.type.ghostdivination.GhostDivinationCurseSource;
 import com.qidate.qisplan2.ghost.curse.type.ghostdivination.GhostDivinationCurseType;
 import com.qidate.qisplan2.ghost.module.GhostModule;
+import com.qidate.qisplan2.ghost.module.GhostModuleHosts;
+import com.qidate.qisplan2.ghost.module.GhostModuleRuntime;
 import com.qidate.qisplan2.ghost.module.GhostRule;
 import com.qidate.qisplan2.ghost.module.GhostRuleContext;
 import com.qidate.qisplan2.ghost.module.ability.GhostAbility;
 import com.qidate.qisplan2.ghost.module.ability.GhostAbilityContext;
 import com.qidate.qisplan2.ghost.module.data.GhostModuleInitialData;
+import com.qidate.qisplan2.ghost.module.event.DivinationSlipResultEvent;
 import com.qidate.qisplan2.ghost.module.event.GhostEvent;
 import com.qidate.qisplan2.ghost.module.event.GhostUseEvent;
+import com.qidate.qisplan2.ghost.module.host.player.PlayerGhostModuleContext;
+import com.qidate.qisplan2.ghost.module.host.player.PlayerGhostModuleHost;
+import com.qidate.qisplan2.ghost.module.implementation.GhostDivinationSlipModule;
 import com.qidate.qisplan2.ghost.module.influence.GhostInfluenceCollector;
 import com.qidate.qisplan2.ghost.module.influence.GhostInfluenceType;
-import com.qidate.qisplan2.ghost.possession.ability.divinationslip.GhostDivinationSlipAbility;
+import com.qidate.qisplan2.ghost.possession.classification.GhostClassification;
+import com.qidate.qisplan2.ghost.possession.classification.GhostTag;
 import com.qidate.qisplan2.ghost.possession.data.PossessedGhostState;
 import com.qidate.qisplan2.ghost.possession.manager.PossessionHandler;
 import com.qidate.qisplan2.network.divinationslip.GhostDivinationNetwork;
+import java.util.List;
+import java.util.UUID;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.LivingEntity;
-
-import java.util.List;
-import java.util.UUID;
-
 import static com.qidate.qisplan2.QisPlan2.MODID;
 
 public final class GhostDivinationSlipModule implements GhostModule {
@@ -86,7 +94,7 @@ public final class GhostDivinationSlipModule implements GhostModule {
     }
 
     @Override
-    public List<GhostAbility> getAbilities() {
+    public List<GhostAbility> getIntrinsicAbilities() {
         return ABILITIES;
     }
 
@@ -95,24 +103,6 @@ public final class GhostDivinationSlipModule implements GhostModule {
      *
      * 防止延迟执行时重新随机。
      */
-    private record DivinationSlipResultEvent(
-            LivingEntity user,
-            int result
-    ) implements GhostEvent {
-
-        private DivinationSlipResultEvent {
-            if (user == null) {
-                throw new NullPointerException("user");
-            }
-
-            if (result < LIFE_RESULT || result > GHOST_RESULT) {
-                throw new IllegalArgumentException(
-                        "Invalid divination slip result: " + result
-                );
-            }
-        }
-    }
-
     /**
      * 鬼签使用规则。
      */
@@ -126,7 +116,7 @@ public final class GhostDivinationSlipModule implements GhostModule {
 
         @Override
         public boolean supports(GhostEvent event) {
-            return event instanceof GhostUseEvent;
+            return event instanceof GhostUseEvent || event instanceof DivinationSlipResultEvent;
         }
 
         @Override
@@ -134,8 +124,8 @@ public final class GhostDivinationSlipModule implements GhostModule {
                 GhostRuleContext context,
                 GhostEvent event
         ) {
-            return event instanceof GhostUseEvent useEvent
-                    && useEvent.user().level() instanceof ServerLevel;
+            return (event instanceof GhostUseEvent useEvent && useEvent.user().level() instanceof ServerLevel)
+                    || (event instanceof DivinationSlipResultEvent result && result.user().level() instanceof ServerLevel);
         }
 
         @Override
@@ -143,18 +133,15 @@ public final class GhostDivinationSlipModule implements GhostModule {
                 GhostRuleContext context,
                 GhostEvent event
         ) {
-            if (!(event instanceof GhostUseEvent useEvent)) {
-                return;
-            }
-
-            LivingEntity user = useEvent.user();
+            LivingEntity user = event instanceof GhostUseEvent useEvent ? useEvent.user()
+                    : ((DivinationSlipResultEvent)event).user();
 
             if (!(user.level() instanceof ServerLevel serverLevel)) {
                 return;
             }
 
             // 本次事件只随机一次，后续使用固定结果。
-            int result = user.getRandom().nextInt(3);
+            int result = event instanceof DivinationSlipResultEvent fixed ? fixed.result() : user.getRandom().nextInt(3);
 
             DivinationSlipResultEvent resultEvent =
                     new DivinationSlipResultEvent(user, result);
@@ -280,7 +267,7 @@ public final class GhostDivinationSlipModule implements GhostModule {
         if (user instanceof ServerPlayer player) {
             PossessedGhostState state = PossessionHandler.getState(
                     player,
-                    GhostDivinationSlipAbility.ID
+                    GhostDivinationSlipModule.ID
             );
 
             if (state != null && state.stunTicks() > 0) {
@@ -369,4 +356,102 @@ public final class GhostDivinationSlipModule implements GhostModule {
             GhostDivinationNetwork.sendResult(player, result);
         }
     }
+
+
+    private static final GhostCorrosion CORROSION =
+            GhostCorrosion.builder()
+                    .add(CorrosionType.GLOBAL, 20)
+                    .build();
+
+    private static final double REVIVAL_GAIN = 20.0D;
+
+
+    @Override
+    public GhostCorrosion corrosion() {
+        return CORROSION;
+    }
+
+    @Override
+    public ResourceLocation iconTexture() {
+        return ResourceLocation.fromNamespaceAndPath(
+                QisPlan2.MODID,
+                "textures/item/ghost_divination_slip.png"
+        );
+    }
+
+    @Override
+    public ResourceLocation suppressionIconTexture() {
+        return ResourceLocation.fromNamespaceAndPath(
+                QisPlan2.MODID,
+                "textures/item/death_sign.png"
+        );
+    }
+
+    @Override
+    public GhostClassification suppressionTargets() {
+        return GhostClassification.of(
+                GhostTag.ENTITY
+        );
+    }
+
+    @Override
+    public int suppressionUnits() {
+        return 2;
+    }
+
+    @Override
+    public double suppressionUnitStrength() {
+        return 20.0D;
+    }
+
+    /**
+     * 主动技能
+     */
+    public static void useResult(
+            ServerPlayer player,
+            int result
+    ) {
+        var host = new PlayerGhostModuleHost(player);
+        if (result < 0 || result > 2 || !GhostModuleHosts.available(host, ID)) return;
+        addRevival(player);
+        GhostModuleRuntime.dispatch(host, new DivinationSlipResultEvent(player, result));
+    }
+
+    public static void addRevival(
+            ServerPlayer player
+    ) {
+
+        PossessedGhostState state =
+                PossessionHandler.getState(
+                        player,
+                        ID
+                );
+
+        if (state == null) {
+            return;
+        }
+
+        PossessedGhostState newState =
+                PossessionHandler.addRevival(
+                        player,
+                        ID,
+                        state,
+                        REVIVAL_GAIN,
+                        CorrosionType.GLOBAL
+                );
+
+        PossessionHandler.setState(
+                player,
+                ID,
+                newState
+        );
+    }
+
+    @Override
+    public boolean use(
+            PlayerGhostModuleContext context
+    ) {
+        return false;
+    }
+
 }

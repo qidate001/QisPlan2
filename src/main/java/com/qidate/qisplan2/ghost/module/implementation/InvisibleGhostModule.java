@@ -10,11 +10,9 @@ import com.qidate.qisplan2.ghost.module.data.GhostModuleInitialData;
 import com.qidate.qisplan2.ghost.module.event.EntityPerceivedEvent;
 import com.qidate.qisplan2.ghost.module.event.GhostEvent;
 import com.qidate.qisplan2.ghost.module.influence.GhostInfluenceType;
+import java.util.List;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.player.Player;
-
-import java.util.List;
-
 import static com.qidate.qisplan2.QisPlan2.MODID;
 
 /**
@@ -68,7 +66,7 @@ public final class InvisibleGhostModule implements GhostModule {
     }
 
     @Override
-    public List<GhostAbility> getAbilities() {
+    public List<GhostAbility> getIntrinsicAbilities() {
         return ABILITIES;
     }
 

@@ -1,6 +1,7 @@
 package com.qidate.qisplan2.ghost.possession;
 
 import com.qidate.qisplan2.core.ModItems;
+import com.qidate.qisplan2.ghost.module.GhostModuleCombatState;
 import com.qidate.qisplan2.entity.ModularGhostEntity;
 import com.qidate.qisplan2.ghost.possession.manager.GhostPossessionManager;
 import com.qidate.qisplan2.ghost.possession.manager.PossessionHandler;
@@ -71,7 +72,7 @@ public final class GhostPossessionInteractionSystem {
         /*
          * 必须死机。
          */
-        if (!ghost.isSupernaturallyStunned()) {
+        if (!ghost.isCoffinNailed() && ghost.getModules().stream().allMatch(GhostModuleCombatState::available)) {
             return InteractionResult.PASS;
         }
 
@@ -81,23 +82,19 @@ public final class GhostPossessionInteractionSystem {
         if (!ghost.level().isClientSide()
                 && player instanceof ServerPlayer serverPlayer) {
 
-            if (PossessionHandler.hasGhost(
-                    serverPlayer,
-                    ghost.getGhostId()
-            )) {
-
-                serverPlayer.displayClientMessage(
-                        Component.literal("已经驾驭了这只鬼。"),
-                        true
-                );
-
+            var moduleId = ghost.getModules().stream()
+                    .filter(e -> !PossessionHandler.hasGhost(serverPlayer, e.id()))
+                    .filter(e -> ghost.isCoffinNailed() || !GhostModuleCombatState.available(e))
+                    .map(e -> e.id()).findFirst().orElse(null);
+            if (moduleId == null) {
+                serverPlayer.displayClientMessage(Component.literal("没有可以驾驭的死机厉鬼模块。"), true);
                 return InteractionResult.CONSUME;
             }
 
             boolean started =
                     GhostPossessionManager.start(
                             serverPlayer,
-                            new EntityGhostPossessionTarget(ghost)
+                            new EntityGhostPossessionTarget(ghost, moduleId)
                     );
 
             if (started) {

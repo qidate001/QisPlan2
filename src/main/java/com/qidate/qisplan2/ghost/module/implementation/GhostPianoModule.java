@@ -12,12 +12,11 @@ import com.qidate.qisplan2.ghost.module.event.GhostEvent;
 import com.qidate.qisplan2.ghost.module.event.GhostSoundEvent;
 import com.qidate.qisplan2.ghost.module.influence.GhostInfluenceType;
 import com.qidate.qisplan2.ghost.module.sound.GhostSoundDefinition;
-import net.minecraft.nbt.CompoundTag;
-import net.minecraft.resources.ResourceLocation;
-
 import java.util.List;
 import java.util.UUID;
-
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ServerLevel;
 import static com.qidate.qisplan2.QisPlan2.MODID;
 
 /**
@@ -96,7 +95,7 @@ public final class GhostPianoModule implements GhostModule {
     }
 
     @Override
-    public List<GhostAbility> getAbilities() {
+    public List<GhostAbility> getIntrinsicAbilities() {
         return ABILITIES;
     }
 
@@ -151,8 +150,6 @@ public final class GhostPianoModule implements GhostModule {
     }
 
 
-
-
     /**
      * 鬼钢琴音乐中断规则。
      *
@@ -184,7 +181,7 @@ public final class GhostPianoModule implements GhostModule {
                     && soundEvent.type() == GhostSoundEvent.Type.INTERRUPTED
                     && soundEvent.listener().isAlive()
                     && soundEvent.listener().level()
-                    instanceof net.minecraft.server.level.ServerLevel;
+                    instanceof ServerLevel;
         }
 
         @Override
@@ -207,8 +204,6 @@ public final class GhostPianoModule implements GhostModule {
     }
 
 
-
-
     /**
      * 鬼钢琴音乐中断能力。
      *
@@ -229,7 +224,7 @@ public final class GhostPianoModule implements GhostModule {
                     && soundEvent.type() == GhostSoundEvent.Type.INTERRUPTED
                     && soundEvent.listener().isAlive()
                     && soundEvent.listener().level()
-                    instanceof net.minecraft.server.level.ServerLevel;
+                    instanceof ServerLevel;
         }
 
         @Override

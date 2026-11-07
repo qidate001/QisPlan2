@@ -1,26 +1,22 @@
-package com.qidate.qisplan2.ghost.possession.ability.ghosteye;
+package com.qidate.qisplan2.ghost.module.implementation.eye;
 
-import com.qidate.qisplan2.QisPlan2;
-import com.qidate.qisplan2.ghost.possession.ability.GhostAbilityContext;
-import com.qidate.qisplan2.ghost.possession.ability.PossessedGhostAbility;
 import com.qidate.qisplan2.ghost.corrosion.CorrosionType;
 import com.qidate.qisplan2.ghost.corrosion.GhostCorrosion;
 import com.qidate.qisplan2.ghost.domain.type.eye.GhostEyeDomainController;
+import com.qidate.qisplan2.ghost.module.GhostModule;
+import com.qidate.qisplan2.ghost.module.data.GhostModuleInitialData;
+import com.qidate.qisplan2.ghost.module.host.player.PlayerGhostModuleContext;
 import com.qidate.qisplan2.ghost.possession.classification.GhostClassification;
 import com.qidate.qisplan2.ghost.possession.classification.GhostTag;
 import com.qidate.qisplan2.ghost.possession.data.PossessedGhostDomainData;
+import java.util.Optional;
 import net.minecraft.resources.ResourceLocation;
 
-import java.util.Optional;
+public final class GhostEyeModule implements GhostModule {
+    public static final ResourceLocation ID = ResourceLocation.fromNamespaceAndPath("qisplan2", "ghost_eye");
+    @Override public ResourceLocation getId() { return ID; }
+    @Override public GhostModuleInitialData getInitialData() { return new GhostModuleInitialData(100, 0); }
 
-public final class GhostEyeAbility
-        implements PossessedGhostAbility {
-
-    public static final ResourceLocation ID =
-            ResourceLocation.fromNamespaceAndPath(
-                    QisPlan2.MODID,
-                    "ghost_eye"
-            );
 
     private static final GhostCorrosion CORROSION =
             GhostCorrosion.builder()
@@ -28,15 +24,6 @@ public final class GhostEyeAbility
                     .add(CorrosionType.GLOBAL, 40)
                     .build();
 
-    @Override
-    public ResourceLocation id() {
-        return ID;
-    }
-
-    @Override
-    public double initialStrength() {
-        return 100.0D;
-    }
 
     /**
      * 鬼域。
@@ -91,8 +78,8 @@ public final class GhostEyeAbility
     }
 
     @Override
-    public void tick(
-            GhostAbilityContext context
+    public void onPlayerTick(
+            PlayerGhostModuleContext context
     ) {
 
         GhostEyeDomainController.tick(context);
@@ -100,9 +87,10 @@ public final class GhostEyeAbility
 
     @Override
     public void onRelease(
-            GhostAbilityContext context
+            PlayerGhostModuleContext context
     ) {
 
         GhostEyeDomainController.close(context.player());
     }
+
 }

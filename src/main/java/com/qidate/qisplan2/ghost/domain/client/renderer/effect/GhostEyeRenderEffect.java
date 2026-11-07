@@ -7,15 +7,14 @@ import com.qidate.qisplan2.ghost.domain.client.renderer.GhostDomainMatrices;
 import com.qidate.qisplan2.ghost.domain.client.renderer.GhostDomainRenderEffect;
 import com.qidate.qisplan2.ghost.domain.client.renderer.GhostDomainRenderEffectRegistry;
 import com.qidate.qisplan2.ghost.isolation.client.ClientGhostIsolationManager;
-import com.qidate.qisplan2.ghost.possession.ability.ghosteye.GhostEyeAbility;
+import com.qidate.qisplan2.ghost.module.implementation.eye.GhostEyeModule;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.UUID;
 import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.ShaderInstance;
 import net.minecraft.resources.ResourceLocation;
-
-import java.util.Collection;
-import java.util.Collections;
-import java.util.UUID;
 
 public final class GhostEyeRenderEffect
         implements GhostDomainRenderEffect {
@@ -39,7 +38,7 @@ public final class GhostEyeRenderEffect
 
     @Override
     public ResourceLocation shaderId() {
-        return GhostEyeAbility.ID;
+        return GhostEyeModule.ID;
     }
 
     @Override
@@ -80,7 +79,7 @@ public final class GhostEyeRenderEffect
                         )
                 )
                 .filter(domain ->
-                        GhostEyeAbility.ID.equals(
+                        GhostEyeModule.ID.equals(
                                 domain.getDomainType()
                         )
                 )

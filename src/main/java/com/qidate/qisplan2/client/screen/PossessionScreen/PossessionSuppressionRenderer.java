@@ -1,20 +1,19 @@
 package com.qidate.qisplan2.client.screen.PossessionScreen;
 
 import com.qidate.qisplan2.QisPlan2;
-import com.qidate.qisplan2.core.ModAttachments;
-import com.qidate.qisplan2.ghost.possession.ability.GhostAbilityRegistry;
-import com.qidate.qisplan2.ghost.possession.ability.PossessedGhostAbility;
+import com.qidate.qisplan2.ghost.module.GhostModule;
+import com.qidate.qisplan2.ghost.module.GhostModuleRegistry;
+import com.qidate.qisplan2.ghost.module.host.player.PlayerGhostData;
 import com.qidate.qisplan2.ghost.possession.data.PossessedGhostData;
 import com.qidate.qisplan2.ghost.possession.data.PossessedGhostState;
 import com.qidate.qisplan2.ghost.possession.manager.GhostSuppressionAllocationHandler;
 import com.qidate.qisplan2.ghost.possession.manager.SuppressionAllocation;
 import com.qidate.qisplan2.network.possession.GhostPossessionNetwork;
+import java.util.List;
+import java.util.Map;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.resources.ResourceLocation;
-
-import java.util.List;
-import java.util.Map;
 
 /**
  * 驭鬼者灵异页渲染器。
@@ -157,9 +156,7 @@ public class PossessionSuppressionRenderer {
         }
 
         Map<ResourceLocation, PossessedGhostData> ghosts =
-                minecraft.player.getData(
-                        ModAttachments.POSSESSED_GHOSTS
-                );
+                PlayerGhostData.views(minecraft.player);
 
         int columns = 3;
 
@@ -244,8 +241,8 @@ public class PossessionSuppressionRenderer {
                 0x40FFFFFF
         );
 
-        PossessedGhostAbility ability =
-                GhostAbilityRegistry.get(
+        GhostModule ability =
+                GhostModuleRegistry.get(
                         ghostId
                 );
 
@@ -314,8 +311,8 @@ public class PossessionSuppressionRenderer {
             return;
         }
 
-        PossessedGhostAbility ability =
-                GhostAbilityRegistry.get(
+        GhostModule ability =
+                GhostModuleRegistry.get(
                         draggingSourceGhost
                 );
 
@@ -426,8 +423,8 @@ public class PossessionSuppressionRenderer {
              *
              * 每个鬼可以拥有自己的压制额度图标。
              */
-            PossessedGhostAbility sourceAbility =
-                    GhostAbilityRegistry.get(
+            GhostModule sourceAbility =
+                    GhostModuleRegistry.get(
                             sourceGhost
                     );
 
@@ -485,7 +482,7 @@ public class PossessionSuppressionRenderer {
             GuiGraphics graphics,
             int x,
             int y,
-            PossessedGhostAbility ability
+            GhostModule ability
     ) {
 
         if (ability == null) {
@@ -592,7 +589,7 @@ public class PossessionSuppressionRenderer {
      */
     private void drawGhostIcon(
             GuiGraphics graphics,
-            PossessedGhostAbility ability,
+            GhostModule ability,
             int x,
             int y,
             int size
@@ -665,9 +662,7 @@ public class PossessionSuppressionRenderer {
         }
 
         Map<ResourceLocation, PossessedGhostData> ghosts =
-                minecraft.player.getData(
-                        ModAttachments.POSSESSED_GHOSTS
-                );
+                PlayerGhostData.views(minecraft.player);
 
         int index = 0;
 
@@ -676,8 +671,8 @@ public class PossessionSuppressionRenderer {
             ResourceLocation ghostId =
                     entry.getKey();
 
-            PossessedGhostAbility ability =
-                    GhostAbilityRegistry.get(
+            GhostModule ability =
+                    GhostModuleRegistry.get(
                             ghostId
                     );
 
@@ -1184,10 +1179,7 @@ public class PossessionSuppressionRenderer {
 
         for (
                 ResourceLocation ghostId
-                : minecraft.player
-                .getData(
-                        ModAttachments.POSSESSED_GHOSTS
-                )
+                : PlayerGhostData.views(minecraft.player)
                 .keySet()
         ) {
 
@@ -1217,9 +1209,7 @@ public class PossessionSuppressionRenderer {
         }
 
         Map<ResourceLocation, PossessedGhostData> ghosts =
-                minecraft.player.getData(
-                        ModAttachments.POSSESSED_GHOSTS
-                );
+                PlayerGhostData.views(minecraft.player);
 
         int index = 0;
 
@@ -1440,13 +1430,13 @@ public class PossessionSuppressionRenderer {
             return false;
         }
 
-        PossessedGhostAbility sourceAbility =
-                GhostAbilityRegistry.get(
+        GhostModule sourceAbility =
+                GhostModuleRegistry.get(
                         sourceGhost
                 );
 
-        PossessedGhostAbility targetAbility =
-                GhostAbilityRegistry.get(
+        GhostModule targetAbility =
+                GhostModuleRegistry.get(
                         targetGhost
                 );
 
@@ -1469,8 +1459,8 @@ public class PossessionSuppressionRenderer {
             ResourceLocation id
     ) {
 
-        PossessedGhostAbility ability =
-                GhostAbilityRegistry.get(
+        GhostModule ability =
+                GhostModuleRegistry.get(
                         id
                 );
 

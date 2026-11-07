@@ -1,17 +1,13 @@
 package com.qidate.qisplan2.ghost.module;
 
 import com.qidate.qisplan2.ghost.module.implementation.*;
+import com.qidate.qisplan2.ghost.module.implementation.calling.CallingGhostModule;
+import com.qidate.qisplan2.ghost.module.implementation.eye.GhostEyeModule;
 import com.qidate.qisplan2.ghost.module.implementation.knocking.KnockingGhostModule;
 import com.qidate.qisplan2.ghost.module.implementation.mist.GhostMistModule;
-import com.qidate.qisplan2.ghost.module.implementation.calling.CallingGhostModule;
 import com.qidate.qisplan2.ghost.module.implementation.nightwanderer.NightWandererModule;
+import java.util.*;
 import net.minecraft.resources.ResourceLocation;
-
-import java.util.Collection;
-import java.util.Collections;
-import java.util.LinkedHashMap;
-import java.util.Map;
-import java.util.Objects;
 
 /**
  * 厉鬼模块注册表。
@@ -22,6 +18,10 @@ public final class GhostModuleRegistry {
 
     private static final Map<ResourceLocation, GhostModule> MODULES =
             new LinkedHashMap<>();
+
+    public static Set<ResourceLocation> ids() {
+        return Collections.unmodifiableSet(MODULES.keySet());
+    }
 
     private GhostModuleRegistry() {
     }
@@ -86,6 +86,7 @@ public final class GhostModuleRegistry {
         register(new NightWandererModule());
         register(new CallingGhostModule());
         register(new GhostMistModule());
+        register(new GhostEyeModule());
         register(new GhostStoneBricksModule());
         register(new InvisibleGhostModule());
         register(new GhostTombstoneModule());

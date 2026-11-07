@@ -2,23 +2,21 @@ package com.qidate.qisplan2.ghost.domain.type.mist;
 
 import com.qidate.qisplan2.QisPlan2;
 import com.qidate.qisplan2.entity.ModularGhostEntity;
-import com.qidate.qisplan2.ghost.module.GhostModuleContext;
-import com.qidate.qisplan2.ghost.module.implementation.mist.GhostMistModule;
-import com.qidate.qisplan2.ghost.module.implementation.mist.GhostMistState;
 import com.qidate.qisplan2.ghost.domain.GhostDomain;
 import com.qidate.qisplan2.ghost.domain.GhostDomainManager;
 import com.qidate.qisplan2.ghost.domain.GhostDomainUpdateMode;
 import com.qidate.qisplan2.ghost.domain.SphereDomainShape;
-import com.qidate.qisplan2.ghost.possession.ability.GhostAbilityContext;
-import com.qidate.qisplan2.ghost.possession.ability.ghostmist.GhostMistAbility;
+import com.qidate.qisplan2.ghost.module.GhostModuleContext;
+import com.qidate.qisplan2.ghost.module.host.player.PlayerGhostModuleContext;
+import com.qidate.qisplan2.ghost.module.implementation.mist.GhostMistModule;
+import com.qidate.qisplan2.ghost.module.implementation.mist.GhostMistState;
 import com.qidate.qisplan2.ghost.possession.data.PossessedGhostData;
 import com.qidate.qisplan2.ghost.possession.data.PossessedGhostDomainData;
 import com.qidate.qisplan2.ghost.possession.manager.PossessionHandler;
+import java.util.UUID;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
-
-import java.util.UUID;
 
 /**
  * ========================================
@@ -100,7 +98,7 @@ public final class GhostMistDomainController {
      * </p>
      */
     public static void tick(
-            GhostAbilityContext context
+            PlayerGhostModuleContext context
     ) {
 
         ServerPlayer player =
@@ -114,7 +112,7 @@ public final class GhostMistDomainController {
 
         if (!PossessionHandler.hasGhost(
                 player,
-                GhostMistAbility.ID
+                GhostMistModule.ID
         )) {
 
             close(player);
@@ -161,7 +159,7 @@ public final class GhostMistDomainController {
 
         if (!PossessionHandler.hasGhost(
                 player,
-                GhostMistAbility.ID
+                GhostMistModule.ID
         )) {
 
             return;
@@ -170,7 +168,7 @@ public final class GhostMistDomainController {
         PossessedGhostData data =
                 PossessionHandler.getData(
                         player,
-                        GhostMistAbility.ID
+                        GhostMistModule.ID
                 );
 
         if (data == null) {
@@ -219,7 +217,7 @@ public final class GhostMistDomainController {
 
         if (!PossessionHandler.hasGhost(
                 player,
-                GhostMistAbility.ID
+                GhostMistModule.ID
         )) {
 
             return;
@@ -228,7 +226,7 @@ public final class GhostMistDomainController {
         PossessedGhostData data =
                 PossessionHandler.getData(
                         player,
-                        GhostMistAbility.ID
+                        GhostMistModule.ID
                 );
 
         if (data == null) {
@@ -268,7 +266,7 @@ public final class GhostMistDomainController {
 
         PossessionHandler.setData(
                 player,
-                GhostMistAbility.ID,
+                GhostMistModule.ID,
                 newData
         );
 
@@ -309,7 +307,7 @@ public final class GhostMistDomainController {
         PossessedGhostData data =
                 PossessionHandler.getData(
                         player,
-                        GhostMistAbility.ID
+                        GhostMistModule.ID
                 );
 
         boolean wasOpen = false;
@@ -333,7 +331,7 @@ public final class GhostMistDomainController {
 
                     PossessionHandler.setData(
                             player,
-                            GhostMistAbility.ID,
+                            GhostMistModule.ID,
                             newData
                     );
                 }
@@ -368,7 +366,7 @@ public final class GhostMistDomainController {
         PossessedGhostData data =
                 PossessionHandler.getData(
                         player,
-                        GhostMistAbility.ID
+                        GhostMistModule.ID
                 );
 
         if (data == null) {
@@ -458,7 +456,7 @@ public final class GhostMistDomainController {
         PossessedGhostData data =
                 PossessionHandler.getData(
                         player,
-                        GhostMistAbility.ID
+                        GhostMistModule.ID
                 );
 
         if (data == null) {
@@ -619,7 +617,7 @@ public final class GhostMistDomainController {
         PossessedGhostData data =
                 PossessionHandler.getData(
                         player,
-                        GhostMistAbility.ID
+                        GhostMistModule.ID
                 );
 
         if (data == null) {
@@ -671,7 +669,7 @@ public final class GhostMistDomainController {
 
         PossessionHandler.setData(
                 player,
-                GhostMistAbility.ID,
+                GhostMistModule.ID,
                 newData
         );
 

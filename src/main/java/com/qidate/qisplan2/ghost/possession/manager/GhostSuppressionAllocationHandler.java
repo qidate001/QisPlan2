@@ -2,15 +2,14 @@ package com.qidate.qisplan2.ghost.possession.manager;
 
 import com.qidate.qisplan2.QisPlan2;
 import com.qidate.qisplan2.core.ModAttachments;
-import com.qidate.qisplan2.ghost.possession.ability.GhostAbilityRegistry;
-import com.qidate.qisplan2.ghost.possession.ability.PossessedGhostAbility;
-import net.minecraft.resources.ResourceLocation;
-import net.minecraft.world.entity.player.Player;
-
+import com.qidate.qisplan2.ghost.module.GhostModule;
+import com.qidate.qisplan2.ghost.module.GhostModuleRegistry;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.entity.player.Player;
 
 public final class GhostSuppressionAllocationHandler {
 
@@ -169,13 +168,13 @@ public final class GhostSuppressionAllocationHandler {
          *
          * 来源鬼的灵异必须能够压制目标鬼。
          */
-        PossessedGhostAbility sourceAbility =
-                GhostAbilityRegistry.get(
+        GhostModule sourceAbility =
+                GhostModuleRegistry.get(
                         sourceGhost
                 );
 
-        PossessedGhostAbility targetAbility =
-                GhostAbilityRegistry.get(
+        GhostModule targetAbility =
+                GhostModuleRegistry.get(
                         targetGhost
                 );
 
@@ -438,13 +437,13 @@ public final class GhostSuppressionAllocationHandler {
          *
          * 来源鬼必须能够压制新的目标鬼。
          */
-        PossessedGhostAbility sourceAbility =
-                GhostAbilityRegistry.get(
+        GhostModule sourceAbility =
+                GhostModuleRegistry.get(
                         sourceGhost
                 );
 
-        PossessedGhostAbility targetAbility =
-                GhostAbilityRegistry.get(
+        GhostModule targetAbility =
+                GhostModuleRegistry.get(
                         newTargetGhost
                 );
 

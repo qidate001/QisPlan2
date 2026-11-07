@@ -1,8 +1,8 @@
 package com.qidate.qisplan2.event;
 
 import com.qidate.qisplan2.QisPlan2;
+import com.qidate.qisplan2.ghost.module.implementation.nightwanderer.NightWandererModule;
 import com.qidate.qisplan2.ghost.possession.manager.PossessionHandler;
-import com.qidate.qisplan2.ghost.possession.ability.nightwanderer.NightWandererAbility;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.item.ItemStack;
@@ -48,7 +48,7 @@ public class PossessionAbilityHandler {
          */
         if (!PossessionHandler.hasGhost(
                 player,
-                NightWandererAbility.ID
+                NightWandererModule.ID
         )) {
             return;
         }
@@ -65,7 +65,7 @@ public class PossessionAbilityHandler {
 
         PossessionHandler.useAbility(
                 player,
-                NightWandererAbility.ID,
+                NightWandererModule.ID,
                 target
         );
     }

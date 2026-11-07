@@ -1,7 +1,6 @@
 package com.qidate.qisplan2.ghost.module.ability;
 
 import com.qidate.qisplan2.ghost.module.*;
-
 import java.util.List;
 import java.util.Objects;
 
@@ -25,6 +24,18 @@ public final class GhostAbilityExecutor {
     public static boolean tryExecute(
             GhostAbilityContext context
     ) {
+        return execute(context, false);
+    }
+
+    /**
+     * 玩家交互需要实际效果结果，以决定是否消费本次交互。
+     * 与规则调用共用完整校验和刺激结算，仅返回语义不同。
+     */
+    public static boolean tryExecuteWithResult(GhostAbilityContext context) {
+        return execute(context, true);
+    }
+
+    private static boolean execute(GhostAbilityContext context, boolean returnEffectResult) {
         Objects.requireNonNull(context, "context");
         if (context.host().getModules().stream().noneMatch(entry -> entry.id().equals(context.moduleId())
                 && !GhostModuleCombatState.permanent(entry)
@@ -45,7 +56,7 @@ public final class GhostAbilityExecutor {
 
         // 2. 检查该模块声明的全部媒介。
         List<GhostMedium> media =
-                List.copyOf(module.getMedia());
+                List.copyOf(module.getMedia(context));
 
         for (GhostMedium medium : media) {
             if (!context.isModuleAvailable()) {
@@ -115,8 +126,8 @@ public final class GhostAbilityExecutor {
         // MANUAL_CHECKPOINT 暂不自动结算。
         // 后续实现显式检查点机制后再处理。
 
-        // 保持旧有语义：能力执行方法已被调用即返回 true。
-        return true;
+        // 规则调用保留“已接受执行”语义；玩家交互返回实际效果是否成功。
+        return !returnEffectResult || effectSucceeded;
     }
 
     /**
@@ -221,7 +232,7 @@ public final class GhostAbilityExecutor {
         }
 
         // 保留现有媒介许可检查。
-        for (GhostMedium medium : module.getMedia()) {
+        for (GhostMedium medium : module.getMedia(context)) {
             if (!medium.allows(context)) {
                 return null;
             }

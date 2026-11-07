@@ -4,27 +4,28 @@ import com.mojang.brigadier.arguments.DoubleArgumentType;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
-
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
-import com.qidate.qisplan2.core.ModAttachments;
 import com.qidate.qisplan2.core.ModTags;
 import com.qidate.qisplan2.entity.ModularGhostEntity;
+import com.qidate.qisplan2.ghost.corrosion.CorrosionMatrix;
+import com.qidate.qisplan2.ghost.corrosion.CorrosionType;
 import com.qidate.qisplan2.ghost.curse.Curse;
 import com.qidate.qisplan2.ghost.curse.CurseManager;
 import com.qidate.qisplan2.ghost.curse.CurseRegistry;
-import com.qidate.qisplan2.ghost.module.GhostModuleDataModifier;
-import com.qidate.qisplan2.ghost.module.host.item.GhostItemData;
 import com.qidate.qisplan2.ghost.module.GhostModule;
-import com.qidate.qisplan2.ghost.module.data.GhostModuleData;
+import com.qidate.qisplan2.ghost.module.GhostModuleDataModifier;
 import com.qidate.qisplan2.ghost.module.GhostModuleRegistry;
+import com.qidate.qisplan2.ghost.module.data.GhostModuleData;
+import com.qidate.qisplan2.ghost.module.host.item.GhostItemData;
 import com.qidate.qisplan2.ghost.module.host.item.GhostItemModuleHost;
+import com.qidate.qisplan2.ghost.module.host.player.PlayerGhostData;
 import com.qidate.qisplan2.ghost.possession.data.PossessedGhostData;
 import com.qidate.qisplan2.ghost.possession.data.PossessedGhostState;
 import com.qidate.qisplan2.ghost.possession.manager.PossessionHandler;
-import com.qidate.qisplan2.ghost.possession.ability.GhostAbilityRegistry;
-
-import com.qidate.qisplan2.ghost.corrosion.CorrosionMatrix;
-import com.qidate.qisplan2.ghost.corrosion.CorrosionType;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.UUID;
 import net.minecraft.ChatFormatting;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
@@ -40,11 +41,6 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.entity.BlockEntity;
-
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.UUID;
 
 public final class GhostCommands {
 
@@ -72,7 +68,7 @@ public final class GhostCommands {
                                                 (context, builder) -> {
 
                                                     for (ResourceLocation id :
-                                                            GhostAbilityRegistry.ids()) {
+                                                            GhostModuleRegistry.ids()) {
 
                                                         builder.suggest(
                                                                 id.toString()
@@ -106,7 +102,7 @@ public final class GhostCommands {
                                                 (context, builder) -> {
 
                                                     for (ResourceLocation id :
-                                                            GhostAbilityRegistry.ids()) {
+                                                            GhostModuleRegistry.ids()) {
 
                                                         builder.suggest(
                                                                 id.toString()
@@ -200,7 +196,7 @@ public final class GhostCommands {
                                                                 (context, builder) -> {
 
                                                                     for (ResourceLocation id :
-                                                                            GhostAbilityRegistry.ids()) {
+                                                                            GhostModuleRegistry.ids()) {
 
                                                                         builder.suggest(
                                                                                 id.toString()
@@ -235,7 +231,7 @@ public final class GhostCommands {
                                                 (context, builder) -> {
 
                                                     for (ResourceLocation id :
-                                                            GhostAbilityRegistry.ids()) {
+                                                            GhostModuleRegistry.ids()) {
 
                                                         builder.suggest(
                                                                 id.toString()
@@ -593,7 +589,7 @@ public final class GhostCommands {
         /*
          * 未知厉鬼
          */
-        if (!GhostAbilityRegistry.contains(
+        if (!GhostModuleRegistry.contains(
                 ghost
         )) {
 
@@ -732,9 +728,7 @@ public final class GhostCommands {
         }
 
         Map<ResourceLocation, PossessedGhostData> ghosts =
-                player.getData(
-                        ModAttachments.POSSESSED_GHOSTS
-                );
+                PlayerGhostData.views(player);
 
         if (ghosts.isEmpty()) {
 
@@ -1271,7 +1265,7 @@ public final class GhostCommands {
     ) {
 
         var curses =
-                com.qidate.qisplan2.ghost.curse.CurseManager.getAll();
+                CurseManager.getAll();
 
         if (curses.isEmpty()) {
 

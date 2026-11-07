@@ -1,13 +1,15 @@
 package com.qidate.qisplan2.ghost.module.implementation.calling;
 
-import com.qidate.qisplan2.entity.ModularGhostEntity;
 import com.qidate.qisplan2.death.ModDamageTypes;
 import com.qidate.qisplan2.death.SupernaturalDeathHandler;
+import com.qidate.qisplan2.entity.ModularGhostEntity;
 import com.qidate.qisplan2.ghost.module.*;
+import com.qidate.qisplan2.ghost.module.GhostModuleCombatState;
 import com.qidate.qisplan2.ghost.module.ability.*;
 import com.qidate.qisplan2.ghost.module.data.GhostModuleInitialData;
 import com.qidate.qisplan2.ghost.module.event.*;
 import com.qidate.qisplan2.ghost.module.influence.GhostInfluenceType;
+import java.util.List;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -15,7 +17,6 @@ import net.minecraft.sounds.SoundSource;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.ai.goal.Goal;
 import net.minecraft.world.phys.Vec3;
-import java.util.List;
 import static com.qidate.qisplan2.QisPlan2.MODID;
 
 /**
@@ -40,7 +41,7 @@ public final class CallingGhostModule implements GhostModule {
     public static boolean isActive(ModularGhostEntity host) {
         return host.level() instanceof ServerLevel && host.isAlive() && !host.isCoffinNailed()
                 && !host.isSupernaturallyStunned() && host.getModules().stream()
-                .anyMatch(e -> e.id().equals(ID) && com.qidate.qisplan2.ghost.module.GhostModuleCombatState.available(e));
+                .anyMatch(e -> e.id().equals(ID) && GhostModuleCombatState.available(e));
     }
     static boolean isTurnAround(float previous, float current) {
         return Math.abs(Mth.wrapDegrees(current - previous)) >= 45.0F;
@@ -82,7 +83,7 @@ public final class CallingGhostModule implements GhostModule {
             }
         });
     }
-    @Override public List<GhostAbility> getAbilities() {
+    @Override public List<GhostAbility> getIntrinsicAbilities() {
         return List.of(new GhostAbility() {
             @Override public ResourceLocation getId() { return FOLLOW; }
             @Override public boolean canExecute(GhostAbilityContext c) { return c.host() instanceof ModularGhostEntity; }

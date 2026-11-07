@@ -2,37 +2,36 @@ package com.qidate.qisplan2;
 
 import com.mojang.blaze3d.vertex.DefaultVertexFormat;
 import com.mojang.logging.LogUtils;
-import com.qidate.qisplan2.event.GhostBlockInteractionHandler;
-import com.qidate.qisplan2.event.GhostBreakoutHandler;
-import com.qidate.qisplan2.ghost.curse.CurseRegistry;
-import com.qidate.qisplan2.ghost.domain.GhostDomainEntityEvents;
-import com.qidate.qisplan2.ghost.domain.client.renderer.GhostDomainShaderRegistry;
 import com.qidate.qisplan2.core.ModEntityAttributes;
 import com.qidate.qisplan2.core.ModRegistries;
 import com.qidate.qisplan2.core.QisConfig;
+import com.qidate.qisplan2.event.GhostBlockInteractionHandler;
+import com.qidate.qisplan2.event.GhostBreakoutHandler;
 import com.qidate.qisplan2.event.GhostLayerCombatHandler;
 import com.qidate.qisplan2.event.PossessionDamageHandler;
+import com.qidate.qisplan2.ghost.curse.CurseRegistry;
+import com.qidate.qisplan2.ghost.domain.GhostDomainEntityEvents;
+import com.qidate.qisplan2.ghost.domain.GhostDomainPlayerLogout;
+import com.qidate.qisplan2.ghost.domain.GhostDomainPlayerSync;
+import com.qidate.qisplan2.ghost.domain.client.renderer.GhostDomainShaderRegistry;
+import com.qidate.qisplan2.ghost.doorplate.GhostDoorPlateTeleportHandler;
 import com.qidate.qisplan2.ghost.isolation.GhostIsolationPlayerSync;
+import com.qidate.qisplan2.ghost.layer.GhostLayerInteractionHandler;
 import com.qidate.qisplan2.ghost.module.GhostModuleInteractionHandler;
 import com.qidate.qisplan2.ghost.module.GhostModuleRegistry;
 import com.qidate.qisplan2.ghost.module.GhostPerceptionHandler;
 import com.qidate.qisplan2.ghost.module.sound.GhostSoundManager;
 import com.qidate.qisplan2.ghost.possession.ability.GhostAbilityInteractionHandler;
-import com.qidate.qisplan2.ghost.possession.ability.GhostAbilityRegistry;
-import com.qidate.qisplan2.ghost.domain.GhostDomainPlayerLogout;
-import com.qidate.qisplan2.ghost.domain.GhostDomainPlayerSync;
-import com.qidate.qisplan2.ghost.doorplate.GhostDoorPlateTeleportHandler;
-import com.qidate.qisplan2.ghost.layer.GhostLayerInteractionHandler;
+import java.io.IOException;
 import net.minecraft.client.renderer.ShaderInstance;
 import net.minecraft.resources.ResourceLocation;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.ModContainer;
 import net.neoforged.fml.common.Mod;
+import net.neoforged.fml.config.ModConfig;
 import net.neoforged.neoforge.client.event.RegisterShadersEvent;
 import net.neoforged.neoforge.common.NeoForge;
 import org.slf4j.Logger;
-
-import java.io.IOException;
 
 @Mod(QisPlan2.MODID)
 public class QisPlan2 {
@@ -42,7 +41,7 @@ public class QisPlan2 {
     // 模组入口
     public QisPlan2(IEventBus modEventBus, ModContainer modContainer) {
         modContainer.registerConfig(
-                net.neoforged.fml.config.ModConfig.Type.CLIENT,
+                ModConfig.Type.CLIENT,
                 QisConfig.CLIENT_SPEC
         );
 
@@ -121,7 +120,7 @@ public class QisPlan2 {
         );
 
         // 驭鬼注册表注册
-        GhostAbilityRegistry.bootstrap();
+
 
         // 诅咒注册表注册
         CurseRegistry.bootstrap();

@@ -1,21 +1,34 @@
 package com.qidate.qisplan2.ghost.module.implementation.knocking;
 
-import com.qidate.qisplan2.entity.ModularGhostEntity;
 import com.qidate.qisplan2.death.ModDamageTypes;
 import com.qidate.qisplan2.death.SupernaturalDeathHandler;
+import com.qidate.qisplan2.entity.ModularGhostEntity;
+import com.qidate.qisplan2.ghost.corrosion.CorrosionType;
+import com.qidate.qisplan2.ghost.corrosion.GhostCorrosion;
 import com.qidate.qisplan2.ghost.module.*;
 import com.qidate.qisplan2.ghost.module.ability.*;
 import com.qidate.qisplan2.ghost.module.data.GhostModuleInitialData;
-import com.qidate.qisplan2.ghost.module.event.GhostEvent;
 import com.qidate.qisplan2.ghost.module.event.DoorKnockHeardEvent;
+import com.qidate.qisplan2.ghost.module.event.GhostEvent;
+import com.qidate.qisplan2.ghost.module.host.player.PlayerGhostModuleContext;
 import com.qidate.qisplan2.ghost.module.influence.GhostInfluenceType;
 import com.qidate.qisplan2.ghost.possession.ability.ghostdoor.knocking.KnockingGhostDoorSystem;
+import com.qidate.qisplan2.ghost.possession.classification.GhostClassification;
+import com.qidate.qisplan2.ghost.possession.classification.GhostTag;
+import com.qidate.qisplan2.ghost.possession.data.PossessedGhostState;
+import com.qidate.qisplan2.ghost.possession.manager.PossessionHandler;
+import java.util.List;
 import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.tags.BlockTags;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.goal.Goal;
-import java.util.List;
+import net.minecraft.world.level.block.DoorBlock;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.state.properties.BlockStateProperties;
+import net.minecraft.world.level.block.state.properties.DoubleBlockHalf;
 import static com.qidate.qisplan2.QisPlan2.MODID;
 
 /**
@@ -50,8 +63,8 @@ public final class KnockingGhostModule implements GhostModule {
         return List.of(new GhostMedium() {
             @Override public ResourceLocation getId() { return MEDIUM; }
             @Override public boolean allows(GhostAbilityContext c) {
-                if (!(c.host() instanceof ModularGhostEntity host) || !isActive(host)
-                        || !(host.level() instanceof ServerLevel)) return false;
+                LivingEntity host = GhostModuleHosts.living(c.host());
+                if (!GhostModuleHosts.available(c.host(), ID) || !(host.level() instanceof ServerLevel)) return false;
                 if (c.parameters() instanceof DoorKnockParameters e) return c.abilityId().equals(KNOCK)
                         && KnockingGhostDoorSystem.isDoor(host.level(), e.door());
                 return c.abilityId().equals(ATTACK) && c.event() instanceof DoorKnockHeardEvent e
@@ -65,8 +78,8 @@ public final class KnockingGhostModule implements GhostModule {
             @Override public ResourceLocation getId() { return RULE; }
             @Override public boolean supports(GhostEvent event) { return event instanceof DoorKnockHeardEvent; }
             @Override public boolean canTrigger(GhostRuleContext c, GhostEvent e) {
-                return c.host() instanceof ModularGhostEntity host && isActive(host)
-                        && e instanceof DoorKnockHeardEvent heard && heard.source() == host;
+                return GhostModuleHosts.available(c.host(), ID)
+                        && e instanceof DoorKnockHeardEvent heard && heard.source() == GhostModuleHosts.living(c.host());
             }
             @Override public void onTrigger(GhostRuleContext c, GhostEvent event) {
                 DoorKnockHeardEvent e = (DoorKnockHeardEvent) event;
@@ -75,18 +88,18 @@ public final class KnockingGhostModule implements GhostModule {
                 Runnable attack = GhostAbilityExecutor.prepareDeferred(new GhostAbilityContext(
                         c.host(), ID, ATTACK, GhostAbilityContext.Source.RULE, e));
                 if (attack != null) c.submitInfluence(e.target().getUUID(), GhostInfluenceType.ATTACK,
-                        c.getModuleContext().intensity(),
+                        GhostModuleHosts.strength(c.host(), ID),
                         () -> KnockingGhostDoorSystem.scheduleModuleAttack(attack));
             }
         });
     }
 
-    @Override public List<GhostAbility> getAbilities() {
+    @Override public List<GhostAbility> getIntrinsicAbilities() {
         return List.of(new GhostAbility() {
             @Override public ResourceLocation getId() { return KNOCK; }
             @Override public boolean canExecute(GhostAbilityContext c) { return c.parameters() instanceof DoorKnockParameters; }
             @Override public void execute(GhostAbilityContext c) {
-                ModularGhostEntity host = (ModularGhostEntity) c.host();
+                LivingEntity host = GhostModuleHosts.living(c.host());
                 KnockingGhostDoorSystem.knock((ServerLevel) host.level(), host,
                         ((DoorKnockParameters)c.parameters()).door(), c.getModuleContext().intensity());
             }
@@ -97,8 +110,342 @@ public final class KnockingGhostModule implements GhostModule {
             @Override public boolean executeWithResult(GhostAbilityContext c) {
                 DoorKnockHeardEvent e = (DoorKnockHeardEvent)c.event();
                 return SupernaturalDeathHandler.tryKill(e.target(),
-                        ModDamageTypes.knockingGhost((LivingEntity)c.host()), c.getModuleContext().intensity());
+                        ModDamageTypes.knockingGhost(GhostModuleHosts.living(c.host())), GhostModuleHosts.strength(c.host(), ID));
             }
         });
     }
+
+
+    /**
+     * 10 秒。
+     */
+    private static final long TEN_SECONDS = 200L;
+
+    /**
+     * 普通敲门：
+     *
+     * +10%
+     */
+    private static final double NORMAL_REVIVAL_GAIN = 10.0D;
+
+    /**
+     * 10 秒内再次敲门：
+     *
+     * +30%
+     */
+    private static final double RAPID_REVIVAL_GAIN = 30.0D;
+
+    /**
+     * 每个受到袭击的目标：
+     *
+     * +2%
+     */
+    private static final double TARGET_REVIVAL_BONUS = 2.0D;
+
+
+    /**
+     * 灵异侵蚀
+     */
+    private static final GhostCorrosion CORROSION =
+            GhostCorrosion.builder()
+                    .add(CorrosionType.GLOBAL, 20)
+                    .add(CorrosionType.HAND, 20)
+                    .build();
+
+
+    /**
+     * 敲门鬼完整复苏时的本质灵异强度。
+     */
+
+
+    /**
+     * 敲门鬼目前没有 LivingEntity 主动能力。
+     */
+    @Override
+    public boolean use(
+            PlayerGhostModuleContext context
+    ) {
+        return false;
+    }
+
+    /**
+     * 灵异侵蚀
+     */
+    @Override
+    public GhostCorrosion corrosion() {
+        return CORROSION;
+    }
+
+    /**
+     * 厉鬼标签
+     */
+    @Override
+    public GhostClassification classification() {
+
+        return GhostClassification.of(
+                GhostTag.ENTITY,
+                GhostTag.EXISTENCE_FORM,
+                GhostTag.DOOR
+        );
+    }
+
+    @Override
+    public GhostClassification suppressionTargets() {
+        return GhostClassification.empty();
+    }
+
+    @Override
+    public int suppressionUnits() {
+        return 1;
+    }
+
+    @Override
+    public double suppressionUnitStrength() {
+        return 20.0D;
+    }
+
+    /**
+     * Shift + 右键门。
+     */
+    @Override
+    public boolean useOnBlock(
+            PlayerGhostModuleContext context,
+            BlockPos clickedPos
+    ) {
+
+        ServerPlayer player =
+                context.player();
+
+        if (!(player.level()
+                instanceof ServerLevel serverLevel)) {
+
+            return false;
+        }
+
+
+        /*
+         * ========================================================
+         * 找到门的下半部分
+         * ========================================================
+         */
+
+        BlockPos doorPos =
+                getLowerDoorPos(
+                        serverLevel,
+                        clickedPos
+                );
+
+        if (doorPos == null) {
+            return false;
+        }
+
+
+        /*
+         * ========================================================
+         * 计算这一次“直接敲下这扇门”
+         * 有多少生物听见。
+         *
+         * 注意：
+         *
+         * 鬼门后续传播产生的其他门，
+         * 不在这里重复增加驾驭者复苏。
+         * ========================================================
+         */
+
+        int targetCount =
+                KnockingGhostDoorSystem.countHearingTargets(
+                        serverLevel,
+                        player,
+                        doorPos
+                );
+
+
+        /*
+         * ========================================================
+         * 真正执行敲门。
+         *
+         * 包括：
+         *
+         * 声音
+         * 延迟攻击
+         * 鬼门
+         * 50 格共鸣
+         * 50 层递归
+         * ========================================================
+         */
+
+        double attackStrength =
+                PossessionHandler.getEffectiveStrength(
+                        player,
+                        ID
+                );
+
+        KnockingGhostDoorSystem.knock(
+                serverLevel,
+                player,
+                doorPos,
+                attackStrength
+        );
+
+
+        /*
+         * ========================================================
+         * 驾驭代价
+         * ========================================================
+         */
+
+        PossessedGhostState state =
+                context.state();
+
+        long now =
+                serverLevel.getGameTime();
+
+        boolean rapid =
+                state.lastAbilityUseTick() > 0
+                        && now - state.lastAbilityUseTick()
+                        < TEN_SECONDS;
+
+
+        double baseGain =
+                rapid
+                        ? RAPID_REVIVAL_GAIN
+                        : NORMAL_REVIVAL_GAIN;
+
+
+        double revivalGain =
+                baseGain
+                        + targetCount
+                        * TARGET_REVIVAL_BONUS;
+
+
+        PossessedGhostState newState =
+                PossessionHandler.addRevival(
+                        player,
+                        ID,
+                        state,
+                        revivalGain,
+                        CorrosionType.HAND
+                );
+
+
+        /*
+         * 记录能力使用时间。
+         */
+
+        newState =
+                new PossessedGhostState(
+                        newState.revival(),
+                        state.strength(),
+                        newState.shallowStun(),
+                        newState.stunTicks(),
+                        newState.permanentStun(),
+                        now
+                );
+
+        context.setState(
+                newState
+        );
+
+
+        /*
+         * ========================================================
+         * 普通门：
+         *
+         * 敲一次就毁掉。
+         *
+         * 鬼门：
+         * 不毁。
+         * ========================================================
+         */
+
+        if (!KnockingGhostDoorSystem.isGhostDoor(
+                serverLevel,
+                doorPos
+        )) {
+
+            serverLevel.destroyBlock(
+                    doorPos,
+                    false
+            );
+        }
+
+
+        /*
+         * ========================================================
+         * 复苏到 100%
+         * ========================================================
+         */
+
+        if (newState.revival()
+                >= 1.0D) {
+
+            player.setHealth(0.0F);
+        }
+
+
+        return true;
+    }
+
+    /**
+     * 获取门的下半部分。
+     */
+    private static BlockPos getLowerDoorPos(
+            ServerLevel level,
+            BlockPos clickedPos
+    ) {
+
+        BlockState state =
+                level.getBlockState(
+                        clickedPos
+                );
+
+        /*
+         * ========================================================
+         * 原版 DoorBlock
+         * ========================================================
+         */
+        if (state.getBlock()
+                instanceof DoorBlock) {
+
+            if (!state.hasProperty(
+                    DoorBlock.HALF
+            )) {
+                return null;
+            }
+
+            if (state.getValue(
+                    DoorBlock.HALF
+            ) == DoubleBlockHalf.UPPER) {
+
+                return clickedPos.below();
+            }
+
+            return clickedPos;
+        }
+
+        /*
+         * ========================================================
+         * 其他标签门
+         * ========================================================
+         */
+        if (state.is(BlockTags.DOORS)) {
+
+            if (state.hasProperty(
+                    BlockStateProperties.DOUBLE_BLOCK_HALF
+            )) {
+
+                if (state.getValue(
+                        BlockStateProperties.DOUBLE_BLOCK_HALF
+                ) == DoubleBlockHalf.UPPER) {
+
+                    return clickedPos.below();
+                }
+            }
+
+            return clickedPos;
+        }
+
+        return null;
+    }
+
 }

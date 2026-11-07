@@ -3,12 +3,11 @@ package com.qidate.qisplan2.ghost.possession.ability.ghostdoor;
 import com.qidate.qisplan2.QisPlan2;
 import com.qidate.qisplan2.death.ModDamageTypes;
 import com.qidate.qisplan2.death.SupernaturalDeathHandler;
-import com.qidate.qisplan2.ghost.possession.ability.ghostdoor.closing.ClosingGhostAbility;
-import com.qidate.qisplan2.ghost.possession.ability.ghostdoor.opening.OpeningGhostAbility;
+import com.qidate.qisplan2.ghost.corrosion.CorrosionType;
+import com.qidate.qisplan2.ghost.module.implementation.ClosingGhostModule;
+import com.qidate.qisplan2.ghost.module.implementation.OpeningGhostModule;
 import com.qidate.qisplan2.ghost.possession.data.PossessedGhostState;
 import com.qidate.qisplan2.ghost.possession.manager.PossessionHandler;
-
-import com.qidate.qisplan2.ghost.corrosion.CorrosionType;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerLevel;
@@ -133,7 +132,7 @@ public final class GhostDoorAbilityHandler {
                 boolean hasOpeningGhost =
                         PossessionHandler.hasGhost(
                                 player,
-                                OpeningGhostAbility.ID
+                                OpeningGhostModule.ID
                         );
 
                 if (hasOpeningGhost) {
@@ -157,7 +156,7 @@ public final class GhostDoorAbilityHandler {
                 boolean hasClosingGhost =
                         PossessionHandler.hasGhost(
                                 player,
-                                ClosingGhostAbility.ID
+                                ClosingGhostModule.ID
                         );
 
                 if (hasClosingGhost) {
@@ -194,7 +193,7 @@ public final class GhostDoorAbilityHandler {
         if (opening
                 && PossessionHandler.hasGhost(
                 player,
-                OpeningGhostAbility.ID
+                OpeningGhostModule.ID
         )) {
 
             useOpeningGhostDoorAbility(
@@ -216,7 +215,7 @@ public final class GhostDoorAbilityHandler {
         if (!opening
                 && PossessionHandler.hasGhost(
                 player,
-                ClosingGhostAbility.ID
+                ClosingGhostModule.ID
         )) {
 
             useClosingGhostDoorAbility(
@@ -245,7 +244,7 @@ public final class GhostDoorAbilityHandler {
         double attackStrength =
                 PossessionHandler.getEffectiveStrength(
                         player,
-                        OpeningGhostAbility.ID
+                        OpeningGhostModule.ID
                 );
 
 
@@ -284,7 +283,7 @@ public final class GhostDoorAbilityHandler {
         PossessedGhostState state =
                 PossessionHandler.getState(
                         player,
-                        OpeningGhostAbility.ID
+                        OpeningGhostModule.ID
                 );
 
         if (state == null) {
@@ -295,7 +294,7 @@ public final class GhostDoorAbilityHandler {
         PossessedGhostState newState =
                 PossessionHandler.addRevival(
                         player,
-                        OpeningGhostAbility.ID,
+                        OpeningGhostModule.ID,
                         state,
                         revivalGain,
                         CorrosionType.HAND
@@ -304,7 +303,7 @@ public final class GhostDoorAbilityHandler {
 
         PossessionHandler.setState(
                 player,
-                OpeningGhostAbility.ID,
+                OpeningGhostModule.ID,
                 newState
         );
     }
@@ -324,7 +323,7 @@ public final class GhostDoorAbilityHandler {
         double attackStrength =
                 PossessionHandler.getEffectiveStrength(
                         player,
-                        ClosingGhostAbility.ID
+                        ClosingGhostModule.ID
                 );
 
 
@@ -363,7 +362,7 @@ public final class GhostDoorAbilityHandler {
         PossessedGhostState state =
                 PossessionHandler.getState(
                         player,
-                        ClosingGhostAbility.ID
+                        ClosingGhostModule.ID
                 );
 
         if (state == null) {
@@ -374,7 +373,7 @@ public final class GhostDoorAbilityHandler {
         PossessedGhostState newState =
                 PossessionHandler.addRevival(
                         player,
-                        ClosingGhostAbility.ID,
+                        ClosingGhostModule.ID,
                         state,
                         revivalGain,
                         CorrosionType.HAND
@@ -383,7 +382,7 @@ public final class GhostDoorAbilityHandler {
 
         PossessionHandler.setState(
                 player,
-                ClosingGhostAbility.ID,
+                ClosingGhostModule.ID,
                 newState
         );
     }
@@ -523,13 +522,13 @@ public final class GhostDoorAbilityHandler {
         boolean possessingOpening =
                 PossessionHandler.hasGhost(
                         player,
-                        OpeningGhostAbility.ID
+                        OpeningGhostModule.ID
                 );
 
         boolean possessingClosing =
                 PossessionHandler.hasGhost(
                         player,
-                        ClosingGhostAbility.ID
+                        ClosingGhostModule.ID
                 );
 
         /*
@@ -648,7 +647,7 @@ public final class GhostDoorAbilityHandler {
             double attackStrength =
                     PossessionHandler.getEffectiveStrength(
                             player,
-                            OpeningGhostAbility.ID
+                            OpeningGhostModule.ID
                     );
 
             /*
@@ -668,17 +667,17 @@ public final class GhostDoorAbilityHandler {
             PossessedGhostState state =
                     PossessionHandler.getState(
                             player,
-                            OpeningGhostAbility.ID
+                            OpeningGhostModule.ID
                     );
 
             if (state != null) {
 
                 PossessionHandler.setState(
                         player,
-                        OpeningGhostAbility.ID,
+                        OpeningGhostModule.ID,
                         PossessionHandler.addRevival(
                                 player,
-                                OpeningGhostAbility.ID,
+                                OpeningGhostModule.ID,
                                 state,
                                 5.0D,
                                 CorrosionType.HAND
@@ -719,7 +718,7 @@ public final class GhostDoorAbilityHandler {
             double attackStrength =
                     PossessionHandler.getEffectiveStrength(
                             player,
-                            ClosingGhostAbility.ID
+                            ClosingGhostModule.ID
                     );
 
             /*
@@ -737,17 +736,17 @@ public final class GhostDoorAbilityHandler {
             PossessedGhostState state =
                     PossessionHandler.getState(
                             player,
-                            ClosingGhostAbility.ID
+                            ClosingGhostModule.ID
                     );
 
             if (state != null) {
 
                 PossessionHandler.setState(
                         player,
-                        ClosingGhostAbility.ID,
+                        ClosingGhostModule.ID,
                         PossessionHandler.addRevival(
                                 player,
-                                ClosingGhostAbility.ID,
+                                ClosingGhostModule.ID,
                                 state,
                                 5.0D,
                                 CorrosionType.HAND
@@ -795,7 +794,7 @@ public final class GhostDoorAbilityHandler {
                 double attackStrength =
                         PossessionHandler.getEffectiveStrength(
                                 player,
-                                OpeningGhostAbility.ID
+                                OpeningGhostModule.ID
                         );
 
                 attackWithOpeningGhost(
@@ -807,17 +806,17 @@ public final class GhostDoorAbilityHandler {
                 PossessedGhostState state =
                         PossessionHandler.getState(
                                 player,
-                                OpeningGhostAbility.ID
+                                OpeningGhostModule.ID
                         );
 
                 if (state != null) {
 
                     PossessionHandler.setState(
                             player,
-                            OpeningGhostAbility.ID,
+                            OpeningGhostModule.ID,
                             PossessionHandler.addRevival(
                                     player,
-                                    OpeningGhostAbility.ID,
+                                    OpeningGhostModule.ID,
                                     state,
                                     1.0D,
                                     CorrosionType.HAND
@@ -854,7 +853,7 @@ public final class GhostDoorAbilityHandler {
                 double attackStrength =
                         PossessionHandler.getEffectiveStrength(
                                 player,
-                                ClosingGhostAbility.ID
+                                ClosingGhostModule.ID
                         );
 
                 attackWithClosingGhost(
@@ -866,17 +865,17 @@ public final class GhostDoorAbilityHandler {
                 PossessedGhostState state =
                         PossessionHandler.getState(
                                 player,
-                                ClosingGhostAbility.ID
+                                ClosingGhostModule.ID
                         );
 
                 if (state != null) {
 
                     PossessionHandler.setState(
                             player,
-                            ClosingGhostAbility.ID,
+                            ClosingGhostModule.ID,
                             PossessionHandler.addRevival(
                                     player,
-                                    OpeningGhostAbility.ID,
+                                    OpeningGhostModule.ID,
                                     state,
                                     1.0D,
                                     CorrosionType.HAND
@@ -919,13 +918,13 @@ public final class GhostDoorAbilityHandler {
                 double openingStrength =
                         PossessionHandler.getEffectiveStrength(
                                 player,
-                                OpeningGhostAbility.ID
+                                OpeningGhostModule.ID
                         );
 
                 double closingStrength =
                         PossessionHandler.getEffectiveStrength(
                                 player,
-                                ClosingGhostAbility.ID
+                                ClosingGhostModule.ID
                         );
 
                 double attackStrength =
@@ -994,7 +993,7 @@ public final class GhostDoorAbilityHandler {
         );
 
         player.setDeltaMovement(
-                net.minecraft.world.phys.Vec3.ZERO
+                Vec3.ZERO
         );
 
         faceTarget(
