@@ -1,5 +1,7 @@
 package com.qidate.qisplan2.core;
 
+import com.qidate.qisplan2.ghost.module.implementation.calling.CallingGhostModule;
+
 import com.qidate.qisplan2.ghost.module.implementation.KnockingGhostModule;
 import com.qidate.qisplan2.ghost.module.implementation.nightwanderer.NightWandererModule;
 
@@ -371,10 +373,12 @@ public class ModItems {
             ITEMS.register(
                     "calling_ghost_spawn_egg",
                     () -> new SpawnEggItem(
-                            CALLING_GHOST.get(),
+                            MODULAR_GHOST.get(),
                             0x191919,
                             0xB44AFF,
-                            new Item.Properties()
+                            new Item.Properties().component(DataComponents.ENTITY_DATA,
+                                    CustomData.of(ModularGhostEntity.createSpawnData(List.of(
+                                            new GhostModuleData.Entry(CallingGhostModule.ID, CallingGhostModule.INITIAL_INTENSITY)))))
                     )
             );
 

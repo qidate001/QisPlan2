@@ -4,7 +4,6 @@ import com.qidate.qisplan2.client.BlackRainParticle;
 import com.qidate.qisplan2.client.GhostUmbrellaClient;
 import com.qidate.qisplan2.client.curse.CurseClientBootstrap;
 import com.qidate.qisplan2.entity.ModularGhostRenderer;
-import com.qidate.qisplan2.entity.calling.CallingGhostRenderer;
 import com.qidate.qisplan2.entity.ghostmist.GhostMistRenderer;
 import com.qidate.qisplan2.entity.painting.GhostPaintingRenderer;
 import com.qidate.qisplan2.ghost.domain.client.ClientGhostDomainEvents;
@@ -244,12 +243,6 @@ public class QisPlan2Client {
         event.registerEntityRenderer(
                 ModEntities.MODULAR_GHOST.get(),
                 ModularGhostRenderer::new
-        );
-
-        // 喊人鬼
-        event.registerEntityRenderer(
-                ModEntities.CALLING_GHOST.get(),
-                CallingGhostRenderer::new
         );
 
         // 鬼雾
