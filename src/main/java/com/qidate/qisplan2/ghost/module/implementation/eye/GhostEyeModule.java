@@ -114,5 +114,4 @@ public final class GhostEyeModule implements GhostModule {
 
         GhostEyeDomainController.close(context.player());
     }
-
 }

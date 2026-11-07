@@ -37,9 +37,6 @@ public final class GhostAbilityExecutor {
 
     private static boolean execute(GhostAbilityContext context, boolean returnEffectResult) {
         Objects.requireNonNull(context, "context");
-        if (context.host().getModules().stream().noneMatch(entry -> entry.id().equals(context.moduleId())
-                && !GhostModuleCombatState.permanent(entry)
-                && GhostModuleCombatState.ticks(entry) == 0)) return false;
 
 
         // 1. 模块必须仍然存在。

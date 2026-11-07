@@ -9,7 +9,6 @@ import com.qidate.qisplan2.ghost.curse.type.ghostdivination.GhostDivinationCurse
 import com.qidate.qisplan2.ghost.curse.type.ghostdivination.GhostDivinationCurseSource;
 import com.qidate.qisplan2.ghost.curse.type.ghostdivination.GhostDivinationCurseType;
 import com.qidate.qisplan2.ghost.module.implementation.GhostDivinationSlipModule;
-import com.qidate.qisplan2.ghost.possession.data.PossessedGhostState;
 import com.qidate.qisplan2.ghost.possession.manager.PossessionHandler;
 import com.qidate.qisplan2.network.divinationslip.GhostDivinationNetwork;
 import java.util.UUID;
@@ -40,11 +39,6 @@ public final class GhostDivinationSlipSystem {
     private static final int LIFE_STRENGTH =
             GhostDivinationCurse.DEFAULT_STRENGTH;
 
-    /**
-     * 死机状态下的生签强度。
-     */
-    private static final int LIFE_STRENGTH_STUN =
-            GhostDivinationCurse.STUN_STRENGTH;
 
     /**
      * 普通死机时间。
@@ -75,23 +69,10 @@ public final class GhostDivinationSlipSystem {
         );
 
         /*
-         * 判断当前是否处于驾驭鬼签后的死机状态。
+         * 物品生签使用物品的既有基础强度，不读取玩家另一个模块的死机状态。
          */
         int strength =
                 LIFE_STRENGTH;
-
-        PossessedGhostState state =
-                PossessionHandler.getState(
-                        player,
-                        GhostDivinationSlipModule.ID
-                );
-
-        if (state != null
-                && state.stunTicks() > 0) {
-
-            strength =
-                    LIFE_STRENGTH_STUN;
-        }
 
         /*
          * 查找玩家当前已有的生签。

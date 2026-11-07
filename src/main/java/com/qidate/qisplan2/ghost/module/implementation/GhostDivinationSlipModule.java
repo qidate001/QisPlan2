@@ -11,11 +11,12 @@ import com.qidate.qisplan2.ghost.curse.type.ghostdivination.GhostDivinationCurse
 import com.qidate.qisplan2.ghost.curse.type.ghostdivination.GhostDivinationCurseSource;
 import com.qidate.qisplan2.ghost.curse.type.ghostdivination.GhostDivinationCurseType;
 import com.qidate.qisplan2.ghost.module.GhostModule;
-import com.qidate.qisplan2.ghost.module.GhostModuleHosts;
-import com.qidate.qisplan2.ghost.module.GhostModuleRuntime;
 import com.qidate.qisplan2.ghost.module.GhostRule;
 import com.qidate.qisplan2.ghost.module.GhostRuleContext;
 import com.qidate.qisplan2.ghost.module.ability.GhostAbility;
+import com.qidate.qisplan2.ghost.module.ability.GhostAbilityExecutor;
+import com.qidate.qisplan2.ghost.module.influence.GhostInfluence;
+import com.qidate.qisplan2.ghost.module.influence.GhostInfluenceSession;
 import com.qidate.qisplan2.ghost.module.ability.GhostAbilityContext;
 import com.qidate.qisplan2.ghost.module.data.GhostModuleInitialData;
 import com.qidate.qisplan2.ghost.module.event.DivinationSlipResultEvent;
@@ -23,7 +24,6 @@ import com.qidate.qisplan2.ghost.module.event.GhostEvent;
 import com.qidate.qisplan2.ghost.module.event.GhostUseEvent;
 import com.qidate.qisplan2.ghost.module.host.player.PlayerGhostModuleContext;
 import com.qidate.qisplan2.ghost.module.host.player.PlayerGhostModuleHost;
-import com.qidate.qisplan2.ghost.module.implementation.GhostDivinationSlipModule;
 import com.qidate.qisplan2.ghost.module.influence.GhostInfluenceCollector;
 import com.qidate.qisplan2.ghost.module.influence.GhostInfluenceType;
 import com.qidate.qisplan2.ghost.possession.classification.GhostClassification;
@@ -66,8 +66,6 @@ public final class GhostDivinationSlipModule implements GhostModule {
 
     private static final int LIFE_DURATION = 5 * 60 * 20;
 
-    private static final int LIFE_STRENGTH_STUN =
-            GhostDivinationCurse.STUN_STRENGTH;
 
     private static final List<GhostRule> RULES =
             List.of(new DivinationSlipUseRule());
@@ -96,6 +94,52 @@ public final class GhostDivinationSlipModule implements GhostModule {
     @Override
     public List<GhostAbility> getIntrinsicAbilities() {
         return ABILITIES;
+    }
+
+    private static final GhostCorrosion CORROSION =
+            GhostCorrosion.builder()
+                    .add(CorrosionType.GLOBAL, 20)
+                    .build();
+
+    private static final double REVIVAL_GAIN = 20.0D;
+
+
+    @Override
+    public GhostCorrosion corrosion() {
+        return CORROSION;
+    }
+
+    @Override
+    public ResourceLocation iconTexture() {
+        return ResourceLocation.fromNamespaceAndPath(
+                QisPlan2.MODID,
+                "textures/item/ghost_divination_slip.png"
+        );
+    }
+
+    @Override
+    public ResourceLocation suppressionIconTexture() {
+        return ResourceLocation.fromNamespaceAndPath(
+                QisPlan2.MODID,
+                "textures/item/death_sign.png"
+        );
+    }
+
+    @Override
+    public GhostClassification suppressionTargets() {
+        return GhostClassification.of(
+                GhostTag.ENTITY
+        );
+    }
+
+    @Override
+    public int suppressionUnits() {
+        return 2;
+    }
+
+    @Override
+    public double suppressionUnitStrength() {
+        return 20.0D;
     }
 
     /**
@@ -263,18 +307,7 @@ public final class GhostDivinationSlipModule implements GhostModule {
 
         int strength = (int) context.getModuleContext().intensity();
 
-        // 驭鬼者的死机状态只适用于玩家。
-        if (user instanceof ServerPlayer player) {
-            PossessedGhostState state = PossessionHandler.getState(
-                    player,
-                    GhostDivinationSlipModule.ID
-            );
-
-            if (state != null && state.stunTicks() > 0) {
-                strength = LIFE_STRENGTH_STUN;
-            }
-        }
-
+        // 强度直接来自模块实例，不再读取旧驭鬼状态并替换成固定死机强度。
         GhostDivinationCurse existing = getLifeCurse(user.getUUID());
 
         if (existing != null) {
@@ -357,53 +390,6 @@ public final class GhostDivinationSlipModule implements GhostModule {
         }
     }
 
-
-    private static final GhostCorrosion CORROSION =
-            GhostCorrosion.builder()
-                    .add(CorrosionType.GLOBAL, 20)
-                    .build();
-
-    private static final double REVIVAL_GAIN = 20.0D;
-
-
-    @Override
-    public GhostCorrosion corrosion() {
-        return CORROSION;
-    }
-
-    @Override
-    public ResourceLocation iconTexture() {
-        return ResourceLocation.fromNamespaceAndPath(
-                QisPlan2.MODID,
-                "textures/item/ghost_divination_slip.png"
-        );
-    }
-
-    @Override
-    public ResourceLocation suppressionIconTexture() {
-        return ResourceLocation.fromNamespaceAndPath(
-                QisPlan2.MODID,
-                "textures/item/death_sign.png"
-        );
-    }
-
-    @Override
-    public GhostClassification suppressionTargets() {
-        return GhostClassification.of(
-                GhostTag.ENTITY
-        );
-    }
-
-    @Override
-    public int suppressionUnits() {
-        return 2;
-    }
-
-    @Override
-    public double suppressionUnitStrength() {
-        return 20.0D;
-    }
-
     /**
      * 主动技能
      */
@@ -412,9 +398,24 @@ public final class GhostDivinationSlipModule implements GhostModule {
             int result
     ) {
         var host = new PlayerGhostModuleHost(player);
-        if (result < 0 || result > 2 || !GhostModuleHosts.available(host, ID)) return;
+        if (result < 0 || result > 2 || !player.isAlive() || !host.hasModule(ID)) return;
+        // 签文结果是事实；直接准备 POSSESSION 能力，不经过规则运行时。
+        var context = new GhostAbilityContext(host, ID, USE_ABILITY_ID,
+                GhostAbilityContext.Source.POSSESSION, new DivinationSlipResultEvent(player, result));
+        Runnable effect = GhostAbilityExecutor.prepareDeferred(context);
+        if (effect == null) return;
         addRevival(player);
-        GhostModuleRuntime.dispatch(host, new DivinationSlipResultEvent(player, result));
+        if (result == GHOST_RESULT) {
+            effect.run();
+            return;
+        }
+        GhostInfluenceSession session = new GhostInfluenceSession();
+        GhostInfluenceCollector.collectCurses(session, host, ID, USE_ABILITY_ID,
+                player.getUUID(), player.serverLevel().getServer());
+        session.submit(new GhostInfluence(host, ID, USE_ABILITY_ID, player.getUUID(),
+                result == LIFE_RESULT ? GhostInfluenceType.PROTECTION : GhostInfluenceType.ATTACK,
+                context.getModuleContext().intensity(), session.getSourceId(host, ID), session.getBatchId()), effect);
+        session.resolveAndApply();
     }
 
     public static void addRevival(

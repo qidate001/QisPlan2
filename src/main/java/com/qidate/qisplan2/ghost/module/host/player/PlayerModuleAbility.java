@@ -27,7 +27,8 @@ public final class PlayerModuleAbility implements GhostAbility {
             if (input.target() != null && (!input.target().isAlive() || input.target().level() != player.level())) return false;
             if (input.block() != null && (!player.serverLevel().hasChunkAt(input.block())
                     || player.distanceToSqr(input.block().getCenter()) > 64)) return false;
-            return host.getModules().stream().anyMatch(e -> e.id().equals(context.moduleId()) && GhostModuleCombatState.available(e));
+            // 玩家主动使用能力不检查规则死机；模块归属、目标及距离仍是硬性前提。
+            return host.hasModule(context.moduleId());
         }
     };
     @Override public ResourceLocation getId() { return id(module); }

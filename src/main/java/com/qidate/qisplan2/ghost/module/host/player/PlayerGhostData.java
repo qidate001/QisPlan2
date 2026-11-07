@@ -52,7 +52,7 @@ public final class PlayerGhostData {
         var player = custom.getCompound(PLAYER_STATE);
         var state = new PossessedGhostState(entry.revival() / maximum(entry.id()), entry.intensity(),
                 player.getDouble("shallowStun"), GhostModuleCombatState.ticks(entry),
-                GhostModuleCombatState.permanent(entry), player.getLong("lastAbilityUseTick"));
+                (entry.deadlocked() || GhostModuleCombatState.permanent(entry)), player.getLong("lastAbilityUseTick"));
         Optional<PossessedGhostDomainData> domain = Optional.empty();
         if (custom.contains("domainStrength")) {
             domain = Optional.of(new PossessedGhostDomainData(custom.getBoolean("domainOpen"),
@@ -79,10 +79,12 @@ public final class PlayerGhostData {
         player.putDouble("shallowStun", state.shallowStun());
         player.putLong("lastAbilityUseTick", state.lastAbilityUseTick());
         custom.put(PLAYER_STATE, player);
-        CompoundTag combat = custom.getCompound(COMBAT).copy();
-        combat.putInt("stunTicks", (int)Math.clamp(state.stunTicks(), 0, Integer.MAX_VALUE));
-        combat.putBoolean("permanentStun", state.permanentStun());
-        custom.put(COMBAT, combat);
+        if (previous == null) {
+            // 仅旧存档迁移读取旧死机字段；运行时死机始终由模块接口修改。
+            CompoundTag combat = new CompoundTag();
+            combat.putInt("stunTicks", (int)Math.clamp(state.stunTicks(), 0, Integer.MAX_VALUE));
+            custom.put(COMBAT, combat);
+        }
         value.domain().ifPresent(domain -> {
             custom.putBoolean("domainOpen", domain.open());
             custom.putDouble("domainStrength", domain.strength());
@@ -90,6 +92,7 @@ public final class PlayerGhostData {
             custom.putInt("domainLayer", domain.layer());
         });
         return new GhostModuleData.Entry(id, state.strength(), state.revival() * maximum(id),
-                previous != null && previous.sleeping(), previous != null && previous.deadlocked(), custom);
+                previous != null && previous.sleeping(),
+                previous == null ? state.permanentStun() : previous.deadlocked(), custom);
     }
 }

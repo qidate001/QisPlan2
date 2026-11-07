@@ -5,7 +5,6 @@ import com.qidate.qisplan2.core.ModSounds;
 import com.qidate.qisplan2.death.ModDamageTypes;
 import com.qidate.qisplan2.death.SupernaturalDeathHandler;
 import com.qidate.qisplan2.entity.ModularGhostEntity;
-import com.qidate.qisplan2.ghost.module.GhostModuleHosts;
 import com.qidate.qisplan2.ghost.module.GhostModuleRuntime;
 import com.qidate.qisplan2.ghost.module.event.DoorKnockHeardEvent;
 import com.qidate.qisplan2.ghost.module.host.player.PlayerGhostModuleHost;
@@ -223,7 +222,7 @@ public final class KnockingGhostDoorSystem {
         if (!source.isAlive() || (source instanceof ModularGhostEntity host
                 && !KnockingGhostModule.isActive(host))) return KnockResult.failed();
         if (source instanceof ServerPlayer player
-                && !GhostModuleHosts.available(new PlayerGhostModuleHost(player), KnockingGhostModule.ID))
+                && !new PlayerGhostModuleHost(player).hasModule(KnockingGhostModule.ID))
             return KnockResult.failed();
         doorPos =
                 doorPos.immutable();
@@ -449,8 +448,7 @@ public final class KnockingGhostDoorSystem {
             if (source instanceof ModularGhostEntity host) {
                 GhostModuleRuntime.dispatch(host, new DoorKnockHeardEvent(source, doorPos, entity));
             } else if (source instanceof ServerPlayer player) {
-                GhostModuleRuntime.dispatch(new PlayerGhostModuleHost(player),
-                        new DoorKnockHeardEvent(source, doorPos, entity));
+                KnockingGhostModule.attackFromPlayer(player, new DoorKnockHeardEvent(source, doorPos, entity));
             } else {
             PENDING_ATTACKS.add(
                     new PendingKnockAttack(

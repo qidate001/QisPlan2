@@ -198,3 +198,23 @@ idea {
         downloadJavadoc = true
     }
 }
+
+// 回归检查复用主源码集的 Minecraft / NeoForge 类路径。
+sourceSets {
+    regression {
+        compileClasspath += sourceSets.main.output + sourceSets.main.compileClasspath
+        runtimeClasspath += sourceSets.main.runtimeClasspath
+    }
+}
+
+// 验证规则死机与玩家主动调用的边界，无需额外测试框架或启动游戏。
+tasks.register('possessionInvocationTest', JavaExec) {
+    dependsOn tasks.named('regressionClasses')
+    classpath = sourceSets.regression.runtimeClasspath
+    mainClass = 'com.qidate.qisplan2.ghost.module.PossessionInvocationTest'
+    workingDir = layout.buildDirectory.dir('regression-run').get().asFile
+    doFirst { workingDir.mkdirs() }
+}
+tasks.named('check') {
+    dependsOn tasks.named('possessionInvocationTest')
+}

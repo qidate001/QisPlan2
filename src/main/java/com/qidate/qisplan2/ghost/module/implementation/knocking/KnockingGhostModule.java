@@ -11,6 +11,9 @@ import com.qidate.qisplan2.ghost.module.data.GhostModuleInitialData;
 import com.qidate.qisplan2.ghost.module.event.DoorKnockHeardEvent;
 import com.qidate.qisplan2.ghost.module.event.GhostEvent;
 import com.qidate.qisplan2.ghost.module.host.player.PlayerGhostModuleContext;
+import com.qidate.qisplan2.ghost.module.host.player.PlayerGhostModuleHost;
+import com.qidate.qisplan2.ghost.module.influence.GhostInfluence;
+import com.qidate.qisplan2.ghost.module.influence.GhostInfluenceSession;
 import com.qidate.qisplan2.ghost.module.influence.GhostInfluenceType;
 import com.qidate.qisplan2.ghost.possession.ability.ghostdoor.knocking.KnockingGhostDoorSystem;
 import com.qidate.qisplan2.ghost.possession.classification.GhostClassification;
@@ -59,12 +62,27 @@ public final class KnockingGhostModule implements GhostModule {
                 host, ID, KNOCK, GhostAbilityContext.Source.BEHAVIOR, null, () -> {}, new DoorKnockParameters(door)));
     }
 
+    /** 玩家敲门产生的后续袭击属于主动能力链，不重新经过自动听声规则。 */
+    public static void attackFromPlayer(ServerPlayer player, DoorKnockHeardEvent heard) {
+        var host = new PlayerGhostModuleHost(player);
+        if (!host.hasModule(ID)) return;
+        Runnable attack = GhostAbilityExecutor.prepareDeferred(new GhostAbilityContext(
+                host, ID, ATTACK, GhostAbilityContext.Source.POSSESSION, heard));
+        if (attack == null) return;
+        GhostInfluenceSession session = new GhostInfluenceSession();
+        session.submit(new GhostInfluence(host, ID, ATTACK, heard.target().getUUID(),
+                GhostInfluenceType.ATTACK, GhostModuleHosts.strength(host, ID),
+                session.getSourceId(host, ID), session.getBatchId()),
+                () -> KnockingGhostDoorSystem.scheduleModuleAttack(attack));
+        session.resolveAndApply();
+    }
+
     @Override public List<GhostMedium> getMedia() {
         return List.of(new GhostMedium() {
             @Override public ResourceLocation getId() { return MEDIUM; }
             @Override public boolean allows(GhostAbilityContext c) {
                 LivingEntity host = GhostModuleHosts.living(c.host());
-                if (!GhostModuleHosts.available(c.host(), ID) || !(host.level() instanceof ServerLevel)) return false;
+                if (host == null || !host.isAlive() || !c.isModuleAvailable() || !(host.level() instanceof ServerLevel)) return false;
                 if (c.parameters() instanceof DoorKnockParameters e) return c.abilityId().equals(KNOCK)
                         && KnockingGhostDoorSystem.isDoor(host.level(), e.door());
                 return c.abilityId().equals(ATTACK) && c.event() instanceof DoorKnockHeardEvent e
@@ -447,5 +465,4 @@ public final class KnockingGhostModule implements GhostModule {
 
         return null;
     }
-
 }

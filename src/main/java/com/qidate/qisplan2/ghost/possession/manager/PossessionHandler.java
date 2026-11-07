@@ -1113,41 +1113,12 @@ public final class PossessionHandler {
             ResourceLocation ghost,
             long ticks
     ) {
-
-        PossessedGhostState state =
-                getState(
-                        player,
-                        ghost
-                );
-
-
-        if (state == null) {
-            return false;
-        }
-
-
-        PossessedGhostState newState =
-                new PossessedGhostState(
-                        state.revival(),
-                        state.strength(),
-                        state.shallowStun(),
-                        Math.max(
-                                1L,
-                                ticks
-                        ),
-                        false,
-                        state.lastAbilityUseTick()
-                );
-
-
-        setState(
-                player,
-                ghost,
-                newState
-        );
-
-
+        var host = new PlayerGhostModuleHost(player);
+        var entry = host.getModules().stream().filter(e -> e.id().equals(ghost)).findFirst().orElse(null);
+        if (entry == null) return false;
+        GhostModuleCombatState.set(host, entry, (int)Math.clamp(ticks, 1, Integer.MAX_VALUE), false);
         return true;
+
     }
 
 
@@ -1161,38 +1132,9 @@ public final class PossessionHandler {
             ServerPlayer player,
             ResourceLocation ghost
     ) {
+        // 无期限死机统一写入模块 deadlocked，由模块命令负责解除。
+        return new PlayerGhostModuleHost(player).setDeadlocked(ghost, true);
 
-        PossessedGhostState state =
-                getState(
-                        player,
-                        ghost
-                );
-
-
-        if (state == null) {
-            return false;
-        }
-
-
-        PossessedGhostState newState =
-                new PossessedGhostState(
-                        state.revival(),
-                        state.strength(),
-                        state.shallowStun(),
-                        0L,
-                        true,
-                        state.lastAbilityUseTick()
-                );
-
-
-        setState(
-                player,
-                ghost,
-                newState
-        );
-
-
-        return true;
     }
 
 
@@ -1215,12 +1157,9 @@ public final class PossessionHandler {
                 QisDeathHandler.forceKillAndCleanup(player);
                 return;
             }
-            if (GhostModuleCombatState.available(entry)) {
-                module.onPlayerTick(new PlayerGhostModuleContext(player, entry.id(), getData(player, entry.id())));
-            } else {
-                // 临时停用也要收回鬼域、移速等玩家运行时效果，实例数据保持不变。
-                module.onPlayerSuspended(new PlayerGhostModuleContext(player, entry.id(), getData(player, entry.id())));
-            }
+            // 玩家持续能力（如已主动展开的鬼域）独立于自动规则；死机不撤销主动能力。
+            // 规则是否失效由下面的 GhostModuleRuntime 统一判断。
+            module.onPlayerTick(new PlayerGhostModuleContext(player, entry.id(), getData(player, entry.id())));
             if (!player.isAlive()) return;
         }
         GhostModuleRuntime.dispatch(host, new ModuleTickEvent());

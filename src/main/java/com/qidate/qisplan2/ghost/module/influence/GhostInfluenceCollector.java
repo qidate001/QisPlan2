@@ -3,6 +3,8 @@ package com.qidate.qisplan2.ghost.module.influence;
 import com.qidate.qisplan2.ghost.curse.Curse;
 import com.qidate.qisplan2.ghost.curse.CurseManager;
 import com.qidate.qisplan2.ghost.module.GhostRuleContext;
+import com.qidate.qisplan2.ghost.module.GhostModuleHost;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
 
 import java.util.Objects;
@@ -71,5 +73,19 @@ public final class GhostInfluenceCollector {
         }
 
         return submitted;
+    }
+
+    /**
+     * 主动能力的诅咒收集入口。直接使用裁决会话，不要求存在或触发某条规则。
+     */
+    public static void collectCurses(GhostInfluenceSession session, GhostModuleHost host,
+            ResourceLocation moduleId, ResourceLocation abilityId, UUID target, MinecraftServer server) {
+        for (Curse curse : CurseManager.getByTarget(target)) {
+            if (!curse.isValid(server) || !(curse instanceof GhostInfluenceProvider provider)) continue;
+            session.submit(new GhostInfluence(host, moduleId, abilityId, target,
+                    provider.getInfluenceType(), provider.getInfluenceIntensity(),
+                    session.getSourceId(host, moduleId), session.getBatchId()),
+                    () -> {}, () -> CurseManager.remove(server, curse.getId()));
+        }
     }
 }

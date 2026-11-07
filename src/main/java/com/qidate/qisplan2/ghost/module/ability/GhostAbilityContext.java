@@ -1,6 +1,7 @@
 package com.qidate.qisplan2.ghost.module.ability;
 
 import com.qidate.qisplan2.ghost.module.GhostModule;
+import com.qidate.qisplan2.ghost.module.GhostModuleCombatState;
 import com.qidate.qisplan2.ghost.module.GhostModuleContext;
 import com.qidate.qisplan2.ghost.module.GhostModuleHost;
 import com.qidate.qisplan2.ghost.module.GhostModuleRegistry;
@@ -123,13 +124,16 @@ public record GhostAbilityContext(
     }
 
     /**
-     * 当前模块是否仍由宿主持有。
+     * 当前模块是否允许本次来源的调用。
      *
      * 上下文创建后，模块仍可能被移除，
      * 因此不能仅凭上下文创建成功就认定模块一直有效。
+     * 自动规则和行为还要求模块未死机；玩家主动调用不受规则死机限制。
      */
     public boolean isModuleAvailable() {
-        return host.hasModule(moduleId);
+        // 死机禁用自动规则和行为，但不禁止驭鬼者主动调用；媒介仍由执行器检查。
+        return host.getModules().stream().anyMatch(entry -> entry.id().equals(moduleId)
+                && (source == Source.POSSESSION || GhostModuleCombatState.available(entry)));
     }
 
     /**
