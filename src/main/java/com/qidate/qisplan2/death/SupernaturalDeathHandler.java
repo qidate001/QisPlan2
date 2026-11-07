@@ -1,6 +1,7 @@
 package com.qidate.qisplan2.death;
 
 import com.qidate.qisplan2.QisPlan2;
+import com.qidate.qisplan2.event.GhostEntityDestructionHandler;
 import com.qidate.qisplan2.core.ModGameRules;
 import com.qidate.qisplan2.core.ModMobEffects;
 import com.qidate.qisplan2.death.SupernaturalEntity;
@@ -218,34 +219,21 @@ public class SupernaturalDeathHandler {
         /*
          * 普通实体仍然是秒杀逻辑
          */
-        entity.hurt(
-                damageSource,
-                Float.MAX_VALUE
-        );
+        boolean instantlyKill = entity.level().getGameRules()
+                .getRule(ModGameRules.GHOST_DAMAGE_INSTANTLY_KILL).get();
 
-        boolean instantlyKill =
-                entity.level()
-                        .getGameRules()
-                        .getRule(
-                                ModGameRules.GHOST_DAMAGE_INSTANTLY_KILL
-                        )
-                        .get();
-
-        if (entity instanceof Player player
-                && player.isCreative()
-                && !instantlyKill) {
-
-            return false;
+        if (!instantlyKill) {
+            // 非强制模式交给真实死亡事件；受伤被免疫或抵挡时，不提前触发摧毁反击。
+            entity.hurt(damageSource, Float.MAX_VALUE);
+            return !entity.isAlive();
         }
 
-        if (instantlyKill) {
-
-            // 强制死亡
+        // 强制模式本来会绕过原版死亡取消，必须在伤害及强制归零前统一检查。
+        return GhostEntityDestructionHandler.executeLethalAttack(entity, damageSource, () -> {
+            entity.hurt(damageSource, Float.MAX_VALUE);
             QisDeathHandler.forceKillAndCleanup(entity);
-            return true;
-        }
-
-        return !entity.isAlive();
+            return !entity.isAlive();
+        });
     }
 
     private static boolean tryGhostShroudProtection(

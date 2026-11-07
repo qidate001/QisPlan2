@@ -15,6 +15,7 @@ public class GhostBlockInteractionHandler {
 
     @SubscribeEvent
     public static void onBlockBreak(BlockEvent.BreakEvent event) {
+        if (event.isCanceled()) return;
         Player player = event.getPlayer();
         if (player == null) {
             return;
@@ -22,10 +23,11 @@ public class GhostBlockInteractionHandler {
 
         BlockState state = event.getState();
 
-        // 直接从方块实例获取鬼模块宿主，不再判断具体方块类型。
-        if (!(state.getBlock() instanceof GhostModuleHost host)) {
-            return;
-        }
+        // 优先使用方块实体持有的可变模块实例；无方块实体宿主时使用方块定义。
+        var blockEntity = event.getLevel().getBlockEntity(event.getPos());
+        GhostModuleHost host = blockEntity instanceof GhostModuleHost modules ? modules
+                : state.getBlock() instanceof GhostModuleHost modules ? modules : null;
+        if (host == null) return;
 
         BlockDestructionAttemptEvent destructionEvent =
                 new BlockDestructionAttemptEvent(
