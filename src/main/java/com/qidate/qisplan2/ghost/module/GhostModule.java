@@ -4,6 +4,7 @@ import com.qidate.qisplan2.ghost.module.ability.GhostAbility;
 import com.qidate.qisplan2.ghost.module.data.GhostModuleInitialData;
 import com.qidate.qisplan2.ghost.module.sound.GhostSoundDefinition;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.entity.ai.goal.Goal;
 
 import java.util.List;
 
@@ -28,16 +29,21 @@ public interface GhostModule {
 
     /**
      * 获取模块定义提供的初始属性。
-     *
-     * 默认值：
-     * - 灵异强度：1.0
-     * - 复苏值：0.0
      */
     default GhostModuleInitialData getInitialData() {
         return new GhostModuleInitialData(
                 1.0D,
                 0.0D
         );
+    }
+
+    /**
+     * 为实体宿主创建独立的行为实例。宿主安装模块时挂载，卸载时停止并移除。
+     * 列表顺序决定行为优先级；没有实体行为的模块返回空列表。
+     */
+    default List<Goal> createEntityGoals(
+            com.qidate.qisplan2.entity.ModularGhostEntity host) {
+        return List.of();
     }
 
     /**

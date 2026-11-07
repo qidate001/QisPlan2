@@ -1,5 +1,10 @@
 package com.qidate.qisplan2.ghost.possession.ability.ghostdoor.knocking;
 
+import com.qidate.qisplan2.entity.ModularGhostEntity;
+import com.qidate.qisplan2.ghost.module.GhostModuleRuntime;
+import com.qidate.qisplan2.ghost.module.event.DoorKnockHeardEvent;
+import com.qidate.qisplan2.ghost.module.implementation.KnockingGhostModule;
+
 import com.qidate.qisplan2.block.GhostDoorBlock;
 import com.qidate.qisplan2.core.ModSounds;
 import com.qidate.qisplan2.death.ModDamageTypes;
@@ -23,7 +28,7 @@ import java.util.*;
 /**
  * 敲门鬼公共规则系统。
  *
- * 本体 KnockingGhost 与驾驭后的 KnockingGhostAbility
+ * 模块化本体 与驾驭后的 KnockingGhostAbility
  * 都通过这里执行“敲门”。
  */
 public final class KnockingGhostDoorSystem {
@@ -215,6 +220,9 @@ public final class KnockingGhostDoorSystem {
             double attackStrength
     ) {
 
+        // 延迟鬼门回声同样检查原宿主，避免卸载模块后仍继续传播。
+        if (!source.isAlive() || (source instanceof ModularGhostEntity host
+                && !KnockingGhostModule.isActive(host))) return KnockResult.failed();
         doorPos =
                 doorPos.immutable();
 
@@ -435,6 +443,10 @@ public final class KnockingGhostDoorSystem {
 
             count++;
 
+            // 听声事实在此刻产生；模块规则自行决定是否安排后续袭击。
+            if (source instanceof ModularGhostEntity host) {
+                GhostModuleRuntime.dispatch(host, new DoorKnockHeardEvent(source, doorPos, entity));
+            } else {
             PENDING_ATTACKS.add(
                     new PendingKnockAttack(
                             level,
@@ -444,6 +456,7 @@ public final class KnockingGhostDoorSystem {
                             attackStrength
                     )
             );
+            }
         }
 
         return count;
@@ -629,7 +642,28 @@ public final class KnockingGhostDoorSystem {
      * ============================================================
      */
 
+    /** 裁决获准后的执行任务，不是事件，也不会重新派发听声语义。 */
+    private record PendingModuleAttack(Runnable action, int remainingTicks) {}
+    private static final List<PendingModuleAttack> MODULE_ATTACKS = new ArrayList<>();
+
+    public static void scheduleModuleAttack(Runnable attack) {
+        MODULE_ATTACKS.add(new PendingModuleAttack(attack, KNOCK_ATTACK_DELAY));
+    }
+
+    private static void tickModuleAttacks() {
+        for (int i = MODULE_ATTACKS.size() - 1; i >= 0; i--) {
+            PendingModuleAttack task = MODULE_ATTACKS.get(i);
+            if (task.remainingTicks() > 1) {
+                MODULE_ATTACKS.set(i, new PendingModuleAttack(task.action(), task.remainingTicks() - 1));
+            } else {
+                MODULE_ATTACKS.remove(i);
+                task.action().run();
+            }
+        }
+    }
+
     public static void tick() {
+        tickModuleAttacks();
 
         tickPendingAttacks();
 
@@ -702,13 +736,8 @@ public final class KnockingGhostDoorSystem {
                 if (pending.source()
                         .isAlive()) {
 
-                    SupernaturalDeathHandler.tryKill(
-                            living,
-                            ModDamageTypes.knockingGhost(
-                                    pending.source()
-                            ),
-                            pending.attackStrength()
-                    );
+                    SupernaturalDeathHandler.tryKill(living,
+                            ModDamageTypes.knockingGhost(pending.source()), pending.attackStrength());
                 }
             }
 

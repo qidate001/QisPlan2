@@ -74,7 +74,7 @@ public final class KnockingGhostAbility
 
     @Override
     public EntityType<? extends AbstractGhostEntity> entityType() {
-        return ModEntities.KNOCKING_GHOST.get();
+        return ModEntities.MODULAR_GHOST.get();
     }
 
     /**

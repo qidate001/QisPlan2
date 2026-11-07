@@ -144,7 +144,30 @@ public class ModularGhostEntity extends AbstractGhostEntity
      * 模块负责声明完整厉鬼的防御基础值；宿主只负责汇总，
      * 因此安装或移除模块时不会依赖专用实体类型来设置属性。
      */
+    private final java.util.Map<ResourceLocation, List<net.minecraft.world.entity.ai.goal.Goal>> moduleGoals =
+            new java.util.HashMap<>();
+
+    /** 同步模块提供的行为；重新读取存档和重复安装不会重复挂载同一组行为。 */
+    private void refreshModuleGoals() {
+        var iterator = moduleGoals.entrySet().iterator();
+        while (iterator.hasNext()) {
+            var entry = iterator.next();
+            if (!hasGhostModule(entry.getKey())) {
+                entry.getValue().forEach(goalSelector::removeGoal);
+                iterator.remove();
+            }
+        }
+        for (var entry : getModules()) {
+            GhostModule module = GhostModuleRegistry.get(entry.id());
+            if (module == null || moduleGoals.containsKey(entry.id())) continue;
+            var goals = module.createEntityGoals(this);
+            for (int i = 0; i < goals.size(); i++) goalSelector.addGoal(i + 1, goals.get(i));
+            moduleGoals.put(entry.id(), goals);
+        }
+    }
+
     private void refreshSupernaturalDefense() {
+        refreshModuleGoals();
         double defense = BASE_SUPERNATURAL_DEFENSE;
 
         for (GhostModuleData.Entry entry : ghostModules.getModules()) {

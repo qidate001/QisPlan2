@@ -1,147 +1,35 @@
-package com.qidate.qisplan2.entity.ghostdoor.knocking;
+package com.qidate.qisplan2.ghost.module.implementation;
 
-import com.qidate.qisplan2.entity.AbstractGhostEntity;
-import com.qidate.qisplan2.entity.GhostAttributeSystem;
+import com.qidate.qisplan2.entity.ModularGhostEntity;
 import com.qidate.qisplan2.entity.ai.GhostWanderGoal;
-import com.qidate.qisplan2.ghost.possession.ability.ghostdoor.knocking.KnockingGhostAbility;
 import com.qidate.qisplan2.ghost.possession.ability.ghostdoor.knocking.KnockingGhostDoorSystem;
-
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.world.entity.EntityType;
-import net.minecraft.world.entity.Mob;
-import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
-import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.ai.goal.Goal;
-import net.minecraft.world.level.Level;
-
 import java.util.EnumSet;
+import java.util.List;
 
-public class KnockingGhost
-        extends AbstractGhostEntity {
-
-    /*
-     * ============================================================
-     * 寻找门
-     * ============================================================
-     */
-
-    /**
-     * 寻找门的水平范围。
-     */
+/**
+ * 敲门鬼模块的实体行为。每个宿主创建独立的目标门与冷却状态，
+ * 不把可变寻路状态保存在全局共享的模块定义中。
+ */
+final class KnockingGhostBehavior {
     private static final int DOOR_SEARCH_RADIUS = 32;
-
-    /**
-     * 垂直搜索范围。
-     */
     private static final int DOOR_SEARCH_VERTICAL = 6;
-
-    /**
-     * 两次敲门之间至少等待。
-     */
     private static final int KNOCK_COOLDOWN = 10;
 
-    @Override
-    public ResourceLocation getGhostId() {
-        return KnockingGhostAbility.ID;
+    static List<Goal> create(ModularGhostEntity ghost) {
+        return List.of(new KnockDoorGoal(ghost, 1.0D), new GhostWanderGoal(ghost, 0.7D) {
+            @Override public boolean canUse() {
+                return KnockingGhostModule.isActive(ghost) && super.canUse();
+            }
+            @Override public boolean canContinueToUse() {
+                return KnockingGhostModule.isActive(ghost) && super.canContinueToUse();
+            }
+        });
     }
-
-
-    /*
-     * ============================================================
-     * 构造
-     * ============================================================
-     */
-
-    public KnockingGhost(
-            EntityType<? extends KnockingGhost> entityType,
-            Level level
-    ) {
-        super(
-                entityType,
-                level
-        );
-
-        GhostAttributeSystem.setSupernaturalDefense(
-                this,
-                6.0D
-        );
-    }
-
-    /*
-     * ============================================================
-     * AI
-     * ============================================================
-     */
-
-    @Override
-    protected void registerGoals()
-    {
-
-        /*
-         * 找门 → 走门 → 敲门。
-         *
-         * 没有主动攻击目标。
-         */
-        this.goalSelector.addGoal(
-                1,
-                new KnockDoorGoal(
-                        this,
-                        1.0D
-                )
-        );
-
-        /*
-         * ========================================
-         * 没有目标，四处游荡
-         * ========================================
-         */
-        this.goalSelector.addGoal(
-                8,
-                new GhostWanderGoal(
-                        this,
-                        0.7D
-                )
-        );
-    }
-
-    /*
-     * ============================================================
-     * Tick
-     * ============================================================
-     */
-
-    @Override
-    public void tick() {
-
-        super.tick();
-
-        /*
-         * ========================================================
-         * 灵异死机
-         * ========================================================
-         *
-         * AbstractGhostEntity 负责真正的死机状态。
-         *
-         * 这里仅仅阻止敲门鬼继续移动。
-         */
-        if (isSupernaturallyStunned()) {
-
-            getNavigation().stop();
-
-            return;
-        }
-    }
-
-    /*
-     * ============================================================
-     * 寻找最近的门
-     * ============================================================
-     */
-
-    private BlockPos findNearestDoor() {
+    private static BlockPos findNearestDoor(ModularGhostEntity ghost) {
 
         /*
          * ========================================================
@@ -151,7 +39,7 @@ public class KnockingGhost
 
         BlockPos ghostDoor =
                 findNearestDoor(
-                        true
+                        ghost, true
                 );
 
         if (ghostDoor != null) {
@@ -165,16 +53,16 @@ public class KnockingGhost
          */
 
         return findNearestDoor(
-                false
+                ghost, false
         );
     }
 
-    private BlockPos findNearestDoor(
-            boolean onlyGhostDoor
+    private static BlockPos findNearestDoor(
+            ModularGhostEntity ghost, boolean onlyGhostDoor
     ) {
 
         BlockPos center =
-                blockPosition();
+                ghost.blockPosition();
 
         BlockPos best =
                 null;
@@ -211,7 +99,7 @@ public class KnockingGhost
                      */
                     if (KnockingGhostDoorSystem
                             .wasRecentlyKnocked(
-                                    this,
+                                    ghost,
                                     pos
                             )) {
 
@@ -226,7 +114,7 @@ public class KnockingGhost
 
                     boolean ghostDoor =
                             KnockingGhostDoorSystem.isGhostDoor(
-                                    level(),
+                                    ghost.level(),
                                     pos
                             );
 
@@ -249,7 +137,7 @@ public class KnockingGhost
                      */
 
                     if (!KnockingGhostDoorSystem.isDoor(
-                            level(),
+                            ghost.level(),
                             pos
                     )) {
 
@@ -292,7 +180,7 @@ public class KnockingGhost
     private static class KnockDoorGoal
             extends Goal {
 
-        private final KnockingGhost ghost;
+        private final ModularGhostEntity ghost;
 
         private final double speedModifier;
 
@@ -301,7 +189,7 @@ public class KnockingGhost
         private int cooldown = 0;
 
         public KnockDoorGoal(
-                KnockingGhost ghost,
+                ModularGhostEntity ghost,
                 double speedModifier
         ) {
 
@@ -331,7 +219,7 @@ public class KnockingGhost
             /*
              * 死机时不寻找门。
              */
-            if (ghost.isSupernaturallyStunned()) {
+            if (!KnockingGhostModule.isActive(ghost)) {
                 return false;
             }
 
@@ -349,7 +237,7 @@ public class KnockingGhost
              * 寻找目标门。
              */
             targetDoor =
-                    ghost.findNearestDoor();
+                    findNearestDoor(ghost);
 
             return targetDoor != null;
         }
@@ -363,7 +251,7 @@ public class KnockingGhost
         @Override
         public boolean canContinueToUse() {
 
-            if (ghost.isSupernaturallyStunned()) {
+            if (!KnockingGhostModule.isActive(ghost)) {
                 return false;
             }
 
@@ -522,11 +410,7 @@ public class KnockingGhost
                  * =================================================
                  */
 
-                KnockingGhostDoorSystem.knock(
-                        serverLevel,
-                        ghost,
-                        targetDoor
-                );
+                KnockingGhostModule.knock(ghost, targetDoor);
 
                 /*
                  * 当前目标结束。
@@ -700,26 +584,4 @@ public class KnockingGhost
         }
     }
 
-    /*
-     * ============================================================
-     * 属性
-     * ============================================================
-     */
-
-    public static AttributeSupplier.Builder createAttributes() {
-
-        return Mob.createMobAttributes()
-                .add(
-                        Attributes.MAX_HEALTH,
-                        20.0D
-                )
-                .add(
-                        Attributes.MOVEMENT_SPEED,
-                        0.25D
-                )
-                .add(
-                        Attributes.FOLLOW_RANGE,
-                        32.0D
-                );
-    }
 }

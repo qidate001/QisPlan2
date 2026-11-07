@@ -1,5 +1,7 @@
 package com.qidate.qisplan2.core;
 
+import com.qidate.qisplan2.ghost.module.implementation.KnockingGhostModule;
+
 import com.mojang.serialization.Codec;
 import com.qidate.qisplan2.entity.ModularGhostEntity;
 import com.qidate.qisplan2.ghost.module.data.GhostModuleData;
@@ -343,7 +345,9 @@ public class ModItems {
                             NIGHT_WANDERER.get(),
                             0x191919, // 基础颜色
                             0x6B6B6B, // 斑点颜色
-                            new Item.Properties()
+                            new Item.Properties().component(DataComponents.ENTITY_DATA,
+                                    CustomData.of(ModularGhostEntity.createSpawnData(List.of(
+                                            new GhostModuleData.Entry(KnockingGhostModule.ID, KnockingGhostModule.INITIAL_INTENSITY)))))
                     )
             );
 
@@ -353,61 +357,12 @@ public class ModItems {
             ITEMS.register(
                     "knocking_ghost_spawn_egg",
                     () -> new SpawnEggItem(
-                            KNOCKING_GHOST.get(),
+                            MODULAR_GHOST.get(),
                             0x191919, // 基础颜色
                             0x6B6B6B, // 斑点颜色
-                            new Item.Properties()
-                    )
-            );
-
-
-    // 兼容保留原开门鬼刷怪蛋物品 ID，但生成统一宿主并预装开门鬼模块。
-    public static final DeferredItem<SpawnEggItem>
-            OPENING_GHOST_SPAWN_EGG =
-            ITEMS.register(
-                    "opening_ghost_spawn_egg",
-                    () -> new SpawnEggItem(
-                            MODULAR_GHOST.get(),
-                            0x191919,
-                            0x4A90E2,
-                            new Item.Properties().component(
-                                    DataComponents.ENTITY_DATA,
-                                    CustomData.of(
-                                            ModularGhostEntity.createSpawnData(
-                                                    List.of(
-                                                            new GhostModuleData.Entry(
-                                                                    OpeningGhostModule.ID,
-                                                                    OpeningGhostModule.INITIAL_INTENSITY
-                                                            )
-                                                    )
-                                            )
-                                    )
-                            )
-                    )
-            );
-
-    // 兼容保留原关门鬼刷怪蛋物品 ID，但生成统一宿主并预装关门鬼模块。
-    public static final DeferredItem<SpawnEggItem>
-            CLOSING_GHOST_SPAWN_EGG =
-            ITEMS.register(
-                    "closing_ghost_spawn_egg",
-                    () -> new SpawnEggItem(
-                            MODULAR_GHOST.get(),
-                            0x191919,
-                            0xB44AFF,
-                            new Item.Properties().component(
-                                    DataComponents.ENTITY_DATA,
-                                    CustomData.of(
-                                            ModularGhostEntity.createSpawnData(
-                                                    List.of(
-                                                            new GhostModuleData.Entry(
-                                                                    ClosingGhostModule.ID,
-                                                                    ClosingGhostModule.INITIAL_INTENSITY
-                                                            )
-                                                    )
-                                            )
-                                    )
-                            )
+                            new Item.Properties().component(DataComponents.ENTITY_DATA,
+                                    CustomData.of(ModularGhostEntity.createSpawnData(List.of(
+                                            new GhostModuleData.Entry(KnockingGhostModule.ID, KnockingGhostModule.INITIAL_INTENSITY)))))
                     )
             );
 

@@ -1,5 +1,7 @@
 package com.qidate.qisplan2.event;
 
+import com.qidate.qisplan2.ghost.module.implementation.KnockingGhostModule;
+
 import com.qidate.qisplan2.QisPlan2;
 import com.qidate.qisplan2.core.ModEntities;
 import com.qidate.qisplan2.entity.ModularGhostEntity;
@@ -341,7 +343,7 @@ public class VillageGhostSpawner {
         /*
          * 开门鬼与关门鬼使用统一的模块化实体宿主，
          * 通过安装不同的完整厉鬼模块区分身份；
-         * 敲门鬼尚未迁移，暂时继续由原实体实现承载。
+         * 敲门鬼也通过模块提供找门和敲门行为。
          */
         switch (type) {
 
@@ -370,11 +372,9 @@ public class VillageGhostSpawner {
             }
 
             default -> {
-
-                entity =
-                        ModEntities.KNOCKING_GHOST
-                                .get()
-                                .create(level);
+                ModularGhostEntity ghost = ModEntities.MODULAR_GHOST.get().create(level);
+                if (ghost != null) ghost.addGhostModule(KnockingGhostModule.ID, KnockingGhostModule.INITIAL_INTENSITY);
+                entity = ghost;
             }
         }
 

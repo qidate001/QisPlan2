@@ -1,5 +1,7 @@
 package com.qidate.qisplan2.event;
 
+import com.qidate.qisplan2.ghost.module.implementation.KnockingGhostModule;
+
 import com.qidate.qisplan2.QisPlan2;
 import com.qidate.qisplan2.death.QisDeathHandler;
 import com.qidate.qisplan2.entity.AbstractGhostEntity;
@@ -213,6 +215,8 @@ public final class GhostBreakoutHandler {
                         OpeningGhostModule.ID,
                         OpeningGhostModule.INITIAL_INTENSITY
                 );
+            } else if (ghostId.equals(KnockingGhostModule.ID)) {
+                modularGhost.addGhostModule(KnockingGhostModule.ID, KnockingGhostModule.INITIAL_INTENSITY);
             } else if (ghostId.equals(ClosingGhostModule.ID)) {
                 modularGhost.addGhostModule(
                         ClosingGhostModule.ID,

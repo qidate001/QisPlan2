@@ -4,7 +4,6 @@ import com.qidate.qisplan2.entity.ModularGhostEntity;
 import com.qidate.qisplan2.entity.TestGeckoEntity;
 import com.qidate.qisplan2.entity.calling.CallingGhost;
 import com.qidate.qisplan2.entity.ghostmist.GhostMist;
-import com.qidate.qisplan2.entity.ghostdoor.knocking.KnockingGhost;
 import com.qidate.qisplan2.entity.nightwanderer.NightWanderer;
 import com.qidate.qisplan2.entity.painting.GhostPaintingEntity;
 import net.minecraft.resources.ResourceLocation;
@@ -68,30 +67,6 @@ public class ModEntities {
                                     ResourceLocation.fromNamespaceAndPath(
                                             MODID,
                                             "night_wanderer"
-                                    ).toString()
-                            )
-            );
-
-    // 敲门鬼
-    public static final Supplier<
-            EntityType<KnockingGhost>
-            > KNOCKING_GHOST =
-            ENTITY_TYPES.register(
-                    "knocking_ghost",
-                    () -> EntityType.Builder
-                            .of(
-                                    KnockingGhost::new,
-                                    MobCategory.MONSTER
-                            )
-                            .sized(
-                                    0.8F,
-                                    1.95F
-                            )
-                            .clientTrackingRange(64)
-                            .build(
-                                    ResourceLocation.fromNamespaceAndPath(
-                                            MODID,
-                                            "knocking_ghost"
                                     ).toString()
                             )
             );

@@ -1,4 +1,3 @@
-
 package com.qidate.qisplan2.ghost.module.event;
 
 import net.minecraft.world.entity.LivingEntity;

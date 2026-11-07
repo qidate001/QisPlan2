@@ -26,7 +26,8 @@ public record GhostAbilityContext(
         ResourceLocation abilityId,
         Source source,
         GhostEvent event,
-        Runnable stimulationCheckpoint
+        Runnable stimulationCheckpoint,
+        GhostAbilityParameters parameters
 ) {
 
     /**
@@ -38,6 +39,9 @@ public record GhostAbilityContext(
          * 由厉鬼规则触发。
          */
         RULE,
+
+        /** 由实体行为直接调用，不要求存在语义事件。 */
+        BEHAVIOR,
 
         /**
          * 由驭鬼者主动调用。
@@ -68,6 +72,12 @@ public record GhostAbilityContext(
                     // 未绑定执行会话时，不执行任何结算。
                 }
         );
+    }
+
+    /** 兼容无显式能力参数的既有调用。 */
+    public GhostAbilityContext(GhostModuleHost host, ResourceLocation moduleId,
+            ResourceLocation abilityId, Source source, GhostEvent event, Runnable checkpoint) {
+        this(host, moduleId, abilityId, source, event, checkpoint, null);
     }
 
     public GhostAbilityContext {
@@ -172,7 +182,8 @@ public record GhostAbilityContext(
                 abilityId,
                 source,
                 event,
-                checkpoint
+                checkpoint,
+                parameters
         );
     }
 }

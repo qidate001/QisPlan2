@@ -4,7 +4,6 @@ import com.qidate.qisplan2.entity.ModularGhostEntity;
 import com.qidate.qisplan2.entity.TestGeckoEntity;
 import com.qidate.qisplan2.entity.calling.CallingGhost;
 import com.qidate.qisplan2.entity.ghostmist.GhostMist;
-import com.qidate.qisplan2.entity.ghostdoor.knocking.KnockingGhost;
 import com.qidate.qisplan2.entity.nightwanderer.NightWanderer;
 import net.neoforged.neoforge.event.entity.EntityAttributeCreationEvent;
 
@@ -26,13 +25,6 @@ public final class ModEntityAttributes {
         event.put(
                 ModEntities.NIGHT_WANDERER.get(),
                 NightWanderer.createAttributes()
-                        .build()
-        );
-
-        // 敲门鬼
-        event.put(
-                ModEntities.KNOCKING_GHOST.get(),
-                KnockingGhost.createAttributes()
                         .build()
         );
 
