@@ -2,7 +2,10 @@ package com.qidate.qisplan2.ghost.domain.type.mist;
 
 import com.qidate.qisplan2.death.ModDamageTypes;
 import com.qidate.qisplan2.death.SupernaturalDeathHandler;
-import com.qidate.qisplan2.entity.ghostmist.GhostMist;
+import com.qidate.qisplan2.entity.ModularGhostEntity;
+import com.qidate.qisplan2.ghost.module.GhostModuleRuntime;
+import com.qidate.qisplan2.ghost.module.event.GhostDomainExposureEvent;
+import com.qidate.qisplan2.ghost.module.implementation.mist.GhostMistModule;
 import com.qidate.qisplan2.ghost.domain.GhostDomain;
 import com.qidate.qisplan2.ghost.domain.GhostDomainBehavior;
 import net.minecraft.server.level.ServerLevel;
@@ -156,6 +159,15 @@ public final class GhostMistDomainBehavior
              * 发动灵异袭击
              * ========================================
              */
+            // 实体鬼雾先发布当前有效鬼域影响的事实，规则与袭击交给模块裁决。
+            if (source instanceof ModularGhostEntity host) {
+                if (GhostMistModule.isActive(host)) {
+                    GhostModuleRuntime.dispatch(host, new GhostDomainExposureEvent(
+                            domain.getId(), host, target, strength * ATTACK_STRENGTH_DIVISOR));
+                }
+                continue;
+            }
+
             boolean killed =
                     SupernaturalDeathHandler.tryKill(
                             target,
@@ -179,19 +191,8 @@ public final class GhostMistDomainBehavior
              * 世界中的 GhostMist
              * ========================================
              *
-             * 世界鬼雾仍然使用原来的成长逻辑。
+             * 世界鬼雾的成长已经由模块能力处理。
              */
-            if (source instanceof GhostMist ghost) {
-
-                GhostMistDomainController.grow(
-                        level,
-                        ghost,
-                        domain
-                );
-
-                continue;
-            }
-
             /*
              * ========================================
              * 玩家驾驭的鬼雾

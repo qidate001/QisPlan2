@@ -26,6 +26,12 @@ public interface GhostModule {
      * 获取模块的唯一标识。
      */
     ResourceLocation getId();
+    /** 每个服务端实体 tick 调用，包括休眠、死机状态，用于管理模块外部资源。 */
+    default void onEntityTick(com.qidate.qisplan2.entity.ModularGhostEntity host) {}
+
+    /** 模块卸载或宿主离开世界时释放运行时资源；不得清空持久化成长数据。 */
+    default void onEntityDetached(com.qidate.qisplan2.entity.ModularGhostEntity host) {}
+
 
     /**
      * 获取模块定义提供的初始属性。

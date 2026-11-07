@@ -154,6 +154,8 @@ public class ModularGhostEntity extends AbstractGhostEntity
         while (iterator.hasNext()) {
             var entry = iterator.next();
             if (!hasGhostModule(entry.getKey())) {
+                GhostModule removedModule = GhostModuleRegistry.get(entry.getKey());
+                if (removedModule != null) removedModule.onEntityDetached(this);
                 entry.getValue().forEach(goalSelector::removeGoal);
                 iterator.remove();
             }
@@ -315,6 +317,10 @@ public class ModularGhostEntity extends AbstractGhostEntity
     public void remove(RemovalReason reason) {
         if (!level().isClientSide) {
             GhostModuleSoundManager.unregisterEntityHost(this);
+            for (var entry : List.copyOf(getModules())) {
+                GhostModule module = GhostModuleRegistry.get(entry.id());
+                if (module != null) module.onEntityDetached(this);
+            }
         }
 
         super.remove(reason);
@@ -476,6 +482,18 @@ public class ModularGhostEntity extends AbstractGhostEntity
         ghostModules.loadEntries(loadedModules);
         refreshSupernaturalDefense();
 
+    }
+
+    /** 模块资源维护独立于规则和移动 AI，确保死机时也能撤销鬼域。 */
+    @Override
+    public void tick() {
+        super.tick();
+        if (!level().isClientSide) {
+            for (var entry : List.copyOf(getModules())) {
+                GhostModule module = GhostModuleRegistry.get(entry.id());
+                if (module != null && hasGhostModule(entry.id())) module.onEntityTick(this);
+            }
+        }
     }
 
     @Override

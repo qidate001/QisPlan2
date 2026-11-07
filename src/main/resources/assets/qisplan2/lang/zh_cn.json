@@ -1,4 +1,5 @@
 {
+  "module.qisplan2.ghost_mist": "鬼雾",
   "module.qisplan2.calling_ghost": "喊人鬼",
   "module.qisplan2.night_wanderer": "夜游鬼",
   "module.qisplan2.knocking_ghost": "敲门鬼",
@@ -91,7 +92,6 @@
 
   "entity.qisplan2.ghost_painting": "§4鬼画",
   "entity.qisplan2.invisible_ghost": "§4不可视之鬼",
-  "entity.qisplan2.ghost_mist": "§4鬼雾",
 
   "module.qisplan2.ghost_stone_bricks": "鬼石砖",
   "module.qisplan2.invisible_ghost": "不可视之鬼",

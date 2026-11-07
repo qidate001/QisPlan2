@@ -3,6 +3,7 @@ package com.qidate.qisplan2;
 import com.mojang.blaze3d.vertex.DefaultVertexFormat;
 import com.mojang.logging.LogUtils;
 import com.qidate.qisplan2.event.GhostBlockInteractionHandler;
+import com.qidate.qisplan2.event.GhostBreakoutHandler;
 import com.qidate.qisplan2.ghost.curse.CurseRegistry;
 import com.qidate.qisplan2.ghost.domain.GhostDomainEntityEvents;
 import com.qidate.qisplan2.ghost.domain.client.renderer.GhostDomainShaderRegistry;
@@ -72,6 +73,11 @@ public class QisPlan2 {
         // 厉鬼看见事件
         NeoForge.EVENT_BUS.register(
                 GhostPerceptionHandler.class
+        );
+
+        // 厉鬼破体而出
+        NeoForge.EVENT_BUS.register(
+                GhostBreakoutHandler.class
         );
 
         // 鬼域实体追踪事件

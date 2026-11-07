@@ -149,6 +149,8 @@ public final class GhostDomain {
 
         if (shape instanceof CylinderDomainShape cylinder) {
             cylinder.setRadius(radius);
+        } else if (shape instanceof SphereDomainShape sphere) {
+            sphere.setRadius(radius);
         }
     }
 

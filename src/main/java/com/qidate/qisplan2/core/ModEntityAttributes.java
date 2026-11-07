@@ -2,7 +2,6 @@ package com.qidate.qisplan2.core;
 
 import com.qidate.qisplan2.entity.ModularGhostEntity;
 import com.qidate.qisplan2.entity.TestGeckoEntity;
-import com.qidate.qisplan2.entity.ghostmist.GhostMist;
 import net.neoforged.neoforge.event.entity.EntityAttributeCreationEvent;
 
 public final class ModEntityAttributes {
@@ -16,13 +15,6 @@ public final class ModEntityAttributes {
         event.put(
                 ModEntities.MODULAR_GHOST.get(),
                 ModularGhostEntity.createAttributes()
-                        .build()
-        );
-
-        // 鬼雾
-        event.put(
-                ModEntities.GHOST_MIST.get(),
-                GhostMist.createAttributes()
                         .build()
         );
 

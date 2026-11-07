@@ -2,7 +2,6 @@ package com.qidate.qisplan2.core;
 
 import com.qidate.qisplan2.entity.ModularGhostEntity;
 import com.qidate.qisplan2.entity.TestGeckoEntity;
-import com.qidate.qisplan2.entity.ghostmist.GhostMist;
 import com.qidate.qisplan2.entity.painting.GhostPaintingEntity;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.EntityType;
@@ -49,29 +48,6 @@ public class ModEntities {
                                                     "modular_ghost"
                                             )
                                             .toString()
-                            )
-            );
-
-    // 鬼雾
-    public static final DeferredHolder<EntityType<?>, EntityType<GhostMist>> GHOST_MIST =
-            ENTITY_TYPES.register(
-                    "ghost_mist",
-                    () -> EntityType.Builder
-                            .of(
-                                    GhostMist::new,
-                                    MobCategory.MONSTER
-                            )
-                            .sized(
-                                    0.6F,
-                                    1.8F
-                            )
-                            .clientTrackingRange(8)
-                            .updateInterval(3)
-                            .build(
-                                    ResourceLocation.fromNamespaceAndPath(
-                                            MODID,
-                                            "ghost_mist"
-                                    ).toString()
                             )
             );
 

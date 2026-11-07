@@ -32,6 +32,11 @@ public final class GhostMistAbility
             );
 
     @Override
+    public net.minecraft.world.entity.EntityType<? extends com.qidate.qisplan2.entity.AbstractGhostEntity> entityType() {
+        return com.qidate.qisplan2.core.ModEntities.MODULAR_GHOST.get();
+    }
+
+    @Override
     public ResourceLocation id() {
         return ID;
     }

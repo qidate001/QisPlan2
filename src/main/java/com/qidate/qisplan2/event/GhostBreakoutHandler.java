@@ -1,5 +1,9 @@
 package com.qidate.qisplan2.event;
 
+import com.qidate.qisplan2.ghost.module.implementation.mist.GhostMistModule;
+import com.qidate.qisplan2.ghost.module.implementation.mist.GhostMistState;
+import com.qidate.qisplan2.ghost.possession.data.PossessedGhostDomainData;
+
 import com.qidate.qisplan2.ghost.module.implementation.KnockingGhostModule;
 import com.qidate.qisplan2.ghost.module.implementation.nightwanderer.NightWandererModule;
 
@@ -26,9 +30,6 @@ import net.neoforged.neoforge.event.entity.living.LivingDeathEvent;
 
 import java.util.Map;
 
-@EventBusSubscriber(
-        modid = QisPlan2.MODID
-)
 public final class GhostBreakoutHandler {
 
     private GhostBreakoutHandler() {
@@ -128,10 +129,12 @@ public final class GhostBreakoutHandler {
                 > entry :
                 states.entrySet()) {
 
+            var persistentData = PossessionHandler.getData(player, entry.getKey());
             spawnBrokenGhost(
                     level,
                     entry.getKey(),
                     entry.getValue(),
+                    persistentData == null ? null : persistentData.domain().orElse(null),
                     x,
                     y,
                     z,
@@ -165,6 +168,7 @@ public final class GhostBreakoutHandler {
             ServerLevel level,
             ResourceLocation ghostId,
             PossessedGhostState state,
+            PossessedGhostDomainData domainData,
             double x,
             double y,
             double z,
@@ -216,6 +220,11 @@ public final class GhostBreakoutHandler {
                         OpeningGhostModule.ID,
                         OpeningGhostModule.INITIAL_INTENSITY
                 );
+            } else if (ghostId.equals(GhostMistModule.ID)) {
+                modularGhost.addGhostModule(GhostMistModule.ID, state.strength());
+                // 破体继承玩家所驾驭鬼雾的成长数据，不能重新退回初始鬼域。
+                if (domainData != null) GhostMistState.save(modularGhost,
+                        domainData.strength(), domainData.radius(), domainData.layer());
             } else if (ghostId.equals(NightWandererModule.ID)) {
                 modularGhost.addGhostModule(NightWandererModule.ID, NightWandererModule.INITIAL_INTENSITY);
             } else if (ghostId.equals(KnockingGhostModule.ID)) {
@@ -298,6 +307,4 @@ public final class GhostBreakoutHandler {
                 stunTicks / 20.0D
         );
     }
-
-
 }
