@@ -15,6 +15,7 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
+import net.minecraft.world.entity.ai.goal.Goal;
 import net.minecraft.world.level.Level;
 
 import java.util.ArrayList;
@@ -144,7 +145,7 @@ public class ModularGhostEntity extends AbstractGhostEntity
      * 模块负责声明完整厉鬼的防御基础值；宿主只负责汇总，
      * 因此安装或移除模块时不会依赖专用实体类型来设置属性。
      */
-    private final java.util.Map<ResourceLocation, List<net.minecraft.world.entity.ai.goal.Goal>> moduleGoals =
+    private final java.util.Map<ResourceLocation, List<Goal>> moduleGoals =
             new java.util.HashMap<>();
 
     /** 同步模块提供的行为；重新读取存档和重复安装不会重复挂载同一组行为。 */
@@ -160,8 +161,17 @@ public class ModularGhostEntity extends AbstractGhostEntity
         for (var entry : getModules()) {
             GhostModule module = GhostModuleRegistry.get(entry.id());
             if (module == null || moduleGoals.containsKey(entry.id())) continue;
-            var goals = module.createEntityGoals(this);
-            for (int i = 0; i < goals.size(); i++) goalSelector.addGoal(i + 1, goals.get(i));
+            var definitions = module.createEntityGoals(this);
+            List<Goal> goals = new ArrayList<>();
+            for (int i = 0; i < definitions.size(); i++) {
+                var scheduled = new com.qidate.qisplan2.entity.ai.ModuleScheduledGoal(
+                        this, entry.id(), i, definitions.get(i),
+                        () -> moduleGoals.values().stream().flatMap(List::stream)
+                                .map(goal -> (com.qidate.qisplan2.entity.ai.ModuleScheduledGoal)goal).toList());
+                goals.add(scheduled);
+                // 跨模块优先级交给包装器按实时强度判断，避免原版固定数字优先级阻止强者抢占。
+                goalSelector.addGoal(1, scheduled);
+            }
             moduleGoals.put(entry.id(), goals);
         }
     }
