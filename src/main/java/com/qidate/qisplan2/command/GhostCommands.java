@@ -580,7 +580,7 @@ public final class GhostCommands {
          */
         String ghostName =
                 Component.translatable(
-                        "ghost."
+                        "module."
                                 + ghost.getNamespace()
                                 + "."
                                 + ghost.getPath()
@@ -668,7 +668,7 @@ public final class GhostCommands {
 
         String ghostName =
                 Component.translatable(
-                        "ghost."
+                        "module."
                                 + ghost.getNamespace()
                                 + "."
                                 + ghost.getPath()
@@ -759,7 +759,7 @@ public final class GhostCommands {
 
             String ghostName =
                     Component.translatable(
-                            "ghost."
+                            "module."
                                     + ghost.getNamespace()
                                     + "."
                                     + ghost.getPath()
@@ -829,7 +829,7 @@ public final class GhostCommands {
 
         String ghostName =
                 Component.translatable(
-                        "ghost."
+                        "module."
                                 + ghost.getNamespace()
                                 + "."
                                 + ghost.getPath()
@@ -907,7 +907,7 @@ public final class GhostCommands {
 
         String ghostName =
                 Component.translatable(
-                        "ghost."
+                        "module."
                                 + ghost.getNamespace()
                                 + "."
                                 + ghost.getPath()
@@ -1121,7 +1121,7 @@ public final class GhostCommands {
 
             String ghostName =
                     Component.translatable(
-                            "ghost."
+                            "module."
                                     + ghost.getNamespace()
                                     + "."
                                     + ghost.getPath()

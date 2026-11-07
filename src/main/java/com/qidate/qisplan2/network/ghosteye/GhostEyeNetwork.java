@@ -156,14 +156,8 @@ public final class GhostEyeNetwork {
                 return;
             }
 
-            if (GhostEyeDomainController.isOpen(player)) {
-
-                GhostEyeDomainController.close(player);
-
-            } else {
-
-                GhostEyeDomainController.open(player);
-            }
+            // 网络层只传达主动操作，实际开关由鬼眼模块执行。
+            PossessionHandler.useAbility(player, GhostEyeModule.ID, null);
         });
     }
 

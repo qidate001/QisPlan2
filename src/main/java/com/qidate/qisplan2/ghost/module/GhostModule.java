@@ -259,7 +259,7 @@ public interface GhostModule {
     default Component displayName() {
 
         return Component.translatable(
-                "ghost."
+                "module."
                         + id().getNamespace()
                         + "."
                         + id().getPath()
