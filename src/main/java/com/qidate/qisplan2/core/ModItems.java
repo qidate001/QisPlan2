@@ -1,13 +1,12 @@
 package com.qidate.qisplan2.core;
 
 import com.qidate.qisplan2.ghost.module.implementation.KnockingGhostModule;
+import com.qidate.qisplan2.ghost.module.implementation.nightwanderer.NightWandererModule;
 
 import com.mojang.serialization.Codec;
 import com.qidate.qisplan2.entity.ModularGhostEntity;
 import com.qidate.qisplan2.ghost.module.data.GhostModuleData;
 import com.qidate.qisplan2.ghost.module.host.item.GhostBlankSwordItem;
-import com.qidate.qisplan2.ghost.module.implementation.ClosingGhostModule;
-import com.qidate.qisplan2.ghost.module.implementation.OpeningGhostModule;
 import com.qidate.qisplan2.item.*;
 import com.qidate.qisplan2.item.candle.RedGhostCandleItem;
 import com.qidate.qisplan2.item.candle.WhiteGhostCandleItem;
@@ -342,12 +341,12 @@ public class ModItems {
             ITEMS.register(
                     "night_wanderer_spawn_egg",
                     () -> new SpawnEggItem(
-                            NIGHT_WANDERER.get(),
+                            MODULAR_GHOST.get(),
                             0x191919, // 基础颜色
                             0x6B6B6B, // 斑点颜色
                             new Item.Properties().component(DataComponents.ENTITY_DATA,
                                     CustomData.of(ModularGhostEntity.createSpawnData(List.of(
-                                            new GhostModuleData.Entry(KnockingGhostModule.ID, KnockingGhostModule.INITIAL_INTENSITY)))))
+                                            new GhostModuleData.Entry(NightWandererModule.ID, NightWandererModule.INITIAL_INTENSITY)))))
                     )
             );
 

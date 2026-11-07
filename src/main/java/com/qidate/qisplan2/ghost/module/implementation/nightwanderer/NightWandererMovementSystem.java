@@ -1,4 +1,6 @@
-package com.qidate.qisplan2.entity.nightwanderer;
+package com.qidate.qisplan2.ghost.module.implementation.nightwanderer;
+
+import com.qidate.qisplan2.entity.ModularGhostEntity;
 
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.ai.attributes.AttributeInstance;
@@ -50,7 +52,7 @@ public final class NightWandererMovementSystem {
      * @param ghost 夜游鬼
      */
     public static void tick(
-            NightWanderer ghost
+            ModularGhostEntity ghost
     ) {
 
         if (ghost.level().isClientSide()) {
@@ -144,6 +146,15 @@ public final class NightWandererMovementSystem {
             removeLightSpeedModifier(
                     speedAttribute
             );
+        }
+    }
+
+    /** 模块停止活动或卸载时撤销自己的修饰符，不改写其他模块的移速。 */
+    public static void clear(ModularGhostEntity host) {
+        AttributeInstance attribute = host.getAttribute(Attributes.MOVEMENT_SPEED);
+        if (attribute != null) {
+            removeDarkSpeedModifier(attribute);
+            removeLightSpeedModifier(attribute);
         }
     }
 

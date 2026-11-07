@@ -6,14 +6,12 @@ import com.qidate.qisplan2.client.curse.CurseClientBootstrap;
 import com.qidate.qisplan2.entity.ModularGhostRenderer;
 import com.qidate.qisplan2.entity.calling.CallingGhostRenderer;
 import com.qidate.qisplan2.entity.ghostmist.GhostMistRenderer;
-import com.qidate.qisplan2.entity.nightwanderer.NightWandererRenderer;
 import com.qidate.qisplan2.entity.painting.GhostPaintingRenderer;
 import com.qidate.qisplan2.ghost.domain.client.ClientGhostDomainEvents;
 import com.qidate.qisplan2.ghost.domain.client.ClientGhostDomainManager;
 import com.qidate.qisplan2.client.key.ClientKeyHandler;
 import com.qidate.qisplan2.client.screen.GhostStoveScreen;
 import com.qidate.qisplan2.client.GhostUmbrellaDomainClient;
-import com.qidate.qisplan2.client.model.NightWandererModel;
 import com.qidate.qisplan2.client.renderer.*;
 import com.qidate.qisplan2.core.*;
 import com.qidate.qisplan2.client.hud.DeathCurseHudOverlay;
@@ -143,26 +141,13 @@ public class QisPlan2Client {
     }
 
     /**
-     * 注册夜游鬼模型 Layer
+     * 注册实体模型 Layer
      */
     private static void registerLayerDefinitions(
             EntityRenderersEvent.RegisterLayerDefinitions event
     ) {
-//        QisPlan2.LOGGER.info(
-//                "[QisPlan2] 注册 NightWanderer Model Layer"
-//        );
 
-        event.registerLayerDefinition(
-                NightWandererModel.LAYER,
-                () -> LayerDefinition.create(
-                        HumanoidModel.createMesh(
-                                CubeDeformation.NONE,
-                                0.0F
-                        ),
-                        64,
-                        64
-                )
-        );
+
     }
 
     private static void registerFluidClientExtensions(
@@ -259,12 +244,6 @@ public class QisPlan2Client {
         event.registerEntityRenderer(
                 ModEntities.MODULAR_GHOST.get(),
                 ModularGhostRenderer::new
-        );
-
-        // 夜游鬼
-        event.registerEntityRenderer(
-                ModEntities.NIGHT_WANDERER.get(),
-                NightWandererRenderer::new
         );
 
         // 喊人鬼

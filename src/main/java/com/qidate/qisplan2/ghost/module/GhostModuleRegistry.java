@@ -1,6 +1,7 @@
 package com.qidate.qisplan2.ghost.module;
 
 import com.qidate.qisplan2.ghost.module.implementation.*;
+import com.qidate.qisplan2.ghost.module.implementation.nightwanderer.NightWandererModule;
 import net.minecraft.resources.ResourceLocation;
 
 import java.util.Collection;
@@ -79,6 +80,7 @@ public final class GhostModuleRegistry {
         register(new OpeningGhostModule());
         register(new ClosingGhostModule());
         register(new KnockingGhostModule());
+        register(new NightWandererModule());
         register(new GhostStoneBricksModule());
         register(new InvisibleGhostModule());
         register(new GhostTombstoneModule());

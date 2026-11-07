@@ -1,4 +1,6 @@
-package com.qidate.qisplan2.entity.nightwanderer;
+package com.qidate.qisplan2.ghost.module.implementation.nightwanderer;
+
+import com.qidate.qisplan2.entity.ModularGhostEntity;
 
 import com.qidate.qisplan2.QisPlan2;
 import net.minecraft.core.BlockPos;
@@ -100,7 +102,7 @@ public final class NightWandererHuntSystem {
      * @param ghost 当前夜游鬼
      */
     public static void tick(
-            NightWanderer ghost
+            ModularGhostEntity ghost
     ) {
 
         /*
@@ -117,7 +119,7 @@ public final class NightWandererHuntSystem {
              * 尚未解锁时，
              * 不应该保留之前可能存在的无目标计时。
              */
-            ghost.resetHuntNoTargetTicks();
+            NightWandererState.set(ghost, NightWandererState.NO_TARGET, 0);
 
             return;
         }
@@ -130,7 +132,7 @@ public final class NightWandererHuntSystem {
          * 猎杀瞬移完成后的一段时间内，
          * 不允许再次进行猎杀瞬移。
          */
-        if (ghost.getHuntTeleportCooldown() > 0) {
+        if (NightWandererState.get(ghost, NightWandererState.TELEPORT_COOLDOWN) > 0) {
             return;
         }
 
@@ -152,7 +154,7 @@ public final class NightWandererHuntSystem {
                 && !target.isRemoved()
                 && canContinueHuntingTarget(ghost, target)) {
 
-            ghost.resetHuntNoTargetTicks();
+            NightWandererState.set(ghost, NightWandererState.NO_TARGET, 0);
 
             return;
         }
@@ -164,13 +166,13 @@ public final class NightWandererHuntSystem {
          *
          * 开始累计无目标时间。
          */
-        ghost.addHuntNoTargetTick();
+        NightWandererState.set(ghost, NightWandererState.NO_TARGET, Math.min(Integer.MAX_VALUE - 1, NightWandererState.get(ghost, NightWandererState.NO_TARGET)) + 1);
 
         /*
          * 尚未达到 30 秒，
          * 暂时不执行猎杀。
          */
-        if (ghost.getHuntNoTargetTicks()
+        if (NightWandererState.get(ghost, NightWandererState.NO_TARGET)
                 < HUNT_NO_TARGET_TIME) {
 
             return;
@@ -188,7 +190,7 @@ public final class NightWandererHuntSystem {
          * 也不会因为计时一直达到阈值而
          * 每 tick 重复执行搜索。
          */
-        ghost.resetHuntNoTargetTicks();
+        NightWandererState.set(ghost, NightWandererState.NO_TARGET, 0);
 
         /*
          * ========================================
@@ -275,7 +277,7 @@ public final class NightWandererHuntSystem {
          * 设置猎杀瞬移冷却
          * ========================================
          */
-        ghost.setHuntTeleportCooldown(
+        NightWandererState.set(ghost, NightWandererState.TELEPORT_COOLDOWN,
                 HUNT_TELEPORT_COOLDOWN
         );
 
@@ -297,9 +299,9 @@ public final class NightWandererHuntSystem {
      * 判断夜游鬼是否已经解锁猎杀能力。
      */
     public static boolean hasHuntAbility(
-            NightWanderer ghost
+            ModularGhostEntity ghost
     ) {
-        return ghost.getKillCount()
+        return NightWandererState.get(ghost, NightWandererState.KILLS)
                 > HUNT_UNLOCK_KILLS;
     }
 
@@ -322,7 +324,7 @@ public final class NightWandererHuntSystem {
      * @return 找到的猎杀目标，没有则返回 {@code null}
      */
     private static LivingEntity findHuntTarget(
-            NightWanderer ghost
+            ModularGhostEntity ghost
     ) {
 
         AABB searchBox =
@@ -531,7 +533,7 @@ public final class NightWandererHuntSystem {
      * 因此不能只在寻找目标时检查一次。
      */
     private static boolean canContinueHuntingTarget(
-            NightWanderer ghost,
+            ModularGhostEntity ghost,
             LivingEntity target
     ) {
         if (target instanceof Player player) {
@@ -549,7 +551,7 @@ public final class NightWandererHuntSystem {
      * @param entity 要检查的实体
      */
     private static boolean isDarkEntity(
-            NightWanderer ghost,
+            ModularGhostEntity ghost,
             LivingEntity entity
     ) {
         return isDarkPosition(
@@ -571,7 +573,7 @@ public final class NightWandererHuntSystem {
      * </ul>
      */
     private static boolean isDarkPosition(
-            NightWanderer ghost,
+            ModularGhostEntity ghost,
             BlockPos pos
     ) {
 
@@ -624,7 +626,7 @@ public final class NightWandererHuntSystem {
      * @return 合适的传送位置，没有则返回 {@code null}
      */
     private static BlockPos findHuntTeleportPosition(
-            NightWanderer ghost,
+            ModularGhostEntity ghost,
             LivingEntity target
     ) {
 
@@ -756,7 +758,7 @@ public final class NightWandererHuntSystem {
      * </ul>
      */
     private static boolean isValidHuntTeleportPosition(
-            NightWanderer ghost,
+            ModularGhostEntity ghost,
             BlockPos pos,
             LivingEntity target
     ) {

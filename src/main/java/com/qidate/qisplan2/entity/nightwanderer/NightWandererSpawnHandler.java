@@ -2,6 +2,8 @@ package com.qidate.qisplan2.entity.nightwanderer;
 
 import com.qidate.qisplan2.QisPlan2;
 import com.qidate.qisplan2.core.ModEntities;
+import com.qidate.qisplan2.entity.ModularGhostEntity;
+import com.qidate.qisplan2.ghost.module.implementation.nightwanderer.NightWandererModule;
 import com.qidate.qisplan2.data.NightWandererSpawnData;
 import com.qidate.qisplan2.ghost.possession.manager.PossessionHandler;
 import com.qidate.qisplan2.ghost.possession.ability.nightwanderer.NightWandererAbility;
@@ -263,14 +265,16 @@ public class NightWandererSpawnHandler {
             BlockPos pos
     ) {
 
-        NightWanderer entity =
-                ModEntities.NIGHT_WANDERER
+        ModularGhostEntity entity =
+                ModEntities.MODULAR_GHOST
                         .get()
                         .create(level);
 
         if (entity == null) {
             return;
         }
+
+        entity.addGhostModule(NightWandererModule.ID, NightWandererModule.INITIAL_INTENSITY);
 
         entity.moveTo(
                 pos.getX() + 0.5D,

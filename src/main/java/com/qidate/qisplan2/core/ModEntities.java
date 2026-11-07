@@ -4,7 +4,6 @@ import com.qidate.qisplan2.entity.ModularGhostEntity;
 import com.qidate.qisplan2.entity.TestGeckoEntity;
 import com.qidate.qisplan2.entity.calling.CallingGhost;
 import com.qidate.qisplan2.entity.ghostmist.GhostMist;
-import com.qidate.qisplan2.entity.nightwanderer.NightWanderer;
 import com.qidate.qisplan2.entity.painting.GhostPaintingEntity;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.EntityType;
@@ -51,23 +50,6 @@ public class ModEntities {
                                                     "modular_ghost"
                                             )
                                             .toString()
-                            )
-            );
-
-    // 夜游鬼
-    public static final DeferredHolder<EntityType<?>, EntityType<NightWanderer>> NIGHT_WANDERER =
-            ENTITY_TYPES.register(
-                    "night_wanderer",
-                    () -> EntityType.Builder
-                            .of(NightWanderer::new, MobCategory.MISC)
-                            .sized(0.6F, 1.8F)
-                            .clientTrackingRange(8)
-                            .updateInterval(3)
-                            .build(
-                                    ResourceLocation.fromNamespaceAndPath(
-                                            MODID,
-                                            "night_wanderer"
-                                    ).toString()
                             )
             );
 

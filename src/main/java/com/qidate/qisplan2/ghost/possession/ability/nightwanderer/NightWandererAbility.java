@@ -112,7 +112,7 @@ public final class NightWandererAbility
     @Override
     public EntityType<? extends AbstractGhostEntity> entityType() {
 
-        return ModEntities.NIGHT_WANDERER.get();
+        return ModEntities.MODULAR_GHOST.get();
     }
 
     @Override

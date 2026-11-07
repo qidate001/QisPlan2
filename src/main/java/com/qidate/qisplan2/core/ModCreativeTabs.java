@@ -196,7 +196,7 @@ public class ModCreativeTabs {
                         }
 
                         // 其他刷怪蛋暂时保持原样。
-                        output.accept(NIGHT_WANDERER_SPAWN_EGG);
+                        // 夜游鬼刷怪蛋由模块列表统一生成。
                         // 敲门鬼由上方按模块生成的刷怪蛋统一展示。
                         output.accept(CALLING_GHOST_SPAWN_EGG);
                         output.accept(GHOST_MIST_SPAWN_EGG);

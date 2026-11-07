@@ -1,4 +1,5 @@
 {
+  "module.qisplan2.night_wanderer": "Night Wanderer",
   "module.qisplan2.knocking_ghost": "Knocking Ghost",
   "itemGroup.qisplan2.qis_plan_ghost": "Qi's Plan 2: §4Ghost",
   "itemGroup.qisplan2.qis_plan_ghost_entities": "Qi's Plan 2：§4Ghost Spawn Egg",
@@ -87,7 +88,6 @@
   "item.qisplan2.ghost_mist_spawn_egg": "§4Ghost Mist Spawn Egg",
 
   "entity.qisplan2.ghost_painting": "§4Ghost Painting",
-  "entity.qisplan2.night_wanderer": "§4Night Wanderer",
   "entity.qisplan2.invisible_ghost": "§4Invisible Ghost",
   "entity.qisplan2.calling_ghost": "§4Calling Ghost",
   "entity.qisplan2.ghost_mist": "§4Ghost Mist",
