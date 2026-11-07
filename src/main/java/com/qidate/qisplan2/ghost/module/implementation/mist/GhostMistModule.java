@@ -30,7 +30,7 @@ public final class GhostMistModule implements GhostModule {
     public static boolean isActive(ModularGhostEntity host) {
         return host.level() instanceof ServerLevel && host.isAlive() && !host.isRemoved()
                 && !host.isCoffinNailed() && !host.isSupernaturallyStunned()
-                && host.getModules().stream().anyMatch(e -> e.id().equals(ID) && !e.sleeping() && !e.deadlocked());
+                && host.getModules().stream().anyMatch(e -> e.id().equals(ID) && GhostModuleCombatState.available(e));
     }
     @Override public List<Goal> createEntityGoals(ModularGhostEntity host) {
         GhostMistState.initialize(host);

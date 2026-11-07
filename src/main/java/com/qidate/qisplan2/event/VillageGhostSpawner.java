@@ -1,6 +1,6 @@
 package com.qidate.qisplan2.event;
 
-import com.qidate.qisplan2.ghost.module.implementation.KnockingGhostModule;
+import com.qidate.qisplan2.ghost.module.implementation.knocking.KnockingGhostModule;
 
 import com.qidate.qisplan2.QisPlan2;
 import com.qidate.qisplan2.core.ModEntities;
@@ -13,7 +13,6 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.tags.StructureTags;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.MobSpawnType;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.chunk.LevelChunk;

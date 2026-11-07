@@ -39,7 +39,7 @@ public final class NightWandererModule implements GhostModule {
     public static boolean isActive(ModularGhostEntity host) {
         return host.level() instanceof ServerLevel && host.isAlive() && !host.isCoffinNailed()
                 && !host.isSupernaturallyStunned() && host.getModules().stream()
-                .anyMatch(e -> e.id().equals(ID) && !e.sleeping() && !e.deadlocked());
+                .anyMatch(e -> e.id().equals(ID) && GhostModuleCombatState.available(e));
     }
 
     /** 实体行为直接调用活动能力，不以请求伪装语义事件。 */

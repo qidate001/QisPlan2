@@ -1,4 +1,4 @@
-package com.qidate.qisplan2.ghost.module.implementation;
+package com.qidate.qisplan2.ghost.module.implementation.knocking;
 
 import com.qidate.qisplan2.entity.ModularGhostEntity;
 import com.qidate.qisplan2.death.ModDamageTypes;
@@ -38,7 +38,7 @@ public final class KnockingGhostModule implements GhostModule {
     /** 每次行为及延迟任务执行前重新检查，移除、休眠和死机立即阻止后续操作。 */
     public static boolean isActive(ModularGhostEntity host) {
         return host.isAlive() && !host.isSupernaturallyStunned()
-                && host.getModules().stream().anyMatch(e -> e.id().equals(ID) && !e.sleeping() && !e.deadlocked());
+                && host.getModules().stream().anyMatch(e -> e.id().equals(ID) && GhostModuleCombatState.available(e));
     }
 
     public static void knock(ModularGhostEntity host, BlockPos door) {

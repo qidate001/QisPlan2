@@ -1,7 +1,7 @@
 package com.qidate.qisplan2.ghost.possession;
 
 import com.qidate.qisplan2.core.ModItems;
-import com.qidate.qisplan2.entity.AbstractGhostEntity;
+import com.qidate.qisplan2.entity.ModularGhostEntity;
 import com.qidate.qisplan2.ghost.possession.manager.GhostPossessionManager;
 import com.qidate.qisplan2.ghost.possession.manager.PossessionHandler;
 import com.qidate.qisplan2.ghost.possession.target.EntityGhostPossessionTarget;
@@ -17,7 +17,7 @@ public final class GhostPossessionInteractionSystem {
     private GhostPossessionInteractionSystem() {}
 
     public static InteractionResult handle(
-            AbstractGhostEntity ghost,
+            ModularGhostEntity ghost,
             Player player,
             InteractionHand hand
     ) {

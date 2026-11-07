@@ -1,21 +1,28 @@
 package com.qidate.qisplan2.entity;
 
+import com.qidate.qisplan2.death.SupernaturalCombatHandler;
+import com.qidate.qisplan2.ghost.GhostAvoidanceSystem;
 import com.qidate.qisplan2.ghost.module.*;
 import com.qidate.qisplan2.ghost.module.data.GhostModuleContainer;
 import com.qidate.qisplan2.ghost.module.data.GhostModuleData;
 import com.qidate.qisplan2.ghost.module.event.ModuleTickEvent;
 import com.qidate.qisplan2.ghost.module.event.TouchEvent;
 import com.qidate.qisplan2.ghost.module.sound.GhostModuleSoundManager;
+import com.qidate.qisplan2.ghost.possession.GhostPossessionInteractionSystem;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.ai.goal.Goal;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 
 import java.util.ArrayList;
@@ -32,10 +39,9 @@ import static com.qidate.qisplan2.QisPlan2.MODID;
  *
  * 实体的具体身份和灵异规则由后续安装的实体模块决定。
  */
-public class ModularGhostEntity extends AbstractGhostEntity
-        implements GhostModuleDataModifier, GhostModuleCustomDataModifier {
+public class ModularGhostEntity extends net.minecraft.world.entity.PathfinderMob
+        implements GhostModuleDataModifier, GhostModuleCustomDataModifier, com.qidate.qisplan2.death.SupernaturalEntity {
 
-    private static final double BASE_SUPERNATURAL_STRENGTH = 5.0D;
     private static final double BASE_SUPERNATURAL_DEFENSE = 4.0D;
 
     private static final String NBT_GHOST_MODULES = "QisPlan2GhostModules";
@@ -71,6 +77,7 @@ public class ModularGhostEntity extends AbstractGhostEntity
         }
 
         CompoundTag entityData = new CompoundTag();
+
         // ENTITY_DATA 在刷怪蛋上采用完整实体存档格式，必须包含宿主实体类型 ID；
         // 缺少该字段时，客户端读取刷怪蛋组件会因无法确定实体类型而崩溃。
         entityData.putString("id", MODID + ":modular_ghost");
@@ -89,15 +96,7 @@ public class ModularGhostEntity extends AbstractGhostEntity
     ) {
         super(entityType, level);
 
-        GhostAttributeSystem.setSupernaturalStrength(
-                this,
-                BASE_SUPERNATURAL_STRENGTH
-        );
 
-        GhostAttributeSystem.setSupernaturalDefense(
-                this,
-                BASE_SUPERNATURAL_DEFENSE
-        );
     }
 
     /**
@@ -126,7 +125,7 @@ public class ModularGhostEntity extends AbstractGhostEntity
             double intensity
     ) {
         ghostModules.addModule(moduleId, intensity);
-        refreshSupernaturalDefense();
+        refreshModuleBindings();
         syncModuleSounds();
     }
 
@@ -135,15 +134,13 @@ public class ModularGhostEntity extends AbstractGhostEntity
      */
     public void removeGhostModule(ResourceLocation moduleId) {
         ghostModules.removeModule(moduleId);
-        refreshSupernaturalDefense();
+        refreshModuleBindings();
         syncModuleSounds();
     }
 
     /**
-     * 根据当前模块定义刷新宿主的灵异防御。
-     *
-     * 模块负责声明完整厉鬼的防御基础值；宿主只负责汇总，
-     * 因此安装或移除模块时不会依赖专用实体类型来设置属性。
+     * 当前宿主已挂载的模块行为实例。
+     * 按模块 ID 管理运行时资源；模块移除时停止行为并释放对应外部资源。
      */
     private final java.util.Map<ResourceLocation, List<Goal>> moduleGoals =
             new java.util.HashMap<>();
@@ -178,23 +175,8 @@ public class ModularGhostEntity extends AbstractGhostEntity
         }
     }
 
-    private void refreshSupernaturalDefense() {
+    private void refreshModuleBindings() {
         refreshModuleGoals();
-        double defense = BASE_SUPERNATURAL_DEFENSE;
-
-        for (GhostModuleData.Entry entry : ghostModules.getModules()) {
-            GhostModule module = GhostModuleRegistry.get(entry.id());
-            if (module == null) {
-                continue;
-            }
-
-            double moduleDefense = module.getSupernaturalDefense();
-            if (Double.isFinite(moduleDefense) && moduleDefense >= 0.0D) {
-                defense = Math.max(defense, moduleDefense);
-            }
-        }
-
-        GhostAttributeSystem.setSupernaturalDefense(this, defense);
     }
 
     /**
@@ -291,7 +273,7 @@ public class ModularGhostEntity extends AbstractGhostEntity
         boolean changed = ghostModules.addModule(moduleId, intensity);
 
         if (changed) {
-            refreshSupernaturalDefense();
+            refreshModuleBindings();
             syncModuleSounds();
         }
 
@@ -306,7 +288,7 @@ public class ModularGhostEntity extends AbstractGhostEntity
         boolean changed = ghostModules.removeModule(moduleId);
 
         if (changed) {
-            refreshSupernaturalDefense();
+            refreshModuleBindings();
             syncModuleSounds();
         }
 
@@ -344,7 +326,6 @@ public class ModularGhostEntity extends AbstractGhostEntity
     /**
      * 当前模块系统尚未确定具体身份时，返回通用 ID。
      */
-    @Override
     public ResourceLocation getGhostId() {
         // 一个模块定义代表一只完整厉鬼，因此宿主身份取首个已安装模块的 ID。
         if (!ghostModules.getModules().isEmpty()) {
@@ -355,6 +336,96 @@ public class ModularGhostEntity extends AbstractGhostEntity
                 MODID,
                 "modular_ghost"
         );
+    }
+
+    /** 空宿主不自带游荡行为，所有实体 AI 由已安装的完整厉鬼模块提供。 */
+    @Override protected void registerGoals() {}
+
+    @Override public double getSupernaturalStrength() {
+        return getModules().stream().mapToDouble(GhostModuleData.Entry::intensity).max().orElse(0);
+    }
+    @Override public double getSupernaturalDefense() {
+        return getModules().stream().map(entry -> GhostModuleRegistry.get(entry.id()))
+                .filter(Objects::nonNull).mapToDouble(GhostModule::getSupernaturalDefense)
+                .filter(value -> Double.isFinite(value) && value >= 0)
+                .max().orElse(BASE_SUPERNATURAL_DEFENSE);
+    }
+
+    /** 棺材钉属于实体上插入的物品；它压制宿主，但不覆盖模块原有休眠或永久死机状态。 */
+    public boolean isCoffinNailed() { return getPersistentData().getBoolean("QisPlan2CoffinNailed"); }
+    public void setCoffinNailed(boolean nailed) {
+        getPersistentData().putBoolean("QisPlan2CoffinNailed", nailed);
+    }
+
+    @Override public boolean isSupernaturallyStunned() {
+        return isCoffinNailed() || (!getModules().isEmpty()
+                && getModules().stream().noneMatch(GhostModuleCombatState::available));
+    }
+
+    @Override public boolean isPermanentlySupernaturallyStunned() {
+        return !getModules().isEmpty() && getModules().stream().allMatch(GhostModuleCombatState::permanent);
+    }
+
+    /** 旧交互的全体死机操作适配为逐模块写入，宿主不再保存另一份倒计时。 */
+    public void setSupernaturalStunTicks(int ticks) {
+        for (var entry : List.copyOf(getModules()))
+            GhostModuleCombatState.set(this, entry, ticks, GhostModuleCombatState.permanent(entry));
+    }
+
+    @Override public void onSupernaturalAttack(int ticks) {
+        for (var entry : List.copyOf(getModules())) {
+            int total = Math.clamp((long)GhostModuleCombatState.ticks(entry) + ticks, 0, Integer.MAX_VALUE);
+            GhostModuleCombatState.set(this, entry, total, GhostModuleCombatState.permanent(entry));
+        }
+        stopGhostMovement();
+    }
+
+    @Override public void onPermanentSupernaturalAttack() {
+        for (var entry : List.copyOf(getModules())) GhostModuleCombatState.set(this, entry, 0, true);
+        stopGhostMovement();
+    }
+
+    @Override public void clearSupernaturalStun() { setSupernaturalStunTicks(0); }
+    private void stopGhostMovement() {
+        getNavigation().stop();
+        setTarget(null);
+        setAggressive(false);
+    }
+
+    @Override public void aiStep() {
+        super.aiStep();
+        if (!level().isClientSide) {
+            GhostModuleCombatState.tick(this);
+            if (isSupernaturallyStunned()) {
+                stopGhostMovement();
+                return;
+            }
+            tickGhostAI();
+        }
+    }
+
+    public boolean canDetectPlayer(Player player) {
+        return GhostAvoidanceSystem.canDetect(this, player);
+    }
+
+    public boolean canAttackPlayer(Player player) {
+        return GhostAvoidanceSystem.canAttack(this, player);
+    }
+
+    public int getPlayerTargetPriority(Player player) {
+        return GhostAvoidanceSystem.getTargetPriority(this, player);
+    }
+
+    @Override public boolean removeWhenFarAway(double distance) { return false; }
+    @Override public boolean requiresCustomPersistence() { return true; }
+    @Override protected boolean shouldDespawnInPeaceful() { return false; }
+    @Override public boolean isInvulnerableTo(DamageSource source) {
+        return SupernaturalCombatHandler.isInvulnerableTo(this, source);
+    }
+
+    @Override public InteractionResult mobInteract(
+            Player player, InteractionHand hand) {
+        return GhostPossessionInteractionSystem.handle(this, player, hand);
     }
 
     public static AttributeSupplier.Builder createAttributes() {
@@ -480,7 +551,16 @@ public class ModularGhostEntity extends AbstractGhostEntity
         }
 
         ghostModules.loadEntries(loadedModules);
-        refreshSupernaturalDefense();
+        // 兼容旧统一宿主存档：只迁移遗留死机字段，不覆盖模块现有强度、复苏和专属数据。
+        if (tag.contains("QisPlan2SupernaturalStunTicks") || tag.contains("QisPlan2PermanentSupernaturalStun")) {
+            int legacyTicks = Math.max(0, tag.getInt("QisPlan2SupernaturalStunTicks"));
+            boolean legacyPermanent = tag.getBoolean("QisPlan2PermanentSupernaturalStun");
+            for (var entry : List.copyOf(getModules())) {
+                GhostModuleCombatState.set(this, entry, Math.max(legacyTicks, GhostModuleCombatState.ticks(entry)),
+                        legacyPermanent || GhostModuleCombatState.permanent(entry));
+            }
+        }
+        refreshModuleBindings();
 
     }
 
@@ -496,8 +576,7 @@ public class ModularGhostEntity extends AbstractGhostEntity
         }
     }
 
-    @Override
-    protected void tickGhostAI() {
+    private void tickGhostAI() {
         // 保留现有的统一模块 Tick 事件
         GhostModuleRuntime.dispatch(this, new ModuleTickEvent());
 

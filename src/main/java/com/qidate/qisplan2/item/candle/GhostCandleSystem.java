@@ -1,6 +1,6 @@
 package com.qidate.qisplan2.item.candle;
 
-import com.qidate.qisplan2.entity.AbstractGhostEntity;
+import com.qidate.qisplan2.entity.ModularGhostEntity;
 import net.minecraft.world.entity.player.Player;
 
 /**
@@ -80,15 +80,15 @@ public final class GhostCandleSystem {
         double searchRange =
                 DISTANCE_EFFECT_RANGE;
 
-        AbstractGhostEntity strongestGhost =
+        ModularGhostEntity strongestGhost =
                 null;
 
         double strongestBurnDamage =
                 BASE_BURN_DAMAGE_PER_TICK;
 
-        for (AbstractGhostEntity ghost
+        for (ModularGhostEntity ghost
                 : player.level().getEntitiesOfClass(
-                AbstractGhostEntity.class,
+                ModularGhostEntity.class,
                 player.getBoundingBox().inflate(
                         searchRange
                 ),
@@ -124,7 +124,7 @@ public final class GhostCandleSystem {
      */
     public static double getBurnDamagePerTick(
             Player player,
-            AbstractGhostEntity ghost
+            ModularGhostEntity ghost
     ) {
         double distance =
                 player.distanceTo(ghost);

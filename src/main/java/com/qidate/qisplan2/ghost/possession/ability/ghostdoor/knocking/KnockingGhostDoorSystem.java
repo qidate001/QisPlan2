@@ -3,7 +3,7 @@ package com.qidate.qisplan2.ghost.possession.ability.ghostdoor.knocking;
 import com.qidate.qisplan2.entity.ModularGhostEntity;
 import com.qidate.qisplan2.ghost.module.GhostModuleRuntime;
 import com.qidate.qisplan2.ghost.module.event.DoorKnockHeardEvent;
-import com.qidate.qisplan2.ghost.module.implementation.KnockingGhostModule;
+import com.qidate.qisplan2.ghost.module.implementation.knocking.KnockingGhostModule;
 
 import com.qidate.qisplan2.block.GhostDoorBlock;
 import com.qidate.qisplan2.core.ModSounds;

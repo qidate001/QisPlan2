@@ -1,7 +1,7 @@
 package com.qidate.qisplan2.item;
 
 import com.qidate.qisplan2.QisPlan2;
-import com.qidate.qisplan2.entity.AbstractGhostEntity;
+import com.qidate.qisplan2.entity.ModularGhostEntity;
 
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
@@ -32,7 +32,7 @@ public class CoffinNailItem
          * 只处理厉鬼。
          * ========================================================
          */
-        if (!(target instanceof AbstractGhostEntity ghost)) {
+        if (!(target instanceof ModularGhostEntity ghost)) {
 
             return InteractionResult.PASS;
         }
@@ -43,7 +43,7 @@ public class CoffinNailItem
          *
          * 不在这里处理。
          *
-         * 拔钉由 AbstractGhostEntity.mobInteract()
+         * 拔钉由 ModularGhostEntity.mobInteract()
          * 统一处理，而且空手也可以拔。
          * ========================================================
          */

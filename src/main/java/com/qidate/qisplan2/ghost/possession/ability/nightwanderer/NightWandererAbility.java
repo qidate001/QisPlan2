@@ -4,7 +4,7 @@ import com.qidate.qisplan2.QisPlan2;
 import com.qidate.qisplan2.core.ModEntities;
 import com.qidate.qisplan2.death.ModDamageTypes;
 import com.qidate.qisplan2.death.SupernaturalDeathHandler;
-import com.qidate.qisplan2.entity.AbstractGhostEntity;
+import com.qidate.qisplan2.entity.ModularGhostEntity;
 import com.qidate.qisplan2.ghost.possession.ability.GhostAbilityContext;
 import com.qidate.qisplan2.ghost.possession.data.PossessedGhostState;
 import com.qidate.qisplan2.ghost.possession.manager.PossessionHandler;
@@ -110,7 +110,7 @@ public final class NightWandererAbility
     }
 
     @Override
-    public EntityType<? extends AbstractGhostEntity> entityType() {
+    public EntityType<? extends ModularGhostEntity> entityType() {
 
         return ModEntities.MODULAR_GHOST.get();
     }

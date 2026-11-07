@@ -1,6 +1,7 @@
 package com.qidate.qisplan2.entity.ai;
 
 import com.qidate.qisplan2.entity.ModularGhostEntity;
+import com.qidate.qisplan2.ghost.module.GhostModuleCombatState;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.ai.goal.Goal;
 import java.util.List;
@@ -11,7 +12,7 @@ import java.util.function.Supplier;
  *
  * 仅比较控制标记重叠的行为。高强度达到低强度两倍，或差值至少 100 时，
  * 高强度模块可以持续占用；较弱模块仅在强者没有可执行的冲突行为时运行。
- * 未达到压倒门槛的同级行为仍按 100 tick 轮换。模块内部保留列表顺序。
+ * 未达到压倒门槛的同级行为按 100 tick 轮换。模块内部保留列表顺序。
  */
 public final class ModuleScheduledGoal extends Goal {
     private static final long MAX_RUN_TICKS = 100;
@@ -55,7 +56,7 @@ public final class ModuleScheduledGoal extends Goal {
     private boolean hasDemand() {
         if (!host.isAlive() || host.isSupernaturallyStunned() || host.isCoffinNailed()
                 || host.getModules().stream().noneMatch(e -> e.id().equals(moduleId)
-                        && !e.sleeping() && !e.deadlocked())) return false;
+                        && GhostModuleCombatState.available(e))) return false;
         long now = host.level().getGameTime();
         if (checkedAt != now) {
             checkedAt = now;

@@ -1,9 +1,6 @@
 package com.qidate.qisplan2.ghost.module.ability;
 
-import com.qidate.qisplan2.ghost.module.GhostMedium;
-import com.qidate.qisplan2.ghost.module.GhostModule;
-import com.qidate.qisplan2.ghost.module.GhostModuleRegistry;
-import com.qidate.qisplan2.ghost.module.GhostRevivalPolicy;
+import com.qidate.qisplan2.ghost.module.*;
 
 import java.util.List;
 import java.util.Objects;
@@ -29,6 +26,10 @@ public final class GhostAbilityExecutor {
             GhostAbilityContext context
     ) {
         Objects.requireNonNull(context, "context");
+        if (context.host().getModules().stream().noneMatch(entry -> entry.id().equals(context.moduleId())
+                && !GhostModuleCombatState.permanent(entry)
+                && GhostModuleCombatState.ticks(entry) == 0)) return false;
+
 
         // 1. 模块必须仍然存在。
         if (!context.isModuleAvailable()) {

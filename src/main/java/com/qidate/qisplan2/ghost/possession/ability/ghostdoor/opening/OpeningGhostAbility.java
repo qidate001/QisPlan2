@@ -2,7 +2,7 @@ package com.qidate.qisplan2.ghost.possession.ability.ghostdoor.opening;
 
 import com.qidate.qisplan2.QisPlan2;
 import com.qidate.qisplan2.core.ModEntities;
-import com.qidate.qisplan2.entity.AbstractGhostEntity;
+import com.qidate.qisplan2.entity.ModularGhostEntity;
 import com.qidate.qisplan2.ghost.possession.ability.PossessedGhostAbility;
 import com.qidate.qisplan2.ghost.corrosion.CorrosionType;
 import com.qidate.qisplan2.ghost.corrosion.GhostCorrosion;
@@ -32,7 +32,7 @@ public final class OpeningGhostAbility
     }
 
     @Override
-    public EntityType<? extends AbstractGhostEntity> entityType() {
+    public EntityType<? extends ModularGhostEntity> entityType() {
         return ModEntities.MODULAR_GHOST.get();
     }
 

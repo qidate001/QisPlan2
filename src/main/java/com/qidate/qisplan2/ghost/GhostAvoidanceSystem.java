@@ -1,6 +1,6 @@
 package com.qidate.qisplan2.ghost;
 
-import com.qidate.qisplan2.entity.AbstractGhostEntity;
+import com.qidate.qisplan2.entity.ModularGhostEntity;
 import com.qidate.qisplan2.item.candle.RedGhostCandleItem;
 import com.qidate.qisplan2.item.candle.WhiteGhostCandleItem;
 import net.minecraft.core.component.DataComponents;
@@ -40,7 +40,7 @@ public final class GhostAvoidanceSystem {
      * @return 是否能够发现
      */
     public static boolean canDetect(
-            AbstractGhostEntity ghost,
+            ModularGhostEntity ghost,
             Player player
     ) {
         if (hasWhiteGhostCandle(player)) {
@@ -62,7 +62,7 @@ public final class GhostAvoidanceSystem {
      * @return 是否允许攻击
      */
     public static boolean canAttack(
-            AbstractGhostEntity ghost,
+            ModularGhostEntity ghost,
             Player player
     ) {
         if (hasWhiteGhostCandle(player)) {
@@ -86,7 +86,7 @@ public final class GhostAvoidanceSystem {
      * @return 目标优先级
      */
     public static int getTargetPriority(
-            AbstractGhostEntity ghost,
+            ModularGhostEntity ghost,
             Player player
     ) {
         if (!canDetect(ghost, player)) {

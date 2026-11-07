@@ -1,6 +1,6 @@
 package com.qidate.qisplan2.ghost.domain;
 
-import com.qidate.qisplan2.entity.AbstractGhostEntity;
+import com.qidate.qisplan2.entity.ModularGhostEntity;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
@@ -142,7 +142,7 @@ public final class GhostDomainVisionSystem {
             Entity entity
     ) {
 
-        if (entity instanceof AbstractGhostEntity) {
+        if (entity instanceof ModularGhostEntity) {
             return GHOST_COLOR;
         }
 

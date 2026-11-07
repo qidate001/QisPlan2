@@ -4,12 +4,11 @@ import com.qidate.qisplan2.ghost.module.implementation.mist.GhostMistModule;
 import com.qidate.qisplan2.ghost.module.implementation.mist.GhostMistState;
 import com.qidate.qisplan2.ghost.possession.data.PossessedGhostDomainData;
 
-import com.qidate.qisplan2.ghost.module.implementation.KnockingGhostModule;
+import com.qidate.qisplan2.ghost.module.implementation.knocking.KnockingGhostModule;
 import com.qidate.qisplan2.ghost.module.implementation.nightwanderer.NightWandererModule;
 
 import com.qidate.qisplan2.QisPlan2;
 import com.qidate.qisplan2.death.QisDeathHandler;
-import com.qidate.qisplan2.entity.AbstractGhostEntity;
 import com.qidate.qisplan2.entity.ModularGhostEntity;
 import com.qidate.qisplan2.ghost.module.implementation.ClosingGhostModule;
 import com.qidate.qisplan2.ghost.module.implementation.OpeningGhostModule;
@@ -25,7 +24,6 @@ import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
 
 import net.neoforged.bus.api.SubscribeEvent;
-import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.entity.living.LivingDeathEvent;
 
 import java.util.Map;
@@ -189,7 +187,7 @@ public final class GhostBreakoutHandler {
             return;
         }
 
-        EntityType<? extends AbstractGhostEntity>
+        EntityType<? extends ModularGhostEntity>
                 entityType =
                 ability.entityType();
 
@@ -201,7 +199,7 @@ public final class GhostBreakoutHandler {
             return;
         }
 
-        AbstractGhostEntity ghost =
+        ModularGhostEntity ghost =
                 entityType.create(level);
 
         if (ghost == null) {
@@ -214,7 +212,8 @@ public final class GhostBreakoutHandler {
 
         // 开门鬼与关门鬼统一使用模块化宿主；破体时按驾驭 ID 安装完整模块。
         // 破体后的死机时间仍由下方根据驾驭复苏值计算，模块强度使用厉鬼初始值。
-        if (ghost instanceof ModularGhostEntity modularGhost) {
+        if (ghost != null) {
+            ModularGhostEntity modularGhost = ghost;
             if (ghostId.equals(OpeningGhostModule.ID)) {
                 modularGhost.addGhostModule(
                         OpeningGhostModule.ID,

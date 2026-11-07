@@ -2,7 +2,7 @@ package com.qidate.qisplan2.ghost.possession.target;
 
 import com.qidate.qisplan2.core.ModItems;
 import com.qidate.qisplan2.death.SupernaturalEntity;
-import com.qidate.qisplan2.entity.AbstractGhostEntity;
+import com.qidate.qisplan2.entity.ModularGhostEntity;
 import com.qidate.qisplan2.ghost.possession.manager.PossessionHandler;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.server.level.ServerPlayer;
@@ -57,7 +57,7 @@ public final class EntityGhostPossessionTarget
          * ====================================================
          */
 
-        if (ghost instanceof AbstractGhostEntity abstractGhost
+        if (ghost instanceof ModularGhostEntity abstractGhost
                 && abstractGhost.isCoffinNailed()) {
 
             abstractGhost.setCoffinNailed(

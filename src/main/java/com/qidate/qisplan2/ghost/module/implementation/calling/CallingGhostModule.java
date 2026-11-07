@@ -40,7 +40,7 @@ public final class CallingGhostModule implements GhostModule {
     public static boolean isActive(ModularGhostEntity host) {
         return host.level() instanceof ServerLevel && host.isAlive() && !host.isCoffinNailed()
                 && !host.isSupernaturallyStunned() && host.getModules().stream()
-                .anyMatch(e -> e.id().equals(ID) && !e.sleeping() && !e.deadlocked());
+                .anyMatch(e -> e.id().equals(ID) && com.qidate.qisplan2.ghost.module.GhostModuleCombatState.available(e));
     }
     static boolean isTurnAround(float previous, float current) {
         return Math.abs(Mth.wrapDegrees(current - previous)) >= 45.0F;

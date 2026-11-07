@@ -1,12 +1,9 @@
 package com.qidate.qisplan2.core;
 
 import com.qidate.qisplan2.ghost.module.implementation.mist.GhostMistModule;
-
 import com.qidate.qisplan2.ghost.module.implementation.calling.CallingGhostModule;
-
-import com.qidate.qisplan2.ghost.module.implementation.KnockingGhostModule;
+import com.qidate.qisplan2.ghost.module.implementation.knocking.KnockingGhostModule;
 import com.qidate.qisplan2.ghost.module.implementation.nightwanderer.NightWandererModule;
-
 import com.mojang.serialization.Codec;
 import com.qidate.qisplan2.entity.ModularGhostEntity;
 import com.qidate.qisplan2.ghost.module.data.GhostModuleData;

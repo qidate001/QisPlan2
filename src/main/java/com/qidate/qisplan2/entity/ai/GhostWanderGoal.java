@@ -1,5 +1,6 @@
 package com.qidate.qisplan2.entity.ai;
 
+import com.qidate.qisplan2.entity.ModularGhostEntity;
 import net.minecraft.world.entity.PathfinderMob;
 import net.minecraft.world.entity.ai.goal.Goal;
 import net.minecraft.world.entity.ai.util.LandRandomPos;
@@ -104,9 +105,7 @@ public class GhostWanderGoal
         /*
          * 死机期间不游荡。
          */
-        if (mob instanceof
-                com.qidate.qisplan2.entity.AbstractGhostEntity ghost
-                && ghost.isSupernaturallyStunned()) {
+        if (mob instanceof ModularGhostEntity ghost && ghost.isSupernaturallyStunned()) {
 
             return false;
         }
@@ -135,9 +134,7 @@ public class GhostWanderGoal
         /*
          * 死机立即停止。
          */
-        if (mob instanceof
-                com.qidate.qisplan2.entity.AbstractGhostEntity ghost
-                && ghost.isSupernaturallyStunned()) {
+        if (mob instanceof ModularGhostEntity ghost && ghost.isSupernaturallyStunned()) {
 
             return false;
         }
@@ -156,13 +153,13 @@ public class GhostWanderGoal
         cooldown =
                 minCooldown
                         + mob.getRandom().nextInt(
-                        Math.max(
-                                1,
-                                maxCooldown
-                                        - minCooldown
-                                        + 1
-                        )
-                );
+                                Math.max(
+                                        1,
+                                        maxCooldown
+                                                - minCooldown
+                                                + 1
+                                )
+                        );
     }
 
     @Override

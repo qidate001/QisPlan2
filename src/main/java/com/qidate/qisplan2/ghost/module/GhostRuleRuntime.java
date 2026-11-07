@@ -106,8 +106,7 @@ public final class GhostRuleRuntime {
 
         for (GhostModuleData.Entry currentEntry : host.getModules()) {
             if (currentEntry.id().equals(moduleId)) {
-                return !currentEntry.sleeping()
-                        && !currentEntry.deadlocked();
+                return GhostModuleCombatState.available(currentEntry);
             }
         }
 

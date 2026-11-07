@@ -1,6 +1,6 @@
 package com.qidate.qisplan2.ghost.possession.ability;
 
-import com.qidate.qisplan2.entity.AbstractGhostEntity;
+import com.qidate.qisplan2.entity.ModularGhostEntity;
 import com.qidate.qisplan2.ghost.corrosion.CorrosionType;
 import com.qidate.qisplan2.ghost.corrosion.GhostCorrosion;
 import com.qidate.qisplan2.ghost.possession.classification.GhostClassification;
@@ -33,7 +33,7 @@ public interface PossessedGhostAbility {
      *
      * 可以在具体 Ability 中覆盖这个方法。
      */
-    default EntityType<? extends AbstractGhostEntity> entityType() {
+    default EntityType<? extends ModularGhostEntity> entityType() {
         return null;
     }
 
