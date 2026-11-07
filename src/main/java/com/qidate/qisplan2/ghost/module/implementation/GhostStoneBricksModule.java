@@ -1,5 +1,6 @@
 package com.qidate.qisplan2.ghost.module.implementation;
 
+import com.qidate.qisplan2.QisPlan2;
 import com.qidate.qisplan2.death.ModDamageTypes;
 import com.qidate.qisplan2.death.SupernaturalDeathHandler;
 import com.qidate.qisplan2.ghost.module.GhostModule;
@@ -15,6 +16,9 @@ import com.qidate.qisplan2.ghost.module.event.GhostEvent;
 import com.qidate.qisplan2.ghost.module.event.ItemDestructionAttemptEvent;
 import com.qidate.qisplan2.ghost.module.influence.GhostInfluenceType;
 import java.util.List;
+
+import com.qidate.qisplan2.ghost.possession.classification.GhostClassification;
+import com.qidate.qisplan2.ghost.possession.classification.GhostTag;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.LivingEntity;
 import static com.qidate.qisplan2.QisPlan2.MODID;
@@ -32,12 +36,30 @@ public final class GhostStoneBricksModule implements GhostModule {
     private static final List<GhostAbility> ABILITIES = List.of(
             new RetaliationAbility(BLOCK_ABILITY, BlockDestructionAttemptEvent.class),
             new RetaliationAbility(ITEM_ABILITY, ItemDestructionAttemptEvent.class),
-            new RetaliationAbility(ENTITY_ABILITY, EntityDestructionAttemptEvent.class));
+            new RetaliationAbility(ENTITY_ABILITY, EntityDestructionAttemptEvent.class)
+    );
 
     @Override public ResourceLocation getId() { return ID; }
     @Override public GhostModuleInitialData getInitialData() { return new GhostModuleInitialData(5, 0); }
     @Override public List<GhostAbility> getIntrinsicAbilities() { return ABILITIES; }
     @Override public List<GhostRule> getRules() { return List.of(new DestructionRule()); }
+    @Override public GhostClassification suppressionTargets() { return GhostClassification.of(GhostTag.ENTITY); }
+    @Override public GhostClassification classification() { return GhostClassification.of(GhostTag.ENTITY); }
+    @Override public int suppressionUnits() { return 1; }
+    @Override
+    public ResourceLocation iconTexture() {
+        return ResourceLocation.fromNamespaceAndPath(
+                QisPlan2.MODID,
+                "textures/block/ghost_stone_bricks.png"
+        );
+    }
+    @Override
+    public ResourceLocation suppressionIconTexture() {
+        return ResourceLocation.fromNamespaceAndPath(
+                QisPlan2.MODID,
+                "textures/block/ghost_stone_bricks.png"
+        );
+    }
 
     /** 每种摧毁事实都明确自己的反击对象；环境伤害没有对象时不执行反击。 */
     private static LivingEntity target(GhostEvent event) {

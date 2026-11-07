@@ -133,6 +133,13 @@ public final class GhostDivinationSlipModule implements GhostModule {
     }
 
     @Override
+    public GhostClassification classification() {
+        return GhostClassification.of(
+                GhostTag.ENTITY
+        );
+    }
+
+    @Override
     public int suppressionUnits() {
         return 2;
     }
