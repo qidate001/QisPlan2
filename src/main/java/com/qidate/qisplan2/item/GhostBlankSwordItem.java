@@ -1,8 +1,6 @@
-package com.qidate.qisplan2.ghost.module.host.item;
+package com.qidate.qisplan2.item;
 
-import com.qidate.qisplan2.ghost.module.GhostModuleRuntime;
-import com.qidate.qisplan2.ghost.module.event.GhostUseEvent;
-import com.qidate.qisplan2.ghost.module.GhostRuleRuntime;
+import com.qidate.qisplan2.ghost.module.host.item.GhostModuleItemSupport;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResultHolder;
 import net.minecraft.world.entity.player.Player;
@@ -14,7 +12,8 @@ import net.minecraft.world.level.Level;
 /**
  * 通用灵异白板剑。
  *
- * 用于承载不同的厉鬼模块。
+ * 默认不携带模块，用于承载后续安装的厉鬼模块。
+ * 保留 SwordItem 的原版剑行为，模块交互通过共用接口提供。
  *
  * 每把剑的模块数据保存在各自 ItemStack 的 Data Components 中。
  * 右键使用时，创建临时模块宿主适配器，并分发 GhostUseEvent。
@@ -22,7 +21,7 @@ import net.minecraft.world.level.Level;
  * 本类不关心剑上具体安装了什么模块，
  * 具体行为由模块自身的规则决定。
  */
-public class GhostBlankSwordItem extends SwordItem {
+public class GhostBlankSwordItem extends SwordItem implements GhostModuleItemSupport {
 
     public GhostBlankSwordItem(Properties properties) {
         super(
@@ -46,21 +45,6 @@ public class GhostBlankSwordItem extends SwordItem {
             Player player,
             InteractionHand hand
     ) {
-        ItemStack stack = player.getItemInHand(hand);
-
-        // 仅在服务端执行规则，避免客户端重复触发灵异效果。
-        if (!level.isClientSide) {
-            GhostItemModuleHost host = new GhostItemModuleHost(stack);
-
-            GhostModuleRuntime.dispatch(
-                    host,
-                    new GhostUseEvent(player)
-            );
-        }
-
-        return InteractionResultHolder.sidedSuccess(
-                stack,
-                level.isClientSide
-        );
+        return useModules(level, player, hand);
     }
 }

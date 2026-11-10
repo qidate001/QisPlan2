@@ -1,150 +1,24 @@
 package com.qidate.qisplan2.item;
 
 import com.qidate.qisplan2.core.ModDataComponents;
+import com.qidate.qisplan2.ghost.module.data.GhostModuleData;
+import com.qidate.qisplan2.ghost.module.host.item.GhostModuleItem;
 import com.qidate.qisplan2.ghost.module.implementation.GhostDivinationSlipModule;
-import com.qidate.qisplan2.ghost.possession.ability.divinationslip.GhostDivinationSlipSystem;
-import com.qidate.qisplan2.ghost.possession.manager.GhostPossessionManager;
-import com.qidate.qisplan2.ghost.possession.target.ItemGhostPossessionTarget;
-import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.world.InteractionHand;
-import net.minecraft.world.InteractionResultHolder;
-import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.item.Item;
-import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.level.Level;
+import java.util.List;
 
-public class GhostDivinationSlipItem extends Item {
-
-    /**
-     * 使用冷却：
-     *
-     * 30 秒 = 600 tick
-     */
-    private static final int COOLDOWN_TICKS = 30 * 20;
-
-    public GhostDivinationSlipItem(
-            Properties properties
-    ) {
-        super(properties);
+/**
+ * 自带鬼签模块的普通物品。
+ * 这里只声明默认模块，不再保存独立死机时间，也不直接实现抽签、保护或袭击。
+ * 使用与驾驭复用通用模块物品入口，实际效果由鬼签模块处理。
+ */
+public class GhostDivinationSlipItem extends GhostModuleItem {
+    public GhostDivinationSlipItem(Properties properties) {
+        super(properties.component(ModDataComponents.GHOST_MODULES.get(), defaultModules()));
     }
 
-    @Override
-    public InteractionResultHolder<ItemStack> use(
-            Level level,
-            Player player,
-            InteractionHand hand
-    ) {
-
-        ItemStack stack =
-                player.getItemInHand(hand);
-
-        /*
-         * ========================================
-         * 死机检查
-         * ========================================
-         *
-         * 死机状态属于当前这一个鬼签。
-         */
-        Long crashedUntil = stack.get(ModDataComponents.GHOST_DIVINATION_CRASHED_UNTIL);
-        boolean crashed = crashedUntil != null
-                && level.getGameTime() < crashedUntil;
-
-        if (crashed) {
-            // 死机状态：只有 Shift+右键才能尝试驾驭
-            if (player.isShiftKeyDown()) {
-                if (!level.isClientSide()
-                        && player instanceof ServerPlayer serverPlayer) {
-
-                    boolean started =
-                            GhostPossessionManager.start(
-                                    serverPlayer,
-                                    new ItemGhostPossessionTarget(
-                                            stack,
-                                            GhostDivinationSlipModule.ID,
-                                            targetPlayer -> stack.remove(
-                                                    ModDataComponents
-                                                            .GHOST_DIVINATION_CRASHED_UNTIL
-                                            )
-                                    )
-                            );
-
-                    if (started) {
-                        return InteractionResultHolder.consume(stack);
-                    }
-                }
-
-                return InteractionResultHolder.sidedSuccess(
-                        stack,
-                        level.isClientSide()
-                );
-            }
-
-            // 死机状态下普通右键无效
-            return InteractionResultHolder.fail(stack);
-        }
-
-        // 死机时间已经结束，清除状态
-        if (crashedUntil != null) {
-            stack.remove(ModDataComponents.GHOST_DIVINATION_CRASHED_UNTIL);
-        }
-
-
-        /*
-         * ========================================
-         * 冷却检查
-         * ========================================
-         */
-        if (player.getCooldowns().isOnCooldown(this)) {
-
-            return InteractionResultHolder.fail(
-                    stack
-            );
-        }
-
-        /*
-         * ========================================
-         * 服务端抽签
-         * ========================================
-         */
-        if (!level.isClientSide
-                && player instanceof ServerPlayer serverPlayer) {
-
-            int result =
-                    level.random.nextInt(3);
-
-            switch (result) {
-
-                case 0 ->
-                        GhostDivinationSlipSystem.useLife(
-                                serverPlayer
-                        );
-
-                case 1 ->
-                        GhostDivinationSlipSystem.useDeathItem(
-                                serverPlayer,
-                                stack
-                        );
-
-                case 2 ->
-                        GhostDivinationSlipSystem.useGhost(
-                                serverPlayer
-                        );
-            }
-
-            /*
-             * ========================================
-             * 30 tick 冷却
-             * ========================================
-             */
-            player.getCooldowns().addCooldown(
-                    this,
-                    COOLDOWN_TICKS
-            );
-        }
-
-        return InteractionResultHolder.sidedSuccess(
-                stack,
-                level.isClientSide
-        );
+    private static List<GhostModuleData.Entry> defaultModules() {
+        var initial = new GhostDivinationSlipModule().getInitialData();
+        return List.of(new GhostModuleData.Entry(GhostDivinationSlipModule.ID,
+                initial.intensity(), initial.revival()));
     }
 }
