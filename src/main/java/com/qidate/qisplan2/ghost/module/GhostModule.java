@@ -4,6 +4,8 @@ import com.qidate.qisplan2.entity.ModularGhostEntity;
 import com.qidate.qisplan2.ghost.corrosion.CorrosionType;
 import com.qidate.qisplan2.ghost.corrosion.GhostCorrosion;
 import com.qidate.qisplan2.ghost.domain.GhostDomainManager;
+import com.qidate.qisplan2.ghost.module.host.item.GhostItemModuleHost;
+import net.minecraft.world.entity.player.Player;
 import com.qidate.qisplan2.ghost.module.ability.GhostAbility;
 import com.qidate.qisplan2.ghost.module.ability.GhostAbilityContext;
 import com.qidate.qisplan2.ghost.module.data.GhostModuleInitialData;
@@ -37,6 +39,10 @@ import net.minecraft.world.entity.ai.goal.Goal;
  * 不属于模块实例的当前状态。
  */
 public interface GhostModule {
+    /** 物品宿主的服务端生命周期；用于燃烧等持续状态，不发布虚构的语义事件。 */
+    default void onItemTick(GhostItemModuleHost host,
+            Player holder) {}
+
 
     /**
      * 获取模块的唯一标识。

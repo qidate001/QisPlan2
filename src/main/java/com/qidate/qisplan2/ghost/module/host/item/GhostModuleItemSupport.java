@@ -7,6 +7,8 @@ import com.qidate.qisplan2.ghost.possession.manager.GhostPossessionManager;
 import com.qidate.qisplan2.ghost.possession.manager.PossessionHandler;
 import com.qidate.qisplan2.ghost.possession.target.ItemGhostPossessionTarget;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.entity.Entity;
+import com.qidate.qisplan2.ghost.module.GhostModuleRegistry;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResultHolder;
 import net.minecraft.world.entity.player.Player;
@@ -46,5 +48,16 @@ public interface GhostModuleItemSupport {
             GhostModuleRuntime.dispatch(host, new GhostUseEvent(player));
         }
         return InteractionResultHolder.sidedSuccess(stack, level.isClientSide);
+    }
+
+    /** 所有模块物品共用的生命周期，不依赖具体物品类型。 */
+    default void tickModules(ItemStack stack, Level level, Entity entity) {
+        if (level.isClientSide || !(entity instanceof Player player)) return;
+        var host = new GhostItemModuleHost(stack);
+        for (var entry : host.getModules()) {
+            if (stack.isEmpty()) break;
+            var module = GhostModuleRegistry.get(entry.id());
+            if (module != null) module.onItemTick(host, player);
+        }
     }
 }

@@ -3,7 +3,7 @@ package com.qidate.qisplan2.event;
 import com.qidate.qisplan2.QisPlan2;
 import com.qidate.qisplan2.ghost.GhostServerManager;
 import com.qidate.qisplan2.ghost.curse.CurseManager;
-import com.qidate.qisplan2.ghost.possession.ability.ghostdoor.knocking.KnockingGhostDoorSystem;
+import com.qidate.qisplan2.ghost.module.implementation.knocking.KnockingGhostDoorSystem;
 import com.qidate.qisplan2.ghost.tombstone.GhostTombstoneInscriptionSystem;
 import com.qidate.qisplan2.network.curse.CurseNetwork;
 import com.qidate.qisplan2.structure.GhostGraveyardGenerationManager;

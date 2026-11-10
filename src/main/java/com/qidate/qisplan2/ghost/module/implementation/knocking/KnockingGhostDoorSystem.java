@@ -1,4 +1,4 @@
-package com.qidate.qisplan2.ghost.possession.ability.ghostdoor.knocking;
+package com.qidate.qisplan2.ghost.module.implementation.knocking;
 
 import com.qidate.qisplan2.block.GhostDoorBlock;
 import com.qidate.qisplan2.core.ModSounds;
@@ -8,7 +8,7 @@ import com.qidate.qisplan2.entity.ModularGhostEntity;
 import com.qidate.qisplan2.ghost.module.GhostModuleRuntime;
 import com.qidate.qisplan2.ghost.module.event.DoorKnockHeardEvent;
 import com.qidate.qisplan2.ghost.module.host.player.PlayerGhostModuleHost;
-import com.qidate.qisplan2.ghost.module.implementation.knocking.KnockingGhostModule;
+
 import java.util.*;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;

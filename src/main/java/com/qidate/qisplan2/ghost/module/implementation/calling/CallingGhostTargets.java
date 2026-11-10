@@ -1,6 +1,7 @@
 package com.qidate.qisplan2.ghost.module.implementation.calling;
 
 import com.qidate.qisplan2.entity.ModularGhostEntity;
+import com.qidate.qisplan2.ghost.GhostAvoidanceSystem;
 import com.qidate.qisplan2.core.ModBlocks;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
@@ -24,6 +25,9 @@ final class CallingGhostTargets {
                 && !player.isSpectator() && host.canDetectPlayer(player);
     }
     static ServerPlayer available(ModularGhostEntity host) {
+        var preferred = GhostAvoidanceSystem.preferredTarget(host, 32,
+                p -> p instanceof ServerPlayer server && valid(host, server) && canTrackPlayer(host, server));
+        if (preferred instanceof ServerPlayer serverPlayer) return serverPlayer;
         ServerPlayer current = current(host);
         // 被阻隔时保留原目标，但不占用移动控制。
         if (current != null) return canTrackPlayer(host, current) ? current : null;

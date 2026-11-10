@@ -1,6 +1,7 @@
 package com.qidate.qisplan2.entity;
 
 import com.qidate.qisplan2.death.SupernaturalCombatHandler;
+import com.qidate.qisplan2.entity.ai.GhostCandleAttractionGoal;
 import com.qidate.qisplan2.death.SupernaturalEntity;
 import com.qidate.qisplan2.entity.ai.ModuleScheduledGoal;
 import com.qidate.qisplan2.ghost.GhostAvoidanceSystem;
@@ -350,7 +351,9 @@ public class ModularGhostEntity extends PathfinderMob
     }
 
     /** 空宿主不自带游荡行为，所有实体 AI 由已安装的完整厉鬼模块提供。 */
-    @Override protected void registerGoals() {}
+    @Override protected void registerGoals() {
+        goalSelector.addGoal(2, new GhostCandleAttractionGoal(this));
+    }
 
     @Override public double getSupernaturalStrength() {
         return getModules().stream().mapToDouble(GhostModuleData.Entry::intensity).max().orElse(0);

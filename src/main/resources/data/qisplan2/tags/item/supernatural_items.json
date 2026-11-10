@@ -2,6 +2,8 @@
   "replace": false,
   "values": [
     "qisplan2:ghost_blank_sword",
-    "qisplan2:ghost_divination_slip"
+    "qisplan2:ghost_divination_slip",
+    "qisplan2:white_ghost_candle",
+    "qisplan2:red_ghost_candle"
   ]
 }

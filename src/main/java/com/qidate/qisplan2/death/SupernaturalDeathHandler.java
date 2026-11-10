@@ -3,13 +3,11 @@ package com.qidate.qisplan2.death;
 import com.qidate.qisplan2.QisPlan2;
 import com.qidate.qisplan2.event.GhostEntityDestructionHandler;
 import com.qidate.qisplan2.core.ModGameRules;
-import com.qidate.qisplan2.core.ModMobEffects;
-import com.qidate.qisplan2.death.SupernaturalEntity;
 import com.qidate.qisplan2.ghost.curse.type.ghostdivination.GhostDivinationCurse;
 import com.qidate.qisplan2.ghost.layer.GhostLayerHandler;
-import com.qidate.qisplan2.ghost.possession.ability.divinationslip.GhostDivinationSlipSystem;
+import com.qidate.qisplan2.ghost.module.implementation.divinationslip.GhostDivinationSlipSystem;
 import com.qidate.qisplan2.item.GhostShroudItem;
-import com.qidate.qisplan2.item.candle.WhiteGhostCandleSystem;
+import com.qidate.qisplan2.ghost.GhostAvoidanceSystem;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
@@ -115,27 +113,9 @@ public class SupernaturalDeathHandler {
         supernaturalIntensity =
                 Math.max(0.0D, supernaturalIntensity);
 
-        /*
-         * ========================================
-         * 白鬼烛抵挡
-         * ========================================
-         *
-         * 1 灵异强度 = 10 耐久。
-         * 即使耐久不足，
-         * 也会尽可能削弱本次袭击。
-         */
-        if (entity instanceof ServerPlayer player) {
-
-            supernaturalIntensity =
-                    WhiteGhostCandleSystem.absorbAttack(
-                            player,
-                            supernaturalIntensity
-                    );
-
-            if (supernaturalIntensity <= 0.0D) {
-                return false;
-            }
-        }
+        // 手持燃烧白烛令袭击停止，不再采用旧版“挨打后扣耐久抵消强度”。
+        // 延迟袭击也在这里读取最新状态，点燃后立即有效，熄灭或燃尽后立即失效。
+        if (entity instanceof Player player && GhostAvoidanceSystem.hasWhiteGhostCandle(player)) return false;
 
         // 记录本次袭击
         double recentIntensity =

@@ -24,6 +24,8 @@ public final class GhostItemModuleHost
 
     private final ItemStack stack;
 
+    public ItemStack stack() { return stack; }
+
     public GhostItemModuleHost(ItemStack stack) {
         this.stack = Objects.requireNonNull(stack, "stack");
     }

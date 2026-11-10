@@ -4,6 +4,7 @@ import com.qidate.qisplan2.ghost.module.host.item.GhostModuleItemSupport;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResultHolder;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.SwordItem;
 import net.minecraft.world.item.Tiers;
@@ -46,5 +47,11 @@ public class GhostBlankSwordItem extends SwordItem implements GhostModuleItemSup
             InteractionHand hand
     ) {
         return useModules(level, player, hand);
+    }
+
+    @Override
+    public void inventoryTick(ItemStack stack, Level level, Entity entity, int slot, boolean selected) {
+        super.inventoryTick(stack, level, entity, slot, selected);
+        tickModules(stack, level, entity);
     }
 }

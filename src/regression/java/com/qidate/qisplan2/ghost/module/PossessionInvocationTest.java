@@ -6,6 +6,7 @@ import com.qidate.qisplan2.ghost.module.data.GhostModuleData;
 import com.qidate.qisplan2.ghost.module.event.ModuleTickEvent;
 import com.qidate.qisplan2.ghost.module.event.GhostEvent;
 import com.qidate.qisplan2.ghost.module.host.player.PlayerGhostData;
+import com.qidate.qisplan2.ghost.module.implementation.candle.GhostCandleModule;
 import java.util.List;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.resources.ResourceLocation;
@@ -75,6 +76,19 @@ public final class PossessionInvocationTest {
         check(rules == 1, "正常模块应触发规则");
         var deadlocked = new GhostModuleData.Entry(ID, 10, 0, false, true, new CompoundTag());
         check(PlayerGhostData.view(deadlocked).state().isAnyStun(), "界面必须显示模块死机");
-        System.out.println("Possession invocation regression checks passed");
+        CompoundTag lit = new CompoundTag();
+        lit.putBoolean("lit", true);
+        check(GhostCandleModule.isLit(new GhostModuleData.Entry(ID, 5, 0, false, false, lit)),
+                "点燃且可用的鬼烛必须有效");
+        check(!GhostCandleModule.isLit(new GhostModuleData.Entry(ID, 5)),
+                "未点燃鬼烛不能提供效果");
+        check(!GhostCandleModule.isLit(new GhostModuleData.Entry(ID, 5, 0, false, true, lit)),
+                "死机鬼烛不能提供效果");
+        check(!GhostCandleModule.isLit(new GhostModuleData.Entry(ID, 5, 0, true, false, lit)),
+                "沉睡鬼烛不能提供效果");
+        lit.put("qisplan2:combat", combat);
+        check(!GhostCandleModule.isLit(new GhostModuleData.Entry(ID, 5, 0, false, false, lit)),
+                "限时死机鬼烛不能提供效果");
+        System.out.println("Possession and candle state regression checks passed");
     }
 }

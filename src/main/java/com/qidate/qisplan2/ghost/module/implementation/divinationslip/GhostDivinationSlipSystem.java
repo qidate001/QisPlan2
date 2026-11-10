@@ -1,4 +1,4 @@
-package com.qidate.qisplan2.ghost.possession.ability.divinationslip;
+package com.qidate.qisplan2.ghost.module.implementation.divinationslip;
 
 import com.qidate.qisplan2.core.ModDataComponents;
 import com.qidate.qisplan2.death.ModDamageTypes;
@@ -8,7 +8,6 @@ import com.qidate.qisplan2.ghost.curse.CurseManager;
 import com.qidate.qisplan2.ghost.curse.type.ghostdivination.GhostDivinationCurse;
 import com.qidate.qisplan2.ghost.curse.type.ghostdivination.GhostDivinationCurseSource;
 import com.qidate.qisplan2.ghost.curse.type.ghostdivination.GhostDivinationCurseType;
-import com.qidate.qisplan2.ghost.module.implementation.GhostDivinationSlipModule;
 import com.qidate.qisplan2.ghost.possession.manager.PossessionHandler;
 import com.qidate.qisplan2.network.divinationslip.GhostDivinationNetwork;
 import java.util.UUID;

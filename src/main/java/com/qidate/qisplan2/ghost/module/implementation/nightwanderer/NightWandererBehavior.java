@@ -1,6 +1,7 @@
 package com.qidate.qisplan2.ghost.module.implementation.nightwanderer;
 
 import com.qidate.qisplan2.entity.ModularGhostEntity;
+import com.qidate.qisplan2.ghost.GhostAvoidanceSystem;
 import com.qidate.qisplan2.ghost.module.GhostModuleRuntime;
 import com.qidate.qisplan2.ghost.module.event.EntityNearbyEvent;
 import net.minecraft.server.level.ServerLevel;
@@ -48,6 +49,8 @@ final class NightWandererBehavior extends Goal {
             var entity = ((ServerLevel)host.level()).getEntity(data.getUUID(NightWandererState.TARGET));
             if (entity instanceof LivingEntity living && validTarget(host, living)) target = living;
         }
+        var preferred = GhostAvoidanceSystem.preferredTarget(host, 32, p -> validTarget(host, p));
+        if (preferred != null) target = preferred;
         if (target == null) {
             target = host.level().getEntitiesOfClass(LivingEntity.class, host.getBoundingBox().inflate(32),
                     e -> validTarget(host, e) && host.distanceToSqr(e) <= 32 * 32

@@ -1,4 +1,4 @@
-package com.qidate.qisplan2.ghost.module.implementation;
+package com.qidate.qisplan2.ghost.module.implementation.divinationslip;
 
 import com.qidate.qisplan2.QisPlan2;
 import com.qidate.qisplan2.death.ModDamageTypes;

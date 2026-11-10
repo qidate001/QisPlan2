@@ -3,7 +3,7 @@ package com.qidate.qisplan2.item;
 import com.qidate.qisplan2.core.ModDataComponents;
 import com.qidate.qisplan2.ghost.module.data.GhostModuleData;
 import com.qidate.qisplan2.ghost.module.host.item.GhostModuleItem;
-import com.qidate.qisplan2.ghost.module.implementation.GhostDivinationSlipModule;
+import com.qidate.qisplan2.ghost.module.implementation.divinationslip.GhostDivinationSlipModule;
 import java.util.List;
 
 /**

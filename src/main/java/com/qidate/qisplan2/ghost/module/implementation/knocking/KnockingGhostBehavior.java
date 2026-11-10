@@ -2,7 +2,6 @@ package com.qidate.qisplan2.ghost.module.implementation.knocking;
 
 import com.qidate.qisplan2.entity.ModularGhostEntity;
 import com.qidate.qisplan2.entity.ai.GhostWanderGoal;
-import com.qidate.qisplan2.ghost.possession.ability.ghostdoor.knocking.KnockingGhostDoorSystem;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerLevel;
@@ -193,11 +192,8 @@ final class KnockingGhostBehavior {
                 double speedModifier
         ) {
 
-            this.ghost =
-                    ghost;
-
-            this.speedModifier =
-                    speedModifier;
+            this.ghost = ghost;
+            this.speedModifier = speedModifier;
 
             setFlags(
                     EnumSet.of(
@@ -227,7 +223,6 @@ final class KnockingGhostBehavior {
              * 敲门冷却。
              */
             if (cooldown > 0) {
-
                 cooldown--;
 
                 return false;
@@ -420,8 +415,7 @@ final class KnockingGhostBehavior {
                 /*
                  * 下一次寻找前短暂冷却。
                  */
-                cooldown =
-                        KNOCK_COOLDOWN;
+                cooldown = KNOCK_COOLDOWN;
 
                 return;
             }

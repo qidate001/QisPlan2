@@ -15,7 +15,6 @@ import com.qidate.qisplan2.ghost.module.host.player.PlayerGhostModuleHost;
 import com.qidate.qisplan2.ghost.module.influence.GhostInfluence;
 import com.qidate.qisplan2.ghost.module.influence.GhostInfluenceSession;
 import com.qidate.qisplan2.ghost.module.influence.GhostInfluenceType;
-import com.qidate.qisplan2.ghost.possession.ability.ghostdoor.knocking.KnockingGhostDoorSystem;
 import com.qidate.qisplan2.ghost.possession.classification.GhostClassification;
 import com.qidate.qisplan2.ghost.possession.classification.GhostTag;
 import com.qidate.qisplan2.ghost.possession.data.PossessedGhostState;

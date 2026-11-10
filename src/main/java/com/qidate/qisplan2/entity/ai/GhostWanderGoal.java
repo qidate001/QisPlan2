@@ -1,6 +1,8 @@
 package com.qidate.qisplan2.entity.ai;
 
 import com.qidate.qisplan2.entity.ModularGhostEntity;
+import com.qidate.qisplan2.ghost.GhostAvoidanceSystem;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.PathfinderMob;
 import net.minecraft.world.entity.ai.goal.Goal;
 import net.minecraft.world.entity.ai.util.LandRandomPos;
@@ -17,8 +19,7 @@ import java.util.EnumSet;
  * 3. 到达后等待一段时间。
  * 4. 不主动寻找或攻击生物。
  */
-public class GhostWanderGoal
-        extends Goal {
+public class GhostWanderGoal extends Goal {
 
     protected final PathfinderMob mob;
 
@@ -45,6 +46,7 @@ public class GhostWanderGoal
     private final int maxCooldown;
 
     private int cooldown = 0;
+    private Player candleTarget;
 
     /**
      * 默认配置。
@@ -110,6 +112,9 @@ public class GhostWanderGoal
             return false;
         }
 
+        candleTarget = GhostAvoidanceSystem.preferredTarget(mob, 32, p -> true);
+        if (candleTarget != null) return true;
+
         /*
          * 冷却。
          */
@@ -142,13 +147,17 @@ public class GhostWanderGoal
         /*
          * 到达目标以后结束。
          */
-        return !mob.getNavigation().isDone();
+        var preferred = GhostAvoidanceSystem.preferredTarget(mob, 32, p -> true);
+        if (candleTarget != null && preferred == null) return false;
+        candleTarget = preferred;
+        return candleTarget != null || !mob.getNavigation().isDone();
     }
 
     @Override
     public void start() {
 
-        chooseRandomPosition();
+        if (candleTarget != null) mob.getNavigation().moveTo(candleTarget, speedModifier);
+        else chooseRandomPosition();
 
         cooldown =
                 minCooldown
@@ -162,15 +171,15 @@ public class GhostWanderGoal
                         );
     }
 
-    @Override
-    public void stop() {
+    @Override public void stop() {
+        if (candleTarget != null) mob.getNavigation().stop();
+        candleTarget = null;
+    }
 
-        /*
-         * 不主动停止导航。
-         *
-         * 更高优先级 Goal 接管时，
-         * 由 AI 系统处理。
-         */
+    @Override public void tick() {
+        if (candleTarget == null) return;
+        if (mob.distanceToSqr(candleTarget) <= 4) mob.getNavigation().stop();
+        else if (mob.tickCount % 10 == 0) mob.getNavigation().moveTo(candleTarget, speedModifier);
     }
 
     private void chooseRandomPosition() {

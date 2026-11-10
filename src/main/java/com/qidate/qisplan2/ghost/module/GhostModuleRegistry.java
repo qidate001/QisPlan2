@@ -1,7 +1,10 @@
 package com.qidate.qisplan2.ghost.module;
 
 import com.qidate.qisplan2.ghost.module.implementation.*;
+import com.qidate.qisplan2.ghost.module.implementation.candle.RedGhostCandleModule;
+import com.qidate.qisplan2.ghost.module.implementation.candle.WhiteGhostCandleModule;
 import com.qidate.qisplan2.ghost.module.implementation.calling.CallingGhostModule;
+import com.qidate.qisplan2.ghost.module.implementation.divinationslip.GhostDivinationSlipModule;
 import com.qidate.qisplan2.ghost.module.implementation.eye.GhostEyeModule;
 import com.qidate.qisplan2.ghost.module.implementation.knocking.KnockingGhostModule;
 import com.qidate.qisplan2.ghost.module.implementation.mist.GhostMistModule;
@@ -87,6 +90,8 @@ public final class GhostModuleRegistry {
         register(new CallingGhostModule());
         register(new GhostMistModule());
         register(new GhostEyeModule());
+        register(new RedGhostCandleModule());
+        register(new WhiteGhostCandleModule());
         register(new GhostStoneBricksModule());
         register(new InvisibleGhostModule());
         register(new GhostTombstoneModule());

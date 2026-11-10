@@ -1,7 +1,7 @@
 package com.qidate.qisplan2.network.divinationslip;
 
 import com.qidate.qisplan2.core.ModItems;
-import com.qidate.qisplan2.ghost.module.implementation.GhostDivinationSlipModule;
+import com.qidate.qisplan2.ghost.module.implementation.divinationslip.GhostDivinationSlipModule;
 import com.qidate.qisplan2.ghost.possession.manager.PossessionHandler;
 import com.qidate.qisplan2.network.payload.GhostDivinationResultPayload;
 import com.qidate.qisplan2.network.payload.GhostDivinationUsePayload;
