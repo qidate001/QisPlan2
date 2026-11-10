@@ -12,6 +12,9 @@ import java.util.Objects;
  */
 public final class GhostAbilityExecutor {
 
+    /**
+     * 禁止外部实例化此工具类；功能统一通过静态入口调用。
+     */
     private GhostAbilityExecutor() {
     }
 
@@ -35,6 +38,10 @@ public final class GhostAbilityExecutor {
         return execute(context, true);
     }
 
+    /**
+     * 执行统一能力流水线：检查模块、媒介和能力条件，按时机结算刺激并执行效果。
+     * returnEffectResult 决定返回实际效果结果，还是返回调用是否被接受。
+     */
     private static boolean execute(GhostAbilityContext context, boolean returnEffectResult) {
         Objects.requireNonNull(context, "context");
 
@@ -53,7 +60,7 @@ public final class GhostAbilityExecutor {
 
         // 2. 检查该模块声明的全部媒介。
         List<GhostMedium> media =
-                List.copyOf(module.getMedia(context));
+                List.copyOf(GhostAbilityDefinitions.media(module, context));
 
         for (GhostMedium medium : media) {
             if (!context.isModuleAvailable()) {
@@ -229,7 +236,7 @@ public final class GhostAbilityExecutor {
         }
 
         // 保留现有媒介许可检查。
-        for (GhostMedium medium : module.getMedia(context)) {
+        for (GhostMedium medium : GhostAbilityDefinitions.media(module, context)) {
             if (!medium.allows(context)) {
                 return null;
             }

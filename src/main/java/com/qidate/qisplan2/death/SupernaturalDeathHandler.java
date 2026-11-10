@@ -18,7 +18,6 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.attributes.AttributeInstance;
 import net.minecraft.world.entity.ai.attributes.AttributeModifier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
-import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 
 public class SupernaturalDeathHandler {
@@ -115,7 +114,7 @@ public class SupernaturalDeathHandler {
 
         // 手持燃烧白烛令袭击停止，不再采用旧版“挨打后扣耐久抵消强度”。
         // 延迟袭击也在这里读取最新状态，点燃后立即有效，熄灭或燃尽后立即失效。
-        if (entity instanceof Player player && GhostAvoidanceSystem.hasWhiteGhostCandle(player)) return false;
+        if (GhostAvoidanceSystem.hasWhiteGhostCandle(entity)) return false;
 
         // 记录本次袭击
         double recentIntensity =
@@ -216,6 +215,9 @@ public class SupernaturalDeathHandler {
         });
     }
 
+    /**
+     * 检查并尝试触发鬼寿衣的保护，返回本次是否成功抵挡死亡。
+     */
     private static boolean tryGhostShroudProtection(
             LivingEntity entity,
             double strength

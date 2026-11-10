@@ -13,13 +13,8 @@ import java.util.Objects;
 import java.util.UUID;
 
 /**
- * 单次规则执行的上下文。
- *
- * 保存当前模块宿主与规则 ID。
- * 通过现有 GhostModuleContext 访问模块实例数据。
- *
- * 当前阶段不负责规则状态持久化，
- * 也不直接执行能力。
+ * 创建不绑定灵异裁决会话的规则上下文。
+ * 委托完整构造流程校验模块和规则标识，直接提交影响前仍需有效裁决会话。
  */
 public record GhostRuleContext(
         GhostModuleHost host,
@@ -28,6 +23,10 @@ public record GhostRuleContext(
         GhostInfluenceSession influenceSession
 ) {
 
+    /**
+     * 创建不绑定灵异裁决会话的规则上下文。
+     * 委托完整构造流程校验模块和规则标识，直接提交影响前仍需有效裁决会话。
+     */
     public GhostRuleContext(
             GhostModuleHost host,
             ResourceLocation moduleId,
@@ -68,6 +67,15 @@ public record GhostRuleContext(
 
     /**
      * 当前规则是否处于统一灵异影响裁决会话中。
+     */
+    /** 延迟的是能力执行，不制造新的语义事件；执行时仍重新校验媒介。 */
+    public Runnable prepareAbility(ResourceLocation abilityId, GhostEvent event) {
+        return GhostAbilityExecutor.prepareDeferred(new GhostAbilityContext(
+                host, moduleId, abilityId, GhostAbilityContext.Source.RULE, event));
+    }
+
+    /**
+     * 判断当前是否处于尚未结束的灵异裁决会话，决定能否继续提交影响。
      */
     public boolean hasInfluenceSession() {
         return influenceSession != null

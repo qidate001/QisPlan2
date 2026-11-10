@@ -1,5 +1,7 @@
 package com.qidate.qisplan2.ghost.module.event;
 
+import net.minecraft.world.entity.LivingEntity;
+
 /**
  * 灵异语义事件：摧毁尝试。
  *
@@ -7,6 +9,9 @@ package com.qidate.qisplan2.ghost.module.event;
  * 任意订阅此事件的鬼模块都可以撤销本次摧毁尝试。
  */
 public abstract class DestructionAttemptEvent implements GhostEvent {
+
+    /** 本次摧毁事实中的责任者；环境破坏无可反击对象时返回 null。 */
+    public abstract LivingEntity getAttacker();
 
     private boolean canceled = false;
 

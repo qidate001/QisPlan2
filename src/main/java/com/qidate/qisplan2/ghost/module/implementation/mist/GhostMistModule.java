@@ -1,97 +1,102 @@
 package com.qidate.qisplan2.ghost.module.implementation.mist;
+import com.qidate.qisplan2.ghost.module.environment.GhostBehavior;
 
 import com.qidate.qisplan2.death.ModDamageTypes;
-import com.qidate.qisplan2.death.SupernaturalDeathHandler;
-import com.qidate.qisplan2.entity.ModularGhostEntity;
-import com.qidate.qisplan2.entity.ai.GhostWanderGoal;
 import com.qidate.qisplan2.ghost.domain.*;
-import com.qidate.qisplan2.ghost.domain.type.mist.GhostMistDomainController;
 import com.qidate.qisplan2.ghost.module.*;
 import com.qidate.qisplan2.ghost.module.ability.*;
 import com.qidate.qisplan2.ghost.module.data.GhostModuleInitialData;
 import com.qidate.qisplan2.ghost.module.event.*;
-import com.qidate.qisplan2.ghost.module.host.player.PlayerGhostModuleContext;
-import com.qidate.qisplan2.ghost.module.host.player.PlayerGhostModuleHost;
 import com.qidate.qisplan2.ghost.module.influence.GhostInfluenceType;
 import com.qidate.qisplan2.ghost.possession.data.PossessedGhostDomainData;
 import java.util.List;
 import java.util.Optional;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.server.level.ServerLevel;
-import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.world.entity.ai.goal.Goal;
 import static com.qidate.qisplan2.QisPlan2.MODID;
 
 /** 完整鬼雾模块：独立维护鬼域生命周期，游荡参与行为调度，鬼域袭击经过统一裁决。 */
 public final class GhostMistModule implements GhostModule {
+    /**
+     * 声明需要的自主行动类型。
+     * 具体 Goal 的创建、资源竞争和停止清理由行动适配层负责。
+     */
+    @Override public GhostBehavior behavior() { return GhostBehavior.WANDER; }
     public static final ResourceLocation ID = id("ghost_mist");
     public static final double INITIAL_INTENSITY = 5;
-    private static final ResourceLocation DOMAIN = id("ghost_mist/domain");
-    private static final ResourceLocation ATTACK = id("ghost_mist/attack");
+    public static final ResourceLocation DOMAIN = id("ghost_mist/domain");
+    public static final ResourceLocation ATTACK = id("ghost_mist/attack");
+
+    /**
+     * 构造或返回本定义使用的资源标识，保持注册与调用入口一致。
+     */
     private static ResourceLocation id(String path) { return ResourceLocation.fromNamespaceAndPath(MODID, path); }
+
+    /**
+     * 获取当前定义的唯一标识。
+     * 注册、能力查找和规则分发使用此标识，不代表某个运行时实例。
+     */
     @Override public ResourceLocation getId() { return ID; }
+
+    /**
+     * 提供新建模块实例的初始强度和复苏值。
+     * 仅用于初始化；已存在实例以保存的模块数据为准。
+     */
     @Override public GhostModuleInitialData getInitialData() { return new GhostModuleInitialData(INITIAL_INTENSITY, 0); }
 
-    public static boolean isActive(ModularGhostEntity host) {
-        return host.level() instanceof ServerLevel && host.isAlive() && !host.isRemoved()
-                && !host.isCoffinNailed() && !host.isSupernaturallyStunned()
-                && host.getModules().stream().anyMatch(e -> e.id().equals(ID) && GhostModuleCombatState.available(e));
-    }
-    @Override public List<Goal> createEntityGoals(ModularGhostEntity host) {
-        GhostMistState.initialize(host);
-        return List.of(new GhostWanderGoal(host, 0.7D) {
-            @Override public boolean canUse() { return isActive(host) && super.canUse(); }
-            @Override public boolean canContinueToUse() { return isActive(host) && super.canContinueToUse(); }
-        });
-    }
     /** 生命周期不依赖 MOVE 控制，也不依赖被死机过滤的规则 Tick。 */
-    @Override public void onEntityTick(ModularGhostEntity host) {
-        if (!isActive(host)) {
-            onEntityDetached(host);
-            return;
-        }
-        GhostAbilityExecutor.tryExecute(new GhostAbilityContext(host, ID, DOMAIN,
-                GhostAbilityContext.Source.BEHAVIOR, null));
-    }
-    @Override public void onEntityDetached(ModularGhostEntity host) {
-        if (host.level() instanceof ServerLevel level) {
-            // 只移除该宿主的鬼雾类型，保留其他模块可能拥有的鬼域。
-            GhostDomainManager.get(level).removeBySourceAndType(host.getUUID(), GhostMistDomainController.DOMAIN_TYPE);
-        }
-    }
-    private static GhostDomain current(ModularGhostEntity host) {
-        return GhostDomainManager.get((ServerLevel)host.level())
-                .getBySourceAndType(host.getUUID(), GhostMistDomainController.DOMAIN_TYPE);
-    }
+
     @Override public List<GhostMedium> getMedia() {
         return List.of(new GhostMedium() {
+            /**
+             * 获取当前定义的唯一标识。
+             * 注册、能力查找和规则分发使用此标识，不代表某个运行时实例。
+             */
             @Override public ResourceLocation getId() { return id("ghost_mist/domain_medium"); }
+
+            /**
+             * 校验本媒介要求的环境、事件或输入条件。
+             * 返回 false 会阻止本次能力执行，主动使用也不能绕过该检查。
+             */
             @Override public boolean allows(GhostAbilityContext c) {
-                var source = GhostModuleHosts.living(c.host());
-                if (!GhostModuleHosts.available(c.host(), ID) || !(source.level() instanceof ServerLevel level)) return false;
-                if (c.host() instanceof PlayerGhostModuleHost && c.event() instanceof GhostDomainExposureEvent e) {
-                    var domain = GhostDomainManager.get(level).getBySourceAndType(source.getUUID(), ID);
-                    return e.source() == source && e.target().isAlive() && e.target() != source
-                            && domain != null && domain.getId().equals(e.domainId())
-                            && GhostDomainEntityTracker.get(level).getEffectiveEntities(domain).contains(e.target());
-                }
-                if (!(c.host() instanceof ModularGhostEntity host) || !isActive(host)) return false;
-                if (c.abilityId().equals(DOMAIN)) return true;
-                if (!(c.event() instanceof GhostDomainExposureEvent e) || e.source() != host
-                        || !e.target().isAlive() || e.target() == host || e.target().level() != host.level()) return false;
-                GhostDomain domain = current(host);
-                return domain != null && domain.getId().equals(e.domainId())
-                        && GhostDomainEntityTracker.get((ServerLevel)host.level()).getEffectiveEntities(domain).contains(e.target());
+                var world = c.getModuleContext().world();
+                if (!world.present()) return false;
+                if (c.abilityId().equals(DOMAIN)) return world.canMaintainDomain();
+                return c.event() instanceof GhostDomainExposureEvent e && world.isOrigin(e.source())
+                        && world.containsInDomain(e.domainId(), e.target());
             }
         });
     }
+
+    /**
+     * 声明本厉鬼响应的语义事件及对应规则。
+     * 规则负责决定何时发起能力或提交影响，不绕过执行器直接完成袭击。
+     */
     @Override public List<GhostRule> getRules() {
         return List.of(new GhostRule() {
+            /**
+             * 获取当前定义的唯一标识。
+             * 注册、能力查找和规则分发使用此标识，不代表某个运行时实例。
+             */
             @Override public ResourceLocation getId() { return id("ghost_mist/exposure_rule"); }
+
+            /**
+             * 判断当前语义事件是否属于本规则处理的范围。
+             * 这里只筛选事件种类或语义，不执行能力和世界操作。
+             */
             @Override public boolean supports(GhostEvent e) { return e instanceof GhostDomainExposureEvent; }
+
+            /**
+             * 检查当前事实和模块上下文是否满足规则触发条件。
+             * 返回 false 时跳过本规则，不提交能力或灵异影响。
+             */
             @Override public boolean canTrigger(GhostRuleContext c, GhostEvent e) {
-                return GhostModuleHosts.available(c.host(), ID);
+                return c.getModuleContext().world().present();
             }
+
+            /**
+             * 处理已满足条件的语义事件，发起对应能力或提交灵异影响。
+             * 需要裁决的效果仅在获准后执行。
+             */
             @Override public void onTrigger(GhostRuleContext c, GhostEvent event) {
                 var e = (GhostDomainExposureEvent)event;
                 c.submitAbilityInfluence(ATTACK, e, e.target().getUUID(),
@@ -99,39 +104,68 @@ public final class GhostMistModule implements GhostModule {
             }
         });
     }
+
+    /**
+     * 返回本厉鬼自身的能力定义。
+     * 世界效果由这些能力执行，输入桥和行为适配器只负责发起调用。
+     */
     @Override public List<GhostAbility> getIntrinsicAbilities() {
         return List.of(new GhostAbility() {
+            /**
+             * 获取当前定义的唯一标识。
+             * 注册、能力查找和规则分发使用此标识，不代表某个运行时实例。
+             */
             @Override public ResourceLocation getId() { return DOMAIN; }
-            @Override public boolean canExecute(GhostAbilityContext c) { return c.host() instanceof ModularGhostEntity; }
+
+            /**
+             * 检查本次能力调用的事件、参数或环境是否可用于执行。
+             * 模块可用性与媒介由统一执行器共同校验。
+             */
+            @Override public boolean canExecute(GhostAbilityContext c) { return c.getModuleContext().world().canMaintainDomain(); }
+
+            /**
+             * 执行当前能力的效果。
+             * 调用方应使用统一执行器，以确保模块状态和媒介已经检查。
+             */
             @Override public void execute(GhostAbilityContext c) {
-                var host = (ModularGhostEntity)c.host();
-                GhostMistDomainController.createDomain((ServerLevel)host.level(), host);
+                c.getModuleContext().world().maintainDomain();
             }
         }, new GhostAbility() {
+            /**
+             * 获取当前定义的唯一标识。
+             * 注册、能力查找和规则分发使用此标识，不代表某个运行时实例。
+             */
             @Override public ResourceLocation getId() { return ATTACK; }
+
+            /**
+             * 检查本次能力调用的事件、参数或环境是否可用于执行。
+             * 模块可用性与媒介由统一执行器共同校验。
+             */
             @Override public boolean canExecute(GhostAbilityContext c) { return c.event() instanceof GhostDomainExposureEvent; }
+
+            /**
+             * 执行当前能力的效果。
+             * 调用方应使用统一执行器，以确保模块状态和媒介已经检查。
+             */
             @Override public void execute(GhostAbilityContext c) { executeWithResult(c); }
+
+            /**
+             * 执行能力并返回实际效果是否成功。
+             * 返回值供主动交互及成功后结算使用，不能等同于仅接受了调用。
+             */
             @Override public boolean executeWithResult(GhostAbilityContext c) {
-                var source = GhostModuleHosts.living(c.host());
+                var world = c.getModuleContext().world();
                 var e = (GhostDomainExposureEvent)c.event();
-                boolean killed = SupernaturalDeathHandler.tryKill(e.target(),
-                        ModDamageTypes.ghostMist(source), e.domainStrength() / 5.0D);
-                var level = (ServerLevel)source.level();
-                var domain = GhostDomainManager.get(level).getBySourceAndType(source.getUUID(), ID);
-                if (killed && domain != null && GhostModuleHosts.available(c.host(), ID)) {
-                    if (source instanceof ModularGhostEntity entity) GhostMistDomainController.grow(level, entity, domain);
-                    else if (source instanceof ServerPlayer player) GhostMistDomainController.grow(player, domain);
-                }
+                boolean killed = world.attack(e.target(), ModDamageTypes.GHOST_MIST, e.domainStrength() / 5.0D);
+                if (killed) world.growDomain();
                 return killed;
             }
         });
     }
 
-
     /**
      * 基础强度。
      */
-
 
     @Override
     public double minimumStrengthRatio() {
@@ -151,30 +185,5 @@ public final class GhostMistModule implements GhostModule {
         );
     }
 
-    /**
-     * 每 tick 驱动鬼雾鬼域。
-     */
-    @Override
-    public void onPlayerTick(
-            PlayerGhostModuleContext context
-    ) {
-
-        GhostMistDomainController.tick(
-                context
-        );
-    }
-
-    /**
-     * 解除驾驭时关闭鬼雾鬼域。
-     */
-    @Override
-    public void onRelease(
-            PlayerGhostModuleContext context
-    ) {
-
-        GhostMistDomainController.close(
-                context.player()
-        );
-    }
 
 }

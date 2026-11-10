@@ -1,7 +1,9 @@
 package com.qidate.qisplan2.ghost.module;
 
 import com.qidate.qisplan2.ghost.module.data.GhostModuleData;
+import com.qidate.qisplan2.ghost.module.environment.GhostEnvironment;
 import net.minecraft.nbt.CompoundTag;
+import com.qidate.qisplan2.ghost.module.environment.GhostWorldAccess;
 import net.minecraft.resources.ResourceLocation;
 
 import java.util.Objects;
@@ -30,6 +32,17 @@ public record GhostModuleContext(
     }
 
     /**
+     * 获取当前模块绑定的世界操作接口。
+     * 模块只能通过接口查询环境或操作世界，不取回具体载体。
+     */
+    public GhostWorldAccess world() { return host.moduleWorld(moduleId); }
+
+    /**
+     * 获取当前模块绑定的环境接口，统一查询暴露状态、燃烧压力和效果输出。
+     */
+    public GhostEnvironment environment() { return host.moduleEnvironment(moduleId); }
+
+    /**
      * 获取当前模块的实时数据。
      */
     public GhostModuleData.Entry getData() {
@@ -50,6 +63,12 @@ public record GhostModuleContext(
 
     /**
      * 获取当前模块的复苏值。
+     */
+    /** 已结算驾驭压制等因素的可用强度；本质强度仍由 intensity 提供。 */
+    public double effectiveIntensity() { return GhostModuleHosts.strength(host, moduleId); }
+
+    /**
+     * 读取模块当前的复苏值，数值以模块实例保存的数据为准。
      */
     public double revival() {
         return getData().revival();
@@ -228,6 +247,10 @@ public record GhostModuleContext(
         return setCustomData(data);
     }
 
+    /**
+     * 取得模块通用数据修改接口。
+     * 载体不支持修改时抛出异常，避免静默丢弃状态变更。
+     */
     private GhostModuleDataModifier getModifier() {
         if (host instanceof GhostModuleDataModifier modifier) {
             return modifier;
@@ -238,6 +261,10 @@ public record GhostModuleContext(
         );
     }
 
+    /**
+     * 取得模块专属数据修改接口。
+     * 载体不支持 customData 写入时抛出异常。
+     */
     private GhostModuleCustomDataModifier getCustomDataModifier() {
         if (host instanceof GhostModuleCustomDataModifier modifier) {
             return modifier;

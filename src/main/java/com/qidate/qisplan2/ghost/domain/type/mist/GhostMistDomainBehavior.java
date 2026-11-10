@@ -1,4 +1,5 @@
 package com.qidate.qisplan2.ghost.domain.type.mist;
+import com.qidate.qisplan2.ghost.module.host.entity.GhostMistEntityBinding;
 
 import com.qidate.qisplan2.death.ModDamageTypes;
 import com.qidate.qisplan2.death.SupernaturalDeathHandler;
@@ -8,7 +9,6 @@ import com.qidate.qisplan2.ghost.domain.GhostDomainBehavior;
 import com.qidate.qisplan2.ghost.module.GhostModuleRuntime;
 import com.qidate.qisplan2.ghost.module.event.GhostDomainExposureEvent;
 import com.qidate.qisplan2.ghost.module.host.player.PlayerGhostModuleHost;
-import com.qidate.qisplan2.ghost.module.implementation.mist.GhostMistModule;
 import java.util.Set;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -161,7 +161,7 @@ public final class GhostMistDomainBehavior
              */
             // 实体鬼雾先发布当前有效鬼域影响的事实，规则与袭击交给模块裁决。
             if (source instanceof ModularGhostEntity host) {
-                if (GhostMistModule.isActive(host)) {
+                if (GhostMistEntityBinding.isActive(host)) {
                     GhostModuleRuntime.dispatch(host, new GhostDomainExposureEvent(
                             domain.getId(), host, target, strength * ATTACK_STRENGTH_DIVISOR));
                 }

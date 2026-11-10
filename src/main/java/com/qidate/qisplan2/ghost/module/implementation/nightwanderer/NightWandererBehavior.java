@@ -1,4 +1,5 @@
 package com.qidate.qisplan2.ghost.module.implementation.nightwanderer;
+import com.qidate.qisplan2.ghost.module.host.entity.NightWandererEntityBinding;
 
 import com.qidate.qisplan2.entity.ModularGhostEntity;
 import com.qidate.qisplan2.ghost.GhostAvoidanceSystem;
@@ -15,31 +16,65 @@ import java.util.EnumSet;
  * 每个宿主独立的夜间行为。Goal 只负责调度，击杀数、计时和目标 UUID
  * 均由模块 customData 承载；不在行为对象内缓存第二份持久状态。
  */
-final class NightWandererBehavior extends Goal {
+public final class NightWandererBehavior extends Goal {
     private final ModularGhostEntity host;
-    NightWandererBehavior(ModularGhostEntity host) {
+
+    /**
+     * 绑定当前实体，并声明夜游追踪需要移动、视线和目标控制。
+     * Goal 只承担行动调度，击杀数与计时从模块 customData 读取。
+     */
+    public NightWandererBehavior(ModularGhostEntity host) {
         this.host = host;
         setFlags(EnumSet.of(Flag.MOVE, Flag.LOOK, Flag.TARGET));
     }
-    @Override public boolean canUse() { return NightWandererModule.isActive(host) && !host.level().isDay(); }
+
+    /**
+     * 判断当前行为是否可以开始执行。
+     * 检查行为需要的模块状态、环境或目标条件，交由 Goal 调度器决定是否取得控制。
+     */
+    @Override public boolean canUse() { return NightWandererEntityBinding.isActive(host) && !host.level().isDay(); }
+
+    /**
+     * 重新检查行为是否仍可继续。
+     * 条件不满足时由调度器停止行为，释放占用的控制资源。
+     */
     @Override public boolean canContinueToUse() { return canUse(); }
+
+    /**
+     * 声明此行为需要每 tick 更新，避免目标观察或动作推进被默认调度间隔跳过。
+     */
     @Override public boolean requiresUpdateEveryTick() { return true; }
-    @Override public void tick() { NightWandererModule.activity(host); }
+
+    /**
+     * 推进当前 tick 的行为或待处理任务；具体执行受本方法的有效性检查约束。
+     */
+    @Override public void tick() { NightWandererEntityBinding.activity(host); }
+
+    /**
+     * 停止当前行为，释放移动控制并清理该行为持有的临时目标。
+     */
     @Override public void stop() {
         host.getNavigation().stop();
         host.setTarget(null);
         NightWandererMovementSystem.clear(host);
     }
 
-    static boolean validTarget(ModularGhostEntity host, LivingEntity target) {
+    /**
+     * 检查目标存活、维度、来源排除及环境屏蔽等目标资格。
+     * 不合格目标不能继续进入追踪或袭击媒介。
+     */
+    public static boolean validTarget(ModularGhostEntity host, LivingEntity target) {
         return target != null && target != host && target.isAlive() && !target.isRemoved()
-                && target.level() == host.level()
+                && target.level() == host.level() && !GhostAvoidanceSystem.hasWhiteGhostCandle(target)
                 && (!(target instanceof Player player) || (!player.isCreative() && !player.isSpectator()
                 && host.canDetectPlayer(player) && host.canAttackPlayer(player)));
     }
 
-    static void tickActivity(ModularGhostEntity host) {
-        NightWandererState.decrement(host, NightWandererState.ATTACK_COOLDOWN);
+    /**
+     * 推进夜游鬼追踪、移动与目标记录。
+     * 目标进入袭击距离时发布附近实体事实，袭击仍由模块规则和裁决处理。
+     */
+    public static void tickActivity(ModularGhostEntity host) {
         NightWandererState.decrement(host, NightWandererState.TELEPORT_COOLDOWN);
 
         // 从模块自己的目标记录恢复目标，避免把共享宿主上其他模块的目标当作本模块状态。

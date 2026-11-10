@@ -1,6 +1,8 @@
 package com.qidate.qisplan2.ghost.module.host.item;
 
 import com.qidate.qisplan2.ghost.module.GhostModuleCombatState;
+import com.qidate.qisplan2.ghost.module.host.GhostIgnitionInputs;
+import com.qidate.qisplan2.ghost.module.event.ModuleTickEvent;
 import com.qidate.qisplan2.ghost.module.GhostModuleRuntime;
 import com.qidate.qisplan2.ghost.module.event.GhostUseEvent;
 import com.qidate.qisplan2.ghost.possession.manager.GhostPossessionManager;
@@ -8,7 +10,6 @@ import com.qidate.qisplan2.ghost.possession.manager.PossessionHandler;
 import com.qidate.qisplan2.ghost.possession.target.ItemGhostPossessionTarget;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
-import com.qidate.qisplan2.ghost.module.GhostModuleRegistry;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResultHolder;
 import net.minecraft.world.entity.player.Player;
@@ -28,7 +29,7 @@ public interface GhostModuleItemSupport {
     default InteractionResultHolder<ItemStack> useModules(Level level, Player player, InteractionHand hand) {
         ItemStack stack = player.getItemInHand(hand);
         if (!level.isClientSide && player instanceof ServerPlayer serverPlayer) {
-            GhostItemModuleHost host = new GhostItemModuleHost(stack);
+            GhostItemModuleHost host = new GhostItemModuleHost(stack, player);
             if (player.isShiftKeyDown()) {
                 var entry = host.getModules().stream()
                         .filter(e -> !GhostModuleCombatState.available(e))
@@ -45,6 +46,7 @@ public interface GhostModuleItemSupport {
                     return started ? InteractionResultHolder.consume(stack) : InteractionResultHolder.fail(stack);
                 }
             }
+            GhostIgnitionInputs.toggle(host);
             GhostModuleRuntime.dispatch(host, new GhostUseEvent(player));
         }
         return InteractionResultHolder.sidedSuccess(stack, level.isClientSide);
@@ -53,11 +55,9 @@ public interface GhostModuleItemSupport {
     /** 所有模块物品共用的生命周期，不依赖具体物品类型。 */
     default void tickModules(ItemStack stack, Level level, Entity entity) {
         if (level.isClientSide || !(entity instanceof Player player)) return;
-        var host = new GhostItemModuleHost(stack);
-        for (var entry : host.getModules()) {
-            if (stack.isEmpty()) break;
-            var module = GhostModuleRegistry.get(entry.id());
-            if (module != null) module.onItemTick(host, player);
-        }
+        var host = new GhostItemModuleHost(stack, player);
+        GhostIgnitionInputs.initialize(host);
+        GhostModuleRuntime.dispatch(host, new ModuleTickEvent());
+        GhostIgnitionInputs.syncModel(host);
     }
 }

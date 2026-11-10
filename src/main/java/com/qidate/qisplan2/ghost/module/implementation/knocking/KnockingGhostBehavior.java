@@ -1,4 +1,5 @@
 package com.qidate.qisplan2.ghost.module.implementation.knocking;
+import com.qidate.qisplan2.ghost.module.host.entity.KnockingGhostEntityBinding;
 
 import com.qidate.qisplan2.entity.ModularGhostEntity;
 import com.qidate.qisplan2.entity.ai.GhostWanderGoal;
@@ -13,21 +14,38 @@ import java.util.List;
  * 敲门鬼模块的实体行为。每个宿主创建独立的目标门与冷却状态，
  * 不把可变寻路状态保存在全局共享的模块定义中。
  */
-final class KnockingGhostBehavior {
+public final class KnockingGhostBehavior {
     private static final int DOOR_SEARCH_RADIUS = 32;
     private static final int DOOR_SEARCH_VERTICAL = 6;
     private static final int KNOCK_COOLDOWN = 10;
 
-    static List<Goal> create(ModularGhostEntity ghost) {
+    /**
+     * 为敲门鬼创建独立的找门行为与游荡行为，避免跨实体共享临时目标。
+     */
+    public static List<Goal> create(ModularGhostEntity ghost) {
         return List.of(new KnockDoorGoal(ghost, 1.0D), new GhostWanderGoal(ghost, 0.7D) {
+            /**
+             * 判断当前行为是否可以开始执行。
+             * 检查行为需要的模块状态、环境或目标条件，交由 Goal 调度器决定是否取得控制。
+             */
             @Override public boolean canUse() {
-                return KnockingGhostModule.isActive(ghost) && super.canUse();
+                return KnockingGhostEntityBinding.isActive(ghost) && super.canUse();
             }
+
+            /**
+             * 重新检查行为是否仍可继续。
+             * 条件不满足时由调度器停止行为，释放占用的控制资源。
+             */
             @Override public boolean canContinueToUse() {
-                return KnockingGhostModule.isActive(ghost) && super.canContinueToUse();
+                return KnockingGhostEntityBinding.isActive(ghost) && super.canContinueToUse();
             }
         });
     }
+
+    /**
+     * 在搜索范围内寻找最近的可用门，并跳过最近敲过的位置。
+     * 无筛选参数时优先鬼门；带筛选参数时只搜索对应类别。
+     */
     private static BlockPos findNearestDoor(ModularGhostEntity ghost) {
 
         /*
@@ -56,6 +74,10 @@ final class KnockingGhostBehavior {
         );
     }
 
+    /**
+     * 在搜索范围内寻找最近的可用门，并跳过最近敲过的位置。
+     * 无筛选参数时优先鬼门；带筛选参数时只搜索对应类别。
+     */
     private static BlockPos findNearestDoor(
             ModularGhostEntity ghost, boolean onlyGhostDoor
     ) {
@@ -187,6 +209,10 @@ final class KnockingGhostBehavior {
 
         private int cooldown = 0;
 
+        /**
+         * 为指定实体建立独立的找门行为，并保存寻路速度倍率。
+         * 声明移动与视线控制，目标门和短暂行为冷却保存在本 Goal 实例中。
+         */
         public KnockDoorGoal(
                 ModularGhostEntity ghost,
                 double speedModifier
@@ -215,7 +241,7 @@ final class KnockingGhostBehavior {
             /*
              * 死机时不寻找门。
              */
-            if (!KnockingGhostModule.isActive(ghost)) {
+            if (!KnockingGhostEntityBinding.isActive(ghost)) {
                 return false;
             }
 
@@ -246,7 +272,7 @@ final class KnockingGhostBehavior {
         @Override
         public boolean canContinueToUse() {
 
-            if (!KnockingGhostModule.isActive(ghost)) {
+            if (!KnockingGhostEntityBinding.isActive(ghost)) {
                 return false;
             }
 
@@ -405,7 +431,7 @@ final class KnockingGhostBehavior {
                  * =================================================
                  */
 
-                KnockingGhostModule.knock(ghost, targetDoor);
+                KnockingGhostEntityBinding.knock(ghost, targetDoor);
 
                 /*
                  * 当前目标结束。

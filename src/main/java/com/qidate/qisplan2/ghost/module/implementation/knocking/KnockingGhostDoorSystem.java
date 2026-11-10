@@ -1,4 +1,5 @@
 package com.qidate.qisplan2.ghost.module.implementation.knocking;
+import com.qidate.qisplan2.ghost.module.host.entity.KnockingGhostEntityBinding;
 
 import com.qidate.qisplan2.block.GhostDoorBlock;
 import com.qidate.qisplan2.core.ModSounds;
@@ -108,6 +109,10 @@ public final class KnockingGhostDoorSystem {
             PENDING_ATTACKS =
             new ArrayList<>();
 
+    /**
+     * 保存一次等待执行的敲门袭击所需的来源、目标、倒计时与强度。
+     * 这是调度数据，不作为模块持久化状态。
+     */
     private record PendingKnockAttack(
             ServerLevel level,
             LivingEntity source,
@@ -127,6 +132,10 @@ public final class KnockingGhostDoorSystem {
             PENDING_DOOR_KNOCKS =
             new ArrayList<>();
 
+    /**
+     * 保存等待传播的鬼门敲门任务，包括位置、递归深度、倒计时和本轮去重集合。
+     * 用于同一次共鸣链的延迟调度，不制造新的能力请求事件。
+     */
     private record PendingDoorKnock(
             ServerLevel level,
             LivingEntity source,
@@ -154,6 +163,9 @@ public final class KnockingGhostDoorSystem {
             new HashMap<>();
 
 
+    /**
+     * 禁止外部实例化此工具类；功能统一通过静态入口调用。
+     */
     private KnockingGhostDoorSystem() {
     }
 
@@ -185,6 +197,9 @@ public final class KnockingGhostDoorSystem {
         );
     }
 
+    /**
+     * 发起敲门的世界操作，声音传播与后续听声处理由敲门系统负责。
+     */
     public static KnockResult knock(
             ServerLevel level,
             LivingEntity source,
@@ -220,7 +235,7 @@ public final class KnockingGhostDoorSystem {
 
         // 延迟鬼门回声同样检查原宿主，避免卸载模块后仍继续传播。
         if (!source.isAlive() || (source instanceof ModularGhostEntity host
-                && !KnockingGhostModule.isActive(host))) return KnockResult.failed();
+                && !KnockingGhostEntityBinding.isActive(host))) return KnockResult.failed();
         if (source instanceof ServerPlayer player
                 && !new PlayerGhostModuleHost(player).hasModule(KnockingGhostModule.ID))
             return KnockResult.failed();
@@ -374,6 +389,9 @@ public final class KnockingGhostDoorSystem {
             boolean ghostDoor
     ) {
 
+        /**
+         * 创建表示敲门失败的结果值：未成功敲门、听声数量为零且未触发鬼门标记。
+         */
         private static KnockResult failed() {
 
             return new KnockResult(
@@ -448,7 +466,7 @@ public final class KnockingGhostDoorSystem {
             if (source instanceof ModularGhostEntity host) {
                 GhostModuleRuntime.dispatch(host, new DoorKnockHeardEvent(source, doorPos, entity));
             } else if (source instanceof ServerPlayer player) {
-                KnockingGhostModule.attackFromPlayer(player, new DoorKnockHeardEvent(source, doorPos, entity));
+                KnockingGhostEntityBinding.attackFromPlayer(player, new DoorKnockHeardEvent(source, doorPos, entity));
             } else {
             PENDING_ATTACKS.add(
                     new PendingKnockAttack(
@@ -649,10 +667,17 @@ public final class KnockingGhostDoorSystem {
     private record PendingModuleAttack(Runnable action, int remainingTicks) {}
     private static final List<PendingModuleAttack> MODULE_ATTACKS = new ArrayList<>();
 
+    /**
+     * 把已经准备好的模块袭击加入延迟队列。
+     * 当前延迟为 10 tick；队列到期执行回调，由能力执行器再次检查模块及媒介。
+     */
     public static void scheduleModuleAttack(Runnable attack) {
         MODULE_ATTACKS.add(new PendingModuleAttack(attack, KNOCK_ATTACK_DELAY));
     }
 
+    /**
+     * 推进延迟的模块袭击任务，到期后执行已准备的能力调用。
+     */
     private static void tickModuleAttacks() {
         for (int i = MODULE_ATTACKS.size() - 1; i >= 0; i--) {
             PendingModuleAttack task = MODULE_ATTACKS.get(i);
@@ -665,6 +690,9 @@ public final class KnockingGhostDoorSystem {
         }
     }
 
+    /**
+     * 推进当前 tick 的行为或待处理任务；具体执行受本方法的有效性检查约束。
+     */
     public static void tick() {
         tickModuleAttacks();
 
@@ -904,6 +932,9 @@ public final class KnockingGhostDoorSystem {
     }
 
 
+    /**
+     * 记录当前来源最近敲过的门，供寻找新门时暂时避让。
+     */
     private static void markRecentlyKnocked(
             LivingEntity source,
             BlockPos pos
@@ -977,6 +1008,9 @@ public final class KnockingGhostDoorSystem {
         return false;
     }
 
+    /**
+     * 统计本次直接敲门范围内的有效听声目标，供主动敲门的代价计算使用。
+     */
     public static int countHearingTargets(
             ServerLevel level,
             LivingEntity source,
@@ -1034,6 +1068,9 @@ public final class KnockingGhostDoorSystem {
     }
 
 
+    /**
+     * 判断指定位置是否为鬼门，供共鸣传播和普通门损坏处理区分使用。
+     */
     public static boolean isGhostDoor(
             Level level,
             BlockPos pos

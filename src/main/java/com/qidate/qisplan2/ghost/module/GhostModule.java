@@ -1,30 +1,21 @@
 package com.qidate.qisplan2.ghost.module;
 
-import com.qidate.qisplan2.entity.ModularGhostEntity;
 import com.qidate.qisplan2.ghost.corrosion.CorrosionType;
+import com.qidate.qisplan2.ghost.module.environment.GhostEnvironmentalEffect;
+import com.qidate.qisplan2.ghost.module.environment.GhostBehavior;
 import com.qidate.qisplan2.ghost.corrosion.GhostCorrosion;
-import com.qidate.qisplan2.ghost.domain.GhostDomainManager;
-import com.qidate.qisplan2.ghost.module.host.item.GhostItemModuleHost;
-import net.minecraft.world.entity.player.Player;
 import com.qidate.qisplan2.ghost.module.ability.GhostAbility;
 import com.qidate.qisplan2.ghost.module.ability.GhostAbilityContext;
 import com.qidate.qisplan2.ghost.module.data.GhostModuleInitialData;
-import com.qidate.qisplan2.ghost.module.host.player.PlayerAbilityParameters;
-import com.qidate.qisplan2.ghost.module.host.player.PlayerGhostModuleContext;
-import com.qidate.qisplan2.ghost.module.host.player.PlayerModuleAbility;
 import com.qidate.qisplan2.ghost.module.influence.GhostInfluenceType;
 import com.qidate.qisplan2.ghost.module.sound.GhostSoundDefinition;
 import com.qidate.qisplan2.ghost.possession.classification.GhostClassification;
 import com.qidate.qisplan2.ghost.possession.classification.GhostTag;
 import com.qidate.qisplan2.ghost.possession.data.PossessedGhostDomainData;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.world.entity.ai.goal.Goal;
 
 /**
  * 灵异模块定义。
@@ -39,21 +30,26 @@ import net.minecraft.world.entity.ai.goal.Goal;
  * 不属于模块实例的当前状态。
  */
 public interface GhostModule {
-    /** 物品宿主的服务端生命周期；用于燃烧等持续状态，不发布虚构的语义事件。 */
-    default void onItemTick(GhostItemModuleHost host,
-            Player holder) {}
+    /**
+     * 声明需要的自主行动类型。
+     * 具体 Goal 的创建、资源竞争和停止清理由行动适配层负责。
+     */
+    default GhostBehavior behavior() { return GhostBehavior.NONE; }
 
+    /** 可被点燃是模块性质，点燃操作由输入适配器提供。 */
+    default boolean supportsIgnition() { return false; }
+
+    /**
+     * 声明能力输出的环境效果类型，供世界系统统一查询。
+     */
+    default GhostEnvironmentalEffect environmentalEffect() {
+        return GhostEnvironmentalEffect.NONE;
+    }
 
     /**
      * 获取模块的唯一标识。
      */
     ResourceLocation getId();
-    /** 每个服务端实体 tick 调用，包括休眠、死机状态，用于管理模块外部资源。 */
-    default void onEntityTick(ModularGhostEntity host) {}
-
-    /** 模块卸载或宿主离开世界时释放运行时资源；不得清空持久化成长数据。 */
-    default void onEntityDetached(ModularGhostEntity host) {}
-
 
     /**
      * 获取模块定义提供的初始属性。
@@ -66,18 +62,9 @@ public interface GhostModule {
     }
 
     /**
-     * 为实体宿主创建独立的行为实例。宿主安装模块时挂载，卸载时停止并移除。
-     * 列表顺序决定行为优先级；没有实体行为的模块返回空列表。
-     */
-    default List<Goal> createEntityGoals(
-            ModularGhostEntity host) {
-        return List.of();
-    }
-
-    /**
      * 获取该厉鬼模块声明的灵异防御基础值。
      *
-     * ModularGhostEntity 会根据宿主当前安装的模块重新计算防御；
+     * 运行时根据当前安装的模块重新计算防御；
      * 多模块宿主采用各模块声明值中的最高值，避免安装顺序改变结果。
      * 默认值与通用模块化宿主的基础防御保持一致。
      */
@@ -125,11 +112,13 @@ public interface GhostModule {
      * 默认没有能力，保证现有模块兼容。
      */
     default List<GhostAbility> getAbilities() {
-        ArrayList<GhostAbility> abilities = new ArrayList<>(getIntrinsicAbilities());
-        abilities.add(new PlayerModuleAbility(this));
-        return List.copyOf(abilities);
+        return List.copyOf(getIntrinsicAbilities());
     }
 
+    /**
+     * 返回本厉鬼自身的能力定义。
+     * 世界效果由这些能力执行，输入桥和行为适配器只负责发起调用。
+     */
     default List<GhostAbility> getIntrinsicAbilities() {
         return List.of();
     }
@@ -168,32 +157,10 @@ public interface GhostModule {
         return List.of();
     }
 
-
     /**
      * 这个能力对应的鬼。
      */
     default ResourceLocation id() { return getId(); }
-
-    /**
-     * 这个能力对应的实体类型。
-     *
-     * 默认情况下不直接要求每个 Ability
-     * 重复声明，破体系统会通过 Registry
-     * 根据 id() 查找。
-     *
-     * 如果以后出现：
-     *
-     * Ability ID ≠ Entity ID
-     *
-     * 可以在具体 Ability 中覆盖这个方法。
-     */
-
-
-    /*
-     * ============================================================
-     * 厉鬼强度
-     * ============================================================
-     */
 
     /**
      * 新获得这只鬼时的初始强度。
@@ -203,7 +170,6 @@ public interface GhostModule {
     default double initialStrength() {
         return getInitialData().intensity();
     }
-
 
     /**
      * 复苏值为 0 时，
@@ -217,12 +183,6 @@ public interface GhostModule {
 
         return 1.0D / 3.0D;
     }
-
-    /*
-     * ============================================================
-     * 鬼域
-     * ============================================================
-     */
 
     /**
      * 新获得这只鬼时的初始鬼域数据。
@@ -249,13 +209,6 @@ public interface GhostModule {
     default Optional<PossessedGhostDomainData> initialDomainData() {
         return Optional.empty();
     }
-
-
-    /*
-     * ============================================================
-     * 基础信息
-     * ============================================================
-     */
 
     /**
      * 玩家看到的鬼名称。
@@ -290,87 +243,8 @@ public interface GhostModule {
         return null;
     }
 
-
-    /*
-     * ============================================================
-     * 驾驭生命周期
-     * ============================================================
-     */
-
-    /**
-     * 玩家刚刚驾驭这只鬼。
-     */
-    default void onPossess(
-            PlayerGhostModuleContext context
-    ) {
-    }
-
-
-    /**
-     * 玩家宿主离线或模块暂时不可用时，释放鬼域等运行时资源。
-     */
-    default void onPlayerSuspended(PlayerGhostModuleContext context) {
-        GhostDomainManager.get(context.player().serverLevel()).removeBySourceAndType(context.player().getUUID(), getId());
-    }
-
     /** 主动能力对目标产生的影响类型，未声明的操作不自动当作袭击。 */
-    default GhostInfluenceType playerActionInfluence() { return null; }
-
-    /** 玩家宿主上的持续效果；不为玩家创建第二份模块状态。 */
-    default void onPlayerTick(
-            PlayerGhostModuleContext context
-    ) {
-    }
-
-
-    /*
-     * ============================================================
-     * 主动能力
-     * ============================================================
-     */
-
-    /**
-     * 使用主动能力。
-     */
-    default boolean use(
-            PlayerGhostModuleContext context
-    ) {
-
-        return false;
-    }
-
-
-    /**
-     * 对方块使用主动能力。
-     */
-    default boolean useOnBlock(
-            PlayerGhostModuleContext context,
-            BlockPos pos
-    ) {
-
-        return false;
-    }
-
-
-    /*
-     * ============================================================
-     * 解除驾驭
-     * ============================================================
-     */
-
-    /**
-     * 玩家解除驾驭时调用。
-     */
-    default void onRelease(
-            PlayerGhostModuleContext context
-    ) { }
-
-
-    /*
-     * ============================================================
-     * 非灵异伤害减免
-     * ============================================================
-     */
+    default GhostInfluenceType activeInfluence() { return null; }
 
     /**
      * 修改驭鬼者的非灵异伤害减免。
@@ -378,13 +252,11 @@ public interface GhostModule {
      * 默认不修改。
      */
     default double modifyNonSupernaturalDamageReduction(
-            ServerPlayer player,
             double currentReduction
     ) {
 
         return currentReduction;
     }
-
 
     /**
      * 修改驭鬼者的非灵异伤害减免上限。
@@ -392,7 +264,6 @@ public interface GhostModule {
      * 默认上限为90%。
      */
     default double modifyNonSupernaturalDamageReductionCap(
-            ServerPlayer player,
             double currentCap
     ) {
 
@@ -403,7 +274,6 @@ public interface GhostModule {
      * 修改驭鬼带来的生命上限加成。
      */
     default double modifyMaxHealthBonus(
-            ServerPlayer player,
             double currentBonus
     ) {
 
@@ -418,12 +288,6 @@ public interface GhostModule {
                 .add(CorrosionType.GLOBAL, 10)
                 .build();
     }
-
-    /*
-     * ============================================================
-     * 压制Tag
-     * ============================================================
-     */
 
     /**
      * 这个鬼的灵异分类。
@@ -481,12 +345,6 @@ public interface GhostModule {
         return false;
     }
 
-    /*
-     * ============================================================
-     * 压制资源
-     * ============================================================
-     */
-
     /**
      * 可分配压制单位数量。
      *
@@ -504,12 +362,6 @@ public interface GhostModule {
     default double suppressionUnitStrength() {
         return 100.0D;
     }
-
-    /*
-     * ============================================================
-     * 压制效率
-     * ============================================================
-     */
 
     /**
      * 自身压制目标时的效率。
@@ -533,10 +385,8 @@ public interface GhostModule {
         return suppressionEfficiency(target) * 0.5D;
     }
 
-    /** 根据调用宿主选择媒介；玩家主动调用使用模块的玩家目标检查。 */
+    /** 根据能力上下文选择媒介；媒介只读取语义参数、环境能力和模块状态。 */
     default List<GhostMedium> getMedia(GhostAbilityContext context) {
-        if (context.parameters() instanceof PlayerAbilityParameters)
-            return List.of(PlayerModuleAbility.MEDIUM);
         return getMedia();
     }
 }

@@ -1,4 +1,5 @@
 package com.qidate.qisplan2.ghost.domain.type.mist;
+import com.qidate.qisplan2.ghost.module.host.entity.GhostMistEntityBinding;
 
 import com.qidate.qisplan2.QisPlan2;
 import com.qidate.qisplan2.entity.ModularGhostEntity;
@@ -67,6 +68,9 @@ public final class GhostMistDomainController {
                     "ghost_mist"
             );
 
+    /**
+     * 禁止外部实例化此工具类；功能统一通过静态入口调用。
+     */
     private GhostMistDomainController() {
     }
 
@@ -548,7 +552,7 @@ public final class GhostMistDomainController {
      * </p>
      */
     public static void createDomain(ServerLevel level, ModularGhostEntity ghost) {
-        if (!GhostMistModule.isActive(ghost)) return;
+        if (!GhostMistEntityBinding.isActive(ghost)) return;
         var manager = GhostDomainManager.get(level);
         var data = GhostMistState.read(ghost);
         double strength = data.getDouble("domainStrength");
@@ -571,7 +575,7 @@ public final class GhostMistDomainController {
 
     /** 击杀成长先写回模块，再同步运行时鬼域；模块卸载和重新加载不会丢失成长值。 */
     public static void grow(ServerLevel level, ModularGhostEntity ghost, GhostDomain domain) {
-        if (!GhostMistModule.isActive(ghost)) return;
+        if (!GhostMistEntityBinding.isActive(ghost)) return;
         double strength = domain.getStrength() + STRENGTH_GROWTH;
         double radius = domain.getRadius() + RADIUS_GROWTH;
         GhostMistState.save(ghost, strength, radius, domain.getLayer());

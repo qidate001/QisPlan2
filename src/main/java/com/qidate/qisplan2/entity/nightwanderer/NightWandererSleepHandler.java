@@ -1,10 +1,10 @@
 package com.qidate.qisplan2.entity.nightwanderer;
 
+import com.qidate.qisplan2.ghost.module.host.entity.NightWandererEntityBinding;
 import com.qidate.qisplan2.QisPlan2;
 import com.qidate.qisplan2.entity.ModularGhostEntity;
 import com.qidate.qisplan2.ghost.module.GhostModuleRuntime;
 import com.qidate.qisplan2.ghost.module.event.SleepTimeSkippedEvent;
-import com.qidate.qisplan2.ghost.module.implementation.nightwanderer.NightWandererModule;
 import net.minecraft.server.level.ServerLevel;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
@@ -13,7 +13,14 @@ import net.neoforged.neoforge.event.level.SleepFinishedTimeEvent;
 /** 睡眠世界事件到模块语义事件的桥接，保留附近第一只可活动夜游鬼获得成长的范围。 */
 @EventBusSubscriber(modid = QisPlan2.MODID)
 public final class NightWandererSleepHandler {
+    /**
+     * 禁止外部实例化此工具类；功能统一通过静态入口调用。
+     */
     private NightWandererSleepHandler() {}
+
+    /**
+     * 睡眠跳时完成后通知有效夜游鬼，使跳过的时间参与模块成长规则。
+     */
     @SubscribeEvent
     public static void onSleepFinished(SleepFinishedTimeEvent event) {
         if (!(event.getLevel() instanceof ServerLevel level)) return;
@@ -23,7 +30,7 @@ public final class NightWandererSleepHandler {
         for (var player : level.players()) {
             for (var host : level.getEntitiesOfClass(ModularGhostEntity.class,
                     player.getBoundingBox().inflate(128),
-                    NightWandererModule::isActive)) {
+                    NightWandererEntityBinding::isActive)) {
                 GhostModuleRuntime.dispatch(host, new SleepTimeSkippedEvent(skipped));
                 return;
             }

@@ -1,7 +1,6 @@
 package com.qidate.qisplan2.ghost.module.implementation;
 
 import com.qidate.qisplan2.core.ModTags;
-import com.qidate.qisplan2.ghost.module.GhostInscriptionCapability;
 import com.qidate.qisplan2.ghost.module.GhostModule;
 import com.qidate.qisplan2.ghost.module.GhostRule;
 import com.qidate.qisplan2.ghost.module.GhostRuleContext;
@@ -47,11 +46,19 @@ public final class GhostTombstoneModule implements GhostModule {
     private static final List<GhostAbility> ABILITIES =
             List.of(new InscriptionAbility());
 
+    /**
+     * 获取当前定义的唯一标识。
+     * 注册、能力查找和规则分发使用此标识，不代表某个运行时实例。
+     */
     @Override
     public ResourceLocation getId() {
         return ID;
     }
 
+    /**
+     * 提供新建模块实例的初始强度和复苏值。
+     * 仅用于初始化；已存在实例以保存的模块数据为准。
+     */
     @Override
     public GhostModuleInitialData getInitialData() {
         return new GhostModuleInitialData(
@@ -60,11 +67,19 @@ public final class GhostTombstoneModule implements GhostModule {
         );
     }
 
+    /**
+     * 声明本厉鬼响应的语义事件及对应规则。
+     * 规则负责决定何时发起能力或提交影响，不绕过执行器直接完成袭击。
+     */
     @Override
     public List<GhostRule> getRules() {
         return RULES;
     }
 
+    /**
+     * 返回本厉鬼自身的能力定义。
+     * 世界效果由这些能力执行，输入桥和行为适配器只负责发起调用。
+     */
     @Override
     public List<GhostAbility> getIntrinsicAbilities() {
         return ABILITIES;
@@ -73,26 +88,41 @@ public final class GhostTombstoneModule implements GhostModule {
     private static final class TombstoneUseRule
             implements GhostRule {
 
+        /**
+         * 获取当前定义的唯一标识。
+         * 注册、能力查找和规则分发使用此标识，不代表某个运行时实例。
+         */
         @Override
         public ResourceLocation getId() {
             return USE_RULE_ID;
         }
 
+        /**
+         * 判断当前语义事件是否属于本规则处理的范围。
+         * 这里只筛选事件种类或语义，不执行能力和世界操作。
+         */
         @Override
         public boolean supports(GhostEvent event) {
             return event instanceof GhostUseEvent;
         }
 
+        /**
+         * 检查当前事实和模块上下文是否满足规则触发条件。
+         * 返回 false 时跳过本规则，不提交能力或灵异影响。
+         */
         @Override
         public boolean canTrigger(
                 GhostRuleContext context,
                 GhostEvent event
         ) {
             return event instanceof GhostUseEvent
-                    && context.getModuleContext().host()
-                    instanceof GhostInscriptionCapability;
+                    && context.getModuleContext().world().canInscribe();
         }
 
+        /**
+         * 处理已满足条件的语义事件，发起对应能力或提交灵异影响。
+         * 需要裁决的效果仅在获准后执行。
+         */
         @Override
         public void onTrigger(
                 GhostRuleContext context,
@@ -108,19 +138,31 @@ public final class GhostTombstoneModule implements GhostModule {
     private static final class InscriptionAbility
             implements GhostAbility {
 
+        /**
+         * 获取当前定义的唯一标识。
+         * 注册、能力查找和规则分发使用此标识，不代表某个运行时实例。
+         */
         @Override
         public ResourceLocation getId() {
             return INSCRIPTION_ABILITY_ID;
         }
 
+        /**
+         * 检查本次能力调用的事件、参数或环境是否可用于执行。
+         * 模块可用性与媒介由统一执行器共同校验。
+         */
         @Override
         public boolean canExecute(GhostAbilityContext context) {
             return context.event() instanceof GhostUseEvent useEvent
                     && useEvent.user() instanceof Player player
-                    && context.host() instanceof GhostInscriptionCapability
+                    && context.getModuleContext().world().canInscribe()
                     && isInscribable(player.getMainHandItem());
         }
 
+        /**
+         * 执行当前能力的效果。
+         * 调用方应使用统一执行器，以确保模块状态和媒介已经检查。
+         */
         @Override
         public void execute(GhostAbilityContext context) {
             if (!context.isModuleAvailable()) {
@@ -131,7 +173,7 @@ public final class GhostTombstoneModule implements GhostModule {
                 return;
             }
 
-            if (!(context.host() instanceof GhostInscriptionCapability capability)) {
+            if (!context.getModuleContext().world().canInscribe()) {
                 return;
             }
 
@@ -145,9 +187,12 @@ public final class GhostTombstoneModule implements GhostModule {
                 return;
             }
 
-            capability.requestInscription(useEvent.user());
+            context.getModuleContext().world().inscribe(useEvent.user());
         }
 
+        /**
+         * 检查物品是否带有鬼墓碑题字标签，作为题字操作的输入限制。
+         */
         private static boolean isInscribable(ItemStack stack) {
             return stack.is(ModTags.Items.GHOST_TOMBSTONE_INSCRIBABLE);
         }

@@ -7,6 +7,7 @@ import com.qidate.qisplan2.ghost.module.data.GhostModuleData;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.entity.player.Player;
 
 import java.util.List;
 import java.util.Objects;
@@ -23,11 +24,36 @@ public final class GhostItemModuleHost
         implements GhostModuleDataModifier, GhostModuleCustomDataModifier {
 
     private final ItemStack stack;
+    private final Player carrier;
 
+    /**
+     * 返回物品当前的携带者，仅供适配层解释位置和暴露状态。
+     * 未提供携带者的纯数据访问场景返回 null。
+     */
+    public Player carrier() { return carrier; }
+
+    /**
+     * 返回适配器绑定的物品栈，用于组件、耐久和外观同步。
+     */
     public ItemStack stack() { return stack; }
 
+    /**
+     * 创建绑定物品栈的数据适配器，可同时提供当前携带者。
+     * 未提供携带者时仍可读写模块组件，但不能据此认定物品已手持暴露。
+     * 物品栈必须非 null；适配器不复制物品或另建模块状态。
+     */
     public GhostItemModuleHost(ItemStack stack) {
+        this(stack, null);
+    }
+
+    /**
+     * 创建绑定物品栈的数据适配器，可同时提供当前携带者。
+     * 未提供携带者时仍可读写模块组件，但不能据此认定物品已手持暴露。
+     * 物品栈必须非 null；适配器不复制物品或另建模块状态。
+     */
+    public GhostItemModuleHost(ItemStack stack, Player carrier) {
         this.stack = Objects.requireNonNull(stack, "stack");
+        this.carrier = carrier;
     }
 
     /**

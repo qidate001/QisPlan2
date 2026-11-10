@@ -1,4 +1,5 @@
 package com.qidate.qisplan2.entity;
+import com.qidate.qisplan2.ghost.module.host.entity.GhostEntityBindings;
 
 import com.qidate.qisplan2.death.SupernaturalCombatHandler;
 import com.qidate.qisplan2.entity.ai.GhostCandleAttractionGoal;
@@ -87,6 +88,10 @@ public class ModularGhostEntity extends PathfinderMob
 
     private final Set<UUID> touchingEntities = new HashSet<>();
 
+    /**
+     * 创建通用厉鬼实体，并交给原版实体构造流程初始化。
+     * 具体厉鬼身份、持久状态与行为由后续安装的模块提供。
+     */
     public ModularGhostEntity(
             EntityType<? extends ModularGhostEntity> entityType,
             Level level
@@ -164,7 +169,7 @@ public class ModularGhostEntity extends PathfinderMob
             var entry = iterator.next();
             if (!hasGhostModule(entry.getKey())) {
                 GhostModule removedModule = GhostModuleRegistry.get(entry.getKey());
-                if (removedModule != null) removedModule.onEntityDetached(this);
+                if (removedModule != null) GhostEntityBindings.detach(removedModule, this);
                 entry.getValue().forEach(goalSelector::removeGoal);
                 iterator.remove();
             }
@@ -172,7 +177,7 @@ public class ModularGhostEntity extends PathfinderMob
         for (var entry : getModules()) {
             GhostModule module = GhostModuleRegistry.get(entry.id());
             if (module == null || moduleGoals.containsKey(entry.id())) continue;
-            var definitions = module.createEntityGoals(this);
+            var definitions = GhostEntityBindings.goals(module, this);
             List<Goal> goals = new ArrayList<>();
             for (int i = 0; i < definitions.size(); i++) {
                 var scheduled = new ModuleScheduledGoal(
@@ -187,6 +192,9 @@ public class ModularGhostEntity extends PathfinderMob
         }
     }
 
+    /**
+     * 刷新当前模块对应的实体行为绑定，保持安装列表与运行时行为一致。
+     */
     private void refreshModuleBindings() {
         refreshModuleGoals();
     }
@@ -307,13 +315,16 @@ public class ModularGhostEntity extends PathfinderMob
         return changed;
     }
 
+    /**
+     * 实体移除前注销声音并释放各模块的运行时资源，随后交给原版移除流程。
+     */
     @Override
     public void remove(RemovalReason reason) {
         if (!level().isClientSide) {
             GhostModuleSoundManager.unregisterEntityHost(this);
             for (var entry : List.copyOf(getModules())) {
                 GhostModule module = GhostModuleRegistry.get(entry.id());
-                if (module != null) module.onEntityDetached(this);
+                if (module != null) GhostEntityBindings.detach(module, this);
             }
         }
 
@@ -331,6 +342,9 @@ public class ModularGhostEntity extends PathfinderMob
         return ghostModules.setIntensity(moduleId, intensity);
     }
 
+    /**
+     * 检查强度是否为有限的非负数，拒绝 NaN、无穷大和负值。
+     */
     private static boolean isValidIntensity(double intensity) {
         return Double.isFinite(intensity) && intensity >= 0.0D;
     }
@@ -355,9 +369,17 @@ public class ModularGhostEntity extends PathfinderMob
         goalSelector.addGoal(2, new GhostCandleAttractionGoal(this));
     }
 
+    /**
+     * 取当前全部模块本质强度的最大值作为实体的对外灵异强度。
+     * 空模块列表返回零，不按安装顺序选择某个模块。
+     */
     @Override public double getSupernaturalStrength() {
         return getModules().stream().mapToDouble(GhostModuleData.Entry::intensity).max().orElse(0);
     }
+
+    /**
+     * 返回灵异防御值，供伤害结算使用。
+     */
     @Override public double getSupernaturalDefense() {
         return getModules().stream().map(entry -> GhostModuleRegistry.get(entry.id()))
                 .filter(Objects::nonNull).mapToDouble(GhostModule::getSupernaturalDefense)
@@ -367,15 +389,26 @@ public class ModularGhostEntity extends PathfinderMob
 
     /** 棺材钉属于实体上插入的物品；它压制宿主，但不覆盖模块原有休眠或永久死机状态。 */
     public boolean isCoffinNailed() { return getPersistentData().getBoolean("QisPlan2CoffinNailed"); }
+
+    /**
+     * 更新棺材钉约束状态，供实体行动控制检查。
+     */
     public void setCoffinNailed(boolean nailed) {
         getPersistentData().putBoolean("QisPlan2CoffinNailed", nailed);
     }
 
+    /**
+     * 判断实体是否应整体停止自主行为。
+     * 棺材钉约束直接阻止行动；有模块但没有任何可用模块时，也视为整体受限。
+     */
     @Override public boolean isSupernaturallyStunned() {
         return isCoffinNailed() || (!getModules().isEmpty()
                 && getModules().stream().noneMatch(GhostModuleCombatState::available));
     }
 
+    /**
+     * 只有模块列表非空且每个模块都被标记为永久死机时，返回 true。
+     */
     @Override public boolean isPermanentlySupernaturallyStunned() {
         return !getModules().isEmpty() && getModules().stream().allMatch(GhostModuleCombatState::permanent);
     }
@@ -386,6 +419,9 @@ public class ModularGhostEntity extends PathfinderMob
             GhostModuleCombatState.set(this, entry, ticks, GhostModuleCombatState.permanent(entry));
     }
 
+    /**
+     * 把灵异压制作用写入模块死机状态，供后续行为与规则检查。
+     */
     @Override public void onSupernaturalAttack(int ticks) {
         for (var entry : List.copyOf(getModules())) {
             int total = Math.clamp((long)GhostModuleCombatState.ticks(entry) + ticks, 0, Integer.MAX_VALUE);
@@ -394,18 +430,33 @@ public class ModularGhostEntity extends PathfinderMob
         stopGhostMovement();
     }
 
+    /**
+     * 应用永久灵异死机，并停止当前实体行动。
+     */
     @Override public void onPermanentSupernaturalAttack() {
         for (var entry : List.copyOf(getModules())) GhostModuleCombatState.set(this, entry, 0, true);
         stopGhostMovement();
     }
 
+    /**
+     * 清零各模块的临时死机倒计时。
+     * 沿用状态写入接口，保留永久死机标记；不能用此方法解除永久死机。
+     */
     @Override public void clearSupernaturalStun() { setSupernaturalStunTicks(0); }
+
+    /**
+     * 停止当前导航，清除攻击目标和攻击姿态。
+     * 用于受限或死机后的行动收尾，不直接改写实体速度。
+     */
     private void stopGhostMovement() {
         getNavigation().stop();
         setTarget(null);
         setAggressive(false);
     }
 
+    /**
+     * 推进实体 AI 生命周期，并在受限状态下维护行动停止与相关状态。
+     */
     @Override public void aiStep() {
         super.aiStep();
         if (!level().isClientSide) {
@@ -418,30 +469,60 @@ public class ModularGhostEntity extends PathfinderMob
         }
     }
 
+    /**
+     * 查询统一目标策略，判断当前厉鬼能否探测指定玩家。
+     */
     public boolean canDetectPlayer(Player player) {
         return GhostAvoidanceSystem.canDetect(this, player);
     }
 
+    /**
+     * 查询统一目标策略，判断当前厉鬼是否允许袭击指定玩家。
+     */
     public boolean canAttackPlayer(Player player) {
         return GhostAvoidanceSystem.canAttack(this, player);
     }
 
+    /**
+     * 读取玩家在统一目标策略中的优先级，供目标选择比较。
+     */
     public int getPlayerTargetPriority(Player player) {
         return GhostAvoidanceSystem.getTargetPriority(this, player);
     }
 
+    /**
+     * 声明实体的远距离自动清除策略。
+     */
     @Override public boolean removeWhenFarAway(double distance) { return false; }
+
+    /**
+     * 声明实体是否需要自定义持久保留，供原版清除逻辑使用。
+     */
     @Override public boolean requiresCustomPersistence() { return true; }
+
+    /**
+     * 声明和平难度下的自动消失策略。
+     */
     @Override protected boolean shouldDespawnInPeaceful() { return false; }
+
+    /**
+     * 检查当前伤害来源是否应被实体免疫策略拦截。
+     */
     @Override public boolean isInvulnerableTo(DamageSource source) {
         return SupernaturalCombatHandler.isInvulnerableTo(this, source);
     }
 
+    /**
+     * 处理玩家与模块化实体的交互，将符合条件的交互接入驾驭流程。
+     */
     @Override public InteractionResult mobInteract(
             Player player, InteractionHand hand) {
         return GhostPossessionInteractionSystem.handle(this, player, hand);
     }
 
+    /**
+     * 创建通用模块化实体的基础属性表，供实体类型注册使用。
+     */
     public static AttributeSupplier.Builder createAttributes() {
         return Mob.createMobAttributes()
                 .add(Attributes.MAX_HEALTH, 20.0D)
@@ -449,6 +530,9 @@ public class ModularGhostEntity extends PathfinderMob
                 .add(Attributes.FOLLOW_RANGE, 32.0D);
     }
 
+    /**
+     * 保存实体附加状态和模块数据，保证模块专属状态随存档持久化。
+     */
     @Override
     public void addAdditionalSaveData(CompoundTag tag) {
         super.addAdditionalSaveData(tag);
@@ -494,6 +578,9 @@ public class ModularGhostEntity extends PathfinderMob
         tag.put(NBT_GHOST_MODULES, modulesTag);
     }
 
+    /**
+     * 读取实体附加状态与模块数据，并恢复所需的运行时绑定。
+     */
     @Override
     public void readAdditionalSaveData(CompoundTag tag) {
         super.readAdditionalSaveData(tag);
@@ -585,11 +672,14 @@ public class ModularGhostEntity extends PathfinderMob
         if (!level().isClientSide) {
             for (var entry : List.copyOf(getModules())) {
                 GhostModule module = GhostModuleRegistry.get(entry.id());
-                if (module != null && hasGhostModule(entry.id())) module.onEntityTick(this);
+                if (module != null && hasGhostModule(entry.id())) GhostEntityBindings.tick(module, this);
             }
         }
     }
 
+    /**
+     * 推进模块化实体的灵异 AI，具体行为由已安装模块的适配器提供。
+     */
     private void tickGhostAI() {
         // 保留现有的统一模块 Tick 事件
         GhostModuleRuntime.dispatch(this, new ModuleTickEvent());

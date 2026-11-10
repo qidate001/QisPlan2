@@ -1,4 +1,5 @@
 package com.qidate.qisplan2.ghost.possession.manager;
+import com.qidate.qisplan2.ghost.module.host.player.binding.GhostPlayerBindings;
 
 import com.qidate.qisplan2.death.QisDeathHandler;
 import com.qidate.qisplan2.event.GhostBreakoutHandler;
@@ -35,6 +36,9 @@ import net.minecraft.world.entity.player.Player;
 
 public final class PossessionHandler {
 
+    /**
+     * 禁止外部实例化此工具类；功能统一通过静态入口调用。
+     */
     private PossessionHandler() {
     }
 
@@ -87,14 +91,12 @@ public final class PossessionHandler {
 
             reduction =
                     ability.modifyNonSupernaturalDamageReduction(
-                            player,
                             reduction
                     );
 
 
             reductionCap =
                     ability.modifyNonSupernaturalDamageReductionCap(
-                            player,
                             reductionCap
                     );
         }
@@ -143,6 +145,9 @@ public final class PossessionHandler {
     }
 
 
+    /**
+     * 计算或读取当前驾驭组合的侵蚀矩阵，供侵蚀结算使用。
+     */
     public static CorrosionMatrix getCorrosionMatrix(
             Player player
     ) {
@@ -264,7 +269,6 @@ public final class PossessionHandler {
 
             health =
                     ability.modifyMaxHealthBonus(
-                            player,
                             health
                     );
         }
@@ -374,6 +378,9 @@ public final class PossessionHandler {
     }
 
 
+    /**
+     * 结算本次操作引起的复苏变化，并通过现有状态入口写回模块数据。
+     */
     public static PossessedGhostState addRevival(
             ServerPlayer player,
             ResourceLocation ghost,
@@ -457,10 +464,13 @@ public final class PossessionHandler {
         if (module == null || !player.isAlive()) return false;
         var host = new PlayerGhostModuleHost(player);
         if (!host.importModule(entry)) return false;
-        module.onPossess(new PlayerGhostModuleContext(player, entry.id(), getData(player, entry.id())));
+        GhostPlayerBindings.get(module).onPossess(new PlayerGhostModuleContext(player, entry.id(), getData(player, entry.id())));
         return true;
     }
 
+    /**
+     * 解除指定厉鬼的驾驭关系，并清理对应的载体运行时资源。
+     */
     public static boolean release(
             ServerPlayer player,
             ResourceLocation ghost
@@ -487,7 +497,7 @@ public final class PossessionHandler {
 
         if (ability != null) {
 
-            ability.onRelease(
+            GhostPlayerBindings.get(ability).onRelease(
                     new PlayerGhostModuleContext(
                             player,
                             ghost,
@@ -725,6 +735,9 @@ public final class PossessionHandler {
     }
 
 
+    /**
+     * 汇总当前驾驭的厉鬼所产生的侵蚀数据。
+     */
     public static EnumMap<CorrosionType, Integer> getAllCorrosion(
             ServerPlayer player
     ) {
@@ -755,6 +768,10 @@ public final class PossessionHandler {
     }
 
 
+    /**
+     * 计算指定厉鬼在指定侵蚀类型中的贡献占比。
+     * 总侵蚀为零时返回零，否则用该鬼贡献除以当前类型总量。
+     */
     public static double getCorrosionRatio(
             ServerPlayer player,
             ResourceLocation ghost,
@@ -785,6 +802,9 @@ public final class PossessionHandler {
     }
 
 
+    /**
+     * 计算或读取当前驾驭组合的侵蚀矩阵，供侵蚀结算使用。
+     */
     public static CorrosionMatrix getCorrosionMatrix(
             ServerPlayer player
     ) {
@@ -1068,6 +1088,9 @@ public final class PossessionHandler {
     }
 
 
+    /**
+     * 在现有驾驭状态上增加浅死机量，返回更新后的状态。
+     */
     public static PossessedGhostState addShallowStun(
             PossessedGhostState state,
             double amount
@@ -1159,7 +1182,7 @@ public final class PossessionHandler {
             }
             // 玩家持续能力（如已主动展开的鬼域）独立于自动规则；死机不撤销主动能力。
             // 规则是否失效由下面的 GhostModuleRuntime 统一判断。
-            module.onPlayerTick(new PlayerGhostModuleContext(player, entry.id(), getData(player, entry.id())));
+            GhostPlayerBindings.get(module).onPlayerTick(new PlayerGhostModuleContext(player, entry.id(), getData(player, entry.id())));
             if (!player.isAlive()) return;
         }
         GhostModuleRuntime.dispatch(host, new ModuleTickEvent());

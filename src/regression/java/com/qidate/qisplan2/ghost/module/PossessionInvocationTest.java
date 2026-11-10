@@ -19,27 +19,100 @@ public final class PossessionInvocationTest {
     private static int rules;
     private static final class Host implements GhostModuleHost {
         List<GhostModuleData.Entry> entries;
+
+        /**
+         * 读取当前载体保存的模块实例列表。
+         */
         public List<GhostModuleData.Entry> getModules() { return entries; }
     }
+
+    /**
+     * 校验回归条件；不满足时抛出断言错误并给出失败原因。
+     */
     private static void check(boolean value, String message) {
         if (!value) throw new AssertionError(message);
     }
+
+    /**
+     * 运行回归用例，覆盖死机、主动能力、媒介限制以及延迟任务失效等边界。
+     */
     public static void main(String[] args) {
+        HostNeutralCandleTest.run();
         GhostModuleRegistry.register(new GhostModule() {
+            /**
+             * 获取当前定义的唯一标识。
+             * 注册、能力查找和规则分发使用此标识，不代表某个运行时实例。
+             */
             public ResourceLocation getId() { return ID; }
+
+            /**
+             * 返回本定义对外提供的能力列表，供统一执行器按标识查找。
+             */
             public List<GhostAbility> getAbilities() { return List.of(new GhostAbility() {
+                /**
+                 * 获取当前定义的唯一标识。
+                 * 注册、能力查找和规则分发使用此标识，不代表某个运行时实例。
+                 */
                 public ResourceLocation getId() { return ID; }
+
+                /**
+                 * 检查本次能力调用的事件、参数或环境是否可用于执行。
+                 * 模块可用性与媒介由统一执行器共同校验。
+                 */
                 public boolean canExecute(GhostAbilityContext c) { return true; }
+
+                /**
+                 * 执行当前能力的效果。
+                 * 调用方应使用统一执行器，以确保模块状态和媒介已经检查。
+                 */
                 public void execute(GhostAbilityContext c) { effects++; }
             }); }
+
+            /**
+             * 声明能力执行前必须满足的媒介。
+             * 主动调用同样需要通过媒介；规则是否触发由规则层单独判断。
+             */
             public List<GhostMedium> getMedia() { return List.of(new GhostMedium() {
+                /**
+                 * 获取当前定义的唯一标识。
+                 * 注册、能力查找和规则分发使用此标识，不代表某个运行时实例。
+                 */
                 public ResourceLocation getId() { return ID; }
+
+                /**
+                 * 校验本媒介要求的环境、事件或输入条件。
+                 * 返回 false 会阻止本次能力执行，主动使用也不能绕过该检查。
+                 */
                 public boolean allows(GhostAbilityContext c) { return medium; }
             }); }
+
+            /**
+             * 声明本厉鬼响应的语义事件及对应规则。
+             * 规则负责决定何时发起能力或提交影响，不绕过执行器直接完成袭击。
+             */
             public List<GhostRule> getRules() { return List.of(new GhostRule() {
+                /**
+                 * 获取当前定义的唯一标识。
+                 * 注册、能力查找和规则分发使用此标识，不代表某个运行时实例。
+                 */
                 public ResourceLocation getId() { return ID; }
+
+                /**
+                 * 判断当前语义事件是否属于本规则处理的范围。
+                 * 这里只筛选事件种类或语义，不执行能力和世界操作。
+                 */
                 public boolean supports(GhostEvent e) { return true; }
+
+                /**
+                 * 检查当前事实和模块上下文是否满足规则触发条件。
+                 * 返回 false 时跳过本规则，不提交能力或灵异影响。
+                 */
                 public boolean canTrigger(GhostRuleContext c, GhostEvent e) { return true; }
+
+                /**
+                 * 处理已满足条件的语义事件，发起对应能力或提交灵异影响。
+                 * 需要裁决的效果仅在获准后执行。
+                 */
                 public void onTrigger(GhostRuleContext c, GhostEvent e) { rules++; }
             }); }
         });

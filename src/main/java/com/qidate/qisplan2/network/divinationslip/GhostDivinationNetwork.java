@@ -1,5 +1,6 @@
 package com.qidate.qisplan2.network.divinationslip;
 
+import com.qidate.qisplan2.ghost.module.host.player.DivinationSlipInput;
 import com.qidate.qisplan2.core.ModItems;
 import com.qidate.qisplan2.ghost.module.implementation.divinationslip.GhostDivinationSlipModule;
 import com.qidate.qisplan2.ghost.possession.manager.PossessionHandler;
@@ -14,9 +15,15 @@ import net.neoforged.neoforge.network.handling.IPayloadContext;
 
 public final class GhostDivinationNetwork {
 
+    /**
+     * 禁止外部实例化此工具类；功能统一通过静态入口调用。
+     */
     private GhostDivinationNetwork() {
     }
 
+    /**
+     * 注册鬼签网络消息及对应处理器，使客户端结果输入进入服务端校验。
+     */
     public static void register(
             RegisterPayloadHandlersEvent event
     ) {
@@ -118,7 +125,7 @@ public final class GhostDivinationNetwork {
                 return;
             }
 
-            GhostDivinationSlipModule.useResult(
+            DivinationSlipInput.useResult(
                     player,
                     payload.result()
             );

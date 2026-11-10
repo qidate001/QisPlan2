@@ -16,6 +16,12 @@ import java.util.Objects;
 public final class ItemDestructionAttemptEvent
         extends DestructionAttemptEvent {
 
+    /**
+     * 返回物品损坏发生时的持有者，作为本次摧毁的反击对象。
+     * 没有持有者时返回 null，模块不能凭空选择反击目标。
+     */
+    @Override public LivingEntity getAttacker() { return holder; }
+
     private final ItemStack stack;
 
     @Nullable
@@ -25,6 +31,10 @@ public final class ItemDestructionAttemptEvent
     private final int damageAmount;
     private final int maxDamage;
 
+    /**
+     * 记录物品损坏前的物品栈、持有者与耐久参数。
+     * 拒绝空物品、负损伤值、非正损耗和非正最大耐久；持有者允许为空。
+     */
     public ItemDestructionAttemptEvent(
             ItemStack stack,
             @Nullable LivingEntity holder,

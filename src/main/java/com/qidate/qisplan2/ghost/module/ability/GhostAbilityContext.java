@@ -105,7 +105,7 @@ public record GhostAbilityContext(
             );
         }
 
-        boolean abilityExists = module.getAbilities().stream()
+        boolean abilityExists = GhostAbilityDefinitions.abilities(module).stream()
                 .anyMatch(ability -> ability.getId().equals(abilityId));
 
         if (!abilityExists) {
@@ -145,7 +145,7 @@ public record GhostAbilityContext(
                 "Unknown ghost module: " + moduleId
         );
 
-        return module.getAbilities().stream()
+        return GhostAbilityDefinitions.abilities(module).stream()
                 .filter(ability -> ability.getId().equals(abilityId))
                 .findFirst()
                 .orElseThrow(() -> new IllegalStateException(

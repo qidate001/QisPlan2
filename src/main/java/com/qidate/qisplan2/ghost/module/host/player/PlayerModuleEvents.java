@@ -1,4 +1,5 @@
 package com.qidate.qisplan2.ghost.module.host.player;
+import com.qidate.qisplan2.ghost.module.host.player.binding.GhostPlayerBindings;
 
 import com.qidate.qisplan2.QisPlan2;
 import com.qidate.qisplan2.ghost.module.*;
@@ -20,6 +21,11 @@ import net.neoforged.neoforge.event.entity.player.PlayerInteractEvent;
 @EventBusSubscriber(modid = QisPlan2.MODID)
 public final class PlayerModuleEvents {
     private static final Map<ServerPlayer, Set<UUID>> TOUCHING = new WeakHashMap<>();
+
+    /**
+     * 检测新进入玩家接触范围的生命实体并发布接触事实。
+     * 持续重叠不会每 tick 重复触发；玩家死亡后停止继续分发。
+     */
     public static void tickTouch(ServerPlayer player, PlayerGhostModuleHost host) {
         Set<UUID> old = TOUCHING.getOrDefault(player, Set.of());
         Set<UUID> current = new HashSet<>();
@@ -31,20 +37,33 @@ public final class PlayerModuleEvents {
         }
         TOUCHING.put(player, current);
     }
+
+    /**
+     * 玩家离线时通知各模块的适配器释放运行时资源，并清除接触记录。
+     */
     @SubscribeEvent public static void logout(PlayerEvent.PlayerLoggedOutEvent event) {
         if (!(event.getEntity() instanceof ServerPlayer player)) return;
         for (var entry : new PlayerGhostModuleHost(player).getModules()) {
             var module = GhostModuleRegistry.get(entry.id());
-            if (module != null) module.onPlayerSuspended(new PlayerGhostModuleContext(player, entry.id(),
+            if (module != null) GhostPlayerBindings.get(module).onPlayerSuspended(new PlayerGhostModuleContext(player, entry.id(),
                     PossessionHandler.getData(player, entry.id())));
         }
         TOUCHING.remove(player);
     }
+
+    /**
+     * 玩家重建时复制仍保留的模块数据，避免未能转移的模块丢失。
+     */
     @SubscribeEvent public static void clonePlayer(PlayerEvent.Clone event) {
         // 通常死亡破体后列表已空；若世界拒绝生成破体实体，保留未转移模块，避免丢失。
         if (event.getEntity() instanceof ServerPlayer player)
             PlayerGhostData.setModules(player, PlayerGhostData.getModules(event.getOriginal()));
     }
+
+    /**
+     * 处理空主手与方块模块的驾驭交互。
+     * 找到尚未驾驭的不可用模块后发起驾驭，成功受理时消费本次交互。
+     */
     @SubscribeEvent public static void blockInteraction(PlayerInteractEvent.RightClickBlock event) {
         if (event.getHand() != InteractionHand.MAIN_HAND || !event.getItemStack().isEmpty()
                 || !(event.getEntity() instanceof ServerPlayer player) || player.isShiftKeyDown()) return;

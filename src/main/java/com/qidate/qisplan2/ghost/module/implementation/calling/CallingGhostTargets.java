@@ -10,21 +10,36 @@ import net.minecraft.util.Mth;
 import net.minecraft.world.level.block.DoorBlock;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.entity.LivingEntity;
 
 /** 目标查询与鬼石砖、关闭鬼门的阻隔检测；查询不改变模块状态。 */
-final class CallingGhostTargets {
+public final class CallingGhostTargets {
     private static final double BLOCK_CHECK_STEP = 0.5D;
-    static ServerPlayer current(ModularGhostEntity host) {
+
+    /**
+     * 查询当前模块记录的有效运行时对象，不存在时返回 null。
+     */
+    public static ServerPlayer current(ModularGhostEntity host) {
         var data = CallingGhostState.read(host);
         if (!(host.level() instanceof ServerLevel level) || !data.hasUUID("target")) return null;
         var player = level.getPlayerByUUID(data.getUUID("target"));
         return player instanceof ServerPlayer serverPlayer && valid(host, serverPlayer) ? serverPlayer : null;
     }
-    static boolean valid(ModularGhostEntity host, ServerPlayer player) {
+
+    /**
+     * 检查候选玩家是否存活、同维度且可以被当前厉鬼探测。
+     */
+    public static boolean valid(ModularGhostEntity host, ServerPlayer player) {
         return player.level() == host.level() && player.isAlive() && !player.isCreative()
                 && !player.isSpectator() && host.canDetectPlayer(player);
     }
-    static ServerPlayer available(ModularGhostEntity host) {
+
+    /**
+     * 寻找可追踪目标，优先考虑红烛吸引，再沿用当前目标或筛选其他玩家。
+     * 同时考虑阻隔和最近袭击后的目标避让冷却。
+     */
+    public static ServerPlayer available(ModularGhostEntity host) {
         var preferred = GhostAvoidanceSystem.preferredTarget(host, 32,
                 p -> p instanceof ServerPlayer server && valid(host, server) && canTrackPlayer(host, server));
         if (preferred instanceof ServerPlayer serverPlayer) return serverPlayer;
@@ -50,12 +65,24 @@ final class CallingGhostTargets {
         }
         return best;
     }
+
+    /**
+     * 把实体来源的位置转换成通用追踪检测输入，复用阻隔查询。
+     */
     public static boolean canTrackPlayer(
             ModularGhostEntity ghost,
             ServerPlayer player
     ) {
+        return canTrack(ghost.level(), ghost.position(), player);
+    }
+
+    /**
+     * 校验目标资格与空间阻隔，判断是否允许继续追踪。
+     */
+    public static boolean canTrack(Level level, Vec3 origin,
+                                   LivingEntity player) {
         Vec3 start =
-                ghost.position().add(
+                origin.add(
                         0.0D,
                         0.8D,
                         0.0D
@@ -110,7 +137,7 @@ final class CallingGhostTargets {
                     );
 
             BlockState state =
-                    ghost.level().getBlockState(
+                    level.getBlockState(
                             checkPos
                     );
 

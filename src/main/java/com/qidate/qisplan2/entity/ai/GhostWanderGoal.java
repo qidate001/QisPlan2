@@ -2,7 +2,7 @@ package com.qidate.qisplan2.entity.ai;
 
 import com.qidate.qisplan2.entity.ModularGhostEntity;
 import com.qidate.qisplan2.ghost.GhostAvoidanceSystem;
-import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.PathfinderMob;
 import net.minecraft.world.entity.ai.goal.Goal;
 import net.minecraft.world.entity.ai.util.LandRandomPos;
@@ -46,7 +46,7 @@ public class GhostWanderGoal extends Goal {
     private final int maxCooldown;
 
     private int cooldown = 0;
-    private Player candleTarget;
+    private LivingEntity candleTarget;
 
     /**
      * 默认配置。
@@ -101,6 +101,10 @@ public class GhostWanderGoal extends Goal {
         );
     }
 
+    /**
+     * 判断当前行为是否可以开始执行。
+     * 检查行为需要的模块状态、环境或目标条件，交由 Goal 调度器决定是否取得控制。
+     */
     @Override
     public boolean canUse() {
 
@@ -133,6 +137,10 @@ public class GhostWanderGoal extends Goal {
         return mob.getRandom().nextInt(20) == 0;
     }
 
+    /**
+     * 重新检查行为是否仍可继续。
+     * 条件不满足时由调度器停止行为，释放占用的控制资源。
+     */
     @Override
     public boolean canContinueToUse() {
 
@@ -153,6 +161,9 @@ public class GhostWanderGoal extends Goal {
         return candleTarget != null || !mob.getNavigation().isDone();
     }
 
+    /**
+     * 取得行为控制后初始化本轮行动，开始对应的移动或目标处理。
+     */
     @Override
     public void start() {
 
@@ -171,17 +182,26 @@ public class GhostWanderGoal extends Goal {
                         );
     }
 
+    /**
+     * 停止当前行为，释放移动控制并清理该行为持有的临时目标。
+     */
     @Override public void stop() {
         if (candleTarget != null) mob.getNavigation().stop();
         candleTarget = null;
     }
 
+    /**
+     * 推进当前 tick 的行为或待处理任务；具体执行受本方法的有效性检查约束。
+     */
     @Override public void tick() {
         if (candleTarget == null) return;
         if (mob.distanceToSqr(candleTarget) <= 4) mob.getNavigation().stop();
         else if (mob.tickCount % 10 == 0) mob.getNavigation().moveTo(candleTarget, speedModifier);
     }
 
+    /**
+     * 为游荡行为选择候选位置；没有合适位置时按现有逻辑放弃本次寻路。
+     */
     private void chooseRandomPosition() {
 
         /*

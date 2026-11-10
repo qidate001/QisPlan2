@@ -218,3 +218,19 @@ tasks.register('possessionInvocationTest', JavaExec) {
 tasks.named('check') {
     dependsOn tasks.named('possessionInvocationTest')
 }
+
+// 模块只能依赖语义事件、模块数据和环境端口，不能绕过端口取回载体。
+tasks.register('verifyModuleIsolation') {
+    def definitions = fileTree('src/main/java/com/qidate/qisplan2/ghost/module/implementation') {
+        include '**/*Module.java'
+    }
+    inputs.files(definitions)
+    doLast {
+        definitions.each { file ->
+            def code = file.getText('UTF-8').replaceAll(/(?s)\/\*.*?\*\//, '').replaceAll(/(?m)\/\/.*$/, '')
+            def forbidden = /\.host\s*\(|\b(?:ModularGhostEntity|GhostModuleHosts|GhostModuleHost|PlayerGhostModuleContext|PlayerGhostModuleHost|GhostItemModuleHost)\b|import\s+com\.qidate\.qisplan2\.ghost\.module\.host\./
+            if (code =~ forbidden) throw new GradleException("模块引用了载体实现: " + file.name)
+        }
+    }
+}
+tasks.named('check') { dependsOn tasks.named('verifyModuleIsolation') }
