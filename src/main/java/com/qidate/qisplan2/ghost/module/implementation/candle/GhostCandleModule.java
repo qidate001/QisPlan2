@@ -8,6 +8,8 @@ import com.qidate.qisplan2.ghost.module.event.GhostEvent;
 import com.qidate.qisplan2.ghost.module.event.GhostUseEvent;
 import com.qidate.qisplan2.ghost.module.host.item.GhostItemModuleHost;
 import com.qidate.qisplan2.item.candle.GhostCandleSystem;
+import com.qidate.qisplan2.ghost.module.sound.GhostSoundManager;
+import net.minecraft.server.level.ServerPlayer;
 import java.util.List;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.resources.ResourceLocation;
@@ -72,6 +74,11 @@ public abstract class GhostCandleModule implements GhostModule {
             stack.set(DataComponents.CUSTOM_MODEL_DATA, new CustomModelData(1));
         else stack.remove(DataComponents.CUSTOM_MODEL_DATA);
     }
+    /** 每 10 点被屏蔽的灵异强度，额外消耗 1 点耐久/秒。 */
+    public static double soundBurnPerTick(double intensity) {
+        return Double.isFinite(intensity) ? Math.max(0, intensity) / 200.0D : 0;
+    }
+
     @Override public void onItemTick(GhostItemModuleHost host, Player player) {
         ItemStack stack = host.stack();
         var data = host.getModuleCustomData(id);
@@ -82,7 +89,14 @@ public abstract class GhostCandleModule implements GhostModule {
         }
         syncModel(stack);
         if (!isLit(stack, id)) return;
-        int damage = GhostCandleSystem.rollBurnDamage(player, GhostCandleSystem.getBurnDamagePerTick(player));
+        double burn = GhostCandleSystem.getBurnDamagePerTick(player);
+        if (id.equals(WhiteGhostCandleModule.ID) && player instanceof ServerPlayer serverPlayer
+                && (player.getMainHandItem() == stack || player.getOffhandItem() == stack)) {
+            // 声音屏蔽是额外负担，与原有附近厉鬼燃烧压力相加。
+            // 多个声源只取最强者；背包中的鬼烛不提供屏蔽，也不承担声音消耗。
+            burn += soundBurnPerTick(GhostSoundManager.getBlockedSoundIntensity(serverPlayer));
+        }
+        int damage = GhostCandleSystem.rollBurnDamage(player, burn);
         if (damage <= 0) return;
         // 必须加上当前损伤值，否则鬼烛永远无法正常燃尽。
         if ((long)stack.getDamageValue() + damage >= stack.getMaxDamage()) stack.shrink(1);

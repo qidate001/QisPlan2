@@ -28,6 +28,7 @@ public final class GhostAvoidanceSystem {
         return GhostCandleModule.isLit(player.getMainHandItem(), id)
                 || GhostCandleModule.isLit(player.getOffhandItem(), id);
     }
+
     /** 使用方可叠加自己的追踪媒介，红烛不会绕过墙体、维度或模块能力前提。 */
     public static Player preferredTarget(LivingEntity ghost, double range, Predicate<Player> eligible) {
         return ghost.level().getEntitiesOfClass(Player.class, ghost.getBoundingBox().inflate(range),

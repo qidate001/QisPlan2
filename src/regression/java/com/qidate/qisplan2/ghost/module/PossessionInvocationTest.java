@@ -89,6 +89,10 @@ public final class PossessionInvocationTest {
         lit.put("qisplan2:combat", combat);
         check(!GhostCandleModule.isLit(new GhostModuleData.Entry(ID, 5, 0, false, false, lit)),
                 "限时死机鬼烛不能提供效果");
+        check(GhostCandleModule.soundBurnPerTick(0) == 0, "没有声音压力时不额外燃烧");
+        check(GhostCandleModule.soundBurnPerTick(10) * 20 == 1, "10强度应额外消耗1耐久每秒");
+        check(GhostCandleModule.soundBurnPerTick(50) * 20 == 5, "声音压力应随强度线性增加");
+        check(GhostCandleModule.soundBurnPerTick(-1) == 0, "无效负强度不能返还耐久");
         System.out.println("Possession and candle state regression checks passed");
     }
 }

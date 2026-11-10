@@ -1,7 +1,9 @@
 package com.qidate.qisplan2.ghost.module.sound;
 
 import com.qidate.qisplan2.ghost.isolation.GhostIsolationSystem;
+import com.qidate.qisplan2.ghost.GhostAvoidanceSystem;
 import com.qidate.qisplan2.ghost.module.GhostModuleHost;
+import com.qidate.qisplan2.ghost.module.GhostModuleCombatState;
 import com.qidate.qisplan2.ghost.module.GhostModuleRuntime;
 import com.qidate.qisplan2.ghost.module.event.GhostSoundEvent;
 import com.qidate.qisplan2.network.ghostsound.GhostSoundNetwork;
@@ -706,6 +708,7 @@ public final class GhostSoundManager {
      * 传播规则：
      * 1. 声音必须处于最大传播距离内。
      * 2. 声源与玩家必须属于同一个灵异隔绝 Region。
+     * 3. 玩家没有手持点燃且有效的白色鬼烛模块。
      *
      * Region 查询只使用 GhostIsolationSystem.getRegionId()，
      * 不主动触发新的空间检测。
@@ -715,6 +718,22 @@ public final class GhostSoundManager {
             SoundSource source,
             ServerPlayer player
     ) {
+        // 白烛只改变本轮传播结果，不能清空 HEARD_SOURCES 或提前跳过 updatePlayer。
+        // 上轮已听见、本轮被屏蔽时，正常执行停止播放、LEFT 和按声音类别聚合的 INTERRUPTED；
+        // 一开始就被屏蔽则没有中断，持续屏蔽也不会重复触发。熄灭后重新进入听觉范围。
+        if (GhostAvoidanceSystem.hasWhiteGhostCandle(player)) {
+            return false;
+        }
+
+        return canReachListener(source, player);
+    }
+
+    /**
+     * 仅判断声音本来能否传播到听众，不考虑白烛。
+     * 屏蔽消耗也必须满足距离、维度和空间隔绝条件，不能对本来听不到的声音收费。
+     */
+    private static boolean canReachListener(SoundSource source, ServerPlayer player) {
+        if (source.level() != player.serverLevel()) return false;
         Vec3 start = source.position();
         Vec3 end = player.getEyePosition();
 
@@ -752,6 +771,26 @@ public final class GhostSoundManager {
 
         // 只有处于同一个 Isolation，声音才可以传播。
         return Objects.equals(sourceRegionId, listenerRegionId);
+    }
+
+    /**
+     * 当前真正被白烛屏蔽的最高声源强度。
+     * 模块声源只读取所属模块，不把同宿主的其他模块强度算进来；
+     * 旧版未指定模块 ID 的声源以宿主最高有效模块强度兼容。
+     * 此查询不修改听觉快照，不派发事件。
+     */
+    public static double getBlockedSoundIntensity(ServerPlayer player) {
+        if (!GhostAvoidanceSystem.hasWhiteGhostCandle(player)) return 0;
+        double strongest = 0;
+        for (SoundSource source : SOURCES.values()) {
+            if (!canReachListener(source, player)) continue;
+            for (var entry : source.host().getModules()) {
+                if (source.moduleId() != null && !source.moduleId().equals(entry.id())) continue;
+                if (!GhostModuleCombatState.available(entry)) continue;
+                if (Double.isFinite(entry.intensity())) strongest = Math.max(strongest, entry.intensity());
+            }
+        }
+        return strongest;
     }
 
     // =========================================================

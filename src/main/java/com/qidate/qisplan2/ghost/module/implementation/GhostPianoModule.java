@@ -23,9 +23,6 @@ import static com.qidate.qisplan2.QisPlan2.MODID;
  * 鬼钢琴模块。
  *
  * 统一承载鬼钢琴的灵异强度、规则和能力。
- *
- * 当前阶段只建立模块定义与初始数据；
- * 音乐中断规则将在后续阶段迁入。
  */
 public final class GhostPianoModule implements GhostModule {
 
