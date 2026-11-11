@@ -7,6 +7,7 @@ import com.qidate.qisplan2.ghost.module.environment.GhostWorldAccess;
 import net.minecraft.resources.ResourceLocation;
 
 import java.util.Objects;
+import com.qidate.qisplan2.ghost.module.environment.GhostTargetState;
 
 /**
  * 单次模块执行的上下文。
@@ -32,9 +33,12 @@ public record GhostModuleContext(
     }
 
     /**
-     * 获取当前模块绑定的世界操作接口。
-     * 模块只能通过接口查询环境或操作世界，不取回具体载体。
+     * 获取当前模块的目标关联状态接口。
+     * 目标进度的存储位置由适配层决定，模块不识别自己的载体。
      */
+    public GhostTargetState targetState() { return host.moduleTargetState(moduleId); }
+
+    /** 获取当前模块的世界操作接口，不返回具体载体。 */
     public GhostWorldAccess world() { return host.moduleWorld(moduleId); }
 
     /**

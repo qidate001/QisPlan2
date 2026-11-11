@@ -4,6 +4,8 @@ import com.qidate.qisplan2.ghost.module.data.GhostModuleData;
 import net.minecraft.resources.ResourceLocation;
 
 import java.util.List;
+import com.qidate.qisplan2.ghost.module.environment.GhostTargetState;
+import com.qidate.qisplan2.ghost.module.host.GhostTargetStateAdapters;
 import com.qidate.qisplan2.ghost.module.environment.GhostEnvironment;
 import com.qidate.qisplan2.ghost.module.environment.GhostWorldAccess;
 import com.qidate.qisplan2.ghost.module.host.GhostEnvironmentAdapters;
@@ -23,6 +25,11 @@ public interface GhostModuleHost {
      * 获取宿主携带的全部厉鬼模块。
      */
     List<GhostModuleData.Entry> getModules();
+
+    /** 为模块提供目标关联状态；新增载体可覆盖其存储实现。 */
+    default GhostTargetState moduleTargetState(ResourceLocation id) {
+        return GhostTargetStateAdapters.bind(this, id);
+    }
 
     /** 载体解释暴露、消耗和效果输出；新增载体无需修改厉鬼定义。 */
     default GhostEnvironment moduleEnvironment(ResourceLocation id) {

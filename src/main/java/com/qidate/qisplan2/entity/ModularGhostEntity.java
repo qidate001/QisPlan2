@@ -704,13 +704,9 @@ public class ModularGhostEntity extends PathfinderMob
             UUID targetId = target.getUUID();
             currentTouchingEntities.add(targetId);
 
-            // 仅在刚刚接触目标时派发一次事件
-            if (touchingEntities.add(targetId)) {
-                GhostModuleRuntime.dispatch(
-                        this,
-                        new TouchEvent(this, target)
-                );
-            }
+            // 每 tick 报告真实接触时长；事件阶段保留进入语义，避免不可触规则重复袭击。
+            boolean beginning = touchingEntities.add(targetId);
+            GhostModuleRuntime.dispatch(this, TouchEvent.sample(this, target, beginning));
         }
 
         // 目标离开碰撞范围后，允许下一次接触重新触发

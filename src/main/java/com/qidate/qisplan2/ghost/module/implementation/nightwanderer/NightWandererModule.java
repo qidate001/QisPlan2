@@ -217,7 +217,7 @@ public final class NightWandererModule implements GhostModule {
     }
 
     /**
-     * 10 秒。
+     * 返回本厉鬼对各身体部位和全局的侵蚀配置。
      */
     private static final GhostCorrosion CORROSION =
             GhostCorrosion.builder()
@@ -227,9 +227,6 @@ public final class NightWandererModule implements GhostModule {
                     .add(CorrosionType.FOOT, 10)
                     .build();
 
-    /**
-     * 返回本厉鬼对各身体部位和全局的侵蚀配置。
-     */
     @Override
     public GhostCorrosion corrosion() {
         return CORROSION;

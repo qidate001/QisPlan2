@@ -49,7 +49,7 @@ public final class GhostModuleInteractionHandler {
         // TouchEvent 描述触碰来源与目标，不规定具体效果。
         if (event.getTarget() instanceof LivingEntity target) {
             GhostModuleRuntime.dispatch(
-                    new GhostItemModuleHost(stack),
+                    new GhostItemModuleHost(stack, player),
                     new TouchEvent(player, target)
             );
         }
@@ -67,10 +67,6 @@ public final class GhostModuleInteractionHandler {
             return;
         }
 
-        // 每 20 tick 触发一次
-        if (player.tickCount % 20 != 0) {
-            return;
-        }
 
         // 只检查主手，避免背包中的物品意外触发
         ItemStack stack = player.getMainHandItem();
@@ -89,10 +85,11 @@ public final class GhostModuleInteractionHandler {
             return;
         }
 
-        // 将持剑者作为触碰事件的目标
-        GhostModuleRuntime.dispatch(
-                new GhostItemModuleHost(stack),
-                new TouchEvent(player, player)
-        );
+        // 持续手持每 tick 贡献一 tick 接触时长；没有把两次采样之间的空档补算进去。
+        var host = new GhostItemModuleHost(stack, player);
+        GhostModuleRuntime.dispatch(host, TouchEvent.sample(player, player, false));
+        // 保留不可触物品原有的每秒一次触碰触发；瞬时事实不增加鬼地毯计时。
+        if (player.isAlive() && player.tickCount % 20 == 0)
+            GhostModuleRuntime.dispatch(host, new TouchEvent(player, player));
     }
 }

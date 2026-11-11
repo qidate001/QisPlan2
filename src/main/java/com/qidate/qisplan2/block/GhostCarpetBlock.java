@@ -1,6 +1,10 @@
 package com.qidate.qisplan2.block;
 
 import net.minecraft.core.BlockPos;
+import java.util.List;
+import com.qidate.qisplan2.ghost.module.GhostModuleHost;
+import com.qidate.qisplan2.ghost.module.data.GhostModuleData;
+import com.qidate.qisplan2.ghost.module.implementation.GhostCarpetModule;
 import net.minecraft.core.Direction;
 import net.minecraft.world.entity.item.FallingBlockEntity;
 import net.minecraft.world.entity.player.Player;
@@ -22,7 +26,17 @@ import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.VoxelShape;
 
 public class GhostCarpetBlock extends Block
-        implements SimpleWaterloggedBlock {
+        implements SimpleWaterloggedBlock, GhostModuleHost {
+
+    /** 静态定义只声明模块；不在全局 Block 对象中保存任何目标进度。 */
+    private static final List<GhostModuleData.Entry> MODULES =
+            List.of(new GhostModuleData.Entry(GhostCarpetModule.ID, new GhostCarpetModule().getInitialData().intensity()));
+
+    /** 返回静态模块配置；不需要新增 BlockEntity。 */
+    @Override public List<GhostModuleData.Entry> getModules() { return MODULES; }
+
+    /** 静态定义不承接复苏刺激；目标接触进度由关系状态适配器保存。 */
+    @Override public boolean allowsAbilityRevivalStimulation() { return false; }
 
     /**
      * 水logged状态
@@ -45,6 +59,7 @@ public class GhostCarpetBlock extends Block
                     16
             );
 
+    /** 创建静态模块地毯并初始化含水状态；接触规则由模块运行时处理。 */
     public GhostCarpetBlock(
             BlockBehaviour.Properties properties
     ) {

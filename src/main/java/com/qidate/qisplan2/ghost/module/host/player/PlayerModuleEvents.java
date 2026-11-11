@@ -17,14 +17,14 @@ import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.entity.player.PlayerEvent;
 import net.neoforged.neoforge.event.entity.player.PlayerInteractEvent;
 
-/** 玩家宿主的语义事件与离线资源清理。触碰采用进入判定，持续重叠不重复触发。 */
+/** 玩家宿主的语义事件与离线资源清理。持续接触报告时长，事件阶段区分进入与停留。 */
 @EventBusSubscriber(modid = QisPlan2.MODID)
 public final class PlayerModuleEvents {
     private static final Map<ServerPlayer, Set<UUID>> TOUCHING = new WeakHashMap<>();
 
     /**
-     * 检测新进入玩家接触范围的生命实体并发布接触事实。
-     * 持续重叠不会每 tick 重复触发；玩家死亡后停止继续分发。
+     * 检测玩家接触范围内的生命实体并发布一 tick 接触采样。
+     * 进入与持续阶段分开标记，不可触规则只响应进入；玩家死亡后停止继续分发。
      */
     public static void tickTouch(ServerPlayer player, PlayerGhostModuleHost host) {
         Set<UUID> old = TOUCHING.getOrDefault(player, Set.of());
@@ -32,7 +32,7 @@ public final class PlayerModuleEvents {
         for (var target : player.serverLevel().getEntitiesOfClass(LivingEntity.class,
                 player.getBoundingBox().inflate(0.05), e -> e != player && e.isAlive())) {
             current.add(target.getUUID());
-            if (!old.contains(target.getUUID())) GhostModuleRuntime.dispatch(host, new TouchEvent(player, target));
+            GhostModuleRuntime.dispatch(host, TouchEvent.sample(player, target, !old.contains(target.getUUID())));
             if (!player.isAlive()) break;
         }
         TOUCHING.put(player, current);

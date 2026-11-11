@@ -1,7 +1,6 @@
 package com.qidate.qisplan2.ghost.module.implementation;
 
 import com.qidate.qisplan2.death.ModDamageTypes;
-import com.qidate.qisplan2.death.SupernaturalDeathHandler;
 import com.qidate.qisplan2.ghost.module.*;
 import com.qidate.qisplan2.ghost.module.ability.GhostAbility;
 import com.qidate.qisplan2.ghost.module.ability.GhostAbilityContext;
@@ -107,7 +106,7 @@ public final class UntouchableGhostModule implements GhostModule {
 
         @Override
         public boolean supports(GhostEvent event) {
-            return event instanceof TouchEvent;
+            return event instanceof TouchEvent touch && touch.isBeginning();
         }
 
         @Override
@@ -115,7 +114,7 @@ public final class UntouchableGhostModule implements GhostModule {
                 GhostRuleContext context,
                 GhostEvent event
         ) {
-            return event instanceof TouchEvent;
+            return event instanceof TouchEvent touch && touch.isBeginning();
         }
 
         @Override
@@ -185,13 +184,8 @@ public final class UntouchableGhostModule implements GhostModule {
             GhostModuleContext moduleContext =
                     context.getModuleContext();
 
-            return SupernaturalDeathHandler.tryKill(
-                    touchEvent.target(),
-                    ModDamageTypes.untouchableGhost(
-                            touchEvent.source()
-                    ),
-                    moduleContext.intensity()
-            );
+            return moduleContext.world().attack(touchEvent.target(),
+                    ModDamageTypes.UNTOUCHABLE_GHOST, moduleContext.intensity());
         }
     }
 }

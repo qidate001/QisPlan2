@@ -164,4 +164,13 @@ public interface GhostWorldAccess {
      * 不支持题字时不执行操作。
      */
     void inscribe(LivingEntity user);
+
+    /** 读取当前世界对接触袭击间隔的配置；无专用配置时使用模块给定的默认 tick 数。 */
+    default int contactIntervalTicks(LivingEntity target, int fallback) { return fallback; }
+
+    /** 播放接触袭击的世界表现；此接口不计算计时也不触发规则。 */
+    void contactAttackFeedback(LivingEntity target);
+
+    /** 在成功击杀位置尝试蔓延地毯；没有附近群落时不生成方块。 */
+    void spreadCarpet(LivingEntity target);
 }

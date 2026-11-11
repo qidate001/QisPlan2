@@ -1,6 +1,8 @@
 package com.qidate.qisplan2.ghost.module.host;
 
 import com.qidate.qisplan2.death.SupernaturalDeathHandler;
+import com.qidate.qisplan2.core.ModGameRules;
+import com.qidate.qisplan2.ghost.module.implementation.GhostCarpetModule;
 import com.qidate.qisplan2.entity.ModularGhostEntity;
 import com.qidate.qisplan2.ghost.GhostAvoidanceSystem;
 import com.qidate.qisplan2.ghost.domain.*;
@@ -44,6 +46,19 @@ public final class GhostWorldAdapters {
      */
     public static GhostWorldAccess bind(GhostModuleHost host, ResourceLocation id) {
         return new GhostWorldAccess() {
+            /** 保留旧世界的鬼地毯时间设置；默认 300 tick，异常非正值至少按一 tick 处理。 */
+            public int contactIntervalTicks(LivingEntity target, int fallback) {
+                return id.equals(GhostCarpetModule.ID)
+                        ? Math.max(1, target.level().getGameRules().getInt(ModGameRules.GHOST_CARPET_KILL_TIME))
+                        : fallback;
+            }
+
+            /** 接触袭击表现由中间层落实，不向模块暴露来源载体。 */
+            public void contactAttackFeedback(LivingEntity target) { GhostCarpetWorldEffects.feedback(target); }
+
+            /** 击杀后的群落蔓延沿用原实现，模块只发出世界操作。 */
+            public void spreadCarpet(LivingEntity target) { GhostCarpetWorldEffects.spread(target); }
+
             /**
              * 在世界适配器内部读取生命实体来源。
              * 可能返回 null；该对象不得通过模块可见接口向外返回。
