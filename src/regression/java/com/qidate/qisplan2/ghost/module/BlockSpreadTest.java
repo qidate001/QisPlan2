@@ -3,6 +3,7 @@ package com.qidate.qisplan2.ghost.module;
 import com.qidate.qisplan2.ghost.module.environment.BlockSpreadAccess;
 import com.qidate.qisplan2.ghost.module.environment.BlockSpreadEngine;
 import com.qidate.qisplan2.ghost.module.environment.BlockSpreadSpec;
+import com.qidate.qisplan2.ghost.module.implementation.GhostGrassModule;
 import java.util.HashSet;
 import java.util.Random;
 import java.util.Set;
@@ -75,6 +76,13 @@ public final class BlockSpreadTest {
         var vertical = grid(ORIGIN.above(), ORIGIN.above(2));
         check(BlockSpreadEngine.spread(vertical, ORIGIN, spec(BlockSpreadSpec.Shape.VOLUME_3D,
                 BlockSpreadSpec.Pattern.CHAIN, 2)) == 2, "三维蔓延应沿竖直方向继续");
+
+        // 使用鬼草丛实际配置，验证没有水平空位时仍能连续向上扩展。
+        var grass = grid(ORIGIN.above(), ORIGIN.above(2), ORIGIN.above(3));
+        int grassCount = BlockSpreadEngine.spread(grass, ORIGIN, GhostGrassModule.SPREAD);
+        check(grassCount >= 2 && grassCount <= 3, "草丛应按实际配置向上新增二至三格");
+        check(grass.blocks.size() == grassCount + 1, "新增数量不能包括原有草丛");
+        check(!GhostGrassModule.SPREAD.requireSupport(), "三维草丛不能要求下方有支撑");
 
         var chain = grid(ORIGIN.north(), ORIGIN.south());
         check(BlockSpreadEngine.spread(chain, ORIGIN, spec(BlockSpreadSpec.Shape.HORIZONTAL_2D,

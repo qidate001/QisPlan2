@@ -39,6 +39,7 @@ public final class PossessionInvocationTest {
     public static void main(String[] args) {
         HostNeutralCandleTest.run();
         GhostCarpetContactTest.run();
+        GhostGrassContactTest.run();
         BlockSpreadTest.run();
         GhostModuleRegistry.register(new GhostModule() {
             /**
