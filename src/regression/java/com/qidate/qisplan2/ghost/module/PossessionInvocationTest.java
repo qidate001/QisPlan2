@@ -39,6 +39,7 @@ public final class PossessionInvocationTest {
     public static void main(String[] args) {
         HostNeutralCandleTest.run();
         GhostCarpetContactTest.run();
+        BlockSpreadTest.run();
         GhostModuleRegistry.register(new GhostModule() {
             /**
              * 获取当前定义的唯一标识。

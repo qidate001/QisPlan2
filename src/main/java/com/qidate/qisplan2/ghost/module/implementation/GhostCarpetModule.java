@@ -8,6 +8,7 @@ import com.qidate.qisplan2.ghost.module.event.*;
 import com.qidate.qisplan2.ghost.module.influence.GhostInfluenceType;
 import com.qidate.qisplan2.ghost.module.influence.GhostInfluenceCollector;
 import java.util.List;
+import com.qidate.qisplan2.ghost.module.environment.BlockSpreadSpec;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.resources.ResourceLocation;
 
@@ -22,17 +23,25 @@ public final class GhostCarpetModule implements GhostModule {
     public static final int CONTACT_TICKS = 15 * 20;
     private static final String PROGRESS = "contactTicks";
 
+    /** 鬼地毯只声明自己的蔓延参数：同高四向、链式、仅空气、必须有下方支撑。 */
+    private static final BlockSpreadSpec SPREAD = new BlockSpreadSpec(
+            ID, 2, 3, BlockSpreadSpec.Shape.HORIZONTAL_2D, BlockSpreadSpec.Pattern.CHAIN,
+            BlockSpreadSpec.Replacement.AIR_ONLY, true, 2, 4096);
+
     /** 在模组命名空间内创建规则和能力标识。 */
     private static ResourceLocation id(String path) { return ResourceLocation.fromNamespaceAndPath("qisplan2", path); }
 
     /** 返回完整鬼地毯的模块身份。 */
-    @Override public ResourceLocation getId() { return ID; }
+    @Override
+    public ResourceLocation getId() { return ID; }
 
     /** 沿用旧鬼地毯的初始袭击强度 2，实例后续以自己的强度数据为准。 */
-    @Override public GhostModuleInitialData getInitialData() { return new GhostModuleInitialData(2, 0); }
+    @Override
+    public GhostModuleInitialData getInitialData() { return new GhostModuleInitialData(2, 0); }
 
     /** 声明接触媒介；累计十五秒属于规则，主动调用仍需有真实接触目标。 */
-    @Override public List<GhostMedium> getMedia() {
+    @Override
+    public List<GhostMedium> getMedia() {
         return List.of(new GhostMedium() {
             /** 返回接触媒介标识。 */
             public ResourceLocation getId() { return id("ghost_carpet/contact"); }
@@ -45,7 +54,8 @@ public final class GhostCarpetModule implements GhostModule {
     }
 
     /** 返回累计接触规则；瞬时点击不计入持续时间。 */
-    @Override public List<GhostRule> getRules() {
+    @Override
+    public List<GhostRule> getRules() {
         return List.of(new GhostRule() {
             /** 返回累计接触规则标识。 */
             public ResourceLocation getId() { return id("ghost_carpet/contact_duration"); }
@@ -93,7 +103,8 @@ public final class GhostCarpetModule implements GhostModule {
     }
 
     /** 能力只执行获准效果，不自行累计接触时间或重新触发规则。 */
-    @Override public List<GhostAbility> getIntrinsicAbilities() {
+    @Override
+    public List<GhostAbility> getIntrinsicAbilities() {
         return List.of(new GhostAbility() {
             /** 返回灵异袭击能力标识。 */
             public ResourceLocation getId() { return ATTACK; }
@@ -107,7 +118,7 @@ public final class GhostCarpetModule implements GhostModule {
                 var world = c.getModuleContext().world();
                 world.contactAttackFeedback(target);
                 boolean killed = world.attack(target, ModDamageTypes.GHOST_CARPET, c.getModuleContext().intensity());
-                if (killed) world.spreadCarpet(target);
+                if (killed) world.spreadBlocks(target, SPREAD);
                 return killed;
             }
         });

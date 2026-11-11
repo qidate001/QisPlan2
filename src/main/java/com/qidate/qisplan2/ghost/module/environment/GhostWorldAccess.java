@@ -171,6 +171,9 @@ public interface GhostWorldAccess {
     /** 播放接触袭击的世界表现；此接口不计算计时也不触发规则。 */
     void contactAttackFeedback(LivingEntity target);
 
-    /** 在成功击杀位置尝试蔓延地毯；没有附近群落时不生成方块。 */
-    void spreadCarpet(LivingEntity target);
+    /**
+     * 以世界目标的位置为搜索中心，按配置扩展附近已有的方块群落。
+     * 目标只用于确定世界与坐标，不代表模块载体；返回实际成功新增的方块数量。
+     */
+    int spreadBlocks(LivingEntity anchor, BlockSpreadSpec spec);
 }

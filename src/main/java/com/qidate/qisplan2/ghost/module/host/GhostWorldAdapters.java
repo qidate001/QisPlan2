@@ -2,6 +2,7 @@ package com.qidate.qisplan2.ghost.module.host;
 
 import com.qidate.qisplan2.death.SupernaturalDeathHandler;
 import com.qidate.qisplan2.core.ModGameRules;
+import com.qidate.qisplan2.ghost.module.environment.BlockSpreadSpec;
 import com.qidate.qisplan2.ghost.module.implementation.GhostCarpetModule;
 import com.qidate.qisplan2.entity.ModularGhostEntity;
 import com.qidate.qisplan2.ghost.GhostAvoidanceSystem;
@@ -56,8 +57,11 @@ public final class GhostWorldAdapters {
             /** 接触袭击表现由中间层落实，不向模块暴露来源载体。 */
             public void contactAttackFeedback(LivingEntity target) { GhostCarpetWorldEffects.feedback(target); }
 
-            /** 击杀后的群落蔓延沿用原实现，模块只发出世界操作。 */
-            public void spreadCarpet(LivingEntity target) { GhostCarpetWorldEffects.spread(target); }
+            /** 使用调用参数提供的世界位置和蔓延策略，不检查来源载体或具体模块种类。 */
+            public int spreadBlocks(LivingEntity anchor, BlockSpreadSpec spec) {
+                if (!(anchor.level() instanceof ServerLevel server)) return 0;
+                return BlockSpreadWorldAdapter.spread(server, anchor.blockPosition(), spec);
+            }
 
             /**
              * 在世界适配器内部读取生命实体来源。
