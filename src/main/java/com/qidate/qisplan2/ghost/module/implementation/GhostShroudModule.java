@@ -1,5 +1,7 @@
 package com.qidate.qisplan2.ghost.module.implementation;
 
+import com.qidate.qisplan2.ghost.corrosion.CorrosionType;
+import com.qidate.qisplan2.ghost.corrosion.GhostCorrosion;
 import com.qidate.qisplan2.ghost.module.GhostMedium;
 import com.qidate.qisplan2.ghost.module.GhostModule;
 import com.qidate.qisplan2.ghost.module.GhostRule;
@@ -34,13 +36,18 @@ public final class GhostShroudModule implements GhostModule {
     /** 返回唯一模块身份。 */
     @Override public ResourceLocation getId() { return ID; }
 
-    /** 初始强度用于模块系统；生命代价按来袭强度计算，保留原有抵挡公式。 */
-    @Override public GhostModuleInitialData getInitialData() { return new GhostModuleInitialData(1, 0); }
+    /** 新实例初始强度为三十；运行时抵挡上限读取实例当前强度。 */
+    @Override public GhostModuleInitialData getInitialData() { return new GhostModuleInitialData(30, 0); }
+
+    /** 驾驭后由通用侵蚀系统计入皮肤六十点，不额外继承默认全局侵蚀。 */
+    @Override public GhostCorrosion corrosion() {
+        return GhostCorrosion.builder().add(CorrosionType.SKIN, 60).build();
+    }
 
     /** 使用既有物品纹理作为模块图标。 */
     @Override public ResourceLocation iconTexture() { return id("textures/item/ghost_shroud.png"); }
 
-    /** 至少消耗一点最大生命；非有限强度不能形成合法代价。 */
+    /** 按实际抵挡量支付最大生命，最低一点；非有限强度不能形成合法代价。 */
     public static double protectionCost(double intensity) {
         return Double.isFinite(intensity) && intensity >= 0 ? Math.max(1, intensity) : Double.POSITIVE_INFINITY;
     }
@@ -97,7 +104,7 @@ public final class GhostShroudModule implements GhostModule {
             public void onTrigger(GhostRuleContext context, GhostEvent event) {
                 var module = context.getModuleContext();
                 var data = module.getCustomData();
-                int ticks = Math.max(0, Math.min(DRAIN_INTERVAL - 1, data.getInt("erosionTicks"))) + 1;
+                int ticks = Math.clamp(data.getInt("erosionTicks"), 0, DRAIN_INTERVAL - 1) + 1;
                 data.putInt("erosionTicks", ticks >= DRAIN_INTERVAL ? 0 : ticks);
                 module.setCustomData(data);
                 if (ticks >= DRAIN_INTERVAL) {
@@ -122,13 +129,17 @@ public final class GhostShroudModule implements GhostModule {
             /** 委托返回真实效果结果的执行入口。 */
             public void execute(GhostAbilityContext context) { executeWithResult(context); }
 
-            /** 只有代价支付成功才抵挡；生命不足时不扣除、不阻断袭击。 */
+            /** 每次最多抵挡自身强度；代价支付失败时，不修改来袭剩余强度。 */
             public boolean executeWithResult(GhostAbilityContext context) {
                 if (!canExecute(context)) return false;
                 var attack = (SupernaturalAttackEvent) context.event();
-                if (!context.getModuleContext().world().consumeMaxHealth(
-                        LOSS, protectionCost(attack.intensity()), 1)) return false;
-                attack.block();
+                var module = context.getModuleContext();
+                double capacity = module.intensity();
+                if (!Double.isFinite(capacity) || capacity <= 0) return false;
+                double absorbed = Math.min(attack.remainingIntensity(), capacity);
+                if (!module.world().consumeMaxHealth(LOSS, protectionCost(absorbed), 1)) return false;
+                // 只削弱已经支付代价的部分；未归零时，后续保护及原袭击继续处理剩余强度。
+                attack.absorb(absorbed);
                 return true;
             }
         }, new GhostAbility() {

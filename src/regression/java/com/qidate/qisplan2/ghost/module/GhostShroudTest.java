@@ -1,5 +1,6 @@
 package com.qidate.qisplan2.ghost.module;
 
+import com.qidate.qisplan2.ghost.corrosion.CorrosionType;
 import com.qidate.qisplan2.ghost.module.ability.GhostAbilityContext;
 import com.qidate.qisplan2.ghost.module.ability.GhostAbilityExecutor;
 import com.qidate.qisplan2.ghost.module.data.GhostModuleData;
@@ -52,12 +53,13 @@ public final class GhostShroudTest {
         CompoundTag data = new CompoundTag();
         boolean deadlocked;
         double maximum = 20;
+        double strength = 30;
         int paid;
         int drained;
 
         /** 返回模块当前状态，允许验证死机后的规则和主动调用差异。 */
         public List<GhostModuleData.Entry> getModules() {
-            return List.of(new GhostModuleData.Entry(GhostShroudModule.ID, 1, 0, deadlocked, false, data));
+            return List.of(new GhostModuleData.Entry(GhostShroudModule.ID, strength, 0, deadlocked, false, data));
         }
         /** 返回独有数据副本，模拟正式存储接口。 */
         public CompoundTag getModuleCustomData(ResourceLocation id) { return data.copy(); }
@@ -92,6 +94,44 @@ public final class GhostShroudTest {
     /** 检查真实规则分发、多个保护与主动能力执行之间的结果。 */
     public static void run() {
         GhostModuleRegistry.register(new GhostShroudModule());
+        var definition = new GhostShroudModule();
+        check(definition.getInitialData().intensity() == 30, "初始强度应为30");
+        check(definition.corrosion().get(CorrosionType.SKIN) == 60
+                && definition.corrosion().get(CorrosionType.GLOBAL) == 0, "驾驭侵蚀应为皮肤60");
+
+        var partial = new Host();
+        partial.maximum = 100;
+        var penetrating = attack(40);
+        GhostModuleRuntime.dispatch(partial, penetrating);
+        check(!penetrating.isBlocked() && penetrating.intensity() == 40
+                && penetrating.remainingIntensity() == 10 && partial.maximum == 70,
+                "强度30应抵挡40中的30，支付30代价并留下10");
+        var exact = attack(30);
+        GhostModuleRuntime.dispatch(partial, exact);
+        check(exact.isBlocked() && exact.remainingIntensity() == 0 && partial.maximum == 40,
+                "同强度应完整抵挡");
+        partial.strength = 5;
+        var changed = attack(8);
+        GhostModuleRuntime.dispatch(partial, changed);
+        check(changed.remainingIntensity() == 3 && partial.maximum == 35, "必须读取实例强度而非写死30");
+        partial.strength = 0;
+        var powerless = attack(8);
+        GhostModuleRuntime.dispatch(partial, powerless);
+        check(powerless.remainingIntensity() == 8 && partial.maximum == 35, "零强度不能消耗生命或抵挡");
+
+        var front = new Host();
+        var back = new Host();
+        front.maximum = 100;
+        back.maximum = 100;
+        var layered = attack(40);
+        GhostModuleRuntime.dispatch(List.of(front, back), layered);
+        check(layered.isBlocked() && front.maximum == 70 && back.maximum == 90,
+                "后层只抵挡前层留下的10，不重复扣除30");
+        var unable = new Host();
+        var unpaid = attack(40);
+        GhostModuleRuntime.dispatch(unable, unpaid);
+        check(unpaid.remainingIntensity() == 40 && unable.maximum == 20, "代价不足不能凭空削弱袭击");
+
         var first = new Host();
         var second = new Host();
         var event = attack(3);

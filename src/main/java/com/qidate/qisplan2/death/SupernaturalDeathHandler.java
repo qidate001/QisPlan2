@@ -90,7 +90,8 @@ public class SupernaturalDeathHandler {
             return false;
         }
 
-        // 防溢出
+        // 非有限强度不能参与抵挡和后续生命代价计算。
+        if (!Double.isFinite(supernaturalIntensity)) return false;
         supernaturalIntensity =
                 Math.max(0.0D, supernaturalIntensity);
 
@@ -98,16 +99,18 @@ public class SupernaturalDeathHandler {
         // 延迟袭击也在这里读取最新状态，点燃后立即有效，熄灭或燃尽后立即失效。
         if (GhostAvoidanceSystem.hasWhiteGhostCandle(entity)) return false;
 
-        // 记录本次袭击
+        // 模块先处理完整或部分抵挡，后续保护与停滞计算只接收剩余强度。
+        var attack = GhostAttackBridge.resolve(entity, supernaturalIntensity);
+        if (attack.isBlocked()) return false;
+        supernaturalIntensity = attack.remainingIntensity();
+
+        // 生签统计真正穿过前层防护的强度，不重新计入已被寿衣抵挡的部分。
         double recentIntensity =
                 SupernaturalIntensityTracker
                         .addAndGetRecentIntensity(
                                 entity,
                                 supernaturalIntensity
                         );
-
-        // 把来袭事实交给目标与装备的模块；只有能力实际成功才取消本次袭击。
-        if (GhostAttackBridge.isBlocked(entity, supernaturalIntensity)) return false;
 
         /*
          * 生签：
