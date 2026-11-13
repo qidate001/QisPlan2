@@ -1,10 +1,18 @@
 package com.qidate.qisplan2.ghost.module.environment;
 
+import java.util.UUID;
+
 /**
  * 模块可见的环境能力。不得返回宿主对象、宿主种类或载体存储。
  * 宿主适配器负责解释暴露、环境压力、表现以及消耗如何落到世界中。
  */
 public interface GhostEnvironment {
+    /** 当前模块是否覆盖一个存活实体的表面；具体覆盖方式由适配层解释。 */
+    default boolean surfaceCovered() { return false; }
+
+    /** 当前覆盖关系是否作用于指定目标，防止替无关对象支付防护代价。 */
+    default boolean coversSurface(UUID target) { return false; }
+
     /**
      * 判断当前模块是否满足暴露在世界中的条件。
      * 具体的手持、存活或方块有效性由载体适配器解释。

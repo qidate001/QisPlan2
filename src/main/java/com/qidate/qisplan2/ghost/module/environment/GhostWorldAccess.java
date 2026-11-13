@@ -3,6 +3,7 @@ package com.qidate.qisplan2.ghost.module.environment;
 import java.util.UUID;
 import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceKey;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.damagesource.DamageType;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
@@ -15,6 +16,12 @@ import net.minecraft.world.phys.Vec3;
  * 目标实体是世界中的作用对象，与模块自己的载体不是同一个概念。
  */
 public interface GhostWorldAccess {
+    /** 尝试永久支付最大生命代价；不足时不修改属性，成功后保留指定生命下限。 */
+    default boolean consumeMaxHealth(ResourceLocation lossId, double cost, double minimum) { return false; }
+
+    /** 降低当前生命；没有有效作用对象时返回失败，具体属性操作留在适配层。 */
+    default boolean drainHealth(float amount) { return false; }
+
     /**
      * 判断当前来源是否位于服务端世界且满足暴露条件。
      */

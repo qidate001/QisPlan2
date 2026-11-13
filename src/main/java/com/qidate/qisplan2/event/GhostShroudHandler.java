@@ -8,6 +8,7 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.enchantment.ItemEnchantments;
+import net.minecraft.world.item.enchantment.Enchantments;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.entity.living.LivingEquipmentChangeEvent;
@@ -16,11 +17,7 @@ import net.neoforged.neoforge.event.tick.EntityTickEvent;
 @EventBusSubscriber(modid = QisPlan2.MODID)
 public class GhostShroudHandler {
 
-    /**
-     * 鬼寿衣每 25 秒扣 1 点生命。
-     */
-    private static final int DRAIN_INTERVAL = 500;
-
+    /** 只维护装备绑定；定时扣血已由鬼寿衣模块处理。 */
     @SubscribeEvent
     public static void onEntityTick(
             EntityTickEvent.Post event
@@ -46,30 +43,9 @@ public class GhostShroudHandler {
                 chest
         );
 
-        /*
-         * 每 100 tick = 5 秒。
-         */
-        if (player.tickCount % DRAIN_INTERVAL != 0) {
-            return;
-        }
-
-        float oldHealth =
-                player.getHealth();
-
-        player.setHealth(
-                Math.max(
-                        0.0F,
-                        oldHealth - 1.0F
-                )
-        );
-
-//        QisPlan2.LOGGER.info(
-//                "[QisPlan2] 鬼寿衣扣血：{} -> {}",
-//                oldHealth,
-//                player.getHealth()
-//        );
     }
 
+    /** 保留非创造玩家无法脱下寿衣的原有装备限制。 */
     @SubscribeEvent
     public static void onEquipmentChange(
             LivingEquipmentChangeEvent event
@@ -134,6 +110,7 @@ public class GhostShroudHandler {
 //        );
     }
 
+    /** 为实际穿戴的寿衣补上绑定附魔，不执行灵异能力。 */
     private static void ensureBindingCurse(
             ServerPlayer player,
             ItemStack stack
@@ -160,7 +137,7 @@ public class GhostShroudHandler {
 
         var binding =
                 registry.getOrThrow(
-                        net.minecraft.world.item.enchantment.Enchantments.BINDING_CURSE
+                        Enchantments.BINDING_CURSE
                 );
 
         /*

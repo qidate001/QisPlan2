@@ -10,6 +10,7 @@ import com.qidate.qisplan2.ghost.possession.manager.PossessionHandler;
 import com.qidate.qisplan2.ghost.possession.target.ItemGhostPossessionTarget;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResultHolder;
 import net.minecraft.world.entity.player.Player;
@@ -54,7 +55,7 @@ public interface GhostModuleItemSupport {
 
     /** 所有模块物品共用的生命周期，不依赖具体物品类型。 */
     default void tickModules(ItemStack stack, Level level, Entity entity) {
-        if (level.isClientSide || !(entity instanceof Player player)) return;
+        if (level.isClientSide || !(entity instanceof LivingEntity player)) return;
         var host = new GhostItemModuleHost(stack, player);
         GhostIgnitionInputs.initialize(host);
         GhostModuleRuntime.dispatch(host, new ModuleTickEvent());

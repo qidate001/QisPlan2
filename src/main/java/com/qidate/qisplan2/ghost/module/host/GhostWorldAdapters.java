@@ -26,6 +26,9 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundSource;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.world.entity.ai.attributes.AttributeModifier;
+import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.damagesource.*;
 import net.minecraft.world.entity.*;
@@ -47,6 +50,36 @@ public final class GhostWorldAdapters {
      */
     public static GhostWorldAccess bind(GhostModuleHost host, ResourceLocation id) {
         return new GhostWorldAccess() {
+            /**
+             * 永久损失沿用传入的属性标识，兼容旧存档已支付的代价。
+             * 扣除前检查预算；属性更新后同步当前生命上限并播放抵挡反馈。
+             */
+            public boolean consumeMaxHealth(ResourceLocation lossId, double cost, double minimum) {
+                var entity = source();
+                if (entity == null || !(entity.level() instanceof ServerLevel) || !entity.isAlive()
+                        || !Double.isFinite(cost) || cost <= 0 || !Double.isFinite(minimum) || minimum < 1
+                        || entity.getMaxHealth() - cost < minimum) return false;
+                var attribute = entity.getAttribute(Attributes.MAX_HEALTH);
+                if (attribute == null) return false;
+                var old = attribute.getModifier(lossId);
+                double amount = (old == null ? 0 : old.amount()) - cost;
+                attribute.addOrReplacePermanentModifier(new AttributeModifier(
+                        lossId, amount, AttributeModifier.Operation.ADD_VALUE));
+                entity.setHealth(Math.min(entity.getHealth(), entity.getMaxHealth()));
+                entity.level().playSound(null, entity.getX(), entity.getY(), entity.getZ(),
+                        SoundEvents.SHIELD_BLOCK, SoundSource.NEUTRAL, 1, 1);
+                return true;
+            }
+
+            /** 执行持续侵蚀；与旧寿衣相同，扣除当前生命而非最大生命。 */
+            public boolean drainHealth(float amount) {
+                var entity = source();
+                if (entity == null || !(entity.level() instanceof ServerLevel) || !entity.isAlive()
+                        || !Float.isFinite(amount) || amount <= 0) return false;
+                entity.setHealth(Math.max(0, entity.getHealth() - amount));
+                return true;
+            }
+
             /** 保留旧世界的鬼地毯时间设置；默认 300 tick，异常非正值至少按一 tick 处理。 */
             public int contactIntervalTicks(LivingEntity target, int fallback) {
                 return id.equals(GhostCarpetModule.ID)

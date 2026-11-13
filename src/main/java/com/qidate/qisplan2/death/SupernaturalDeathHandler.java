@@ -1,34 +1,16 @@
 package com.qidate.qisplan2.death;
 
-import com.qidate.qisplan2.QisPlan2;
 import com.qidate.qisplan2.event.GhostEntityDestructionHandler;
+import com.qidate.qisplan2.ghost.module.host.GhostAttackBridge;
 import com.qidate.qisplan2.core.ModGameRules;
 import com.qidate.qisplan2.ghost.curse.type.ghostdivination.GhostDivinationCurse;
 import com.qidate.qisplan2.ghost.layer.GhostLayerHandler;
 import com.qidate.qisplan2.ghost.module.implementation.divinationslip.GhostDivinationSlipSystem;
-import com.qidate.qisplan2.item.GhostShroudItem;
 import com.qidate.qisplan2.ghost.GhostAvoidanceSystem;
-import net.minecraft.resources.ResourceLocation;
-import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.sounds.SoundEvents;
-import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.damagesource.DamageSource;
-import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.entity.ai.attributes.AttributeInstance;
-import net.minecraft.world.entity.ai.attributes.AttributeModifier;
-import net.minecraft.world.entity.ai.attributes.Attributes;
-import net.minecraft.world.item.ItemStack;
 
 public class SupernaturalDeathHandler {
-
-
-    private static final ResourceLocation
-            GHOST_SHROUD_MAX_HEALTH_LOSS =
-            ResourceLocation.fromNamespaceAndPath(
-                    QisPlan2.MODID,
-                    "ghost_shroud_max_health_loss"
-            );
 
 
     /**
@@ -124,20 +106,8 @@ public class SupernaturalDeathHandler {
                                 supernaturalIntensity
                         );
 
-        // 鬼寿衣
-        if (tryGhostShroudProtection(
-                entity,
-                supernaturalIntensity
-        )) {
-
-
-//            QisPlan2.LOGGER.info(
-//                    "[QisPlan2] 鬼寿衣抵挡灵异攻击：{}，强度={}",
-//                    entity.getName().getString(),
-//                    supernaturalIntensity
-//            );
-            return false;
-        }
+        // 把来袭事实交给目标与装备的模块；只有能力实际成功才取消本次袭击。
+        if (GhostAttackBridge.isBlocked(entity, supernaturalIntensity)) return false;
 
         /*
          * 生签：
@@ -215,126 +185,4 @@ public class SupernaturalDeathHandler {
         });
     }
 
-    /**
-     * 检查并尝试触发鬼寿衣的保护，返回本次是否成功抵挡死亡。
-     */
-    private static boolean tryGhostShroudProtection(
-            LivingEntity entity,
-            double strength
-    ) {
-        /*
-         * 必须是玩家。
-         */
-        if (!(entity instanceof ServerPlayer player)) {
-            return false;
-        }
-
-        /*
-         * 必须穿着鬼寿衣。
-         */
-        ItemStack chest =
-                player.getItemBySlot(
-                        EquipmentSlot.CHEST
-                );
-
-        if (!(chest.getItem() instanceof GhostShroudItem)) {
-            return false;
-        }
-
-        /*
-         * 获取最大生命属性。
-         */
-        AttributeInstance maxHealth =
-                player.getAttribute(
-                        Attributes.MAX_HEALTH
-                );
-
-        if (maxHealth == null) {
-            return false;
-        }
-
-        /*
-         * ========================================
-         * 计算本次最大生命消耗
-         * ========================================
-         *
-         * 最低消耗 1 点。
-         */
-        double cost =
-                Math.max(
-                        1.0D,
-                        strength
-                );
-
-        /*
-         * 至少保留 1 点最大生命。
-         */
-        if (player.getMaxHealth() - cost < 1.0D) {
-            return false;
-        }
-
-        /*
-         * ========================================
-         * 获取鬼寿衣此前累计造成的最大生命损失
-         * ========================================
-         */
-        double currentLoss = 0.0D;
-
-        AttributeModifier modifier =
-                maxHealth.getModifier(
-                        GHOST_SHROUD_MAX_HEALTH_LOSS
-                );
-
-        if (modifier != null) {
-            currentLoss =
-                    -modifier.amount();
-        }
-
-        /*
-         * 累加本次消耗。
-         */
-        double newLoss =
-                currentLoss + cost;
-
-        /*
-         * ========================================
-         * 永久降低最大生命
-         * ========================================
-         */
-        maxHealth.addOrReplacePermanentModifier(
-                new AttributeModifier(
-                        GHOST_SHROUD_MAX_HEALTH_LOSS,
-                        -newLoss,
-                        AttributeModifier.Operation.ADD_VALUE
-                )
-        );
-
-        /*
-         * 最大生命下降后，
-         * 当前生命不能超过新的上限。
-         */
-        if (player.getHealth()
-                > player.getMaxHealth()) {
-
-            player.setHealth(
-                    player.getMaxHealth()
-            );
-        }
-
-        /*
-         * 鬼寿衣成功抵挡的音效。
-         */
-        player.level().playSound(
-                null,
-                player.getX(),
-                player.getY(),
-                player.getZ(),
-                SoundEvents.SHIELD_BLOCK,
-                SoundSource.PLAYERS,
-                1.0F,
-                1.0F
-        );
-
-        return true;
-    }
 }

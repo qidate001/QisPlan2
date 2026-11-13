@@ -7,6 +7,7 @@ import com.qidate.qisplan2.ghost.module.host.item.GhostItemModuleHost;
 import com.qidate.qisplan2.ghost.module.host.player.PlayerGhostModuleHost;
 import com.qidate.qisplan2.ghost.module.sound.GhostSoundManager;
 import net.minecraft.resources.ResourceLocation;
+import java.util.UUID;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.level.block.entity.BlockEntity;
@@ -35,6 +36,25 @@ public final class GhostEnvironmentAdapters {
      */
     public static GhostEnvironment bind(GhostModuleHost host, ResourceLocation moduleId) {
         return new GhostEnvironment() {
+            /** 装备必须真实穿戴；实体与驾驭形态由其自身表面满足覆盖媒介。 */
+            public boolean surfaceCovered() {
+                var entity = bearer(host);
+                if (entity == null || !entity.isAlive() || entity.isRemoved()) return false;
+                if (host instanceof GhostItemModuleHost item) {
+                    if (item.stack().isEmpty()) return false;
+                    for (var armor : entity.getArmorSlots())
+                        if (armor == item.stack()) return true;
+                    return false;
+                }
+                return true;
+            }
+
+            /** 只保护当前被覆盖的实体，不向模块返回此实体。 */
+            public boolean coversSurface(UUID target) {
+                var entity = bearer(host);
+                return surfaceCovered() && entity != null && entity.getUUID().equals(target);
+            }
+
             /**
              * 判断当前模块是否满足暴露在世界中的条件。
              * 具体的手持、存活或方块有效性由载体适配器解释。

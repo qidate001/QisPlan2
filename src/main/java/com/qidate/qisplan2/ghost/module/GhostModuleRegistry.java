@@ -95,6 +95,7 @@ public final class GhostModuleRegistry {
         register(new GhostStoneBricksModule());
         register(new GhostCarpetModule());
         register(new GhostGrassModule());
+        register(new GhostShroudModule());
         register(new InvisibleGhostModule());
         register(new GhostTombstoneModule());
         register(new GhostDivinationSlipModule());
