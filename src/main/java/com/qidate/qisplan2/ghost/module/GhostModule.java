@@ -32,9 +32,6 @@ import net.minecraft.resources.ResourceLocation;
  * 不属于模块实例的当前状态。
  */
 public interface GhostModule {
-    /** 厉鬼默认独立存在；替换式定义覆写此声明，模块不需要知道宿主是什么。 */
-    default GhostModuleForm form() { return GhostModuleForm.independent(); }
-
     /**
      * 声明需要的自主行动类型。
      * 具体 Goal 的创建、资源竞争和停止清理由行动适配层负责。
@@ -65,6 +62,11 @@ public interface GhostModule {
                 0.0D
         );
     }
+
+    /**
+     * 厉鬼默认独立存在；替换式定义覆写此声明，模块不需要知道宿主是什么。
+     */
+    default GhostModuleForm form() { return GhostModuleForm.independent(); }
 
     /**
      * 获取该厉鬼模块声明的灵异防御基础值。
