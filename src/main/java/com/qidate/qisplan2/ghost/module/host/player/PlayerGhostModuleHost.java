@@ -1,5 +1,7 @@
 package com.qidate.qisplan2.ghost.module.host.player;
 
+import com.qidate.qisplan2.ghost.bearing.HostComposition;
+
 import com.qidate.qisplan2.ghost.module.GhostModuleCustomDataModifier;
 import com.qidate.qisplan2.ghost.module.GhostModuleDataModifier;
 import com.qidate.qisplan2.ghost.module.data.GhostModuleContainer;
@@ -24,6 +26,10 @@ public final class PlayerGhostModuleHost
 
     private final Player player;
 
+    /** 玩家固定采用二十一个人形承载部位。 */
+    @Override public HostComposition composition() { return HostComposition.HUMANOID; }
+
+
     public PlayerGhostModuleHost(Player player) {
         this.player = Objects.requireNonNull(player, "player");
     }
@@ -32,7 +38,7 @@ public final class PlayerGhostModuleHost
 
     /** 完整实例导入，保留强度、复苏、沉睡、死机和 customData；重复模块拒绝覆盖。 */
     public boolean importModule(GhostModuleData.Entry entry) {
-        if (hasModule(entry.id())) return false;
+        if (hasModule(entry.id()) || !canInstallModule(entry.id())) return false;
         var entries = new ArrayList<>(getModules());
         entries.add(entry);
         PlayerGhostData.setModules(player, entries);
@@ -210,7 +216,7 @@ public final class PlayerGhostModuleHost
      * 从 Player 当前的数据组件创建临时容器。
      */
     private GhostModuleContainer createContainer() {
-        GhostModuleContainer container = new GhostModuleContainer();
+        GhostModuleContainer container = new GhostModuleContainer(this::composition);
         container.loadEntries(PlayerGhostData.getModules(player));
         return container;
     }

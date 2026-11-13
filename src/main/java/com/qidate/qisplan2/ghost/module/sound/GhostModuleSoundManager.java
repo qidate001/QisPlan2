@@ -62,6 +62,7 @@ public final class GhostModuleSoundManager {
         Set<SoundRegistration> registrations = new HashSet<>();
 
         for (GhostModuleData.Entry entry : host.getModules()) {
+            if (!host.carriesModule(entry.id())) continue;
             GhostModule module = GhostModuleRegistry.get(entry.id());
 
             if (module == null) {
@@ -126,6 +127,7 @@ public final class GhostModuleSoundManager {
         );
 
         for (GhostModuleData.Entry entry : host.getModules()) {
+            if (!host.carriesModule(entry.id())) continue;
             GhostModule module = GhostModuleRegistry.get(entry.id());
 
             if (module == null) {

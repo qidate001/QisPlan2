@@ -3,7 +3,7 @@ package com.qidate.qisplan2.ghost.possession.ability.ghostdoor;
 import com.qidate.qisplan2.QisPlan2;
 import com.qidate.qisplan2.death.ModDamageTypes;
 import com.qidate.qisplan2.death.SupernaturalDeathHandler;
-import com.qidate.qisplan2.ghost.corrosion.CorrosionType;
+import com.qidate.qisplan2.ghost.bearing.SpiritualPart;
 import com.qidate.qisplan2.ghost.module.implementation.ClosingGhostModule;
 import com.qidate.qisplan2.ghost.module.implementation.OpeningGhostModule;
 import com.qidate.qisplan2.ghost.possession.data.PossessedGhostState;
@@ -297,7 +297,7 @@ public final class GhostDoorAbilityHandler {
                         OpeningGhostModule.ID,
                         state,
                         revivalGain,
-                        CorrosionType.HAND
+                        SpiritualPart.HAND
                 );
 
 
@@ -376,7 +376,7 @@ public final class GhostDoorAbilityHandler {
                         ClosingGhostModule.ID,
                         state,
                         revivalGain,
-                        CorrosionType.HAND
+                        SpiritualPart.HAND
                 );
 
 
@@ -680,7 +680,7 @@ public final class GhostDoorAbilityHandler {
                                 OpeningGhostModule.ID,
                                 state,
                                 5.0D,
-                                CorrosionType.HAND
+                                SpiritualPart.HAND
                         )
                 );
             }
@@ -749,7 +749,7 @@ public final class GhostDoorAbilityHandler {
                                 ClosingGhostModule.ID,
                                 state,
                                 5.0D,
-                                CorrosionType.HAND
+                                SpiritualPart.HAND
                         )
                 );
             }
@@ -819,7 +819,7 @@ public final class GhostDoorAbilityHandler {
                                     OpeningGhostModule.ID,
                                     state,
                                     1.0D,
-                                    CorrosionType.HAND
+                                    SpiritualPart.HAND
                             )
                     );
                 }
@@ -878,7 +878,7 @@ public final class GhostDoorAbilityHandler {
                                     OpeningGhostModule.ID,
                                     state,
                                     1.0D,
-                                    CorrosionType.HAND
+                                    SpiritualPart.HAND
                             )
                     );
                 }

@@ -34,7 +34,7 @@ public abstract class AbstractModularGhostBlockEntity
     private static final String NBT_MODULES = "QisPlan2GhostModules";
 
     private final GhostModuleContainer ghostModules =
-            new GhostModuleContainer();
+            new GhostModuleContainer(this::composition);
 
     protected AbstractModularGhostBlockEntity(
             net.minecraft.world.level.block.entity.BlockEntityType<?> type,

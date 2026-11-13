@@ -1,5 +1,8 @@
 package com.qidate.qisplan2.ghost.module.host.player;
 
+import com.qidate.qisplan2.ghost.bearing.HostComposition;
+import com.qidate.qisplan2.ghost.bearing.GhostBearing;
+
 import com.qidate.qisplan2.core.ModAttachments;
 import com.qidate.qisplan2.ghost.module.*;
 import com.qidate.qisplan2.ghost.module.data.GhostModuleData;
@@ -35,6 +38,7 @@ public final class PlayerGhostData {
     }
     public static void setModules(Player player, List<GhostModuleData.Entry> entries) {
         if (player.level().isClientSide) throw new IllegalStateException("Player module mutation requires server");
+        GhostBearing.validateChange(HostComposition.HUMANOID, getModules(player), entries);
         player.getPersistentData().putBoolean(MIGRATED, true);
         player.setData(ModAttachments.PLAYER_GHOST_MODULES, List.copyOf(entries));
     }

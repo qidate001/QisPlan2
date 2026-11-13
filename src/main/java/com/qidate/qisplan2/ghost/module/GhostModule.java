@@ -1,6 +1,8 @@
 package com.qidate.qisplan2.ghost.module;
 
-import com.qidate.qisplan2.ghost.corrosion.CorrosionType;
+import com.qidate.qisplan2.ghost.bearing.GhostModuleForm;
+
+import com.qidate.qisplan2.ghost.bearing.SpiritualPart;
 import com.qidate.qisplan2.ghost.module.environment.GhostEnvironmentalEffect;
 import com.qidate.qisplan2.ghost.module.environment.GhostBehavior;
 import com.qidate.qisplan2.ghost.corrosion.GhostCorrosion;
@@ -30,6 +32,9 @@ import net.minecraft.resources.ResourceLocation;
  * 不属于模块实例的当前状态。
  */
 public interface GhostModule {
+    /** 厉鬼默认独立存在；替换式定义覆写此声明，模块不需要知道宿主是什么。 */
+    default GhostModuleForm form() { return GhostModuleForm.independent(); }
+
     /**
      * 声明需要的自主行动类型。
      * 具体 Goal 的创建、资源竞争和停止清理由行动适配层负责。
@@ -285,7 +290,7 @@ public interface GhostModule {
      */
     default GhostCorrosion corrosion() {
         return GhostCorrosion.builder()
-                .add(CorrosionType.GLOBAL, 10)
+                .add(SpiritualPart.GLOBAL, 10)
                 .build();
     }
 

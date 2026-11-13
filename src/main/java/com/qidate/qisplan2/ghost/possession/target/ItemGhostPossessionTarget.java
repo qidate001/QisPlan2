@@ -1,5 +1,7 @@
 package com.qidate.qisplan2.ghost.possession.target;
 
+import com.qidate.qisplan2.ghost.module.host.player.PlayerGhostModuleHost;
+
 import com.qidate.qisplan2.ghost.module.GhostModuleRegistry;
 import com.qidate.qisplan2.ghost.module.data.GhostModuleData;
 import com.qidate.qisplan2.ghost.module.host.item.GhostItemData;
@@ -28,6 +30,13 @@ public final class ItemGhostPossessionTarget
         this.stack = stack;
         this.abilityId = abilityId;
         this.failureAction = failureAction;
+    }
+
+    /** 新宿主缺少部位、部位已满或已有同名模块时，拒绝开始驾驭。 */
+    @Override public boolean canStart(ServerPlayer player) {
+        var destination = new PlayerGhostModuleHost(player);
+        return abilityId != null && !destination.hasModule(abilityId)
+                && destination.canInstallModule(abilityId);
     }
 
     @Override

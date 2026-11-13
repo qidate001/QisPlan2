@@ -1,6 +1,6 @@
 package com.qidate.qisplan2.ghost.module.host.player;
 import com.qidate.qisplan2.QisPlan2;
-import com.qidate.qisplan2.ghost.corrosion.CorrosionType;
+import com.qidate.qisplan2.ghost.bearing.SpiritualPart;
 import com.qidate.qisplan2.ghost.module.ability.GhostAbilityExecutor;
 import com.qidate.qisplan2.ghost.module.influence.GhostInfluence;
 import com.qidate.qisplan2.ghost.module.influence.GhostInfluenceSession;
@@ -79,7 +79,7 @@ public final class DivinationSlipInput {
                         ID,
                         state,
                         REVIVAL_GAIN,
-                        CorrosionType.GLOBAL
+                        SpiritualPart.GLOBAL
                 );
 
         PossessionHandler.setState(

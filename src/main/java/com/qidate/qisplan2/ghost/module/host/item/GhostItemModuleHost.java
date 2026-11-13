@@ -222,7 +222,7 @@ public final class GhostItemModuleHost
      * 从 ItemStack 当前的数据组件创建临时容器。
      */
     private GhostModuleContainer createContainer() {
-        GhostModuleContainer container = new GhostModuleContainer();
+        GhostModuleContainer container = new GhostModuleContainer(this::composition);
         container.loadEntries(GhostItemData.getModules(stack));
         return container;
     }

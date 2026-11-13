@@ -5,7 +5,7 @@ import com.qidate.qisplan2.client.curse.ClientCurseState;
 import com.qidate.qisplan2.client.curse.CurseClientRegistry;
 import com.qidate.qisplan2.core.QisConfig;
 import com.qidate.qisplan2.ghost.corrosion.CorrosionMatrix;
-import com.qidate.qisplan2.ghost.corrosion.CorrosionType;
+import com.qidate.qisplan2.ghost.bearing.SpiritualPart;
 import com.qidate.qisplan2.ghost.module.GhostModule;
 import com.qidate.qisplan2.ghost.module.GhostModuleRegistry;
 import com.qidate.qisplan2.ghost.module.host.player.PlayerGhostData;
@@ -365,24 +365,24 @@ public class PossessionStatusRenderer {
      * 顺序必须与 {@link #ORGAN_OVERLAYS}
      * 以及 {@link #ORGAN_OVERLAYS_WHITE} 保持一致。
      */
-    private static final CorrosionType[] ORGAN_TYPES = {
-            CorrosionType.BRAIN,
-            CorrosionType.HEART,
-            CorrosionType.LUNG,
-            CorrosionType.STOMACH,
-            CorrosionType.LIVER,
-            CorrosionType.KIDNEY,
-            CorrosionType.PANCREAS,
-            CorrosionType.GALLBLADDER,
-            CorrosionType.SPLEEN,
-            CorrosionType.INTESTINE,
-            CorrosionType.EYE,
-            CorrosionType.EAR,
-            CorrosionType.NOSE,
-            CorrosionType.MOUTH,
-            CorrosionType.HAND,
-            CorrosionType.FOOT,
-            CorrosionType.BONE
+    private static final SpiritualPart[] ORGAN_TYPES = {
+            SpiritualPart.BRAIN,
+            SpiritualPart.HEART,
+            SpiritualPart.LUNG,
+            SpiritualPart.STOMACH,
+            SpiritualPart.LIVER,
+            SpiritualPart.KIDNEY,
+            SpiritualPart.PANCREAS,
+            SpiritualPart.GALLBLADDER,
+            SpiritualPart.SPLEEN,
+            SpiritualPart.INTESTINE,
+            SpiritualPart.EYE,
+            SpiritualPart.EAR,
+            SpiritualPart.NOSE,
+            SpiritualPart.MOUTH,
+            SpiritualPart.HAND,
+            SpiritualPart.FOOT,
+            SpiritualPart.BONE
     };
 
     /**
@@ -393,7 +393,7 @@ public class PossessionStatusRenderer {
      * x2/y2 为数值文字一侧的坐标。
      */
     private record OrganAnchor(
-            CorrosionType type,
+            SpiritualPart type,
             int x1,
             int y1,
             int x2,
@@ -409,26 +409,26 @@ public class PossessionStatusRenderer {
      * 和 {@link #scaleBodyY} 缩放。
      */
     private static final OrganAnchor[] ORGAN_ANCHORS = {
-            new OrganAnchor(CorrosionType.BRAIN, 60, 19, 118, 19),         // 脑 (正)
+            new OrganAnchor(SpiritualPart.BRAIN, 60, 19, 118, 19),         // 脑 (正)
 
-            new OrganAnchor(CorrosionType.EYE, 190, 29, 140, 29),          // 眼 (逆)
-            new OrganAnchor(CorrosionType.NOSE, 185, 40, 130, 40),         // 鼻 (逆)
-            new OrganAnchor(CorrosionType.EAR, 70, 30, 112, 30),           // 耳 (正)
-            new OrganAnchor(CorrosionType.MOUTH, 77, 49, 130, 49),         // 嘴 (正)
+            new OrganAnchor(SpiritualPart.EYE, 190, 29, 140, 29),          // 眼 (逆)
+            new OrganAnchor(SpiritualPart.NOSE, 185, 40, 130, 40),         // 鼻 (逆)
+            new OrganAnchor(SpiritualPart.EAR, 70, 30, 112, 30),           // 耳 (正)
+            new OrganAnchor(SpiritualPart.MOUTH, 77, 49, 130, 49),         // 嘴 (正)
 
-            new OrganAnchor(CorrosionType.LUNG, 219, 80, 142, 80),         // 肺 (逆)
-            new OrganAnchor(CorrosionType.HEART, 219, 100, 133, 100),      // 心 (逆)
-            new OrganAnchor(CorrosionType.STOMACH, 219, 128, 150, 128),    // 胃 (逆)
-            new OrganAnchor(CorrosionType.SPLEEN, 250, 135, 156, 135),     // 脾 (逆)
-            new OrganAnchor(CorrosionType.LIVER, 43, 127, 112, 127),       // 肝 (正)
-            new OrganAnchor(CorrosionType.GALLBLADDER, 43, 142, 113, 142), // 胆 (正)
-            new OrganAnchor(CorrosionType.KIDNEY, 43, 160, 110, 160),      // 肾 (正)
-            new OrganAnchor(CorrosionType.PANCREAS, 219, 153, 140, 153),   // 胰 (逆)
-            new OrganAnchor(CorrosionType.INTESTINE, 219, 179, 147, 179),  // 肠 (逆)
+            new OrganAnchor(SpiritualPart.LUNG, 219, 80, 142, 80),         // 肺 (逆)
+            new OrganAnchor(SpiritualPart.HEART, 219, 100, 133, 100),      // 心 (逆)
+            new OrganAnchor(SpiritualPart.STOMACH, 219, 128, 150, 128),    // 胃 (逆)
+            new OrganAnchor(SpiritualPart.SPLEEN, 250, 135, 156, 135),     // 脾 (逆)
+            new OrganAnchor(SpiritualPart.LIVER, 43, 127, 112, 127),       // 肝 (正)
+            new OrganAnchor(SpiritualPart.GALLBLADDER, 43, 142, 113, 142), // 胆 (正)
+            new OrganAnchor(SpiritualPart.KIDNEY, 43, 160, 110, 160),      // 肾 (正)
+            new OrganAnchor(SpiritualPart.PANCREAS, 219, 153, 140, 153),   // 胰 (逆)
+            new OrganAnchor(SpiritualPart.INTESTINE, 219, 179, 147, 179),  // 肠 (逆)
 
-            new OrganAnchor(CorrosionType.HAND, 33, 207, 53, 207),         // 手 (正)
-            new OrganAnchor(CorrosionType.BONE, 205, 278, 151, 278),       // 骨 (逆)
-            new OrganAnchor(CorrosionType.FOOT, 193, 380, 155, 380),       // 足 (逆)
+            new OrganAnchor(SpiritualPart.HAND, 33, 207, 53, 207),         // 手 (正)
+            new OrganAnchor(SpiritualPart.BONE, 205, 278, 151, 278),       // 骨 (逆)
+            new OrganAnchor(SpiritualPart.FOOT, 193, 380, 155, 380),       // 足 (逆)
     };
 
 
@@ -685,7 +685,7 @@ public class PossessionStatusRenderer {
                 bodyWidth,
                 bodyHeight,
                 matrix.total(
-                        CorrosionType.GLOBAL
+                        SpiritualPart.GLOBAL
                 )
         );
 

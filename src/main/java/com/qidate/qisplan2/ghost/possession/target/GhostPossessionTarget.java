@@ -9,6 +9,9 @@ import net.minecraft.server.level.ServerPlayer;
  * 还是其他形式的灵异存在。
  */
 public interface GhostPossessionTarget {
+    /** 是否允许开始本次驾驭；具体来源可在这里检查宿主承载容量。 */
+    default boolean canStart(ServerPlayer player) { return true; }
+
 
     /**
      * 驾驭成功。

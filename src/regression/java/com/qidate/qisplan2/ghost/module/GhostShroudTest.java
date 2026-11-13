@@ -1,6 +1,6 @@
 package com.qidate.qisplan2.ghost.module;
 
-import com.qidate.qisplan2.ghost.corrosion.CorrosionType;
+import com.qidate.qisplan2.ghost.bearing.SpiritualPart;
 import com.qidate.qisplan2.ghost.module.ability.GhostAbilityContext;
 import com.qidate.qisplan2.ghost.module.ability.GhostAbilityExecutor;
 import com.qidate.qisplan2.ghost.module.data.GhostModuleData;
@@ -96,8 +96,8 @@ public final class GhostShroudTest {
         GhostModuleRegistry.register(new GhostShroudModule());
         var definition = new GhostShroudModule();
         check(definition.getInitialData().intensity() == 30, "初始强度应为30");
-        check(definition.corrosion().get(CorrosionType.SKIN) == 60
-                && definition.corrosion().get(CorrosionType.GLOBAL) == 0, "驾驭侵蚀应为皮肤60");
+        check(definition.corrosion().get(SpiritualPart.SKIN) == 60
+                && definition.corrosion().get(SpiritualPart.GLOBAL) == 0, "驾驭侵蚀应为皮肤60");
 
         var partial = new Host();
         partial.maximum = 100;

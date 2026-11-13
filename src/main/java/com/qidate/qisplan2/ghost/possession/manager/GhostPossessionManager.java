@@ -40,7 +40,7 @@ public final class GhostPossessionManager {
             GhostPossessionTarget target
     ) {
 
-        if (isPossessing(player)) {
+        if (isPossessing(player) || !target.canStart(player)) {
             return false;
         }
 

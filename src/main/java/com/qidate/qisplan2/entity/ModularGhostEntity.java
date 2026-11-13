@@ -1,4 +1,6 @@
 package com.qidate.qisplan2.entity;
+
+import com.qidate.qisplan2.ghost.bearing.HostComposition;
 import com.qidate.qisplan2.ghost.module.host.entity.GhostEntityBindings;
 
 import com.qidate.qisplan2.death.SupernaturalCombatHandler;
@@ -83,8 +85,8 @@ public class ModularGhostEntity extends PathfinderMob
         return entityData;
     }
 
-    private final GhostModuleContainer ghostModules =
-            new GhostModuleContainer();
+    private final HostComposition composition;
+    private final GhostModuleContainer ghostModules;
 
     private final Set<UUID> touchingEntities = new HashSet<>();
 
@@ -96,10 +98,24 @@ public class ModularGhostEntity extends PathfinderMob
             EntityType<? extends ModularGhostEntity> entityType,
             Level level
     ) {
-        super(entityType, level);
-
-
+        this(entityType, level, HostComposition.HUMANOID, List.of());
     }
+
+    /**
+     * 特殊模型实体通过此构造器声明自己的组成和默认模块，复用全部存档、行为与能力框架。
+     * 默认模块只用于新实体初始化；读档中的空列表表示模块已移除，不能重新补回。
+     */
+    protected ModularGhostEntity(EntityType<? extends ModularGhostEntity> entityType, Level level,
+            HostComposition composition, List<GhostModuleData.Entry> defaultModules) {
+        super(entityType, level);
+        this.composition = Objects.requireNonNull(composition, "composition");
+        this.ghostModules = new GhostModuleContainer(() -> this.composition);
+        if (!ghostModules.replaceEntries(defaultModules))
+            throw new IllegalArgumentException("Default modules exceed entity bearing capacity");
+    }
+
+    /** 返回该实体类型在构造时声明的组成，基础实体默认采用二十一个人形部位。 */
+    @Override public HostComposition composition() { return composition; }
 
     /**
      * 获取实体当前安装的模块。
@@ -137,10 +153,10 @@ public class ModularGhostEntity extends PathfinderMob
      * 同一宿主不允许覆盖已有的同名模块。
      */
     public boolean importGhostModule(GhostModuleData.Entry entry) {
-        if (hasGhostModule(entry.id())) return false;
+        if (hasGhostModule(entry.id()) || !canInstallModule(entry.id())) return false;
         List<GhostModuleData.Entry> entries = new ArrayList<>(getModules());
         entries.add(entry);
-        ghostModules.loadEntries(entries);
+        if (!ghostModules.replaceEntries(entries)) return false;
         refreshModuleBindings();
         syncModuleSounds();
         return true;
@@ -167,7 +183,7 @@ public class ModularGhostEntity extends PathfinderMob
         var iterator = moduleGoals.entrySet().iterator();
         while (iterator.hasNext()) {
             var entry = iterator.next();
-            if (!hasGhostModule(entry.getKey())) {
+            if (!carriesModule(entry.getKey())) {
                 GhostModule removedModule = GhostModuleRegistry.get(entry.getKey());
                 if (removedModule != null) GhostEntityBindings.detach(removedModule, this);
                 entry.getValue().forEach(goalSelector::removeGoal);
@@ -175,6 +191,7 @@ public class ModularGhostEntity extends PathfinderMob
             }
         }
         for (var entry : getModules()) {
+            if (!carriesModule(entry.id())) continue;
             GhostModule module = GhostModuleRegistry.get(entry.id());
             if (module == null || moduleGoals.containsKey(entry.id())) continue;
             var definitions = GhostEntityBindings.goals(module, this);
@@ -585,6 +602,10 @@ public class ModularGhostEntity extends PathfinderMob
     public void readAdditionalSaveData(CompoundTag tag) {
         super.readAdditionalSaveData(tag);
 
+        if (!tag.contains(NBT_GHOST_MODULES, Tag.TAG_LIST)) {
+            refreshModuleBindings();
+            return;
+        }
         ghostModules.clear();
 
         ListTag modulesTag = tag.getList(
@@ -663,6 +684,15 @@ public class ModularGhostEntity extends PathfinderMob
         }
         refreshModuleBindings();
 
+    }
+
+    /** 新生成的子类实体也需要激活默认模块行为；此时子类字段已完成初始化。 */
+    @Override public void onAddedToLevel() {
+        super.onAddedToLevel();
+        if (!level().isClientSide) {
+            refreshModuleBindings();
+            syncModuleSounds();
+        }
     }
 
     /** 模块资源维护独立于规则和移动 AI，确保死机时也能撤销鬼域。 */

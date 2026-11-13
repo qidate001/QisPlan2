@@ -1,5 +1,7 @@
 package com.qidate.qisplan2.ghost.possession.target;
 
+import com.qidate.qisplan2.ghost.module.host.player.PlayerGhostModuleHost;
+
 import com.qidate.qisplan2.ghost.module.*;
 import com.qidate.qisplan2.ghost.possession.manager.PossessionHandler;
 import net.minecraft.resources.ResourceLocation;
@@ -14,6 +16,13 @@ public final class BlockGhostPossessionTarget implements GhostPossessionTarget {
         this.block = block;
         this.moduleId = moduleId;
     }
+    /** 新宿主缺少部位、部位已满或已有同名模块时，拒绝开始驾驭。 */
+    @Override public boolean canStart(ServerPlayer player) {
+        var destination = new PlayerGhostModuleHost(player);
+        return moduleId != null && !destination.hasModule(moduleId)
+                && destination.canInstallModule(moduleId);
+    }
+
     @Override public boolean onSuccess(ServerPlayer player) {
         if (block.isRemoved() || block.getLevel() != player.level()
                 || player.serverLevel().getBlockEntity(block.getBlockPos()) != block

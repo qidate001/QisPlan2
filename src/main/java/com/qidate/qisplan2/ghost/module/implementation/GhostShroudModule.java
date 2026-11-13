@@ -1,6 +1,8 @@
 package com.qidate.qisplan2.ghost.module.implementation;
 
-import com.qidate.qisplan2.ghost.corrosion.CorrosionType;
+import com.qidate.qisplan2.ghost.bearing.GhostModuleForm;
+
+import com.qidate.qisplan2.ghost.bearing.SpiritualPart;
 import com.qidate.qisplan2.ghost.corrosion.GhostCorrosion;
 import com.qidate.qisplan2.ghost.module.GhostMedium;
 import com.qidate.qisplan2.ghost.module.GhostModule;
@@ -33,6 +35,9 @@ public final class GhostShroudModule implements GhostModule {
         return ResourceLocation.fromNamespaceAndPath("qisplan2", path);
     }
 
+    /** 寿衣以替换皮肤的形式存在；实际部位匹配和占位由承载框架完成。 */
+    @Override public GhostModuleForm form() { return GhostModuleForm.replacing(SpiritualPart.SKIN); }
+
     /** 返回唯一模块身份。 */
     @Override public ResourceLocation getId() { return ID; }
 
@@ -41,7 +46,7 @@ public final class GhostShroudModule implements GhostModule {
 
     /** 驾驭后由通用侵蚀系统计入皮肤六十点，不额外继承默认全局侵蚀。 */
     @Override public GhostCorrosion corrosion() {
-        return GhostCorrosion.builder().add(CorrosionType.SKIN, 60).build();
+        return GhostCorrosion.builder().add(SpiritualPart.SKIN, 60).build();
     }
 
     /** 使用既有物品纹理作为模块图标。 */

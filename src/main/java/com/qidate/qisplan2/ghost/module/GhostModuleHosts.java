@@ -16,7 +16,7 @@ public final class GhostModuleHosts {
     }
     public static boolean available(GhostModuleHost host, ResourceLocation id) {
         var living = living(host);
-        return living != null && living.isAlive() && !living.isRemoved()
+        return host.carriesModule(id) && living != null && living.isAlive() && !living.isRemoved()
                 && (!(living instanceof ModularGhostEntity ghost) || !ghost.isCoffinNailed())
                 && host.getModules().stream().anyMatch(e -> e.id().equals(id) && GhostModuleCombatState.available(e));
     }

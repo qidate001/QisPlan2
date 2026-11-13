@@ -1,5 +1,9 @@
 package com.qidate.qisplan2.ghost.module.data;
 
+import com.qidate.qisplan2.ghost.bearing.HostComposition;
+import com.qidate.qisplan2.ghost.bearing.GhostBearing;
+import java.util.function.Supplier;
+
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.resources.ResourceLocation;
 
@@ -14,6 +18,32 @@ import java.util.Objects;
  * 不负责宿主的存档生命周期、网络同步或游戏行为。
  */
 public final class GhostModuleContainer {
+    private final Supplier<HostComposition> composition;
+
+    /** 默认服务于物品及方块，只有一个万能部位。 */
+    public GhostModuleContainer() { this(() -> HostComposition.UNIVERSAL); }
+
+    /** 宿主提供自己的组成；以供应接口绑定，容器不识别宿主类型。 */
+    public GhostModuleContainer(Supplier<HostComposition> composition) {
+        this.composition = Objects.requireNonNull(composition, "composition");
+    }
+
+    /** 新模块加入前进行承载校验，状态更新不占用额外容量。 */
+    public boolean canInstall(ResourceLocation id) {
+        return GhostBearing.canInstall(composition.get(), getModules(), id);
+    }
+
+    /** 原子替换运行时模块列表；失败时原列表完整保留。存档读取仍使用 loadEntries。 */
+    public boolean replaceEntries(List<GhostModuleData.Entry> entries) {
+        try {
+            GhostBearing.validateChange(composition.get(), getModules(), entries);
+        } catch (IllegalArgumentException rejected) {
+            return false;
+        }
+        loadEntries(entries);
+        return true;
+    }
+
 
     private final List<GhostModuleData.Entry> modules =
             new ArrayList<>();
@@ -55,7 +85,7 @@ public final class GhostModuleContainer {
     ) {
         Objects.requireNonNull(moduleId, "moduleId");
 
-        if (!isValidValue(intensity)) {
+        if (!isValidValue(intensity) || !canInstall(moduleId)) {
             return false;
         }
 
@@ -98,7 +128,7 @@ public final class GhostModuleContainer {
         Objects.requireNonNull(moduleId, "moduleId");
 
         if (!isValidValue(intensity)
-                || hasModule(moduleId)) {
+                || hasModule(moduleId) || !canInstall(moduleId)) {
             return false;
         }
 
@@ -124,7 +154,7 @@ public final class GhostModuleContainer {
             ResourceLocation moduleId,
             double intensity
     ) {
-        if (!isValidValue(intensity)) {
+        if (!isValidValue(intensity) || !canInstall(moduleId)) {
             return false;
         }
 
@@ -307,11 +337,14 @@ public final class GhostModuleContainer {
         }
     }
 
+    /** 更新既有条目时保持顺序，承载占位不会因普通数据更新而重新分配。 */
     private void putEntry(GhostModuleData.Entry replacement) {
-        modules.removeIf(
-                entry -> entry.id().equals(replacement.id())
-        );
-
+        for (int index = 0; index < modules.size(); index++) {
+            if (modules.get(index).id().equals(replacement.id())) {
+                modules.set(index, replacement);
+                return;
+            }
+        }
         modules.add(replacement);
     }
 

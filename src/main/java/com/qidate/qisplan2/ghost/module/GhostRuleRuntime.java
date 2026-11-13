@@ -100,7 +100,7 @@ public final class GhostRuleRuntime {
             GhostModuleHost host,
             ResourceLocation moduleId
     ) {
-        if (!host.hasModule(moduleId)) {
+        if (!host.carriesModule(moduleId)) {
             return false;
         }
 

@@ -132,7 +132,7 @@ public record GhostAbilityContext(
      */
     public boolean isModuleAvailable() {
         // 死机禁用自动规则和行为，但不禁止驭鬼者主动调用；媒介仍由执行器检查。
-        return host.getModules().stream().anyMatch(entry -> entry.id().equals(moduleId)
+        return host.carriesModule(moduleId) && host.getModules().stream().anyMatch(entry -> entry.id().equals(moduleId)
                 && (source == Source.POSSESSION || GhostModuleCombatState.available(entry)));
     }
 

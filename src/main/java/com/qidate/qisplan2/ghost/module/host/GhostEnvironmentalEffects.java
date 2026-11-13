@@ -21,7 +21,7 @@ public final class GhostEnvironmentalEffects {
      * 要求模块可用、已点燃、效果类型匹配且满足暴露媒介。
      */
     public static boolean active(GhostModuleHost host, GhostEnvironmentalEffect effect) {
-        return host.getModules().stream().anyMatch(e -> GhostModuleCombatState.available(e)
+        return host.getModules().stream().anyMatch(e -> host.carriesModule(e.id()) && GhostModuleCombatState.available(e)
                 && e.customData().getBoolean("lit")
                 && effect.name().equals(e.customData().getString("activeEffect"))
                 && host.moduleEnvironment(e.id()).exposed());

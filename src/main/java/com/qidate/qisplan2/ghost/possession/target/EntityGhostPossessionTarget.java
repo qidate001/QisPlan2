@@ -1,5 +1,7 @@
 package com.qidate.qisplan2.ghost.possession.target;
 
+import com.qidate.qisplan2.ghost.module.host.player.PlayerGhostModuleHost;
+
 import com.qidate.qisplan2.core.ModItems;
 import com.qidate.qisplan2.death.SupernaturalEntity;
 import com.qidate.qisplan2.entity.ModularGhostEntity;
@@ -29,6 +31,13 @@ public final class EntityGhostPossessionTarget
 
     public Entity ghost() {
         return ghost;
+    }
+
+    /** 新宿主缺少部位、部位已满或已有同名模块时，拒绝开始驾驭。 */
+    @Override public boolean canStart(ServerPlayer player) {
+        var destination = new PlayerGhostModuleHost(player);
+        return moduleId != null && !destination.hasModule(moduleId)
+                && destination.canInstallModule(moduleId);
     }
 
     @Override

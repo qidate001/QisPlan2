@@ -1,7 +1,7 @@
 package com.qidate.qisplan2.ghost.module.host.player.binding;
 
 import com.qidate.qisplan2.QisPlan2;
-import com.qidate.qisplan2.ghost.corrosion.CorrosionType;
+import com.qidate.qisplan2.ghost.bearing.SpiritualPart;
 import com.qidate.qisplan2.ghost.module.*;
 import com.qidate.qisplan2.ghost.module.ability.*;
 import com.qidate.qisplan2.ghost.module.event.*;
@@ -143,7 +143,7 @@ public final class NightWandererPlayerBinding implements GhostPlayerBinding {
                             ID,
                             state,
                             NIGHT_REVIVAL_PER_TICK,
-                            CorrosionType.GLOBAL
+                            SpiritualPart.GLOBAL
                     );
 
             context.setState(
@@ -229,7 +229,7 @@ public final class NightWandererPlayerBinding implements GhostPlayerBinding {
                         ID,
                         state,
                         revivalGain,
-                        CorrosionType.HAND
+                        SpiritualPart.HAND
                 );
 
         /*

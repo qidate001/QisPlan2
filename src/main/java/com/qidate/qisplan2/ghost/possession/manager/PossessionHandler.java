@@ -4,7 +4,7 @@ import com.qidate.qisplan2.ghost.module.host.player.binding.GhostPlayerBindings;
 import com.qidate.qisplan2.death.QisDeathHandler;
 import com.qidate.qisplan2.event.GhostBreakoutHandler;
 import com.qidate.qisplan2.ghost.corrosion.CorrosionMatrix;
-import com.qidate.qisplan2.ghost.corrosion.CorrosionType;
+import com.qidate.qisplan2.ghost.bearing.SpiritualPart;
 import com.qidate.qisplan2.ghost.corrosion.GhostCorrosion;
 import com.qidate.qisplan2.ghost.module.GhostModule;
 import com.qidate.qisplan2.ghost.module.GhostModuleCombatState;
@@ -23,7 +23,7 @@ import com.qidate.qisplan2.ghost.module.host.player.PlayerModuleEvents;
 import com.qidate.qisplan2.ghost.possession.data.PossessedGhostData;
 import com.qidate.qisplan2.ghost.possession.data.PossessedGhostState;
 import com.qidate.qisplan2.ghost.possession.suppression.GhostSuppressionSystem;
-import java.util.EnumMap;
+import java.util.LinkedHashMap;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -137,10 +137,10 @@ public final class PossessionHandler {
 
 
         return (
-                matrix.total(CorrosionType.GLOBAL)
-                        + matrix.total(CorrosionType.SKIN)
-                        + matrix.total(CorrosionType.FLESH)
-                        + matrix.total(CorrosionType.BONE)
+                matrix.total(SpiritualPart.GLOBAL)
+                        + matrix.total(SpiritualPart.SKIN)
+                        + matrix.total(SpiritualPart.FLESH)
+                        + matrix.total(SpiritualPart.BONE)
         ) / 4.0D;
     }
 
@@ -179,32 +179,32 @@ public final class PossessionHandler {
             for (var entry :
                     corrosion.entries().entrySet()) {
 
-                CorrosionType type =
+                SpiritualPart type =
                         entry.getKey();
 
                 int amount =
                         entry.getValue();
 
 
-                if (type == CorrosionType.GLOBAL) {
+                if (type.equals(SpiritualPart.GLOBAL)) {
 
                     matrix.add(
-                            CorrosionType.GLOBAL,
+                            SpiritualPart.GLOBAL,
                             ghost,
-                            CorrosionType.GLOBAL,
+                            SpiritualPart.GLOBAL,
                             amount
                     );
 
 
-                    for (CorrosionType other :
-                            CorrosionType.values()) {
+                    for (SpiritualPart other :
+                            SpiritualPart.playerCorrosionTargets()) {
 
-                        if (other != CorrosionType.GLOBAL) {
+                        if (!other.equals(SpiritualPart.GLOBAL)) {
 
                             matrix.add(
                                     other,
                                     ghost,
-                                    CorrosionType.GLOBAL,
+                                    SpiritualPart.GLOBAL,
                                     amount
                             );
                         }
@@ -386,7 +386,7 @@ public final class PossessionHandler {
             ResourceLocation ghost,
             PossessedGhostState state,
             double revivalPercent,
-            CorrosionType type
+            SpiritualPart type
     ) {
 
         if (state == null) {
@@ -727,7 +727,7 @@ public final class PossessionHandler {
 
     public static int getCorrosion(
             ServerPlayer player,
-            CorrosionType type
+            SpiritualPart type
     ) {
 
         return getCorrosionMatrix(player)
@@ -738,21 +738,19 @@ public final class PossessionHandler {
     /**
      * 汇总当前驾驭的厉鬼所产生的侵蚀数据。
      */
-    public static EnumMap<CorrosionType, Integer> getAllCorrosion(
+    public static Map<SpiritualPart, Integer> getAllCorrosion(
             ServerPlayer player
     ) {
 
-        EnumMap<
-                CorrosionType,
+        Map<
+                SpiritualPart,
                 Integer
                 > result =
-                new EnumMap<>(
-                        CorrosionType.class
-                );
+                new LinkedHashMap<>();
 
 
-        for (CorrosionType type :
-                CorrosionType.values()) {
+        for (SpiritualPart type :
+                SpiritualPart.playerCorrosionTargets()) {
 
             result.put(
                     type,
@@ -775,7 +773,7 @@ public final class PossessionHandler {
     public static double getCorrosionRatio(
             ServerPlayer player,
             ResourceLocation ghost,
-            CorrosionType type
+            SpiritualPart type
     ) {
 
         CorrosionMatrix matrix =
@@ -838,32 +836,32 @@ public final class PossessionHandler {
             for (var entry :
                     corrosion.entries().entrySet()) {
 
-                CorrosionType type =
+                SpiritualPart type =
                         entry.getKey();
 
                 int amount =
                         entry.getValue();
 
 
-                if (type == CorrosionType.GLOBAL) {
+                if (type.equals(SpiritualPart.GLOBAL)) {
 
                     matrix.add(
-                            CorrosionType.GLOBAL,
+                            SpiritualPart.GLOBAL,
                             ghost,
-                            CorrosionType.GLOBAL,
+                            SpiritualPart.GLOBAL,
                             amount
                     );
 
 
-                    for (CorrosionType other :
-                            CorrosionType.values()) {
+                    for (SpiritualPart other :
+                            SpiritualPart.playerCorrosionTargets()) {
 
-                        if (other != CorrosionType.GLOBAL) {
+                        if (!other.equals(SpiritualPart.GLOBAL)) {
 
                             matrix.add(
                                     other,
                                     ghost,
-                                    CorrosionType.GLOBAL,
+                                    SpiritualPart.GLOBAL,
                                     amount
                             );
                         }

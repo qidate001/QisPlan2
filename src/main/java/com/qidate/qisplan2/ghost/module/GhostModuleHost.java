@@ -1,5 +1,8 @@
 package com.qidate.qisplan2.ghost.module;
 
+import com.qidate.qisplan2.ghost.bearing.HostComposition;
+import com.qidate.qisplan2.ghost.bearing.GhostBearing;
+
 import com.qidate.qisplan2.ghost.module.data.GhostModuleData;
 import net.minecraft.resources.ResourceLocation;
 
@@ -20,6 +23,20 @@ import com.qidate.qisplan2.ghost.module.host.GhostWorldAdapters;
  * 宿主能够保存模块数据，不代表它必须允许模块状态变化。
  */
 public interface GhostModuleHost {
+    /** 物品和方块暂用一个万能部位；其他宿主可自行声明任意组成。 */
+    default HostComposition composition() { return HostComposition.UNIVERSAL; }
+
+    /** 按当前模块数据推导占位，移除后自然释放，无需维护第二份存档状态。 */
+    default GhostBearing.Allocation bearing() { return GhostBearing.allocate(composition(), getModules()); }
+
+    /** 是否真正承载此模块；旧存档中的冲突实例保留数据，但禁止规则和能力运行。 */
+    default boolean carriesModule(ResourceLocation id) { return bearing().accepted().contains(id); }
+
+    /** 安装前统一检查指定部位是否存在、是否有容量。 */
+    default boolean canInstallModule(ResourceLocation id) {
+        return GhostBearing.canInstall(composition(), getModules(), id);
+    }
+
 
     /**
      * 获取宿主携带的全部厉鬼模块。

@@ -1,5 +1,8 @@
 package com.qidate.qisplan2.ghost.module.host.item;
 
+import com.qidate.qisplan2.ghost.bearing.HostComposition;
+import com.qidate.qisplan2.ghost.bearing.GhostBearing;
+
 import com.qidate.qisplan2.core.ModDataComponents;
 import com.qidate.qisplan2.ghost.module.data.GhostModuleContainer;
 import com.qidate.qisplan2.ghost.module.data.GhostModuleData;
@@ -87,9 +90,7 @@ public final class GhostItemData {
 
         GhostModuleContainer container = createContainer(stack);
 
-        container.loadEntries(
-                mergeEntry(container.getModules(), newEntry)
-        );
+        if (!container.replaceEntries(mergeEntry(container.getModules(), newEntry))) return;
 
         saveContainer(stack, container);
     }
@@ -107,6 +108,7 @@ public final class GhostItemData {
         Objects.requireNonNull(stack, "stack");
         Objects.requireNonNull(modules, "modules");
 
+        GhostBearing.validateChange(HostComposition.UNIVERSAL, getModules(stack), modules);
         GhostModuleContainer container = new GhostModuleContainer();
         container.loadEntries(modules);
 

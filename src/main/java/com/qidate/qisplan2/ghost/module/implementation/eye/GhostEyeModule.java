@@ -1,6 +1,6 @@
 package com.qidate.qisplan2.ghost.module.implementation.eye;
 
-import com.qidate.qisplan2.ghost.corrosion.CorrosionType;
+import com.qidate.qisplan2.ghost.bearing.SpiritualPart;
 import com.qidate.qisplan2.ghost.corrosion.GhostCorrosion;
 import com.qidate.qisplan2.ghost.module.GhostModule;
 import com.qidate.qisplan2.ghost.module.data.GhostModuleInitialData;
@@ -91,8 +91,8 @@ public final class GhostEyeModule implements GhostModule {
 
     private static final GhostCorrosion CORROSION =
             GhostCorrosion.builder()
-                    .add(CorrosionType.EYE, 100)
-                    .add(CorrosionType.GLOBAL, 40)
+                    .add(SpiritualPart.EYE, 100)
+                    .add(SpiritualPart.GLOBAL, 40)
                     .build();
 
     /**

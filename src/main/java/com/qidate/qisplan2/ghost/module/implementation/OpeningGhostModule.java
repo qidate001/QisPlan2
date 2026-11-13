@@ -3,7 +3,7 @@ package com.qidate.qisplan2.ghost.module.implementation;
 import com.qidate.qisplan2.death.ModDamageTypes;
 import com.qidate.qisplan2.ghost.module.environment.GhostWorldAccess;
 import net.minecraft.world.phys.Vec3;
-import com.qidate.qisplan2.ghost.corrosion.CorrosionType;
+import com.qidate.qisplan2.ghost.bearing.SpiritualPart;
 import com.qidate.qisplan2.ghost.corrosion.GhostCorrosion;
 import com.qidate.qisplan2.ghost.module.*;
 import com.qidate.qisplan2.ghost.module.ability.GhostAbility;
@@ -211,8 +211,8 @@ public final class OpeningGhostModule implements GhostModule {
 
     private static final GhostCorrosion CORROSION =
             GhostCorrosion.builder()
-                    .add(CorrosionType.GLOBAL, 10)
-                    .add(CorrosionType.HAND, 20)
+                    .add(SpiritualPart.GLOBAL, 10)
+                    .add(SpiritualPart.HAND, 20)
                     .build();
 
     /**

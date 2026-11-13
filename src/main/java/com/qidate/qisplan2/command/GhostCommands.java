@@ -8,7 +8,7 @@ import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.qidate.qisplan2.core.ModTags;
 import com.qidate.qisplan2.entity.ModularGhostEntity;
 import com.qidate.qisplan2.ghost.corrosion.CorrosionMatrix;
-import com.qidate.qisplan2.ghost.corrosion.CorrosionType;
+import com.qidate.qisplan2.ghost.bearing.SpiritualPart;
 import com.qidate.qisplan2.ghost.curse.Curse;
 import com.qidate.qisplan2.ghost.curse.CurseManager;
 import com.qidate.qisplan2.ghost.curse.CurseRegistry;
@@ -1010,8 +1010,8 @@ public final class GhostCommands {
          * ========================================================
          */
 
-        for (CorrosionType type :
-                CorrosionType.values()) {
+        for (SpiritualPart type :
+                SpiritualPart.playerCorrosionTargets()) {
 
             int total =
                     matrix.total(type);
@@ -1072,7 +1072,7 @@ public final class GhostCommands {
     private static void appendGhostContributions(
             MutableComponent message,
             CorrosionMatrix matrix,
-            CorrosionType target,
+            SpiritualPart target,
             double baseGrowth
     ) {
 
@@ -2016,7 +2016,7 @@ public final class GhostCommands {
      */
 
     private static String getCorrosionName(
-            CorrosionType type
+            SpiritualPart type
     ) {
         return Component.translatable(
                 "corrosion.qisplan2." +

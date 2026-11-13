@@ -1,7 +1,7 @@
 package com.qidate.qisplan2.ghost.module.host.player.binding;
 import com.qidate.qisplan2.ghost.module.implementation.knocking.KnockingGhostDoorSystem;
 
-import com.qidate.qisplan2.ghost.corrosion.CorrosionType;
+import com.qidate.qisplan2.ghost.bearing.SpiritualPart;
 import com.qidate.qisplan2.ghost.module.*;
 import com.qidate.qisplan2.ghost.module.ability.*;
 import com.qidate.qisplan2.ghost.module.host.player.PlayerGhostModuleContext;
@@ -174,7 +174,7 @@ public final class KnockingGhostPlayerBinding implements GhostPlayerBinding {
                         ID,
                         state,
                         revivalGain,
-                        CorrosionType.HAND
+                        SpiritualPart.HAND
                 );
 
 

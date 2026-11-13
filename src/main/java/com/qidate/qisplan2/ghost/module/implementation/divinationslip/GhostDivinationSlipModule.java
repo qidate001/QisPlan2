@@ -3,7 +3,7 @@ package com.qidate.qisplan2.ghost.module.implementation.divinationslip;
 import com.qidate.qisplan2.QisPlan2;
 import com.qidate.qisplan2.death.ModDamageTypes;
 import com.qidate.qisplan2.death.SupernaturalDeathHandler;
-import com.qidate.qisplan2.ghost.corrosion.CorrosionType;
+import com.qidate.qisplan2.ghost.bearing.SpiritualPart;
 import com.qidate.qisplan2.ghost.corrosion.GhostCorrosion;
 import com.qidate.qisplan2.ghost.curse.Curse;
 import com.qidate.qisplan2.ghost.curse.CurseManager;
@@ -107,7 +107,7 @@ public final class GhostDivinationSlipModule implements GhostModule {
 
     private static final GhostCorrosion CORROSION =
             GhostCorrosion.builder()
-                    .add(CorrosionType.GLOBAL, 20)
+                    .add(SpiritualPart.GLOBAL, 20)
                     .build();
 
     private static final double REVIVAL_GAIN = 20.0D;
