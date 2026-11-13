@@ -13,10 +13,14 @@ import com.qidate.qisplan2.ghost.curse.Curse;
 import com.qidate.qisplan2.ghost.curse.CurseManager;
 import com.qidate.qisplan2.ghost.curse.CurseRegistry;
 import com.qidate.qisplan2.ghost.module.GhostModule;
+import com.qidate.qisplan2.ghost.module.GhostModuleHost;
+import com.qidate.qisplan2.ghost.module.GhostModuleCombatState;
+import com.qidate.qisplan2.ghost.bearing.GhostModuleForm;
+import com.qidate.qisplan2.ghost.module.host.player.PlayerGhostModuleHost;
+import net.minecraft.network.chat.HoverEvent;
 import com.qidate.qisplan2.ghost.module.GhostModuleDataModifier;
 import com.qidate.qisplan2.ghost.module.GhostModuleRegistry;
 import com.qidate.qisplan2.ghost.module.data.GhostModuleData;
-import com.qidate.qisplan2.ghost.module.host.item.GhostItemData;
 import com.qidate.qisplan2.ghost.module.host.item.GhostItemModuleHost;
 import com.qidate.qisplan2.ghost.module.host.player.PlayerGhostData;
 import com.qidate.qisplan2.ghost.possession.data.PossessedGhostData;
@@ -40,7 +44,6 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.level.block.entity.BlockEntity;
 
 public final class GhostCommands {
 
@@ -322,9 +325,11 @@ public final class GhostCommands {
         /*
          * ========================================================
          * /qisplan2 module list
-         * /qisplan2 module add <module>
-         * /qisplan2 module remove <module>
-         * /qisplan2 module info
+         * /qisplan2 module item add <module>
+         * /qisplan2 module item remove <module>
+         * /qisplan2 module item info
+         *
+         * /qisplan2 module player info [targets]
          *
          * /qisplan2 module entity add <targets> <module>
          * /qisplan2 module entity remove <targets> <module>
@@ -342,53 +347,62 @@ public final class GhostCommands {
                                 Commands.literal("list")
                                         .executes(GhostCommands::moduleList)
                         )
-                        .then(
-                                Commands.literal("add")
-                                        .then(
-                                                Commands.argument(
-                                                                "module",
-                                                                ResourceLocationArgument.id()
-                                                        )
-                                                        .suggests(
-                                                                (context, builder) -> {
-                                                                    for (GhostModule module :
-                                                                            GhostModuleRegistry.getAll()) {
-                                                                        builder.suggest(
-                                                                                module.getId().toString()
-                                                                        );
-                                                                    }
+                        .then(Commands.literal("player")
+                                .executes(GhostCommands::modulePlayerInfoSelf)
+                                .then(Commands.literal("info")
+                                        .executes(GhostCommands::modulePlayerInfoSelf)
+                                        .then(Commands.argument("targets", EntityArgument.players())
+                                                .executes(GhostCommands::modulePlayerInfo))))
+                        .then(Commands.literal("item")
+                                .then(Commands.literal("list").executes(GhostCommands::moduleList))
+                                .then(
+                                        Commands.literal("add")
+                                                .then(
+                                                        Commands.argument(
+                                                                        "module",
+                                                                        ResourceLocationArgument.id()
+                                                                )
+                                                                .suggests(
+                                                                        (context, builder) -> {
+                                                                            for (GhostModule module :
+                                                                                    GhostModuleRegistry.getAll()) {
+                                                                                builder.suggest(
+                                                                                        module.getId().toString()
+                                                                                );
+                                                                            }
 
-                                                                    return builder.buildFuture();
-                                                                }
-                                                        )
-                                                        .executes(GhostCommands::moduleAdd)
-                                        )
-                        )
-                        .then(
-                                Commands.literal("remove")
-                                        .then(
-                                                Commands.argument(
-                                                                "module",
-                                                                ResourceLocationArgument.id()
-                                                        )
-                                                        .suggests(
-                                                                (context, builder) -> {
-                                                                    for (GhostModule module :
-                                                                            GhostModuleRegistry.getAll()) {
-                                                                        builder.suggest(
-                                                                                module.getId().toString()
-                                                                        );
-                                                                    }
+                                                                            return builder.buildFuture();
+                                                                        }
+                                                                )
+                                                                .executes(GhostCommands::moduleAdd)
+                                                )
+                                )
+                                .then(
+                                        Commands.literal("remove")
+                                                .then(
+                                                        Commands.argument(
+                                                                        "module",
+                                                                        ResourceLocationArgument.id()
+                                                                )
+                                                                .suggests(
+                                                                        (context, builder) -> {
+                                                                            for (GhostModule module :
+                                                                                    GhostModuleRegistry.getAll()) {
+                                                                                builder.suggest(
+                                                                                        module.getId().toString()
+                                                                                );
+                                                                            }
 
-                                                                    return builder.buildFuture();
-                                                                }
-                                                        )
-                                                        .executes(GhostCommands::moduleRemove)
-                                        )
-                        )
-                        .then(
-                                Commands.literal("info")
-                                        .executes(GhostCommands::moduleInfo)
+                                                                            return builder.buildFuture();
+                                                                        }
+                                                                )
+                                                                .executes(GhostCommands::moduleRemove)
+                                                )
+                                )
+                                .then(
+                                        Commands.literal("info")
+                                                .executes(GhostCommands::moduleInfo)
+                                )
                         )
                         .then(
                                 Commands.literal("entity")
@@ -1425,588 +1439,258 @@ public final class GhostCommands {
     }
 
     /**
-     * /qisplan2 module list
-     *
-     * 列出所有已注册的厉鬼模块。
+     * 模块命令统一使用翻译组件，格式化在客户端按当前语言完成。
+     * 原版翻译参数只接受组件、数字、布尔值和字符串；资源标识、UUID 等须先转为字符串。
+     * 保留嵌套组件，避免在服务端提前展开译名；使用新数组，不修改调用方参数。
      */
-    private static int moduleList(
-            CommandContext<CommandSourceStack> context
-    ) {
-        var source = context.getSource();
+    private static MutableComponent moduleText(String key, Object... args) {
+        Object[] safeArgs = new Object[args.length];
+        for (int i = 0; i < args.length; i++) {
+            Object value = args[i];
+            safeArgs[i] = value instanceof Component || value instanceof Number
+                    || value instanceof Boolean || value instanceof String ? value : String.valueOf(value);
+        }
+        return Component.translatable("command.qisplan2.module." + key, safeArgs);
+    }
 
+    /** 模块名称翻译缺失时显示注册 ID，未知或旧存档模块也可以检查。 */
+    private static Component moduleName(ResourceLocation id) {
+        return Component.translatableWithFallback("module." + id.getNamespace() + "." + id.getPath(), id.toString());
+    }
+
+    /** 复用既有部位译名，自定义部位缺少翻译时保留完整标识。 */
+    private static Component partName(SpiritualPart part) {
+        return Component.translatableWithFallback("corrosion." + part.id().getNamespace() + "."
+                + part.id().getPath(), part.id().toString());
+    }
+
+    /** 布尔状态也交给语言文件，不输出写死的中文或英文。 */
+    private static Component moduleBoolean(boolean value) { return moduleText(value ? "yes" : "no"); }
+
+    /** 列出所有模块定义；根 list 和 item list 共用，不读取物品实例。 */
+    private static int moduleList(CommandContext<CommandSourceStack> context) {
         var modules = GhostModuleRegistry.getAll();
-
-        if (modules.isEmpty()) {
-            source.sendSuccess(
-                    () -> Component.literal("当前没有注册任何厉鬼模块。"),
-                    false
-            );
-            return 1;
-        }
-
-        source.sendSuccess(
-                () -> Component.literal("已注册的厉鬼模块："),
-                false
-        );
-
-        for (GhostModule module : modules) {
-            source.sendSuccess(
-                    () -> Component.literal(
-                            "- " + module.getId()
-                    ),
-                    false
-            );
-        }
-
-        return modules.size();
+        context.getSource().sendSuccess(() -> moduleText("registered", modules.size()), false);
+        for (var module : modules)
+            context.getSource().sendSuccess(() -> moduleText("name", moduleName(module.getId()), module.getId()), false);
+        return Math.max(1, modules.size());
     }
 
+    /** 获取主手灵异物品，控制台或非灵异物品均给出可翻译提示。 */
+    private static GhostItemModuleHost moduleItemHost(CommandSourceStack source) {
+        var player = source.getPlayer();
+        if (player == null) { source.sendFailure(moduleText("player_only")); return null; }
+        var stack = player.getMainHandItem();
+        if (stack.isEmpty() || !stack.is(ModTags.Items.SUPERNATURAL_ITEMS)) {
+            source.sendFailure(moduleText("hold_item"));
+            return null;
+        }
+        return new GhostItemModuleHost(stack, player);
+    }
 
-    /**
-     * /qisplan2 module add <module>
-     *
-     * 将指定模块装入主手灵异物品。
-     */
-    private static int moduleAdd(
-            CommandContext<CommandSourceStack> context
-    ) {
+    /** 解析命令指定模块，未知标识统一报错。 */
+    private static GhostModule commandModule(CommandContext<CommandSourceStack> context) {
+        var id = ResourceLocationArgument.getId(context, "module");
+        var module = GhostModuleRegistry.get(id);
+        if (module == null) context.getSource().sendFailure(moduleText("unknown", id));
+        return module;
+    }
+
+    /** 物品安装前区分重复模块与承载冲突，避免把占位失败误报为已安装。 */
+    private static int moduleAdd(CommandContext<CommandSourceStack> context) {
         var source = context.getSource();
-
-        ServerPlayer player = source.getPlayer();
-
-        if (player == null) {
-            source.sendFailure(
-                    Component.literal("该命令只能由玩家执行。")
-            );
-            return 0;
+        var module = commandModule(context);
+        if (module == null) return 0;
+        var host = moduleItemHost(source);
+        if (host == null) return 0;
+        if (host.hasModule(module.getId())) {
+            source.sendFailure(moduleText("duplicate", module.getId())); return 0;
         }
-
-        ResourceLocation moduleId =
-                ResourceLocationArgument.getId(context, "module");
-
-        GhostModule module = GhostModuleRegistry.get(moduleId);
-
-        if (module == null) {
-            source.sendFailure(
-                    Component.literal("未注册的厉鬼模块：" + moduleId)
-            );
-            return 0;
+        if (!host.canInstallModule(module.getId())) {
+            source.sendFailure(moduleText("capacity", module.getId())); return 0;
         }
-
-        ItemStack stack = player.getMainHandItem();
-
-        if (stack.isEmpty()
-                || !stack.is(ModTags.Items.SUPERNATURAL_ITEMS)) {
-            source.sendFailure(
-                    Component.literal(
-                            "请在主手持有带有 supernatural_items Tag 的灵异物品。"
-                    )
-            );
-            return 0;
-        }
-
-        // 通过统一的数据修改接口安装模块，使用模块定义提供的初始属性。
-        GhostItemModuleHost host = new GhostItemModuleHost(stack);
-
         if (!host.addModule(module)) {
-            source.sendFailure(
-                    Component.literal(
-                            "物品已持有模块 " + moduleId
-                                    + "，未重复安装。"
-                    )
-            );
-            return 0;
+            source.sendFailure(moduleText("install_failed", module.getId())); return 0;
         }
-
-        var initialData = module.getInitialData();
-
-        source.sendSuccess(
-                () -> Component.literal(
-                        "已将厉鬼模块 " + moduleId
-                                + " 装入物品，初始灵异强度："
-                                + initialData.intensity()
-                                + "，初始复苏值："
-                                + initialData.revival()
-                ),
-                true
-        );
-
+        var initial = module.getInitialData();
+        source.sendSuccess(() -> moduleText("item_added", module.getId(), initial.intensity(), initial.revival()), true);
         return 1;
     }
 
-
-    /**
-     * /qisplan2 module remove <module>
-     *
-     * 从主手物品移除指定模块。
-     */
-    private static int moduleRemove(
-            CommandContext<CommandSourceStack> context
-    ) {
+    /** 从主手物品移除模块；占位随实际数据移除自动释放。 */
+    private static int moduleRemove(CommandContext<CommandSourceStack> context) {
         var source = context.getSource();
+        var host = moduleItemHost(source);
+        if (host == null) return 0;
+        var id = ResourceLocationArgument.getId(context, "module");
+        if (!host.removeModule(id)) {
+            source.sendFailure(moduleText("remove_failed", id)); return 0;
+        }
+        source.sendSuccess(() -> moduleText("item_removed", id), true);
+        return 1;
+    }
 
-        ServerPlayer player = source.getPlayer();
+    /** 显示主手物品实例，复用全部宿主的详细输出格式。 */
+    private static int moduleInfo(CommandContext<CommandSourceStack> context) {
+        var host = moduleItemHost(context.getSource());
+        return host == null ? 0 : printModuleInfo(context.getSource(), host,
+                moduleText("item_header", host.stack().getHoverName()));
+    }
 
+    /** 无目标时查看自己；控制台应使用带玩家选择器的版本。 */
+    private static int modulePlayerInfoSelf(CommandContext<CommandSourceStack> context) {
+        var player = context.getSource().getPlayer();
         if (player == null) {
-            source.sendFailure(
-                    Component.literal("该命令只能由玩家执行。")
-            );
-            return 0;
+            context.getSource().sendFailure(moduleText("player_target_required")); return 0;
         }
+        return printModuleInfo(context.getSource(), new PlayerGhostModuleHost(player),
+                moduleText("player_header", player.getDisplayName(), player.getUUID()));
+    }
 
-        ResourceLocation moduleId =
-                ResourceLocationArgument.getId(context, "module");
+    /** 查询指定玩家自身的模块，不混入其背包或穿戴物品的模块。 */
+    private static int modulePlayerInfo(CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
+        var players = EntityArgument.getPlayers(context, "targets");
+        for (var player : players)
+            printModuleInfo(context.getSource(), new PlayerGhostModuleHost(player),
+                    moduleText("player_header", player.getDisplayName(), player.getUUID()));
+        return players.size();
+    }
 
-        ItemStack stack = player.getMainHandItem();
-
-        if (stack.isEmpty()
-                || !stack.is(ModTags.Items.SUPERNATURAL_ITEMS)) {
-            source.sendFailure(
-                    Component.literal("请先手持灵异物品。")
-            );
-            return 0;
+    /** 批量安装实体模块，分别统计不支持的实体与重复或容量不足的拒绝项。 */
+    private static int moduleEntityAdd(CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
+        var source = context.getSource();
+        var module = commandModule(context);
+        if (module == null) return 0;
+        int installed = 0, unsupported = 0, rejected = 0;
+        for (var target : EntityArgument.getEntities(context, "targets")) {
+            if (!(target instanceof ModularGhostEntity host)) unsupported++;
+            else if (host.addModule(module)) installed++;
+            else rejected++;
         }
+        var result = moduleText("entity_added", module.getId(), installed, unsupported, rejected);
+        if (installed == 0) source.sendFailure(result);
+        else source.sendSuccess(() -> result, true);
+        return installed;
+    }
 
-        if (!GhostItemData.hasModule(stack, moduleId)) {
-            source.sendFailure(
-                    Component.literal(
-                            "该物品没有携带模块：" + moduleId
-                    )
-            );
-            return 0;
+    /** 批量移除实体模块，目标不支持或没有该模块时仅计为跳过。 */
+    private static int moduleEntityRemove(CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
+        var source = context.getSource();
+        var id = ResourceLocationArgument.getId(context, "module");
+        int removed = 0, skipped = 0;
+        for (var target : EntityArgument.getEntities(context, "targets")) {
+            if (target instanceof ModularGhostEntity host && host.removeModule(id)) removed++;
+            else skipped++;
         }
+        var result = moduleText("entity_removed", id, removed, skipped);
+        if (removed == 0) source.sendFailure(result);
+        else source.sendSuccess(() -> result, true);
+        return removed;
+    }
 
-        GhostItemData.removeModule(stack, moduleId);
+    /** 查询实体模块及真实承载分配，不支持的选择目标不影响其他实体查询。 */
+    private static int moduleEntityInfo(CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
+        int count = 0;
+        for (var target : EntityArgument.getEntities(context, "targets")) {
+            if (!(target instanceof ModularGhostEntity host)) continue;
+            printModuleInfo(context.getSource(), host, moduleText("entity_header", host.getDisplayName(), host.getUUID()));
+            count++;
+        }
+        if (count == 0) context.getSource().sendFailure(moduleText("no_entities"));
+        return count;
+    }
 
-        source.sendSuccess(
-                () -> Component.literal(
-                        "已从物品中移除厉鬼模块：" + moduleId
-                ),
-                true
-        );
-
+    /** 为可变方块宿主安装模块，承载校验失败不修改已有数据。 */
+    private static int moduleBlockAdd(CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
+        var source = context.getSource();
+        var module = commandModule(context);
+        if (module == null) return 0;
+        var pos = BlockPosArgument.getLoadedBlockPos(context, "pos");
+        if (!(source.getLevel().getBlockEntity(pos) instanceof GhostModuleDataModifier host)) {
+            source.sendFailure(moduleText("block_not_mutable", pos.toShortString())); return 0;
+        }
+        if (host.hasModule(module.getId())) {
+            source.sendFailure(moduleText("duplicate", module.getId())); return 0;
+        }
+        if (!host.canInstallModule(module.getId())) {
+            source.sendFailure(moduleText("capacity", module.getId())); return 0;
+        }
+        if (!host.addModule(module)) {
+            source.sendFailure(moduleText("install_failed", module.getId())); return 0;
+        }
+        var initial = module.getInitialData();
+        source.sendSuccess(() -> moduleText("block_added", pos.toShortString(), module.getId(),
+                initial.intensity(), initial.revival()), true);
         return 1;
     }
 
-
-    /**
-     * /qisplan2 module info
-     *
-     * 查看主手物品携带的模块。
-     */
-    private static int moduleInfo(
-            CommandContext<CommandSourceStack> context
-    ) {
+    /** 方块移除仍要求可变数据接口，静态方块只允许查询。 */
+    private static int moduleBlockRemove(CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
         var source = context.getSource();
-
-        ServerPlayer player = source.getPlayer();
-
-        if (player == null) {
-            source.sendFailure(
-                    Component.literal("该命令只能由玩家执行。")
-            );
-            return 0;
+        var pos = BlockPosArgument.getLoadedBlockPos(context, "pos");
+        var id = ResourceLocationArgument.getId(context, "module");
+        if (!(source.getLevel().getBlockEntity(pos) instanceof GhostModuleDataModifier host)) {
+            source.sendFailure(moduleText("block_not_mutable", pos.toShortString())); return 0;
         }
-
-        ItemStack stack = player.getMainHandItem();
-
-        if (stack.isEmpty()
-                || !stack.is(ModTags.Items.SUPERNATURAL_ITEMS)) {
-            source.sendFailure(
-                    Component.literal("请先手持灵异物品。")
-            );
-            return 0;
+        if (!host.removeModule(id)) {
+            source.sendFailure(moduleText("remove_failed", id)); return 0;
         }
-
-        var modules = GhostItemData.getModules(stack);
-
-        if (modules.isEmpty()) {
-            source.sendSuccess(
-                    () -> Component.literal("该物品尚未装载任何厉鬼模块。"),
-                    false
-            );
-            return 1;
-        }
-
-        source.sendSuccess(
-                () -> Component.literal("物品携带的厉鬼模块："),
-                false
-        );
-
-        for (GhostModuleData.Entry entry : modules) {
-            source.sendSuccess(
-                    () -> Component.literal(
-                            "- " + entry.id()
-                                    + "（灵异强度："
-                                    + entry.intensity()
-                                    + "）"
-                    ),
-                    false
-            );
-        }
-
-        return modules.size();
-    }
-
-    /**
-     * /qisplan2 module entity add <targets> <module>
-     *
-     * 为选中的模块化厉鬼实体安装模块。
-     */
-    private static int moduleEntityAdd(
-            CommandContext<CommandSourceStack> context
-    ) throws CommandSyntaxException {
-        var source = context.getSource();
-
-        var targets = EntityArgument.getEntities(context, "targets");
-
-        ResourceLocation moduleId =
-                ResourceLocationArgument.getId(context, "module");
-
-        GhostModule module = GhostModuleRegistry.get(moduleId);
-
-        if (module == null) {
-            source.sendFailure(
-                    Component.literal("未注册的厉鬼模块：" + moduleId)
-            );
-            return 0;
-        }
-
-        int successCount = 0;
-        int skippedCount = 0;
-
-        for (Entity target : targets) {
-            if (!(target instanceof ModularGhostEntity ghost)) {
-                skippedCount++;
-                continue;
-            }
-
-            if (ghost.addModule(module)) {
-                successCount++;
-            } else {
-                skippedCount++;
-            }
-        }
-
-        if (successCount == 0) {
-            source.sendFailure(
-                    Component.literal(
-                            "选择的实体中没有可操作的模块化厉鬼实体。"
-                    )
-            );
-            return 0;
-        }
-
-        final int installedCount = successCount;
-        final int skipped = skippedCount;
-
-        var initialData = module.getInitialData();
-
-        source.sendSuccess(
-                () -> Component.literal(
-                        "已为 " + installedCount
-                                + " 个模块化厉鬼实体安装模块 "
-                                + moduleId
-                                + "，初始灵异强度："
-                                + initialData.intensity()
-                                + "，初始复苏值："
-                                + initialData.revival()
-                                + (skipped > 0
-                                ? "；跳过了 " + skipped + " 个非模块化厉鬼实体。"
-                                : "")
-                ),
-                true
-        );
-
-        return successCount;
-    }
-
-    /**
-     * /qisplan2 module entity remove <targets> <module>
-     *
-     * 从选中的模块化厉鬼实体移除模块。
-     */
-    private static int moduleEntityRemove(
-            CommandContext<CommandSourceStack> context
-    ) throws CommandSyntaxException {
-        var source = context.getSource();
-
-        var targets = EntityArgument.getEntities(context, "targets");
-
-        ResourceLocation moduleId =
-                ResourceLocationArgument.getId(context, "module");
-
-        int removedCount = 0;
-        int skippedCount = 0;
-
-        for (Entity target : targets) {
-            if (!(target instanceof ModularGhostEntity ghost)) {
-                skippedCount++;
-                continue;
-            }
-
-            if (!ghost.hasGhostModule(moduleId)) {
-                continue;
-            }
-
-            ghost.removeGhostModule(moduleId);
-            removedCount++;
-        }
-
-        if (removedCount == 0) {
-            source.sendFailure(
-                    Component.literal(
-                            "没有实体移除模块 " + moduleId
-                                    + "。请检查目标类型以及实体是否安装该模块。"
-                    )
-            );
-            return 0;
-        }
-
-        final int count = removedCount;
-        final int skipped = skippedCount;
-
-        source.sendSuccess(
-                () -> Component.literal(
-                        "已从 " + count
-                                + " 个模块化厉鬼实体移除模块："
-                                + moduleId
-                                + (skipped > 0
-                                ? "；跳过了 " + skipped + " 个非模块化厉鬼实体。"
-                                : "")
-                ),
-                true
-        );
-
-        return removedCount;
-    }
-
-    /**
-     * /qisplan2 module entity info <targets>
-     *
-     * 查看选中的模块化厉鬼实体携带的模块。
-     */
-    private static int moduleEntityInfo(
-            CommandContext<CommandSourceStack> context
-    ) throws CommandSyntaxException {
-        var source = context.getSource();
-
-        var targets = EntityArgument.getEntities(context, "targets");
-
-        int entityCount = 0;
-
-        for (Entity target : targets) {
-            if (!(target instanceof ModularGhostEntity ghost)) {
-                continue;
-            }
-
-            entityCount++;
-
-            var modules = ghost.getModules();
-
-            source.sendSuccess(
-                    () -> Component.literal(
-                            "实体：" + ghost.getName().getString()
-                                    + "（UUID：" + ghost.getUUID() + "）"
-                    ),
-                    false
-            );
-
-            if (modules.isEmpty()) {
-                source.sendSuccess(
-                        () -> Component.literal(
-                                "  尚未装载任何厉鬼模块。"
-                        ),
-                        false
-                );
-                continue;
-            }
-
-            for (GhostModuleData.Entry entry : modules) {
-                source.sendSuccess(
-                        () -> Component.literal(
-                                "  - " + entry.id()
-                                        + "（灵异强度："
-                                        + entry.intensity()
-                                        + "）"
-                        ),
-                        false
-                );
-            }
-        }
-
-        if (entityCount == 0) {
-            source.sendFailure(
-                    Component.literal(
-                            "选择的实体中没有模块化厉鬼实体。"
-                    )
-            );
-            return 0;
-        }
-
-        return entityCount;
-    }
-
-
-    /**
-     * /qisplan2 module block add <pos> <module>
-     *
-     * 为支持模块数据的方块实体安装模块。
-     */
-    private static int moduleBlockAdd(
-            CommandContext<CommandSourceStack> context
-    ) throws CommandSyntaxException {
-        var source = context.getSource();
-
-        BlockPos pos = BlockPosArgument.getLoadedBlockPos(context, "pos");
-
-        ResourceLocation moduleId =
-                ResourceLocationArgument.getId(context, "module");
-
-        GhostModule module = GhostModuleRegistry.get(moduleId);
-
-        if (module == null) {
-            source.sendFailure(
-                    Component.literal("未注册的厉鬼模块：" + moduleId)
-            );
-            return 0;
-        }
-
-        BlockEntity blockEntity =
-                source.getLevel().getBlockEntity(pos);
-
-        if (!(blockEntity instanceof GhostModuleDataModifier modifier)) {
-            source.sendFailure(
-                    Component.literal(
-                            "指定位置的方块实体不支持模块数据：" + pos
-                    )
-            );
-            return 0;
-        }
-
-        if (!modifier.addModule(module)) {
-            source.sendFailure(
-                    Component.literal(
-                            "安装模块失败：" + moduleId
-                                    + "。模块可能已经存在，或宿主拒绝安装。"
-                    )
-            );
-            return 0;
-        }
-
-        var initialData = module.getInitialData();
-
-        source.sendSuccess(
-                () -> Component.literal(
-                        "已在 " + pos + " 安装模块 " + moduleId
-                                + "；灵异强度：" + initialData.intensity()
-                                + "，复苏值：" + initialData.revival()
-                ),
-                true
-        );
-
+        source.sendSuccess(() -> moduleText("block_removed", pos.toShortString(), id), true);
         return 1;
     }
 
-    /**
-     * /qisplan2 module block remove <pos> <module>
-     *
-     * 从方块实体移除模块。
-     */
-    private static int moduleBlockRemove(
-            CommandContext<CommandSourceStack> context
-    ) throws CommandSyntaxException {
+    /** 同时支持有方块实体的宿主，以及鬼草丛、鬼地毯等静态方块宿主。 */
+    private static int moduleBlockInfo(CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
         var source = context.getSource();
-
-        BlockPos pos = BlockPosArgument.getLoadedBlockPos(context, "pos");
-
-        ResourceLocation moduleId =
-                ResourceLocationArgument.getId(context, "module");
-
-        BlockEntity blockEntity =
-                source.getLevel().getBlockEntity(pos);
-
-        if (!(blockEntity instanceof GhostModuleDataModifier modifier)) {
-            source.sendFailure(
-                    Component.literal(
-                            "指定位置的方块实体不支持模块数据：" + pos
-                    )
-            );
-            return 0;
+        var pos = BlockPosArgument.getLoadedBlockPos(context, "pos");
+        var blockEntity = source.getLevel().getBlockEntity(pos);
+        GhostModuleHost host = blockEntity instanceof GhostModuleHost modules ? modules
+                : source.getLevel().getBlockState(pos).getBlock() instanceof GhostModuleHost modules ? modules : null;
+        if (host == null) {
+            source.sendFailure(moduleText("block_not_host", pos.toShortString())); return 0;
         }
-
-        if (!modifier.removeModule(moduleId)) {
-            source.sendFailure(
-                    Component.literal(
-                            "移除模块失败：" + moduleId
-                                    + "。请检查该模块是否存在。"
-                    )
-            );
-            return 0;
-        }
-
-        source.sendSuccess(
-                () -> Component.literal(
-                        "已从 " + pos + " 移除模块：" + moduleId
-                ),
-                true
-        );
-
-        return 1;
+        return printModuleInfo(source, host, moduleText("block_header", pos.toShortString()));
     }
 
     /**
-     * /qisplan2 module block info <pos>
-     *
-     * 查看方块实体携带的模块。
+     * 全部宿主共用详细信息输出。占位来自承载分配结果，不能将模块要求的皮肤误报为物品实际占据的部位。
+     * 临时死机 tick、永久死机和裁决死机分别显示；规则就绪不代表当前能力媒介已经满足。
+     * 独有数据放在悬浮文本里，避免较大的 NBT 直接刷满聊天栏。
      */
-    private static int moduleBlockInfo(
-            CommandContext<CommandSourceStack> context
-    ) throws CommandSyntaxException {
-        var source = context.getSource();
-
-        BlockPos pos = BlockPosArgument.getLoadedBlockPos(context, "pos");
-
-        BlockEntity blockEntity =
-                source.getLevel().getBlockEntity(pos);
-
-        if (!(blockEntity instanceof GhostModuleDataModifier modifier)) {
-            source.sendFailure(
-                    Component.literal(
-                            "指定位置的方块实体不支持模块数据：" + pos
-                    )
-            );
-            return 0;
+    private static int printModuleInfo(CommandSourceStack source, GhostModuleHost host, Component header) {
+        var entries = host.getModules();
+        var allocation = host.bearing();
+        source.sendSuccess(() -> header, false);
+        source.sendSuccess(() -> moduleText("summary", entries.size(), host.composition().capacities().size()), false);
+        if (entries.isEmpty()) source.sendSuccess(() -> moduleText("empty"), false);
+        for (var entry : entries) {
+            var definition = GhostModuleRegistry.get(entry.id());
+            boolean replacement = definition != null && definition.form().kind() == GhostModuleForm.Kind.REPLACEMENT;
+            Component form = moduleText(definition == null ? "unknown_form" : replacement ? "replacement" : "independent");
+            Component required = replacement ? partName(definition.form().part()) : moduleText("none");
+            MutableComponent occupied = Component.empty();
+            for (var slot : allocation.occupants().entrySet()) {
+                if (!slot.getValue().contains(entry.id())) continue;
+                if (!occupied.getSiblings().isEmpty()) occupied.append(moduleText("separator"));
+                occupied.append(moduleText("slot", partName(slot.getKey()), slot.getValue().size(),
+                        host.composition().capacities().get(slot.getKey())));
+            }
+            Component actual = occupied.getSiblings().isEmpty() ? moduleText("none") : occupied;
+            boolean carried = allocation.accepted().contains(entry.id());
+            Component status = moduleText(carried ? "carried" : definition == null ? "unregistered" : "unavailable");
+            Component maximum = definition == null ? moduleText("unknown_value") : Component.literal(Double.toString(definition.getMaxRevival()));
+            source.sendSuccess(() -> moduleText("name", moduleName(entry.id()), entry.id()), false);
+            source.sendSuccess(() -> moduleText("values", entry.intensity(), entry.revival(), maximum), false);
+            source.sendSuccess(() -> moduleText("bearing", form, required, actual, status), false);
+            source.sendSuccess(() -> moduleText("states", moduleBoolean(entry.sleeping()),
+                    moduleBoolean(entry.deadlocked()), GhostModuleCombatState.ticks(entry),
+                    moduleBoolean(GhostModuleCombatState.permanent(entry)),
+                    moduleBoolean(carried && GhostModuleCombatState.available(entry))), false);
+            source.sendSuccess(() -> moduleText("custom_data", entry.customData().getAllKeys().size())
+                    .withStyle(style -> style.withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT,
+                            Component.literal(entry.customData().toString())))), false);
         }
-
-        List<GhostModuleData.Entry> modules = modifier.getModules();
-
-        source.sendSuccess(
-                () -> Component.literal("方块位置：" + pos),
-                false
-        );
-
-        if (modules.isEmpty()) {
-            source.sendSuccess(
-                    () -> Component.literal("  尚未装载任何厉鬼模块。"),
-                    false
-            );
-            return 1;
-        }
-
-        for (GhostModuleData.Entry entry : modules) {
-            source.sendSuccess(
-                    () -> Component.literal(
-                            "  - " + entry.id()
-                                    + "（灵异强度：" + entry.intensity()
-                                    + "，复苏值：" + entry.revival()
-                                    + "）"
-                    ),
-                    false
-            );
-        }
-
-        return modules.size();
+        return Math.max(1, entries.size());
     }
 
     /*

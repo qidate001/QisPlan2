@@ -43,6 +43,7 @@ public final class PossessionInvocationTest {
         BlockSpreadTest.run();
         GhostShroudTest.run();
         GhostBearingTest.run();
+        ModuleCommandTextTest.run();
         GhostModuleRegistry.register(new GhostModule() {
             /**
              * 获取当前定义的唯一标识。
