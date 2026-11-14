@@ -1,17 +1,12 @@
 package com.qidate.qisplan2.network.divinationslip;
 
-import com.qidate.qisplan2.ghost.module.host.player.DivinationSlipInput;
 import com.qidate.qisplan2.core.ModItems;
-import com.qidate.qisplan2.ghost.module.implementation.divinationslip.GhostDivinationSlipModule;
-import com.qidate.qisplan2.ghost.possession.manager.PossessionHandler;
 import com.qidate.qisplan2.network.payload.GhostDivinationResultPayload;
-import com.qidate.qisplan2.network.payload.GhostDivinationUsePayload;
 import net.minecraft.client.Minecraft;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.ItemStack;
 import net.neoforged.neoforge.network.PacketDistributor;
 import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent;
-import net.neoforged.neoforge.network.handling.IPayloadContext;
 
 public final class GhostDivinationNetwork {
 
@@ -30,18 +25,6 @@ public final class GhostDivinationNetwork {
 
         var registrar =
                 event.registrar("1");
-
-        /*
-         * ========================================================
-         * C2S：鬼签使用
-         * ========================================================
-         */
-
-        registrar.playToServer(
-                GhostDivinationUsePayload.TYPE,
-                GhostDivinationUsePayload.STREAM_CODEC,
-                GhostDivinationNetwork::handleUse
-        );
 
         /*
          * ========================================================
@@ -97,43 +80,6 @@ public final class GhostDivinationNetwork {
 
     /*
      * ========================================================
-     * C2S：处理鬼签使用
-     * ========================================================
-     */
-
-    private static void handleUse(
-            GhostDivinationUsePayload payload,
-            IPayloadContext context
-    ) {
-
-        context.enqueueWork(() -> {
-
-            if (!(context.player()
-                    instanceof ServerPlayer player)) {
-
-                return;
-            }
-
-            /*
-             * 必须真的驾驭了鬼签。
-             */
-            if (!PossessionHandler.hasGhost(
-                    player,
-                    GhostDivinationSlipModule.ID
-            )) {
-
-                return;
-            }
-
-            DivinationSlipInput.useResult(
-                    player,
-                    payload.result()
-            );
-        });
-    }
-
-    /*
-     * ========================================================
      * S2C：发送鬼签结果
      * ========================================================
      */
@@ -151,20 +97,4 @@ public final class GhostDivinationNetwork {
         );
     }
 
-    /*
-     * ========================================================
-     * C2S：发送鬼签使用
-     * ========================================================
-     */
-
-    public static void sendUse(
-            int result
-    ) {
-
-        PacketDistributor.sendToServer(
-                new GhostDivinationUsePayload(
-                        result
-                )
-        );
-    }
 }

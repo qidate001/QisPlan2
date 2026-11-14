@@ -16,6 +16,12 @@ import net.minecraft.world.phys.Vec3;
  * 目标实体是世界中的作用对象，与模块自己的载体不是同一个概念。
  */
 public interface GhostWorldAccess {
+    /** 查询主动操作媒介，不暴露来源对象或载体种类。 */
+    default boolean canActivate(GhostActiveAction action) { return false; }
+
+    /** 执行已经满足媒介的主动操作，目标由宿主适配层在服务端确定。 */
+    default boolean activate(GhostActiveAction action) { return false; }
+
     /** 尝试永久支付最大生命代价；不足时不修改属性，成功后保留指定生命下限。 */
     default boolean consumeMaxHealth(ResourceLocation lossId, double cost, double minimum) { return false; }
 

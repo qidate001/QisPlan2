@@ -21,7 +21,6 @@ import com.qidate.qisplan2.ghost.module.GhostModuleInteractionHandler;
 import com.qidate.qisplan2.ghost.module.GhostModuleRegistry;
 import com.qidate.qisplan2.ghost.module.GhostPerceptionHandler;
 import com.qidate.qisplan2.ghost.module.sound.GhostSoundManager;
-import com.qidate.qisplan2.ghost.possession.ability.GhostAbilityInteractionHandler;
 import java.io.IOException;
 import net.minecraft.client.renderer.ShaderInstance;
 import net.minecraft.resources.ResourceLocation;
@@ -126,7 +125,7 @@ public class QisPlan2 {
         CurseRegistry.bootstrap();
 
         // 驭鬼事件注册
-        GhostAbilityInteractionHandler.register();
+
 
         // 厉鬼模块注册
         GhostModuleRegistry.bootstrap();

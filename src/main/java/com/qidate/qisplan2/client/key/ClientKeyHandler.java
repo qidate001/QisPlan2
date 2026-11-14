@@ -1,157 +1,46 @@
 package com.qidate.qisplan2.client.key;
 
+import com.mojang.blaze3d.platform.InputConstants;
 import com.qidate.qisplan2.client.screen.PossessionScreen.PossessionScreen;
-import com.qidate.qisplan2.network.divinationslip.GhostDivinationNetwork;
-import com.qidate.qisplan2.network.ghostdomain.GhostDomainNetwork;
-import com.qidate.qisplan2.network.ghosteye.GhostEyeNetwork;
-import com.qidate.qisplan2.network.ghostmist.GhostMistNetwork;
+import com.qidate.qisplan2.client.screen.AbilityWheelScreen;
 import net.minecraft.client.Minecraft;
 import net.neoforged.neoforge.client.event.ClientTickEvent;
 import net.neoforged.neoforge.client.event.RegisterKeyMappingsEvent;
+import org.lwjgl.glfw.GLFW;
 
-import static com.qidate.qisplan2.client.key.ModKeyMappings.*;
-
+/** 按住打开、松开提交；一次按住最多打开一次，鼠标确认后不会立刻重开。 */
 public final class ClientKeyHandler {
-
-    private ClientKeyHandler() {
+    private static boolean latched;
+    /** 输入管理器无需实例化。 */
+    private ClientKeyHandler() {}
+    /** 只注册界面与轮盘两个通用按键。 */
+    public static void registerKeyMappings(RegisterKeyMappingsEvent event) {
+        event.register(ModKeyMappings.OPEN_POSSESSION_SCREEN);
+        event.register(ModKeyMappings.ABILITY_WHEEL);
     }
-
-    public static void registerKeyMappings(
-            RegisterKeyMappingsEvent event
-    ) {
-
-        event.register(OPEN_POSSESSION_SCREEN);
-
-        event.register(GHOST_DIVINATION_LIFE);
-        event.register(GHOST_DIVINATION_DEATH);
-        event.register(GHOST_DIVINATION_GHOST);
-
-        event.register(GHOST_EYE_LAYER_UP);
-        event.register(GHOST_EYE_LAYER_DOWN);
-        event.register(GHOST_EYE_SELF_LAYER_UP);
-        event.register(GHOST_EYE_SELF_LAYER_DOWN);
-        event.register(GHOST_EYE_TOGGLE);
-        event.register(GHOST_EYE_REBOOT);
-
-        /*
-         * ========================================================
-         * 鬼雾
-         * ========================================================
-         */
-
-        event.register(
-                GHOST_MIST_TOGGLE
-        );
-
-        event.register(GHOST_DOMAIN_TELEPORT);
-        event.register(GHOST_DOMAIN_RAISE_LAYER);
-        event.register(GHOST_DOMAIN_LOWER_LAYER);
+    /** 读取实际按键状态，避免打开 Screen 后 KeyMapping 被原版清零造成误释放。 */
+    public static boolean wheelHeld() {
+        var key = ModKeyMappings.ABILITY_WHEEL.getKey();
+        long window = Minecraft.getInstance().getWindow().getWindow();
+        if (key.getValue() < 0) return false;
+        if (key.getType() == InputConstants.Type.MOUSE)
+            return GLFW.glfwGetMouseButton(window, key.getValue()) == GLFW.GLFW_PRESS;
+        return InputConstants.isKeyDown(window, key.getValue());
     }
-
-    public static void clientTick(
-            ClientTickEvent.Post event
-    ) {
-
-        Minecraft minecraft =
-                Minecraft.getInstance();
-
-        while (OPEN_POSSESSION_SCREEN.consumeClick()) {
-
-            if (minecraft.screen == null) {
-
-                minecraft.setScreen(
-                        new PossessionScreen()
-                );
-            }
+    /** 只在游戏中允许打开；失焦、死亡和其他界面都不会产生技能请求。 */
+    public static void clientTick(ClientTickEvent.Post event) {
+        var mc = Minecraft.getInstance();
+        boolean held = wheelHeld();
+        if (!held) latched = false;
+        if (mc.screen instanceof AbilityWheelScreen wheel) {
+            if (!mc.isWindowActive() || mc.player == null || !mc.player.isAlive()) wheel.cancel();
+            else if (!held) wheel.confirm();
+        } else if (held && !latched) {
+            latched = true;
+            if (mc.screen == null && mc.player != null && mc.level != null && mc.player.isAlive()
+                    && !mc.player.isSpectator() && mc.isWindowActive()) mc.setScreen(new AbilityWheelScreen());
         }
-
-
-        /*
-         * ========================================================
-         * 鬼签
-         * ========================================================
-         */
-
-        // 活签
-        while (GHOST_DIVINATION_LIFE.consumeClick()) {
-            GhostDivinationNetwork.sendUse(0);
-        }
-
-        // 死签
-        while (GHOST_DIVINATION_DEATH.consumeClick()) {
-            GhostDivinationNetwork.sendUse(1);
-        }
-
-        // 鬼签
-        while (GHOST_DIVINATION_GHOST.consumeClick()) {
-            GhostDivinationNetwork.sendUse(2);
-        }
-
-        /*
-         * ========================================================
-         * 鬼眼
-         * ========================================================
-         */
-
-        // 提高鬼域总层数
-        while (GHOST_EYE_LAYER_UP.consumeClick()) {
-            GhostEyeNetwork.sendLayerChange(1);
-        }
-
-        // 降低鬼域总层数
-        while (GHOST_EYE_LAYER_DOWN.consumeClick()) {
-            GhostEyeNetwork.sendLayerChange(-1);
-        }
-
-        // 提高玩家自己所在鬼域层数
-        while (GHOST_EYE_SELF_LAYER_UP.consumeClick()) {
-            GhostEyeNetwork.sendSelfLayerChange(1);
-        }
-
-        // 降低玩家自己所在鬼域层数
-        while (GHOST_EYE_SELF_LAYER_DOWN.consumeClick()) {
-            GhostEyeNetwork.sendSelfLayerChange(-1);
-        }
-
-        // 开关鬼眼
-        while (GHOST_EYE_TOGGLE.consumeClick()) {
-            GhostEyeNetwork.sendToggle();
-        }
-
-        // 鬼眼重启
-        if (GHOST_EYE_REBOOT.consumeClick()) {
-            GhostEyeNetwork.sendReboot();
-        }
-
-        /*
-         * ========================================================
-         * 鬼雾
-         * ========================================================
-         */
-
-        while (GHOST_MIST_TOGGLE.consumeClick()) {
-            GhostMistNetwork.sendToggle();
-        }
-
-        /*
-         * ========================================================
-         * 鬼域
-         * ========================================================
-         */
-
-        // 化虹
-        if (GHOST_DOMAIN_TELEPORT.consumeClick()) {
-            GhostDomainNetwork.sendTeleport();
-        }
-
-        // 提升指向的生物所在层数
-        if (GHOST_DOMAIN_RAISE_LAYER.consumeClick()) {
-            GhostDomainNetwork.sendRaiseLayer();
-        }
-
-        // 降低指向的生物所在层数
-        if (GHOST_DOMAIN_LOWER_LAYER.consumeClick()) {
-            GhostDomainNetwork.sendLowerLayer();
-        }
+        while (ModKeyMappings.OPEN_POSSESSION_SCREEN.consumeClick())
+            if (mc.screen == null && mc.player != null) mc.setScreen(new PossessionScreen());
     }
 }

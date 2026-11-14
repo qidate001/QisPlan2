@@ -1,5 +1,8 @@
 package com.qidate.qisplan2.ghost.module.ability;
 
+import com.qidate.qisplan2.ghost.module.GhostMedium;
+import java.util.List;
+
 import net.minecraft.resources.ResourceLocation;
 
 /**
@@ -11,6 +14,25 @@ import net.minecraft.resources.ResourceLocation;
  * 不依赖某个特定的 GhostEvent 才能执行。
  */
 public interface GhostAbility {
+    /** 名称由能力 ID 推导语言键，显示层不再把整个厉鬼名称当成唯一技能名称。 */
+    default String translationKey() {
+        return "ability." + getId().getNamespace() + "." + getId().getPath().replace('/', '.');
+    }
+
+    /** 能力可以声明独立图标；未指定时使用通用图标，保证新能力可直接进入界面。 */
+    default ResourceLocation iconTexture() {
+        return ResourceLocation.fromNamespaceAndPath("minecraft", "textures/item/nether_star.png");
+    }
+
+    /** 是否支持主动选择。规则回调和持续维护默认不作为可手动释放的按钮。 */
+    default boolean manuallySelectable() { return false; }
+
+    /** 能力自己的硬性媒介，统一执行器在每次调用和延迟执行前重新检查。 */
+    default List<GhostMedium> media(GhostAbilityContext context) { return List.of(); }
+
+    /** 默认同时继承模块媒介；独立主动操作可完整声明自身媒介。 */
+    default boolean inheritsModuleMedia() { return true; }
+
 
     /**
      * 获取能力在所属模块中的唯一标识。

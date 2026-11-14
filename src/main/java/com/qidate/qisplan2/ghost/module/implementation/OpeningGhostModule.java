@@ -1,5 +1,8 @@
 package com.qidate.qisplan2.ghost.module.implementation;
 
+import com.qidate.qisplan2.ghost.module.ability.WorldActionAbility;
+import com.qidate.qisplan2.ghost.module.environment.GhostActiveAction;
+
 import com.qidate.qisplan2.death.ModDamageTypes;
 import com.qidate.qisplan2.ghost.module.environment.GhostWorldAccess;
 import net.minecraft.world.phys.Vec3;
@@ -30,6 +33,13 @@ import static com.qidate.qisplan2.QisPlan2.MODID;
  * 限制袭击必须由有效门事件触发，能力负责瞬移和裁决后的袭击。
  */
 public final class OpeningGhostModule implements GhostModule {
+    /** 声明各个可主动选择的能力；定义只认识世界端口，不识别宿主类型。 */
+    @Override public List<GhostAbility> getActiveAbilities() {
+        return List.of(
+            WorldActionAbility.of(ID, "hunt", "minecraft:textures/item/oak_door.png", GhostActiveAction.DOOR_HUNT)
+        );
+    }
+
     public static final ResourceLocation ID = ResourceLocation.fromNamespaceAndPath(MODID, "opening_ghost");
     public static final double INITIAL_INTENSITY = 5.0D;
     private static final double TRIGGER_RADIUS = 100.0D;

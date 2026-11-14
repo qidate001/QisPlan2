@@ -1,5 +1,7 @@
 package com.qidate.qisplan2.ghost.module.implementation.eye;
 
+import com.qidate.qisplan2.ghost.module.environment.GhostActiveAction;
+import com.qidate.qisplan2.ghost.module.ability.WorldActionAbility;
 import com.qidate.qisplan2.ghost.bearing.SpiritualPart;
 import com.qidate.qisplan2.ghost.corrosion.GhostCorrosion;
 import com.qidate.qisplan2.ghost.module.GhostModule;
@@ -17,11 +19,26 @@ import net.minecraft.resources.ResourceLocation;
 /**
  * 鬼眼模块的最小实现。
  *
- * 目前只声明主动切换鬼域，运行时维护与清理由环境出口负责。
+ * 声明鬼域开关、层数调节、化虹与重启等独立主动能力，效果由环境出口负责。
  * 不声明语义事件、触发规则或额外袭击能力，后续完善鬼眼规则时再扩展。
  * 鬼域持久状态保存在模块 customData，模块不读取具体载体。
  */
 public final class GhostEyeModule implements GhostModule {
+    /** 显式声明可主动调用的独立技能，宿主差异由世界端口处理。 */
+    @Override public List<GhostAbility> getActiveAbilities() {
+        return List.of(
+            WorldActionAbility.of(ID, "cast_toggle", "minecraft:textures/item/ender_eye.png", GhostActiveAction.TOGGLE_DOMAIN),
+            WorldActionAbility.of(ID, "domain_up", "minecraft:textures/item/glowstone_dust.png", GhostActiveAction.DOMAIN_UP),
+            WorldActionAbility.of(ID, "domain_down", "minecraft:textures/item/redstone.png", GhostActiveAction.DOMAIN_DOWN),
+            WorldActionAbility.of(ID, "self_up", "minecraft:textures/item/feather.png", GhostActiveAction.SELF_UP),
+            WorldActionAbility.of(ID, "self_down", "minecraft:textures/item/flint.png", GhostActiveAction.SELF_DOWN),
+            WorldActionAbility.of(ID, "reboot", "minecraft:textures/item/clock_00.png", GhostActiveAction.REBOOT),
+            WorldActionAbility.of(ID, "teleport", "minecraft:textures/item/ender_pearl.png", GhostActiveAction.TELEPORT),
+            WorldActionAbility.of(ID, "raise_target", "minecraft:textures/item/feather.png", GhostActiveAction.RAISE_TARGET),
+            WorldActionAbility.of(ID, "lower_target", "minecraft:textures/item/flint.png", GhostActiveAction.LOWER_TARGET)
+        );
+    }
+
     public static final ResourceLocation ID = ResourceLocation.fromNamespaceAndPath("qisplan2", "ghost_eye");
     public static final ResourceLocation TOGGLE_DOMAIN = ResourceLocation.fromNamespaceAndPath("qisplan2", "ghost_eye/toggle_domain");
 

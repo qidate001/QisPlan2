@@ -1,5 +1,6 @@
 package com.qidate.qisplan2.ghost.possession.ability.ghostdoor;
 
+import java.util.function.Predicate;
 import com.qidate.qisplan2.network.ghostdoor.GhostDoorNetwork;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
@@ -258,10 +259,14 @@ public final class GhostDoorMarkManager {
      * ============================================================
      */
 
-    public static LivingEntity findNearestMarkedTarget(
-            ServerPlayer viewer,
-            ServerLevel level
-    ) {
+    /** 兼容查询所有门鬼标记的内部调用。 */
+    public static LivingEntity findNearestMarkedTarget(ServerPlayer viewer, ServerLevel level) {
+        return findNearestMarkedTarget(viewer, level, target -> true);
+    }
+
+    /** 按所选能力筛选标记；保持原有已加载目标范围和失效标记清理。 */
+    public static LivingEntity findNearestMarkedTarget(ServerPlayer viewer, ServerLevel level,
+            Predicate<LivingEntity> filter) {
 
         Map<UUID, MarkState> playerMarks =
                 MARKS.get(
@@ -345,6 +350,8 @@ public final class GhostDoorMarkManager {
                 continue;
             }
 
+
+            if (!filter.test(living)) continue;
 
             double distance =
                     viewer.distanceToSqr(

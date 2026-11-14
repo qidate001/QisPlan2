@@ -1,15 +1,12 @@
 package com.qidate.qisplan2.network.ghostdoor;
 
 import com.qidate.qisplan2.client.DoorGhostMarkClient;
-import com.qidate.qisplan2.ghost.possession.ability.ghostdoor.GhostDoorAbilityHandler;
-import com.qidate.qisplan2.network.payload.GhostDoorAbilityPayload;
 import com.qidate.qisplan2.network.payload.GhostDoorMarkPayload;
 
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
 import net.neoforged.neoforge.network.PacketDistributor;
 import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent;
-import net.neoforged.neoforge.network.handling.IPayloadContext;
 
 import java.util.UUID;
 
@@ -46,36 +43,7 @@ public final class GhostDoorNetwork {
                 }
         );
 
-        /*
-         * ========================================================
-         * C2S：门鬼能力
-         * ========================================================
-         */
 
-        registrar.playToServer(
-                GhostDoorAbilityPayload.TYPE,
-                GhostDoorAbilityPayload.STREAM_CODEC,
-                GhostDoorNetwork::handleAbility
-        );
-    }
-
-    private static void handleAbility(
-            GhostDoorAbilityPayload payload,
-            IPayloadContext context
-    ) {
-
-        context.enqueueWork(() -> {
-
-            if (!(context.player()
-                    instanceof ServerPlayer player)) {
-
-                return;
-            }
-
-            GhostDoorAbilityHandler.use(
-                    player
-            );
-        });
     }
 
     /*
@@ -108,16 +76,4 @@ public final class GhostDoorNetwork {
         );
     }
 
-    /*
-     * ========================================================
-     * C2S：使用门鬼能力
-     * ========================================================
-     */
-
-    public static void sendAbility() {
-
-        PacketDistributor.sendToServer(
-                new GhostDoorAbilityPayload()
-        );
-    }
 }

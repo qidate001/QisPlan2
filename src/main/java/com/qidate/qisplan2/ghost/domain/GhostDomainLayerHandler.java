@@ -14,19 +14,17 @@ public final class GhostDomainLayerHandler {
     public static boolean raise(
             ServerPlayer player
     ) {
-        return changeLayer(player, 1);
+        return changeLayer(player, 1, GhostDomainManager.get(player.serverLevel()).getOwnEffectiveDomain(player));
     }
 
     public static boolean lower(
             ServerPlayer player
     ) {
-        return changeLayer(player, -1);
+        return changeLayer(player, -1, GhostDomainManager.get(player.serverLevel()).getOwnEffectiveDomain(player));
     }
 
-    private static boolean changeLayer(
-            ServerPlayer player,
-            int delta
-    ) {
+    /** 只能改变所选模块鬼域覆盖的目标；被其他更强鬼域接管时拒绝。 */
+    public static boolean changeLayer(ServerPlayer player, int delta, GhostDomain selectedDomain) {
 
         Entity target =
                 GhostDomainTargetHandler.getLookTarget(player);
@@ -44,7 +42,7 @@ public final class GhostDomainLayerHandler {
         GhostDomain domain =
                 manager.getEffectiveDomain(target);
 
-        if (domain == null) {
+        if (domain == null || selectedDomain == null || !domain.getId().equals(selectedDomain.getId())) {
             return false;
         }
 

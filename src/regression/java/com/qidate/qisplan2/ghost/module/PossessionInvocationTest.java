@@ -44,6 +44,7 @@ public final class PossessionInvocationTest {
         GhostShroudTest.run();
         GhostBearingTest.run();
         ModuleCommandTextTest.run();
+        AbilityWheelTest.run();
         GhostModuleRegistry.register(new GhostModule() {
             /**
              * 获取当前定义的唯一标识。

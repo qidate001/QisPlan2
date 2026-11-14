@@ -31,21 +31,21 @@ public final class DivinationSlipInput {
      * 将服务端确认的签文结果转换为鬼签主动能力调用。
      * 准备能力后结算复苏；生死签提交裁决，鬼签结果直接执行已准备效果。
      */
-    public static void useResult(
+    public static boolean useResult(
             ServerPlayer player,
             int result
     ) {
         var host = new PlayerGhostModuleHost(player);
-        if (result < 0 || result > 2 || !player.isAlive() || !host.hasModule(ID)) return;
+        if (result < 0 || result > 2 || !player.isAlive() || !host.hasModule(ID)) return false;
         // 签文结果是事实；直接准备 POSSESSION 能力，不经过规则运行时。
         var context = new GhostAbilityContext(host, ID, USE_ABILITY_ID,
                 GhostAbilityContext.Source.POSSESSION, new DivinationSlipResultEvent(player, result));
         Runnable effect = GhostAbilityExecutor.prepareDeferred(context);
-        if (effect == null) return;
+        if (effect == null) return false;
         addRevival(player);
         if (result == GHOST_RESULT) {
             effect.run();
-            return;
+            return true;
         }
         GhostInfluenceSession session = new GhostInfluenceSession();
         GhostInfluenceCollector.collectCurses(session, host, ID, USE_ABILITY_ID,
@@ -54,6 +54,7 @@ public final class DivinationSlipInput {
                 result == LIFE_RESULT ? GhostInfluenceType.PROTECTION : GhostInfluenceType.ATTACK,
                 context.getModuleContext().intensity(), session.getSourceId(host, ID), session.getBatchId()), effect);
         session.resolveAndApply();
+        return true;
     }
 
     /**

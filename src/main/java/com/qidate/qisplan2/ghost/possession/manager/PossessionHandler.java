@@ -14,11 +14,9 @@ import com.qidate.qisplan2.ghost.module.ability.GhostAbilityContext;
 import com.qidate.qisplan2.ghost.module.ability.GhostAbilityExecutor;
 import com.qidate.qisplan2.ghost.module.data.GhostModuleData;
 import com.qidate.qisplan2.ghost.module.event.ModuleTickEvent;
-import com.qidate.qisplan2.ghost.module.host.player.PlayerAbilityParameters;
 import com.qidate.qisplan2.ghost.module.host.player.PlayerGhostData;
 import com.qidate.qisplan2.ghost.module.host.player.PlayerGhostModuleContext;
 import com.qidate.qisplan2.ghost.module.host.player.PlayerGhostModuleHost;
-import com.qidate.qisplan2.ghost.module.host.player.PlayerModuleAbility;
 import com.qidate.qisplan2.ghost.module.host.player.PlayerModuleEvents;
 import com.qidate.qisplan2.ghost.possession.data.PossessedGhostData;
 import com.qidate.qisplan2.ghost.possession.data.PossessedGhostState;
@@ -1186,45 +1184,6 @@ public final class PossessionHandler {
         GhostModuleRuntime.dispatch(host, new ModuleTickEvent());
         PlayerModuleEvents.tickTouch(player, host);
     }
-
-
-    /*
-     * ============================================================
-     * 主动能力
-     * ============================================================
-     */
-
-    public static boolean useAbility(
-            ServerPlayer player,
-            ResourceLocation ghost,
-            LivingEntity target
-    ) {
-        GhostModule module = GhostModuleRegistry.get(ghost);
-        var host = new PlayerGhostModuleHost(player);
-        if (module == null || !host.hasModule(ghost)) return false;
-        return GhostAbilityExecutor.tryExecuteWithResult(new GhostAbilityContext(host, ghost, PlayerModuleAbility.id(module),
-                GhostAbilityContext.Source.POSSESSION, null, () -> {}, new PlayerAbilityParameters(target, null)));
-    }
-
-
-    /*
-     * ============================================================
-     * 方块主动能力
-     * ============================================================
-     */
-
-    public static boolean useAbilityOnBlock(
-            ServerPlayer player,
-            ResourceLocation ghost,
-            BlockPos pos
-    ) {
-        GhostModule module = GhostModuleRegistry.get(ghost);
-        var host = new PlayerGhostModuleHost(player);
-        if (module == null || !host.hasModule(ghost)) return false;
-        return GhostAbilityExecutor.tryExecuteWithResult(new GhostAbilityContext(host, ghost, PlayerModuleAbility.id(module),
-                GhostAbilityContext.Source.POSSESSION, null, () -> {}, new PlayerAbilityParameters(null, pos)));
-    }
-
 
     /*
      * ============================================================

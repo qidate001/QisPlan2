@@ -1,4 +1,8 @@
 package com.qidate.qisplan2.ghost.module.implementation.nightwanderer;
+
+import com.qidate.qisplan2.ghost.module.ability.WorldActionAbility;
+import com.qidate.qisplan2.ghost.module.environment.GhostActiveAction;
+import com.qidate.qisplan2.ghost.module.ability.GhostAbility;
 import com.qidate.qisplan2.ghost.module.environment.GhostBehavior;
 
 import com.qidate.qisplan2.QisPlan2;
@@ -21,6 +25,13 @@ import static com.qidate.qisplan2.QisPlan2.MODID;
  * 击杀数和各项计时由 NightWandererState 写入模块 customData。
  */
 public final class NightWandererModule implements GhostModule {
+    /** 声明各个可主动选择的能力；定义只认识世界端口，不识别宿主类型。 */
+    @Override public List<GhostAbility> getActiveAbilities() {
+        return List.of(
+            WorldActionAbility.of(ID, "strike", "minecraft:textures/item/iron_sword.png", GhostActiveAction.MELEE)
+        );
+    }
+
     /**
      * 声明需要的自主行动类型。
      * 具体 Goal 的创建、资源竞争和停止清理由行动适配层负责。

@@ -1,8 +1,6 @@
 package com.qidate.qisplan2.network.ghostdomain;
 
 import com.qidate.qisplan2.ghost.domain.GhostDomain;
-import com.qidate.qisplan2.ghost.domain.GhostDomainLayerHandler;
-import com.qidate.qisplan2.ghost.domain.GhostDomainTeleportHandler;
 import com.qidate.qisplan2.ghost.domain.client.ClientGhostDomainManager;
 import com.qidate.qisplan2.ghost.domain.client.ClientGhostDomainVisionSystem;
 import com.qidate.qisplan2.ghost.isolation.GhostIsolationRegion;
@@ -16,7 +14,6 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.neoforged.neoforge.network.PacketDistributor;
 import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent;
-import net.neoforged.neoforge.network.handling.IPayloadContext;
 
 import java.util.*;
 
@@ -263,41 +260,6 @@ public final class GhostDomainNetwork {
                 }
         );
 
-        /*
-         * ========================================================
-         * C2S：化虹
-         * ========================================================
-         */
-
-        registrar.playToServer(
-                GhostDomainTeleportPayload.TYPE,
-                GhostDomainTeleportPayload.STREAM_CODEC,
-                GhostDomainNetwork::handleTeleport
-        );
-
-        /*
-         * ========================================================
-         * C2S：实体提升层数
-         * ========================================================
-         */
-
-        registrar.playToServer(
-                GhostDomainRaiseLayerPayload.TYPE,
-                GhostDomainRaiseLayerPayload.STREAM_CODEC,
-                GhostDomainNetwork::handleRaiseLayer
-        );
-
-        /*
-         * ========================================================
-         * C2S：实体降低层数
-         * ========================================================
-         */
-
-        registrar.playToServer(
-                GhostDomainLowerLayerPayload.TYPE,
-                GhostDomainLowerLayerPayload.STREAM_CODEC,
-                GhostDomainNetwork::handleLowerLayer
-        );
     }
 
     /*
@@ -619,91 +581,9 @@ public final class GhostDomainNetwork {
 
     /*
      * ========================================================
-     * C2S：化虹
-     * ========================================================
-     */
-
-    private static void handleTeleport(
-            GhostDomainTeleportPayload payload,
-            IPayloadContext context
-    ) {
-
-        context.enqueueWork(() -> {
-
-            if (!(context.player()
-                    instanceof ServerPlayer player)) {
-
-                return;
-            }
-
-            GhostDomainTeleportHandler.teleport(
-                    player
-            );
-        });
-    }
-
-    /*
-     * ========================================================
-     * C2S：实体提升层数
-     * ========================================================
-     */
-
-    private static void handleRaiseLayer(
-            GhostDomainRaiseLayerPayload payload,
-            IPayloadContext context
-    ) {
-
-        context.enqueueWork(() -> {
-
-            if (!(context.player()
-                    instanceof ServerPlayer player)) {
-
-                return;
-            }
-
-            GhostDomainLayerHandler.raise(
-                    player
-            );
-        });
-    }
-
-    /*
-     * ========================================================
-     * C2S：实体降低层数
-     * ========================================================
-     */
-
-    private static void handleLowerLayer(
-            GhostDomainLowerLayerPayload payload,
-            IPayloadContext context
-    ) {
-
-        context.enqueueWork(() -> {
-
-            if (!(context.player()
-                    instanceof ServerPlayer player)) {
-
-                return;
-            }
-
-            GhostDomainLayerHandler.lower(
-                    player
-            );
-        });
-    }
-
-    /*
-     * ========================================================
      * 客户端：化虹
      * ========================================================
      */
-
-    public static void sendTeleport() {
-
-        PacketDistributor.sendToServer(
-                new GhostDomainTeleportPayload()
-        );
-    }
 
     /*
      * ========================================================
@@ -711,23 +591,11 @@ public final class GhostDomainNetwork {
      * ========================================================
      */
 
-    public static void sendRaiseLayer() {
-
-        PacketDistributor.sendToServer(
-                new GhostDomainRaiseLayerPayload()
-        );
-    }
-
     /*
      * ========================================================
      * 客户端：实体降低层数
      * ========================================================
      */
 
-    public static void sendLowerLayer() {
 
-        PacketDistributor.sendToServer(
-                new GhostDomainLowerLayerPayload()
-        );
-    }
 }

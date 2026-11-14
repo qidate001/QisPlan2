@@ -14,19 +14,15 @@ public final class GhostDomainTeleportHandler {
     private GhostDomainTeleportHandler() {
     }
 
-    public static boolean teleport(
-            ServerPlayer player
-    ) {
+    /** 保留内部通用调用，自动选择当前生效的己方鬼域。 */
+    public static boolean teleport(ServerPlayer player) {
+        return teleport(player, GhostDomainManager.get(player.serverLevel()).getOwnEffectiveDomain(player));
+    }
 
-        ServerLevel level =
-                player.serverLevel();
-
-        GhostDomainManager manager =
-                GhostDomainManager.get(level);
-
-        GhostDomain domain =
-                manager.getOwnEffectiveDomain(player);
-
+    /** 模块技能指定其自身鬼域，避免误借用另一模块的鬼域能力。 */
+    public static boolean teleport(ServerPlayer player, GhostDomain domain) {
+        ServerLevel level = player.serverLevel();
+        GhostDomainManager manager = GhostDomainManager.get(level);
         if (domain == null) {
             return false;
         }

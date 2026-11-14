@@ -1,5 +1,8 @@
 package com.qidate.qisplan2.ghost.module.host;
 
+import com.qidate.qisplan2.ghost.module.environment.GhostActiveAction;
+import com.qidate.qisplan2.ghost.module.host.player.PlayerActiveActions;
+
 import com.qidate.qisplan2.death.SupernaturalDeathHandler;
 import com.qidate.qisplan2.core.ModGameRules;
 import com.qidate.qisplan2.ghost.module.environment.BlockSpreadSpec;
@@ -50,6 +53,16 @@ public final class GhostWorldAdapters {
      */
     public static GhostWorldAccess bind(GhostModuleHost host, ResourceLocation id) {
         return new GhostWorldAccess() {
+            /** 主动输入的载体差异封闭在适配层，模块只看到操作是否受支持。 */
+            public boolean canActivate(GhostActiveAction action) {
+                return PlayerActiveActions.canActivate(host, id, action);
+            }
+
+            /** 再次检查并落实操作，不能由客户端传入目标或袭击强度。 */
+            public boolean activate(GhostActiveAction action) {
+                return PlayerActiveActions.activate(host, id, action);
+            }
+
             /**
              * 永久损失沿用传入的属性标识，兼容旧存档已支付的代价。
              * 扣除前检查预算；属性更新后同步当前生命上限并播放抵挡反馈。

@@ -1,4 +1,7 @@
 package com.qidate.qisplan2.ghost.module.implementation.mist;
+import com.qidate.qisplan2.ghost.module.ability.GhostAbility;
+import com.qidate.qisplan2.ghost.module.environment.GhostActiveAction;
+import com.qidate.qisplan2.ghost.module.ability.WorldActionAbility;
 import com.qidate.qisplan2.ghost.module.environment.GhostBehavior;
 
 import com.qidate.qisplan2.death.ModDamageTypes;
@@ -16,6 +19,16 @@ import static com.qidate.qisplan2.QisPlan2.MODID;
 
 /** 完整鬼雾模块：独立维护鬼域生命周期，游荡参与行为调度，鬼域袭击经过统一裁决。 */
 public final class GhostMistModule implements GhostModule {
+    /** 显式声明可主动调用的独立技能，宿主差异由世界端口处理。 */
+    @Override public List<GhostAbility> getActiveAbilities() {
+        return List.of(
+            WorldActionAbility.of(ID, "cast_toggle", "minecraft:textures/item/ender_pearl.png", GhostActiveAction.TOGGLE_DOMAIN),
+            WorldActionAbility.of(ID, "teleport", "minecraft:textures/item/ender_pearl.png", GhostActiveAction.TELEPORT),
+            WorldActionAbility.of(ID, "raise_target", "minecraft:textures/item/feather.png", GhostActiveAction.RAISE_TARGET),
+            WorldActionAbility.of(ID, "lower_target", "minecraft:textures/item/flint.png", GhostActiveAction.LOWER_TARGET)
+        );
+    }
+
     /**
      * 声明需要的自主行动类型。
      * 具体 Goal 的创建、资源竞争和停止清理由行动适配层负责。

@@ -1,4 +1,8 @@
 package com.qidate.qisplan2.ghost.module.implementation.knocking;
+
+import com.qidate.qisplan2.ghost.module.ability.WorldActionAbility;
+import com.qidate.qisplan2.ghost.module.environment.GhostActiveAction;
+import com.qidate.qisplan2.ghost.module.ability.GhostAbility;
 import com.qidate.qisplan2.ghost.module.environment.GhostBehavior;
 
 import com.qidate.qisplan2.death.ModDamageTypes;
@@ -21,6 +25,13 @@ import static com.qidate.qisplan2.QisPlan2.MODID;
  * 听声规则提交延迟袭击裁决，能力负责敲门、鬼门传播和获准后的灵异袭击。
  */
 public final class KnockingGhostModule implements GhostModule {
+    /** 声明各个可主动选择的能力；定义只认识世界端口，不识别宿主类型。 */
+    @Override public List<GhostAbility> getActiveAbilities() {
+        return List.of(
+            WorldActionAbility.of(ID, "cast_knock", "minecraft:textures/item/iron_door.png", GhostActiveAction.KNOCK)
+        );
+    }
+
     /**
      * 声明需要的自主行动类型。
      * 具体 Goal 的创建、资源竞争和停止清理由行动适配层负责。

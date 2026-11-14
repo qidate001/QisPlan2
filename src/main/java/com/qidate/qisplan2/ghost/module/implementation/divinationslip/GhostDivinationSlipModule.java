@@ -1,5 +1,8 @@
 package com.qidate.qisplan2.ghost.module.implementation.divinationslip;
 
+import com.qidate.qisplan2.ghost.module.ability.WorldActionAbility;
+import com.qidate.qisplan2.ghost.module.environment.GhostActiveAction;
+
 import com.qidate.qisplan2.QisPlan2;
 import com.qidate.qisplan2.death.ModDamageTypes;
 import com.qidate.qisplan2.death.SupernaturalDeathHandler;
@@ -35,6 +38,15 @@ import net.minecraft.world.entity.LivingEntity;
 import static com.qidate.qisplan2.QisPlan2.MODID;
 
 public final class GhostDivinationSlipModule implements GhostModule {
+    /** 声明各个可主动选择的能力；定义只认识世界端口，不识别宿主类型。 */
+    @Override public List<GhostAbility> getActiveAbilities() {
+        return List.of(
+            WorldActionAbility.of(ID, "life", "qisplan2:textures/item/life_sign.png", GhostActiveAction.DIVINATION_LIFE),
+            WorldActionAbility.of(ID, "death", "qisplan2:textures/item/death_sign.png", GhostActiveAction.DIVINATION_DEATH),
+            WorldActionAbility.of(ID, "ghost", "qisplan2:textures/item/ghost_sign.png", GhostActiveAction.DIVINATION_GHOST)
+        );
+    }
+
 
     public static final ResourceLocation ID =
             ResourceLocation.fromNamespaceAndPath(

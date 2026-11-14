@@ -6,8 +6,6 @@ import com.qidate.qisplan2.network.divinationslip.GhostDivinationNetwork;
 import com.qidate.qisplan2.network.ghostdoor.GhostDoorNetwork;
 import com.qidate.qisplan2.network.ghostdomain.GhostDomainNetwork;
 import com.qidate.qisplan2.network.ghostdoor.GhostDoorPlateNetwork;
-import com.qidate.qisplan2.network.ghosteye.GhostEyeNetwork;
-import com.qidate.qisplan2.network.ghostmist.GhostMistNetwork;
 import com.qidate.qisplan2.network.ghostsound.GhostSoundNetwork;
 import com.qidate.qisplan2.network.ghosttombstone.GhostTombstoneNetwork;
 import com.qidate.qisplan2.network.possession.GhostPossessionNetwork;
@@ -33,6 +31,7 @@ public final class QisNetwork {
          */
 
         GhostPossessionNetwork.register(event);
+        GhostAbilityNetwork.register(event);
 
         /*
          * ========================================================
@@ -65,22 +64,6 @@ public final class QisNetwork {
          */
 
         GhostDivinationNetwork.register(event);
-
-        /*
-         * ========================================================
-         * 鬼眼
-         * ========================================================
-         */
-
-        GhostEyeNetwork.register(event);
-
-        /*
-         * ========================================================
-         * 鬼雾
-         * ========================================================
-         */
-
-        GhostMistNetwork.register(event);
 
         /*
          * ========================================================
