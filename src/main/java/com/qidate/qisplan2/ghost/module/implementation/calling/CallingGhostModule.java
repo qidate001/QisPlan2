@@ -8,7 +8,8 @@ import com.qidate.qisplan2.ghost.module.environment.GhostBehavior;
 import com.qidate.qisplan2.ghost.module.event.*;
 import com.qidate.qisplan2.ghost.module.influence.GhostInfluenceType;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.util.Mth;
+import net.minecraft.world.phys.Vec3;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.entity.LivingEntity;
 import java.util.List;
 
@@ -16,6 +17,7 @@ import java.util.List;
 public final class CallingGhostModule implements GhostModule {
     public static final ResourceLocation ID = id("calling_ghost");
     public static final ResourceLocation FOLLOW = id("calling_ghost/follow_call");
+    public static final ResourceLocation CANCEL = id("calling_ghost/cancel_follow");
     public static final ResourceLocation ATTACK = id("calling_ghost/attack");
     public static final double INITIAL_INTENSITY = 30;
     /** 标识工具不包含宿主信息。 */
@@ -26,39 +28,44 @@ public final class CallingGhostModule implements GhostModule {
     public ResourceLocation getId() { return ID; }
     /** 提供新实例的初始强度和复苏。 */
     public GhostModuleInitialData getInitialData() { return new GhostModuleInitialData(INITIAL_INTENSITY, 0); }
-    /** 必须接近完全回头，允许十五度视角误差；不是相邻两帧转过四十五度。 */
-    public static boolean isTurnAround(float initial, float current) { return Math.abs(Mth.wrapDegrees(current - initial)) >= 165; }
-    /** 每次喊名的累计转动量递增，最长一次九十度，逐 tick 推进。 */
-    public static float turnAmount(int call) { return Math.min(90, Math.max(0, call) * 10F); }
+    /** 后方偏移只用开始追踪时的水平朝向，目标转头不会使来源绕到另一边。 */
+    public static Vec3 behindOffset(float initialYaw) {
+        double radians = Math.toRadians(initialYaw);
+        return new Vec3(Math.sin(radians) * 2.5, 1, -Math.cos(radians) * 2.5);
+    }
+    /** 第一次七十度，后续逐次增强到完整半圈；实际转向始终朝来源且不越过。 */
+    public static float turnAmount(int call) { return Math.min(180, Math.max(0, call) * 70F); }
 
-    /** 公开喊名要求可移动、可追踪；私有袭击只能针对真实回头事件中的当前目标。 */
+    /** 公开喊名要求可移动、可追踪；私有袭击只能针对真实看见来源事件中的当前目标。 */
     public List<GhostMedium> getMedia() { return List.of(new GhostMedium() {
         /** 返回能力或模块的稳定标识。 */
         public ResourceLocation getId() { return id("calling_ghost/target_medium"); }
         /** 校验硬性媒介，不产生世界效果。 */
         public boolean allows(GhostAbilityContext c) {
+            if (c.abilityId().equals(CANCEL)) return true;
             var world = c.getModuleContext().world();
+            if (c.abilityId().equals(FOLLOW) && c.source() == GhostAbilityContext.Source.POSSESSION
+                    && world.aimedTarget(32) == null) return true;
             LivingEntity target = c.source() == GhostAbilityContext.Source.POSSESSION ? world.aimedTarget(32) : world.target();
             if (!world.present() || !world.canTrack(target)) return false;
             if (c.abilityId().equals(FOLLOW)) return world.canMove();
-            return c.event() instanceof TargetTurnedAroundEvent turn && turn.target() == target
-                    && c.getModuleContext().getCustomData().getBoolean("heardCall")
-                    && isTurnAround(turn.initialYaw(), turn.currentYaw()) && world.validTarget(target);
+            return c.event() instanceof SourceSeenEvent turn && turn.observer() == target
+                    && world.sourceVisibleTo(target) && world.validTarget(target);
         }
     }); }
 
-    /** 自主喊名观察到回头后，在当前规则批次提交袭击。 */
+    /** 自主喊名观察到目标看见来源后，在当前规则批次提交袭击。 */
     public List<GhostRule> getRules() { return List.of(new GhostRule() {
         /** 返回能力或模块的稳定标识。 */
         public ResourceLocation getId() { return id("calling_ghost/turn_rule"); }
         /** 只筛选本规则能处理的语义事件。 */
-        public boolean supports(GhostEvent e) { return e instanceof TargetTurnedAroundEvent; }
+        public boolean supports(GhostEvent e) { return e instanceof SourceSeenEvent; }
         /** 判定本事件是否应触发自动规则。 */
         public boolean canTrigger(GhostRuleContext c, GhostEvent e) { return !c.getModuleContext().getCustomData().getBoolean("manualCalling"); }
         /** 在当前事件会话中提交能力影响。 */
         public void onTrigger(GhostRuleContext c, GhostEvent e) {
-            var turn = (TargetTurnedAroundEvent)e;
-            c.submitAbilityInfluence(ATTACK, turn, turn.target().getUUID(), GhostInfluenceType.ATTACK, c.getModuleContext().intensity());
+            var turn = (SourceSeenEvent)e;
+            c.submitAbilityInfluence(ATTACK, turn, turn.observer().getUUID(), GhostInfluenceType.ATTACK, c.getModuleContext().intensity());
         }
     }); }
 
@@ -76,26 +83,37 @@ public final class CallingGhostModule implements GhostModule {
         }
     }
 
-    /** 对外只提供喊名；攻击不接受自由瞄准目标。 */
+    /** 对外提供喊名和取消追踪；空放喊名同样取消，袭击始终私有。 */
     public List<GhostAbility> getIntrinsicAbilities() { return List.of(new GhostAbility() {
         /** 返回能力或模块的稳定标识。 */
         public ResourceLocation getId() { return FOLLOW; }
         /** 声明技能使用的图标纹理。 */
         public ResourceLocation iconTexture() { return ResourceLocation.parse("minecraft:textures/item/name_tag.png"); }
         /** 检查本次执行所需的环境与语义条件。 */
-        public boolean canExecute(GhostAbilityContext c) { return c.getModuleContext().world().canMove(); }
+        public boolean canExecute(GhostAbilityContext c) { return c.source() == GhostAbilityContext.Source.POSSESSION || c.getModuleContext().world().canMove(); }
         /** 在通过统一执行器后更新本能力的状态与效果。 */
         public void execute(GhostAbilityContext c) {
             var context = c.getModuleContext();
             if (c.source() == GhostAbilityContext.Source.POSSESSION) {
                 var target = context.world().aimedTarget(32);
-                if (target == null) return;
+                if (target == null) { finish(context, context.world().target()); return; }
                 var data = context.getCustomData();
                 data.putUUID("target", target.getUUID()); data.putBoolean("manualCalling", true);
-                data.putBoolean("callInitialized", false); context.setCustomData(data);
+                data.putBoolean("callInitialized", false); data.remove("lastFollowTick"); context.setCustomData(data);
             }
             step(context);
         }
+    }, new GhostAbility() {
+        /** 取消不需要目标、视线或移动媒介，随时可以结束追踪。 */
+        public ResourceLocation getId() { return CANCEL; }
+        /** 取消操作不继承追踪的媒介。 */
+        public boolean inheritsModuleMedia() { return false; }
+        /** 取消使用独立图标。 */
+        public ResourceLocation iconTexture() { return ResourceLocation.parse("minecraft:textures/item/barrier.png"); }
+        /** 没有目标时重复取消也有效。 */
+        public boolean canExecute(GhostAbilityContext c) { return true; }
+        /** 立即清空目标及尚未执行的视角牵引。 */
+        public void execute(GhostAbilityContext c) { finish(c.getModuleContext(), c.getModuleContext().world().target()); }
     }, new GhostAbility() {
         /** 返回能力或模块的稳定标识。 */
         public ResourceLocation getId() { return ATTACK; }
@@ -104,18 +122,18 @@ public final class CallingGhostModule implements GhostModule {
         /** 声明技能使用的图标纹理。 */
         public ResourceLocation iconTexture() { return ResourceLocation.parse("minecraft:textures/item/name_tag.png"); }
         /** 检查本次执行所需的环境与语义条件。 */
-        public boolean canExecute(GhostAbilityContext c) { return c.event() instanceof TargetTurnedAroundEvent turn && c.getModuleContext().world().validTarget(turn.target()); }
+        public boolean canExecute(GhostAbilityContext c) { return c.event() instanceof SourceSeenEvent turn && c.getModuleContext().world().validTarget(turn.observer()); }
         /** 为持续能力的袭击声明真实目标与强度。 */
         public GhostAbilityInfluence activeInfluence(GhostAbilityContext c) {
-            return GhostAbilityInfluence.of(c.event() instanceof TargetTurnedAroundEvent turn ? turn.target() : null,
+            return GhostAbilityInfluence.of(c.event() instanceof SourceSeenEvent turn ? turn.observer() : null,
                     GhostInfluenceType.ATTACK, c.getModuleContext().intensity());
         }
         /** 在通过统一执行器后更新本能力的状态与效果。 */
         public void execute(GhostAbilityContext c) { executeWithResult(c); }
         /** 执行效果并返回真实结果。 */
         public boolean executeWithResult(GhostAbilityContext c) {
-            if (!(c.event() instanceof TargetTurnedAroundEvent turn)) return false;
-            return c.getModuleContext().world().attack(turn.target(), ModDamageTypes.CALLING_GHOST, c.getModuleContext().intensity());
+            if (!(c.event() instanceof SourceSeenEvent turn)) return false;
+            return c.getModuleContext().world().attack(turn.observer(), ModDamageTypes.CALLING_GHOST, c.getModuleContext().intensity());
         }
     }); }
 
@@ -132,16 +150,10 @@ public final class CallingGhostModule implements GhostModule {
             data.putInt("callCount", 0); data.putInt("callCooldown", 0);
             data.putFloat("pendingTurn", 0); data.putBoolean("heardCall", false);
         }
-        if (data.getBoolean("heardCall") && isTurnAround(data.getFloat("initialYaw"), target.getYRot())) {
-            context.setCustomData(data);
-            var event = new TargetTurnedAroundEvent(target, data.getFloat("initialYaw"), target.getYRot());
-            if (data.getBoolean("manualCalling")) context.continueAbility(ATTACK, event);
-            else context.dispatchEvent(event);
-            finish(context, target); return;
-        }
-        var look = target.getLookAngle();
-        var behind = target.position().add(-look.x * 2.5, 1, -look.z * 2.5);
+        // 先按固定世界方向跟随位置，再判定目标能否真正看见来源。
+        var behind = target.position().add(behindOffset(data.getFloat("initialYaw")));
         world.teleport(behind.x, behind.y, behind.z, target);
+        if (attackIfSeen(context, target, data)) return;
         int cooldown = Math.max(0, data.getInt("callCooldown") - 1);
         if (cooldown == 0) {
             cooldown = 100;
@@ -154,11 +166,24 @@ public final class CallingGhostModule implements GhostModule {
         }
         data.putInt("callCooldown", cooldown);
         if (world.canHearCall(target)) {
-            float turn = Math.min(3, data.getFloat("pendingTurn"));
-            if (turn > 0) world.turnTarget(target, turn);
-            data.putFloat("pendingTurn", Math.max(0, data.getFloat("pendingTurn") - turn));
+            float turn = Math.min(Math.min(12, 4 + data.getInt("callCount") * 2), data.getFloat("pendingTurn"));
+            float moved = turn > 0 ? world.turnTargetTowardSource(target, turn) : 0;
+            data.putFloat("pendingTurn", Math.max(0, data.getFloat("pendingTurn") - moved));
         } else data.putFloat("pendingTurn", 0);
         context.setCustomData(data);
+        // 强制视角已同步到服务端，立即判断，不等下一 tick 被新的移动包覆盖。
+        attackIfSeen(context, target, data);
+    }
+
+    /** 只在来源实际进入视野且无遮挡时发布看见事实，随后统一裁决并结束本轮。 */
+    private static boolean attackIfSeen(GhostModuleContext context, LivingEntity target, CompoundTag data) {
+        if (!context.world().sourceVisibleTo(target)) return false;
+        context.setCustomData(data);
+        var event = new SourceSeenEvent(target);
+        if (data.getBoolean("manualCalling")) context.continueAbility(ATTACK, event);
+        else context.dispatchEvent(event);
+        finish(context, target);
+        return true;
     }
 
     /** 无论袭击是否成功都结束本轮，短暂避免再次选择同一目标。 */
@@ -166,6 +191,7 @@ public final class CallingGhostModule implements GhostModule {
         var data = context.getCustomData();
         data.remove("target"); data.putBoolean("manualCalling", false); data.putBoolean("callInitialized", false);
         data.putFloat("pendingTurn", 0); data.putBoolean("heardCall", false);
+        data.remove("lastFollowTick"); data.remove("initialYaw"); data.putInt("callCount", 0); data.putInt("callCooldown", 0);
         if (target != null) { data.putUUID("recentlyAttacked", target.getUUID()); data.putInt("attackTargetCooldown", 100); }
         context.setCustomData(data);
     }

@@ -46,6 +46,8 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.phys.Vec3;
+import net.minecraft.util.Mth;
+import com.qidate.qisplan2.ghost.module.environment.GhostSight;
 
 /** 把各类物理载体转换成统一世界操作；这里是唯一允许处理载体差异的边界之一。 */
 public final class GhostWorldAdapters {
@@ -60,20 +62,36 @@ public final class GhostWorldAdapters {
      */
     public static GhostWorldAccess bind(GhostModuleHost host, ResourceLocation id) {
         return new GhostWorldAccess() {
+            /** 服务端使用前方 120 度视锥及真实遮挡；不依赖客户端画面设置。 */
+            public boolean sourceVisibleTo(LivingEntity observer) {
+                var origin = source();
+                if (!validTarget(observer) || origin == null || !observer.hasLineOfSight(origin)) return false;
+                if (observer instanceof Player player && origin.isInvisibleTo(player)) return false;
+                return GhostSight.inView(observer.getLookAngle(), origin.getEyePosition().subtract(observer.getEyePosition()));
+            }
+            /** 按实际来源计算水平和垂直角度；玩家视角通过连接同步，生物同步头部朝向。 */
+            public float turnTargetTowardSource(LivingEntity target, float maximumDegrees) {
+                if (!canHearCall(target) || source() == null || !Float.isFinite(maximumDegrees) || maximumDegrees <= 0) return 0;
+                Vec3 offset = source().getEyePosition().subtract(target.getEyePosition());
+                float yaw = (float)(Math.toDegrees(Math.atan2(offset.z, offset.x)) - 90);
+                float pitch = (float)-Math.toDegrees(Math.atan2(offset.y, offset.horizontalDistance()));
+                float dy = Mth.wrapDegrees(yaw - target.getYRot());
+                float dp = pitch - target.getXRot();
+                float distance = Math.max(Math.abs(dy), Math.abs(dp));
+                float ratio = distance == 0 ? 0 : Math.min(1, maximumDegrees / distance);
+                float nextYaw = target.getYRot() + dy * ratio;
+                float nextPitch = Mth.clamp(target.getXRot() + dp * ratio, -90, 90);
+                if (target instanceof ServerPlayer player)
+                    player.connection.teleport(player.getX(), player.getY(), player.getZ(), nextYaw, nextPitch);
+                else { target.setYRot(nextYaw); target.setXRot(nextPitch); target.setYHeadRot(nextYaw); target.setYBodyRot(nextYaw); }
+                return Math.min(distance, maximumDegrees);
+            }
+
             /** 标签与白烛屏蔽决定是否听见，不让模块识别具体宿主。 */
             public boolean canHearCall(LivingEntity target) {
                 return validTarget(target) && !target.getType().is(ModTags.NO_HEARING)
                         && !GhostAvoidanceSystem.hasWhiteGhostCandle(target);
             }
-            /** 玩家通过连接同步视角，生物同步身体及头部朝向。 */
-            public void turnTarget(LivingEntity target, float degrees) {
-                if (!canHearCall(target) || !Float.isFinite(degrees)) return;
-                float yaw = target.getYRot() + degrees;
-                if (target instanceof ServerPlayer player)
-                    player.connection.teleport(player.getX(), player.getY(), player.getZ(), yaw, player.getXRot());
-                else { target.setYRot(yaw); target.setYHeadRot(yaw); target.setYBodyRot(yaw); }
-            }
-
             /** 返回服务端世界时间。 */
             public long gameTime() { return level() == null ? 0 : level().getGameTime(); }
             /** 将门上半部归一化为下半部。 */

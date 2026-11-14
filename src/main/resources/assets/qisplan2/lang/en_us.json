@@ -353,5 +353,6 @@
   "hud.qisplan2.ability_wheel.empty": "No active abilities",
   "hud.qisplan2.ability_wheel.cancel": "Select an ability",
   "hud.qisplan2.ability_wheel.hint": "Release key / LMB to cast · Center / Esc to cancel",
-  "hud.qisplan2.ability_wheel.unavailable": "§7Requirements not met, or no valid target."
+  "hud.qisplan2.ability_wheel.unavailable": "§7Requirements not met, or no valid target.",
+  "ability.qisplan2.calling_ghost.cancel_follow": "Cancel pursuit"
 }

@@ -16,10 +16,13 @@ import net.minecraft.world.phys.Vec3;
  * 目标实体是世界中的作用对象，与模块自己的载体不是同一个概念。
  */
 public interface GhostWorldAccess {
+    /** 观察者的视野与无遮挡视线是否实际覆盖当前来源。 */
+    default boolean sourceVisibleTo(LivingEntity observer) { return false; }
+    /** 将目标视角朝实际来源转动，包含俯仰；返回本次实际转角，不能越过来源朝向。 */
+    default float turnTargetTowardSource(LivingEntity target, float maximumDegrees) { return 0; }
+
     /** 目标是否能接收本次喊名；无听力标签与屏蔽由环境解释。 */
     default boolean canHearCall(LivingEntity target) { return false; }
-    /** 小幅修改目标视角，由适配器同步玩家客户端或实体朝向。 */
-    default void turnTarget(LivingEntity target, float degrees) {}
 
     /** 当前世界时间，供模块保存冷却与复苏间隔。 */
     default long gameTime() { return 0; }
