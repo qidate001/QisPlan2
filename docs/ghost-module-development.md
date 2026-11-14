@@ -415,7 +415,7 @@ import com.qidate.qisplan2.ghost.module.implementation.example.ContactEchoModule
 本例使用原版纹理，无需新增资源。自定义图标例如：
 
 ```java
-ResourceLocation.parse("qisplan2:textures/gui/ability/contact_echo.png")
+ResourceLocation.parse("qisplan2:textures/gui/ability/contact_echo.png");
 ```
 
 对应文件：
