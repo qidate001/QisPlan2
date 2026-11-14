@@ -132,9 +132,12 @@ public final class GhostStoneBricksModule implements GhostModule {
 
     /** 三种宿主共用同一条“实际反击成功才撤销摧毁”的能力实现。 */
     private static final class RetaliationAbility implements GhostAbility {
+        /** 仅由已满足语义的内部流程发动，不允许独立点选袭击。 */
+        @Override public boolean isPublicSkill() { return false; }
+
         /** 主动渠道与规则使用相同的袭击/保护语义，获准前不执行世界效果。 */
         @Override public GhostAbilityInfluence activeInfluence(GhostAbilityContext context) {
-            return GhostAbilityInfluence.of(context.getModuleContext().world().aimedTarget(8), GhostInfluenceType.ATTACK, context.getModuleContext().intensity());
+            return GhostAbilityInfluence.of(context.event() instanceof DestructionAttemptEvent ? target(context.event()) : null, GhostInfluenceType.ATTACK, context.getModuleContext().intensity());
         }
 
             /** 技能图标由所属模块直接声明。 */
@@ -151,7 +154,6 @@ public final class GhostStoneBricksModule implements GhostModule {
          * 模块可用性与媒介由统一执行器共同校验。
          */
         @Override public boolean canExecute(GhostAbilityContext context) {
-            if (context.event() == null) return context.getModuleContext().world().validTarget(context.getModuleContext().world().aimedTarget(8));
             return context.event() instanceof DestructionAttemptEvent
                     && !((DestructionAttemptEvent)context.event()).isCanceled()
                     && target(context.event()) != null && target(context.event()).isAlive();
@@ -169,7 +171,7 @@ public final class GhostStoneBricksModule implements GhostModule {
          */
         @Override public boolean executeWithResult(GhostAbilityContext context) {
             if (!canExecute(context)) return false;
-            LivingEntity attacker = context.event() == null ? context.getModuleContext().world().aimedTarget(8) : target(context.event());
+            LivingEntity attacker = target(context.event());
             boolean succeeded = context.getModuleContext().world().attack(attacker,
                     ModDamageTypes.GHOST_STONE_BRICKS, context.getModuleContext().intensity());
             if (succeeded && context.event() instanceof DestructionAttemptEvent destruction) destruction.cancel();

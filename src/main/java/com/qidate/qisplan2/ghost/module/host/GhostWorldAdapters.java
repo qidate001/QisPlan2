@@ -1,5 +1,6 @@
 package com.qidate.qisplan2.ghost.module.host;
 
+import com.qidate.qisplan2.core.ModTags;
 
 import net.minecraft.world.level.block.state.properties.DoubleBlockHalf;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
@@ -59,6 +60,20 @@ public final class GhostWorldAdapters {
      */
     public static GhostWorldAccess bind(GhostModuleHost host, ResourceLocation id) {
         return new GhostWorldAccess() {
+            /** 标签与白烛屏蔽决定是否听见，不让模块识别具体宿主。 */
+            public boolean canHearCall(LivingEntity target) {
+                return validTarget(target) && !target.getType().is(ModTags.NO_HEARING)
+                        && !GhostAvoidanceSystem.hasWhiteGhostCandle(target);
+            }
+            /** 玩家通过连接同步视角，生物同步身体及头部朝向。 */
+            public void turnTarget(LivingEntity target, float degrees) {
+                if (!canHearCall(target) || !Float.isFinite(degrees)) return;
+                float yaw = target.getYRot() + degrees;
+                if (target instanceof ServerPlayer player)
+                    player.connection.teleport(player.getX(), player.getY(), player.getZ(), yaw, player.getXRot());
+                else { target.setYRot(yaw); target.setYHeadRot(yaw); target.setYBodyRot(yaw); }
+            }
+
             /** 返回服务端世界时间。 */
             public long gameTime() { return level() == null ? 0 : level().getGameTime(); }
             /** 将门上半部归一化为下半部。 */
@@ -342,19 +357,17 @@ public final class GhostWorldAdapters {
             /**
              * 检查目标是否存在可播放的喊名声音；没有对应声音时返回 false。
              */
-            public boolean hasCall(LivingEntity target) {
-                return target instanceof ServerPlayer player && CallingGhostSounds.getSound(player) != null;
-            }
+            public boolean hasCall(LivingEntity target) { return canHearCall(target); }
 
             /**
              * 在目标位置播放可用的喊名声音。
              * 目标不受支持或没有声音资源时不播放。
              */
             public void playCall(LivingEntity target) {
-                if (level() != null && target instanceof ServerPlayer player) {
-                    var sound = CallingGhostSounds.getSound(player);
-                    if (sound != null) level().playSound(null,player.getX(),player.getY(),player.getZ(),sound,SoundSource.HOSTILE,1,1);
-                }
+                if (!canHearCall(target)) return;
+                var sound = target instanceof ServerPlayer player ? CallingGhostSounds.getSound(player) : null;
+                if (sound == null) sound = SoundEvents.ENDERMAN_STARE;
+                level().playSound(null, target.getX(), target.getY(), target.getZ(), sound, SoundSource.HOSTILE, 1, 1);
             }
 
             /**

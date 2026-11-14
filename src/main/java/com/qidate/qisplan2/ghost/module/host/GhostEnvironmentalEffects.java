@@ -21,7 +21,7 @@ public final class GhostEnvironmentalEffects {
      * 要求模块可用、已点燃、效果类型匹配且满足暴露媒介。
      */
     public static boolean active(GhostModuleHost host, GhostEnvironmentalEffect effect) {
-        return host.getModules().stream().anyMatch(e -> host.carriesModule(e.id()) && GhostModuleCombatState.available(e)
+        return host.getModules().stream().anyMatch(e -> host.carriesModule(e.id()) && (GhostModuleCombatState.available(e) || e.customData().getBoolean("manualBurn"))
                 && e.customData().getBoolean("lit")
                 && effect.name().equals(e.customData().getString("activeEffect"))
                 && host.moduleEnvironment(e.id()).exposed());
@@ -44,6 +44,6 @@ public final class GhostEnvironmentalEffects {
     /** 仅用于物品外观兼容查询，不代表已经满足暴露媒介。 */
     public static boolean isLit(ItemStack stack, ResourceLocation id) {
         return !stack.isEmpty() && new GhostItemModuleHost(stack).getModules().stream().anyMatch(e ->
-                e.id().equals(id) && GhostModuleCombatState.available(e) && e.customData().getBoolean("lit"));
+                e.id().equals(id) && (GhostModuleCombatState.available(e) || e.customData().getBoolean("manualBurn")) && e.customData().getBoolean("lit"));
     }
 }

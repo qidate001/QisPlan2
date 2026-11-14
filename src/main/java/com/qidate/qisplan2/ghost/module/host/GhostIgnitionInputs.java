@@ -25,7 +25,7 @@ public final class GhostIgnitionInputs {
         var custom = modifier.getModuleCustomData(id);
         if (custom.contains("remainingFuel") && custom.getDouble("remainingFuel") <= 0 && lit) return false;
         custom.putBoolean("lit", lit);
-        if (!lit) custom.remove("activeEffect");
+        if (!lit) { custom.remove("activeEffect"); custom.remove("manualBurn"); }
         modifier.setModuleCustomData(id, custom);
         GhostModuleRuntime.dispatch(host, new IgnitionChangedEvent(lit));
         return true;
@@ -71,7 +71,7 @@ public final class GhostIgnitionInputs {
             var module = GhostModuleRegistry.get(entry.id());
             if (module == null || !module.supportsIgnition()) continue;
             supports = true;
-            lit |= GhostModuleCombatState.available(entry) && entry.customData().getBoolean("lit");
+            lit |= (GhostModuleCombatState.available(entry) || entry.customData().getBoolean("manualBurn")) && entry.customData().getBoolean("lit");
         }
         if (!supports) return;
         if (lit) host.stack().set(DataComponents.CUSTOM_MODEL_DATA, new CustomModelData(1));

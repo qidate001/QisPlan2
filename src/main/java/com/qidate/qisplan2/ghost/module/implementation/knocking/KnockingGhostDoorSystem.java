@@ -3,6 +3,8 @@ import com.qidate.qisplan2.ghost.module.host.entity.KnockingGhostEntityBinding;
 
 import com.qidate.qisplan2.block.GhostDoorBlock;
 import com.qidate.qisplan2.core.ModSounds;
+import com.qidate.qisplan2.core.ModTags;
+import com.qidate.qisplan2.ghost.GhostAvoidanceSystem;
 import com.qidate.qisplan2.death.ModDamageTypes;
 import com.qidate.qisplan2.death.SupernaturalDeathHandler;
 import com.qidate.qisplan2.entity.ModularGhostEntity;
@@ -429,7 +431,7 @@ public final class KnockingGhostDoorSystem {
                 level.getEntitiesOfClass(
                         LivingEntity.class,
                         hearingBox,
-                        LivingEntity::isAlive
+                        e -> e.isAlive() && !e.getType().is(ModTags.NO_HEARING) && !GhostAvoidanceSystem.hasWhiteGhostCandle(e)
                 )) {
 
             /*
@@ -1030,7 +1032,7 @@ public final class KnockingGhostDoorSystem {
                 level.getEntitiesOfClass(
                         LivingEntity.class,
                         hearingBox,
-                        LivingEntity::isAlive
+                        e -> e.isAlive() && !e.getType().is(ModTags.NO_HEARING) && !GhostAvoidanceSystem.hasWhiteGhostCandle(e)
                 )) {
 
             /*

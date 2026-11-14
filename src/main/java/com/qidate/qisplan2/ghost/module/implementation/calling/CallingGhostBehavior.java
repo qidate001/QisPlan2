@@ -2,8 +2,6 @@ package com.qidate.qisplan2.ghost.module.implementation.calling;
 import com.qidate.qisplan2.ghost.module.host.entity.CallingGhostEntityBinding;
 
 import com.qidate.qisplan2.entity.ModularGhostEntity;
-import com.qidate.qisplan2.ghost.module.GhostModuleRuntime;
-import com.qidate.qisplan2.ghost.module.event.EntityTurnedEvent;
 import net.minecraft.world.entity.ai.goal.Goal;
 import net.minecraft.world.phys.Vec3;
 import java.util.EnumSet;
@@ -58,6 +56,7 @@ public final class CallingGhostBehavior extends Goal {
         data.putBoolean("previousNoGravity", previousNoGravity);
         // 被其他模块抢占期间的转身不计入本次跟随，重新建立观察基线。
         data.putBoolean("hasLastPlayerRotation", false);
+        data.putBoolean("callInitialized", false);
         CallingGhostState.write(host, data);
         host.noPhysics = true;
         host.setNoGravity(true);
@@ -77,13 +76,14 @@ public final class CallingGhostBehavior extends Goal {
             var data = CallingGhostState.read(host);
             data.putBoolean("physicsOwned", false);
             data.putBoolean("hasLastPlayerRotation", false);
+            data.putBoolean("callInitialized", false);
             CallingGhostState.write(host, data);
         }
     }
 
     /**
-     * 更新追踪玩家与朝向观察，发生朝向变化时发布转身事实。
-     * 达到转身阈值后结束本轮遭遇，否则通过能力入口继续跟随喊名。
+     * 选择或保留目标，然后交给模块推进瞬移、喊名和累计回头判断。
+     * Goal 不再依据相邻帧转角自行触发袭击。
      */
     @Override public void tick() {
         var player = CallingGhostTargets.available(host);
@@ -92,21 +92,6 @@ public final class CallingGhostBehavior extends Goal {
         if (!data.hasUUID("target") || !data.getUUID("target").equals(player.getUUID())) {
             CallingGhostState.bind(host, player);
             data = CallingGhostState.read(host);
-        }
-        float previous = data.getFloat("lastPlayerYRot");
-        float current = player.getYRot();
-        boolean observed = data.getBoolean("hasLastPlayerRotation");
-        data.putFloat("lastPlayerYRot", current);
-        data.putBoolean("hasLastPlayerRotation", true);
-        CallingGhostState.write(host, data);
-        if (observed && previous != current) {
-            GhostModuleRuntime.dispatch(host, new EntityTurnedEvent(host, player, previous, current));
-            if (CallingGhostModule.isTurnAround(previous, current)) {
-                // 无论袭击是否被保护挡住，本轮遭遇均结束，保持原有目标避让逻辑。
-                CallingGhostState.finishAttack(host, player);
-                host.setDeltaMovement(Vec3.ZERO);
-                return;
-            }
         }
         CallingGhostEntityBinding.followAndCall(host);
     }

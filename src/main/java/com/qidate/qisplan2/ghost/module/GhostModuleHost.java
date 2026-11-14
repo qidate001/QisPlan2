@@ -23,6 +23,9 @@ import com.qidate.qisplan2.ghost.module.host.GhostWorldAdapters;
  * 宿主能够保存模块数据，不代表它必须允许模块状态变化。
  */
 public interface GhostModuleHost {
+    /** 是否允许未显式启动的自主表现；受控宿主可关闭，模块无需得知载体身份。 */
+    default boolean allowsAutomaticAbilities() { return true; }
+
     /** 物品和方块暂用一个万能部位；其他宿主可自行声明任意组成。 */
     default HostComposition composition() { return HostComposition.UNIVERSAL; }
 

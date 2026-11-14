@@ -48,7 +48,7 @@ public final class KnockingGhostEntityBinding {
         var host = new PlayerGhostModuleHost(player);
         if (!host.hasModule(ID)) return;
         Runnable attack = GhostAbilityExecutor.prepareDeferred(new GhostAbilityContext(
-                host, ID, ATTACK, GhostAbilityContext.Source.POSSESSION, heard));
+                host, ID, ATTACK, GhostAbilityContext.Source.CONTINUATION, heard));
         if (attack == null) return;
         KnockingGhostDoorSystem.scheduleModuleAttack(attack);
     }

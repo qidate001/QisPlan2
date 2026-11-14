@@ -1,236 +1,172 @@
 package com.qidate.qisplan2.ghost.module.implementation.calling;
-import com.qidate.qisplan2.ghost.module.ability.GhostAbilityInfluence;
-import com.qidate.qisplan2.ghost.module.environment.GhostBehavior;
 
 import com.qidate.qisplan2.death.ModDamageTypes;
 import com.qidate.qisplan2.ghost.module.*;
 import com.qidate.qisplan2.ghost.module.ability.*;
 import com.qidate.qisplan2.ghost.module.data.GhostModuleInitialData;
+import com.qidate.qisplan2.ghost.module.environment.GhostBehavior;
 import com.qidate.qisplan2.ghost.module.event.*;
 import com.qidate.qisplan2.ghost.module.influence.GhostInfluenceType;
-import java.util.List;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.util.Mth;
-import net.minecraft.world.phys.Vec3;
-import static com.qidate.qisplan2.QisPlan2.MODID;
+import net.minecraft.world.entity.LivingEntity;
+import java.util.List;
 
-/**
- * 完整喊人鬼模块。
- * 行为选择并跟随目标；媒介校验目标与灵异阻隔；转身事实触发规则并提交裁决；
- * 跟随喊名能力与袭击能力只在统一执行器批准后操作世界。
- */
+/** 喊名是持续能力；目标、起始视角、喊名次数和转向进度全部属于模块实例。 */
 public final class CallingGhostModule implements GhostModule {
-    /**
-     * 声明需要的自主行动类型。
-     * 具体 Goal 的创建、资源竞争和停止清理由行动适配层负责。
-     */
-    @Override public GhostBehavior behavior() { return GhostBehavior.FOLLOW_CALL; }
     public static final ResourceLocation ID = id("calling_ghost");
-
-    // 原实现固定使用 30 强度袭击，迁移后作为模块初始值，后续随实例 intensity 变化。
-    public static final double INITIAL_INTENSITY = 30.0D;
     public static final ResourceLocation FOLLOW = id("calling_ghost/follow_call");
     public static final ResourceLocation ATTACK = id("calling_ghost/attack");
+    public static final double INITIAL_INTENSITY = 30;
+    /** 标识工具不包含宿主信息。 */
+    private static ResourceLocation id(String name) { return ResourceLocation.fromNamespaceAndPath("qisplan2", name); }
+    /** 自主实体行为只负责选目标和取得移动控制。 */
+    public GhostBehavior behavior() { return GhostBehavior.FOLLOW_CALL; }
+    /** 返回能力或模块的稳定标识。 */
+    public ResourceLocation getId() { return ID; }
+    /** 提供新实例的初始强度和复苏。 */
+    public GhostModuleInitialData getInitialData() { return new GhostModuleInitialData(INITIAL_INTENSITY, 0); }
+    /** 必须接近完全回头，允许十五度视角误差；不是相邻两帧转过四十五度。 */
+    public static boolean isTurnAround(float initial, float current) { return Math.abs(Mth.wrapDegrees(current - initial)) >= 165; }
+    /** 每次喊名的累计转动量递增，最长一次九十度，逐 tick 推进。 */
+    public static float turnAmount(int call) { return Math.min(90, Math.max(0, call) * 10F); }
 
-    /**
-     * 构造或返回本定义使用的资源标识，保持注册与调用入口一致。
-     */
-    private static ResourceLocation id(String path) { return ResourceLocation.fromNamespaceAndPath(MODID, path); }
+    /** 公开喊名要求可移动、可追踪；私有袭击只能针对真实回头事件中的当前目标。 */
+    public List<GhostMedium> getMedia() { return List.of(new GhostMedium() {
+        /** 返回能力或模块的稳定标识。 */
+        public ResourceLocation getId() { return id("calling_ghost/target_medium"); }
+        /** 校验硬性媒介，不产生世界效果。 */
+        public boolean allows(GhostAbilityContext c) {
+            var world = c.getModuleContext().world();
+            LivingEntity target = c.source() == GhostAbilityContext.Source.POSSESSION ? world.aimedTarget(32) : world.target();
+            if (!world.present() || !world.canTrack(target)) return false;
+            if (c.abilityId().equals(FOLLOW)) return world.canMove();
+            return c.event() instanceof TargetTurnedAroundEvent turn && turn.target() == target
+                    && c.getModuleContext().getCustomData().getBoolean("heardCall")
+                    && isTurnAround(turn.initialYaw(), turn.currentYaw()) && world.validTarget(target);
+        }
+    }); }
 
-    /**
-     * 获取当前定义的唯一标识。
-     * 注册、能力查找和规则分发使用此标识，不代表某个运行时实例。
-     */
-    @Override public ResourceLocation getId() { return ID; }
+    /** 自主喊名观察到回头后，在当前规则批次提交袭击。 */
+    public List<GhostRule> getRules() { return List.of(new GhostRule() {
+        /** 返回能力或模块的稳定标识。 */
+        public ResourceLocation getId() { return id("calling_ghost/turn_rule"); }
+        /** 只筛选本规则能处理的语义事件。 */
+        public boolean supports(GhostEvent e) { return e instanceof TargetTurnedAroundEvent; }
+        /** 判定本事件是否应触发自动规则。 */
+        public boolean canTrigger(GhostRuleContext c, GhostEvent e) { return !c.getModuleContext().getCustomData().getBoolean("manualCalling"); }
+        /** 在当前事件会话中提交能力影响。 */
+        public void onTrigger(GhostRuleContext c, GhostEvent e) {
+            var turn = (TargetTurnedAroundEvent)e;
+            c.submitAbilityInfluence(ATTACK, turn, turn.target().getUUID(), GhostInfluenceType.ATTACK, c.getModuleContext().intensity());
+        }
+    }); }
 
-    /**
-     * 提供新建模块实例的初始强度和复苏值。
-     * 仅用于初始化；已存在实例以保存的模块数据为准。
-     */
-    @Override public GhostModuleInitialData getInitialData() { return new GhostModuleInitialData(INITIAL_INTENSITY, 0); }
-
-    /**
-     * 计算归一化后的水平转角变化，达到 45 度即视为满足转身语义。
-     */
-    public static boolean isTurnAround(float previous, float current) {
-        return Math.abs(Mth.wrapDegrees(current - previous)) >= 45.0F;
+    /** 持续主动喊名不依赖自动规则开关；目标失效或遇到空间阻隔时结束。 */
+    public void tickAbilities(GhostModuleContext context) {
+        var data = context.getCustomData();
+        int cooldown = Math.max(0, data.getInt("attackTargetCooldown") - 1);
+        data.putInt("attackTargetCooldown", cooldown);
+        if (cooldown == 0) data.remove("recentlyAttacked");
+        context.setCustomData(data);
+        if (data.getBoolean("manualCalling")) {
+            var target = context.world().target();
+            if (target == null || !context.world().canTrack(target) || !context.world().canMove()) { finish(context, target); return; }
+            context.continueAbility(FOLLOW, null);
+        }
     }
 
-    /**
-     * 声明能力执行前必须满足的媒介。
-     * 主动调用同样需要通过媒介；规则是否触发由规则层单独判断。
-     */
-    @Override public List<GhostMedium> getMedia() {
-        return List.of(new GhostMedium() {
-            /**
-             * 获取当前定义的唯一标识。
-             * 注册、能力查找和规则分发使用此标识，不代表某个运行时实例。
-             */
-            @Override public ResourceLocation getId() { return id("calling_ghost/target_medium"); }
-
-            /**
-             * 校验本媒介要求的环境、事件或输入条件。
-             * 返回 false 会阻止本次能力执行，主动使用也不能绕过该检查。
-             */
-            @Override public boolean allows(GhostAbilityContext c) {
-                var world = c.getModuleContext().world();
-                if (!world.present()) return false;
-                var player = c.event() == null && c.source() == GhostAbilityContext.Source.POSSESSION ? world.aimedTarget(32) : world.target();
-                if (player == null || !world.canTrack(player)) return false;
-                if (c.abilityId().equals(FOLLOW)) return c.source() == GhostAbilityContext.Source.POSSESSION || c.getModuleContext().getCustomBoolean("physicsOwned", false);
-                if (c.event() == null) return world.validTarget(player);
-                return c.event() instanceof EntityTurnedEvent e && world.isOrigin(e.observer())
-                        && e.entity() == player && isTurnAround(e.previousYaw(), e.currentYaw())
-                        && world.validTarget(player);
+    /** 对外只提供喊名；攻击不接受自由瞄准目标。 */
+    public List<GhostAbility> getIntrinsicAbilities() { return List.of(new GhostAbility() {
+        /** 返回能力或模块的稳定标识。 */
+        public ResourceLocation getId() { return FOLLOW; }
+        /** 声明技能使用的图标纹理。 */
+        public ResourceLocation iconTexture() { return ResourceLocation.parse("minecraft:textures/item/name_tag.png"); }
+        /** 检查本次执行所需的环境与语义条件。 */
+        public boolean canExecute(GhostAbilityContext c) { return c.getModuleContext().world().canMove(); }
+        /** 在通过统一执行器后更新本能力的状态与效果。 */
+        public void execute(GhostAbilityContext c) {
+            var context = c.getModuleContext();
+            if (c.source() == GhostAbilityContext.Source.POSSESSION) {
+                var target = context.world().aimedTarget(32);
+                if (target == null) return;
+                var data = context.getCustomData();
+                data.putUUID("target", target.getUUID()); data.putBoolean("manualCalling", true);
+                data.putBoolean("callInitialized", false); context.setCustomData(data);
             }
-        });
+            step(context);
+        }
+    }, new GhostAbility() {
+        /** 返回能力或模块的稳定标识。 */
+        public ResourceLocation getId() { return ATTACK; }
+        /** 内部袭击不作为玩家可直接释放的技能。 */
+        public boolean isPublicSkill() { return false; }
+        /** 声明技能使用的图标纹理。 */
+        public ResourceLocation iconTexture() { return ResourceLocation.parse("minecraft:textures/item/name_tag.png"); }
+        /** 检查本次执行所需的环境与语义条件。 */
+        public boolean canExecute(GhostAbilityContext c) { return c.event() instanceof TargetTurnedAroundEvent turn && c.getModuleContext().world().validTarget(turn.target()); }
+        /** 为持续能力的袭击声明真实目标与强度。 */
+        public GhostAbilityInfluence activeInfluence(GhostAbilityContext c) {
+            return GhostAbilityInfluence.of(c.event() instanceof TargetTurnedAroundEvent turn ? turn.target() : null,
+                    GhostInfluenceType.ATTACK, c.getModuleContext().intensity());
+        }
+        /** 在通过统一执行器后更新本能力的状态与效果。 */
+        public void execute(GhostAbilityContext c) { executeWithResult(c); }
+        /** 执行效果并返回真实结果。 */
+        public boolean executeWithResult(GhostAbilityContext c) {
+            if (!(c.event() instanceof TargetTurnedAroundEvent turn)) return false;
+            return c.getModuleContext().world().attack(turn.target(), ModDamageTypes.CALLING_GHOST, c.getModuleContext().intensity());
+        }
+    }); }
+
+    /** 推进一次持续喊名；每 tick 最多一次，转向基线始终保持为本轮开始时的朝向。 */
+    private static void step(GhostModuleContext context) {
+        var world = context.world(); var target = world.target();
+        if (target == null || !world.canTrack(target)) { finish(context, target); return; }
+        var data = context.getCustomData();
+        long now = world.gameTime();
+        if (data.contains("lastFollowTick") && data.getLong("lastFollowTick") == now) return;
+        data.putLong("lastFollowTick", now);
+        if (!data.getBoolean("callInitialized")) {
+            data.putBoolean("callInitialized", true); data.putFloat("initialYaw", target.getYRot());
+            data.putInt("callCount", 0); data.putInt("callCooldown", 0);
+            data.putFloat("pendingTurn", 0); data.putBoolean("heardCall", false);
+        }
+        if (data.getBoolean("heardCall") && isTurnAround(data.getFloat("initialYaw"), target.getYRot())) {
+            context.setCustomData(data);
+            var event = new TargetTurnedAroundEvent(target, data.getFloat("initialYaw"), target.getYRot());
+            if (data.getBoolean("manualCalling")) context.continueAbility(ATTACK, event);
+            else context.dispatchEvent(event);
+            finish(context, target); return;
+        }
+        var look = target.getLookAngle();
+        var behind = target.position().add(-look.x * 2.5, 1, -look.z * 2.5);
+        world.teleport(behind.x, behind.y, behind.z, target);
+        int cooldown = Math.max(0, data.getInt("callCooldown") - 1);
+        if (cooldown == 0) {
+            cooldown = 100;
+            if (world.canHearCall(target)) {
+                int count = Math.min(1000, data.getInt("callCount") + 1);
+                data.putInt("callCount", count); data.putBoolean("heardCall", true);
+                data.putFloat("pendingTurn", data.getFloat("pendingTurn") + turnAmount(count));
+                world.playCall(target);
+            }
+        }
+        data.putInt("callCooldown", cooldown);
+        if (world.canHearCall(target)) {
+            float turn = Math.min(3, data.getFloat("pendingTurn"));
+            if (turn > 0) world.turnTarget(target, turn);
+            data.putFloat("pendingTurn", Math.max(0, data.getFloat("pendingTurn") - turn));
+        } else data.putFloat("pendingTurn", 0);
+        context.setCustomData(data);
     }
 
-    /**
-     * 声明本厉鬼响应的语义事件及对应规则。
-     * 规则负责决定何时发起能力或提交影响，不绕过执行器直接完成袭击。
-     */
-    @Override public List<GhostRule> getRules() {
-        return List.of(new GhostRule() {
-            /**
-             * 获取当前定义的唯一标识。
-             * 注册、能力查找和规则分发使用此标识，不代表某个运行时实例。
-             */
-            @Override public ResourceLocation getId() { return id("calling_ghost/turn_rule"); }
-
-            /**
-             * 判断当前语义事件是否属于本规则处理的范围。
-             * 这里只筛选事件种类或语义，不执行能力和世界操作。
-             */
-            @Override public boolean supports(GhostEvent e) {
-                return e instanceof EntityTurnedEvent || e instanceof ModuleTickEvent;
-            }
-
-            /**
-             * 检查当前事实和模块上下文是否满足规则触发条件。
-             * 返回 false 时跳过本规则，不提交能力或灵异影响。
-             */
-            @Override public boolean canTrigger(GhostRuleContext c, GhostEvent e) {
-                return c.getModuleContext().world().present();
-            }
-
-            /**
-             * 处理已满足条件的语义事件，发起对应能力或提交灵异影响。
-             * 需要裁决的效果仅在获准后执行。
-             */
-            @Override public void onTrigger(GhostRuleContext c, GhostEvent e) {
-                if (e instanceof ModuleTickEvent) {
-                    var data = c.getModuleContext().getCustomData();
-                    int remaining = Math.max(0, data.getInt("attackTargetCooldown"));
-                    data.putInt("attackTargetCooldown", Math.max(0, remaining - 1));
-                    if (remaining <= 1) data.remove("recentlyAttacked");
-                    c.getModuleContext().setCustomData(data);
-                } else if (e instanceof EntityTurnedEvent turn && isTurnAround(turn.previousYaw(), turn.currentYaw())) {
-                    c.submitAbilityInfluence(ATTACK, turn, turn.entity().getUUID(),
-                            GhostInfluenceType.ATTACK, c.getModuleContext().intensity());
-                }
-            }
-        });
-    }
-
-    /**
-     * 返回本厉鬼自身的能力定义。
-     * 世界效果由这些能力执行，输入桥和行为适配器只负责发起调用。
-     */
-    @Override public List<GhostAbility> getIntrinsicAbilities() {
-        return List.of(new GhostAbility() {
-            /** 技能图标由所属模块直接声明。 */
-            @Override public ResourceLocation iconTexture() { return ResourceLocation.parse("minecraft:textures/item/name_tag.png"); }
-
-            /**
-             * 获取当前定义的唯一标识。
-             * 注册、能力查找和规则分发使用此标识，不代表某个运行时实例。
-             */
-            @Override public ResourceLocation getId() { return FOLLOW; }
-
-            /**
-             * 检查本次能力调用的事件、参数或环境是否可用于执行。
-             * 模块可用性与媒介由统一执行器共同校验。
-             */
-            @Override public boolean canExecute(GhostAbilityContext c) { return c.getModuleContext().world().canMove(); }
-
-            /**
-             * 执行当前能力的效果。
-             * 调用方应使用统一执行器，以确保模块状态和媒介已经检查。
-             */
-            @Override public void execute(GhostAbilityContext c) {
-                var world = c.getModuleContext().world();
-                var player = c.event() == null && c.source() == GhostAbilityContext.Source.POSSESSION ? world.aimedTarget(32) : world.target();
-                if (player == null) return;
-                Vec3 look = player.getLookAngle();
-                Vec3 destination = player.position().subtract(look.x * 2.5D, 0, look.z * 2.5D).add(0, 1, 0);
-                Vec3 movement = destination.subtract(world.position());
-                double distance = movement.length();
-                world.move(distance < 0.1D ? Vec3.ZERO
-                        : movement.normalize().scale(Math.min(distance * 0.5D, 0.35D)), player.getYRot());
-
-                var data = c.getModuleContext().getCustomData();
-                int cooldown = Math.max(0, data.getInt("callCooldown"));
-                if (cooldown > 0) {
-                    data.putInt("callCooldown", cooldown - 1);
-                    c.getModuleContext().setCustomData(data);
-                    return;
-                }
-                if (data.getInt("callCount") >= 7) {
-                    data.remove("target");
-                    data.putBoolean("hasLastPlayerRotation", false);
-                    c.getModuleContext().setCustomData(data);
-                    world.move(Vec3.ZERO, player.getYRot());
-                    return;
-                }
-                boolean hasSound = world.hasCall(player);
-                data.putInt("callCooldown", 100);
-                if (hasSound) {
-                    data.putInt("callCount", Math.max(0, data.getInt("callCount")) + 1);
-                    world.playCall(player);
-                }
-                c.getModuleContext().setCustomData(data);
-            }
-        }, new GhostAbility() {
-            /** 技能图标由所属模块直接声明。 */
-            @Override public ResourceLocation iconTexture() { return ResourceLocation.parse("minecraft:textures/item/name_tag.png"); }
-
-            /**
-             * 获取当前定义的唯一标识。
-             * 注册、能力查找和规则分发使用此标识，不代表某个运行时实例。
-             */
-            @Override public ResourceLocation getId() { return ATTACK; }
-            /** 主动渠道与规则使用相同的袭击/保护语义，获准前不执行世界效果。 */
-            @Override public GhostAbilityInfluence activeInfluence(GhostAbilityContext context) {
-                return GhostAbilityInfluence.of(context.getModuleContext().world().aimedTarget(32), GhostInfluenceType.ATTACK, context.getModuleContext().intensity());
-            }
-
-
-            /**
-             * 检查本次能力调用的事件、参数或环境是否可用于执行。
-             * 模块可用性与媒介由统一执行器共同校验。
-             */
-            @Override public boolean canExecute(GhostAbilityContext c) {
-                return c.event() instanceof EntityTurnedEvent e && e.entity() instanceof ServerPlayer
-                        || c.event() == null && c.getModuleContext().world().validTarget(c.getModuleContext().world().aimedTarget(32));
-            }
-
-            /**
-             * 执行当前能力的效果。
-             * 调用方应使用统一执行器，以确保模块状态和媒介已经检查。
-             */
-            @Override public void execute(GhostAbilityContext c) { executeWithResult(c); }
-
-            /**
-             * 执行能力并返回实际效果是否成功。
-             * 返回值供主动交互及成功后结算使用，不能等同于仅接受了调用。
-             */
-            @Override public boolean executeWithResult(GhostAbilityContext c) {
-                var target = c.event() instanceof EntityTurnedEvent event ? event.entity() : c.getModuleContext().world().aimedTarget(32);
-                return c.getModuleContext().world().attack(target,
-                        ModDamageTypes.CALLING_GHOST, c.getModuleContext().intensity());
-            }
-        });
+    /** 无论袭击是否成功都结束本轮，短暂避免再次选择同一目标。 */
+    private static void finish(GhostModuleContext context, LivingEntity target) {
+        var data = context.getCustomData();
+        data.remove("target"); data.putBoolean("manualCalling", false); data.putBoolean("callInitialized", false);
+        data.putFloat("pendingTurn", 0); data.putBoolean("heardCall", false);
+        if (target != null) { data.putUUID("recentlyAttacked", target.getUUID()); data.putInt("attackTargetCooldown", 100); }
+        context.setCustomData(data);
     }
 }

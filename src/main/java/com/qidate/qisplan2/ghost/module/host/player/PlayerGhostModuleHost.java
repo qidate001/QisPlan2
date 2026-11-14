@@ -23,6 +23,9 @@ import net.minecraft.world.entity.player.Player;
  */
 public final class PlayerGhostModuleHost
         implements GhostModuleDataModifier, GhostModuleCustomDataModifier {
+    /** 已驾驭模块由主动输入决定持续表现，不自动开启音乐。 */
+    @Override public boolean allowsAutomaticAbilities() { return false; }
+
 
     private final Player player;
 

@@ -1,5 +1,7 @@
 package com.qidate.qisplan2.ghost.module;
 
+import com.qidate.qisplan2.ghost.module.sound.GhostModuleSoundManager;
+import com.qidate.qisplan2.ghost.module.event.ModuleTickEvent;
 import com.qidate.qisplan2.ghost.module.data.GhostModuleData;
 import com.qidate.qisplan2.ghost.module.event.GhostEvent;
 import com.qidate.qisplan2.ghost.module.influence.GhostInfluenceSession;
@@ -58,12 +60,18 @@ public final class GhostModuleRuntime {
         try {
             for (GhostModuleHost host : List.copyOf(hosts)) {
                 if (host == null) continue;
+                if (event instanceof ModuleTickEvent)
+                    GhostModuleSoundManager.syncCarriedHost(host);
                 List<GhostModuleData.Entry> entries = List.copyOf(host.getModules());
                 for (GhostModuleData.Entry entry : entries) {
                     if (!host.hasModule(entry.id())) continue;
                     GhostModule module = GhostModuleRegistry.get(entry.id());
                     if (module == null) continue;
-                    GhostRuleRuntime.dispatchModule(host, entry, event, session);
+                    if (host.carriesModule(entry.id())) module.onAbilityEvent(new GhostModuleContext(host, entry.id()), event);
+                    if (!host.hasModule(entry.id())) continue;
+                    if (event instanceof ModuleTickEvent && host.carriesModule(entry.id()))
+                        module.tickAbilities(new GhostModuleContext(host, entry.id()));
+                    if (host.hasModule(entry.id())) GhostRuleRuntime.dispatchModule(host, entry, event, session);
                 }
             }
         } finally {

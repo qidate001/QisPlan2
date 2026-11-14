@@ -1,5 +1,10 @@
 package com.qidate.qisplan2.ghost.module.sound;
 
+import java.util.UUID;
+import com.qidate.qisplan2.ghost.module.host.GhostEnvironmentAdapters;
+import com.qidate.qisplan2.ghost.module.host.item.GhostItemModuleHost;
+import com.qidate.qisplan2.ghost.module.host.player.PlayerGhostModuleHost;
+import com.qidate.qisplan2.ghost.module.GhostModuleHost;
 import com.qidate.qisplan2.block.entity.AbstractModularGhostBlockEntity;
 import com.qidate.qisplan2.entity.ModularGhostEntity;
 import com.qidate.qisplan2.ghost.module.GhostModule;
@@ -253,6 +258,26 @@ public final class GhostModuleSoundManager {
                     registration.moduleId(),
                     registration.soundType()
             );
+        }
+    }
+
+    /** 玩家和手持物品共享实体声源出口，身份按载体分开，避免同模块互相覆盖。 */
+    public static void syncCarriedHost(GhostModuleHost host) {
+        if (!(host instanceof PlayerGhostModuleHost)
+                && !(host instanceof GhostItemModuleHost)) return;
+        var bearer = GhostEnvironmentAdapters.bearer(host);
+        if (bearer == null || !(bearer.level() instanceof ServerLevel level)) return;
+        for (var entry : host.getModules()) {
+            var module = GhostModuleRegistry.get(entry.id());
+            if (module == null || module.getSounds().isEmpty() || !host.carriesModule(entry.id())) continue;
+            UUID sourceId = bearer.getUUID();
+            if (host instanceof GhostItemModuleHost item) {
+                var data = item.getModuleCustomData(entry.id());
+                if (!data.hasUUID("soundSource")) { data.putUUID("soundSource", UUID.randomUUID()); item.setModuleCustomData(entry.id(), data); }
+                sourceId = data.getUUID("soundSource");
+            }
+            for (var sound : module.getSounds()) GhostSoundManager.registerModuleEntitySource(level, sourceId, host,
+                    entry.id(), sound.soundType(), sound.soundEvent(), bearer.getEyePosition(), sound.range());
         }
     }
 

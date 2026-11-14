@@ -1,6 +1,7 @@
 package com.qidate.qisplan2.ghost.module;
 
 import com.qidate.qisplan2.ghost.module.data.GhostModuleData;
+import com.qidate.qisplan2.ghost.module.ability.*;
 import com.qidate.qisplan2.ghost.module.environment.*;
 import com.qidate.qisplan2.ghost.module.event.ModuleTickEvent;
 import com.qidate.qisplan2.ghost.module.implementation.candle.WhiteGhostCandleModule;
@@ -138,6 +139,21 @@ public final class HostNeutralCandleTest {
             GhostModuleRuntime.dispatch(host, new ModuleTickEvent());
             if (host.environment().emissions != 1 || Math.abs(host.environment().consumed - 0.30) > 1e-9)
                 throw new AssertionError("屏蔽应执行一次并按声音强度额外燃烧");
+        }
+        for (Storage host : List.of(first, second)) {
+            var ignite = new GhostAbilityContext(host, ID, ResourceLocation.parse("qisplan2:white_ghost_candle/ignite"), GhostAbilityContext.Source.POSSESSION, null);
+            if (!GhostAbilityExecutor.tryExecute(ignite)) throw new AssertionError("公开点燃应成功");
+            double before = host.environment().consumed;
+            GhostModuleRuntime.dispatch(host, new ModuleTickEvent());
+            if (Math.abs(host.environment().consumed - before - 0.30) > 1e-9)
+                throw new AssertionError("主动持续与自动规则不得双重消耗");
+            host.environment().exposed = false;
+            var stop = new GhostAbilityContext(host, ID, ResourceLocation.parse("qisplan2:white_ghost_candle/extinguish"), GhostAbilityContext.Source.POSSESSION, null);
+            if (!GhostAbilityExecutor.tryExecute(stop) || host.data().getBoolean("lit"))
+                throw new AssertionError("不暴露时仍必须能主动熄灭");
+            before = host.environment().consumed;
+            GhostModuleRuntime.dispatch(host, new ModuleTickEvent());
+            if (host.environment().consumed != before) throw new AssertionError("熄灭后不可继续消耗");
         }
         if (first.environment().consumed != second.environment().consumed)
             throw new AssertionError("相同环境下不同载体必须一致");

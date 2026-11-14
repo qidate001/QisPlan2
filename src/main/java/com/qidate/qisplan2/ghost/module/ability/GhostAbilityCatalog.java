@@ -23,7 +23,7 @@ public final class GhostAbilityCatalog {
             var module = GhostModuleRegistry.get(entry.id());
             if (module == null || !host.carriesModule(entry.id())) continue;
             for (var ability : module.getAbilities())
-                result.add(new Entry(entry.id(), ability));
+                if (ability.isPublicSkill()) result.add(new Entry(entry.id(), ability));
         }
         return List.copyOf(result);
     }

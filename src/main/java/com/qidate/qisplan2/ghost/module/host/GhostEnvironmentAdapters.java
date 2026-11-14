@@ -1,5 +1,7 @@
 package com.qidate.qisplan2.ghost.module.host;
 
+import net.minecraft.world.entity.ai.attributes.AttributeModifier;
+import net.minecraft.world.entity.ai.attributes.Attributes;
 import com.qidate.qisplan2.entity.ModularGhostEntity;
 import com.qidate.qisplan2.ghost.module.*;
 import com.qidate.qisplan2.ghost.module.environment.*;
@@ -36,6 +38,15 @@ public final class GhostEnvironmentAdapters {
      */
     public static GhostEnvironment bind(GhostModuleHost host, ResourceLocation moduleId) {
         return new GhostEnvironment() {
+            /** 物品燃烧不点燃携带者；生命载体使用原版着火状态。 */
+            public void setBurning(boolean burning) {
+                if (host instanceof GhostItemModuleHost) return;
+                var entity = bearer(host);
+                if (entity == null) return;
+                if (burning) entity.setRemainingFireTicks(Math.max(entity.getRemainingFireTicks(), 40));
+                else entity.clearFire();
+            }
+
             /** 装备必须真实穿戴；实体与驾驭形态由其自身表面满足覆盖媒介。 */
             public boolean surfaceCovered() {
                 var entity = bearer(host);
@@ -127,7 +138,27 @@ public final class GhostEnvironmentAdapters {
                     if ((long)item.stack().getDamageValue() + whole >= item.stack().getMaxDamage()) {
                         item.stack().shrink(1);
                     } else item.stack().setDamageValue(item.stack().getDamageValue() + whole);
-                } else consumeStoredFuel(data, moduleId, amount);
+                } else {
+                    var entity = bearer(host);
+                    if (entity instanceof ModularGhostEntity) return;
+                    if (entity != null) {
+                        ResourceLocation loss = ResourceLocation.fromNamespaceAndPath(moduleId.getNamespace(), "candle_burn/" + moduleId.getPath());
+                        var attribute = entity.getAttribute(Attributes.MAX_HEALTH);
+                        if (attribute == null || entity.getMaxHealth() - amount < 1) {
+                            var custom = data.getModuleCustomData(moduleId);
+                            custom.putBoolean("lit", false);
+                            custom.remove("manualBurn"); custom.remove("activeEffect");
+                            data.setModuleCustomData(moduleId, custom);
+                            setBurning(false);
+                        } else {
+                            var previous = attribute.getModifier(loss);
+                            attribute.addOrReplacePermanentModifier(new AttributeModifier(
+                                    loss, (previous == null ? 0 : previous.amount()) - amount,
+                                    AttributeModifier.Operation.ADD_VALUE));
+                            entity.setHealth(Math.min(entity.getHealth(), entity.getMaxHealth()));
+                        }
+                    } else consumeStoredFuel(data, moduleId, amount);
+                }
             }
         };
     }

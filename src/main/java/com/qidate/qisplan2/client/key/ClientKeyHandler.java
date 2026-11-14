@@ -1,5 +1,6 @@
 package com.qidate.qisplan2.client.key;
 
+import com.qidate.qisplan2.client.screen.AbilityWheelPreferences;
 import com.mojang.blaze3d.platform.InputConstants;
 import com.qidate.qisplan2.client.screen.PossessionScreen.PossessionScreen;
 import com.qidate.qisplan2.client.screen.AbilityWheelScreen;
@@ -25,6 +26,7 @@ public final class ClientKeyHandler {
     public static void registerKeyMappings(RegisterKeyMappingsEvent event) {
         event.register(ModKeyMappings.OPEN_POSSESSION_SCREEN);
         event.register(ModKeyMappings.ABILITY_WHEEL);
+        for (var key : ModKeyMappings.WHEEL_SLOTS) event.register(key);
         ModKeyMappings.DOMAIN_SHORTCUTS.values().forEach(event::register);
     }
 
@@ -62,6 +64,16 @@ public final class ClientKeyHandler {
     public static void clientTick(ClientTickEvent.Post event) {
         var mc = Minecraft.getInstance();
         handleDomainShortcuts(mc);
+        for (int i = 0; i < ModKeyMappings.WHEEL_SLOTS.length; i++) {
+            boolean pressed = false;
+            while (ModKeyMappings.WHEEL_SLOTS[i].consumeClick()) pressed = true;
+            if (!pressed || mc.screen != null || mc.player == null || !mc.player.isAlive()
+                    || mc.player.isSpectator() || !mc.isWindowActive()) continue;
+            var slots = AbilityWheelPreferences.current()
+                    .resolve(GhostAbilityCatalog.all(new PlayerGhostModuleHost(mc.player)));
+            var entry = slots.get(i);
+            if (entry != null) PacketDistributor.sendToServer(new GhostAbilityUsePayload(entry.moduleId(), entry.ability().getId()));
+        }
         boolean held = wheelHeld();
         if (!held) latched = false;
         if (mc.screen instanceof AbilityWheelScreen wheel) {

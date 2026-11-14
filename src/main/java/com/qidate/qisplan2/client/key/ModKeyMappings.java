@@ -1,5 +1,6 @@
 package com.qidate.qisplan2.client.key;
 
+import java.util.stream.IntStream;
 import com.mojang.blaze3d.platform.InputConstants;
 import net.minecraft.client.KeyMapping;
 import org.lwjgl.glfw.GLFW;
@@ -31,6 +32,11 @@ public final class ModKeyMappings {
     private static KeyMapping domainKey(String name, int key) {
         return new KeyMapping("key.qisplan2.ghost_domain_" + name, InputConstants.Type.KEYSYM, key, CATEGORY);
     }
+
+    /** 固定轮盘槽位快捷键，小键盘 1～9、0；不会占用原版快捷栏数字键。 */
+    public static final KeyMapping[] WHEEL_SLOTS = IntStream.range(0, 10)
+            .mapToObj(i -> new KeyMapping("key.qisplan2.wheel_slot_" + (i + 1), InputConstants.Type.KEYSYM,
+                    i == 9 ? GLFW.GLFW_KEY_KP_0 : GLFW.GLFW_KEY_KP_1 + i, CATEGORY)).toArray(KeyMapping[]::new);
 
     /** 按键定义类不需要实例化。 */
     private ModKeyMappings() {}

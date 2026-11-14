@@ -14,6 +14,9 @@ import net.minecraft.resources.ResourceLocation;
  * 不依赖某个特定的 GhostEvent 才能执行。
  */
 public interface GhostAbility {
+    /** 私有能力只允许规则、行为和已启动能力的内部延续调用，不作为玩家技能。 */
+    default boolean isPublicSkill() { return true; }
+
     /** 主动调用需要参加的灵异裁决；纯移动、声音、开关等不声明。规则仍使用其事件共享会话。 */
     default GhostAbilityInfluence activeInfluence(GhostAbilityContext context) { return null; }
 

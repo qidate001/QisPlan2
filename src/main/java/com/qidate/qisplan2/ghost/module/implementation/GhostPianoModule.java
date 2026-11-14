@@ -1,5 +1,8 @@
 package com.qidate.qisplan2.ghost.module.implementation;
 
+import com.qidate.qisplan2.ghost.module.GhostModuleCombatState;
+import com.qidate.qisplan2.ghost.module.GhostModuleContext;
+import com.qidate.qisplan2.ghost.module.data.GhostModuleData;
 import com.qidate.qisplan2.ghost.module.ability.GhostAbilityInfluence;
 import com.qidate.qisplan2.death.ModDamageTypes;
 import com.qidate.qisplan2.death.SupernaturalDeathHandler;
@@ -72,7 +75,7 @@ public final class GhostPianoModule implements GhostModule {
             List.of(new GhostPianoMusicRule());
 
     private static final List<GhostAbility> ABILITIES =
-            List.of(new GhostPianoMusicAbility());
+            List.of(musicSwitch(true), musicSwitch(false), new GhostPianoMusicAbility());
 
     @Override
     public ResourceLocation getId() {
@@ -114,6 +117,39 @@ public final class GhostPianoModule implements GhostModule {
                         32.0D
                 )
         );
+    }
+
+    /** 自主状态默认播放；显式开始的音乐不因规则死机而被取消。 */
+    @Override public boolean soundEnabled(GhostModuleData.Entry entry, boolean automatic) {
+        var data = entry.customData();
+        boolean playing = data.contains("musicPlaying") ? data.getBoolean("musicPlaying") : automatic;
+        return playing && (data.getBoolean("manualMusic") || GhostModuleCombatState.available(entry));
+    }
+
+    /** 主动音乐的中断仍是听觉事实，私有袭击只能由该持续流程调用。 */
+    @Override public void onAbilityEvent(GhostModuleContext context, GhostEvent event) {
+        if (context.getCustomData().getBoolean("manualMusic") && event instanceof GhostSoundEvent sound
+                && sound.soundType().equals(ID) && sound.type() == GhostSoundEvent.Type.INTERRUPTED)
+            context.continueAbility(MUSIC_INTERRUPTION_ABILITY_ID, event);
+    }
+
+    /** 播放和停止是公开技能，声音传播统一由管理器按模块状态同步。 */
+    private static GhostAbility musicSwitch(boolean playing) {
+        return new GhostAbility() {
+            /** 返回能力或模块的稳定标识。 */
+            public ResourceLocation getId() { return ResourceLocation.fromNamespaceAndPath(MODID, "ghost_piano/" + (playing ? "play" : "stop")); }
+            /** 声明技能使用的图标纹理。 */
+            public ResourceLocation iconTexture() { return ResourceLocation.parse("qisplan2:textures/item/ghost_piano.png"); }
+            /** 检查本次执行所需的环境与语义条件。 */
+            public boolean canExecute(GhostAbilityContext c) { return c.getModuleContext().world().present(); }
+            /** 在通过统一执行器后更新本能力的状态与效果。 */
+            public void execute(GhostAbilityContext c) {
+                var data = c.getModuleContext().getCustomData();
+                data.putBoolean("musicPlaying", playing);
+                data.putBoolean("manualMusic", true);
+                c.getModuleContext().setCustomData(data);
+            }
+        };
     }
 
     /**
@@ -174,7 +210,8 @@ public final class GhostPianoModule implements GhostModule {
                 GhostRuleContext context,
                 GhostEvent event
         ) {
-            return event instanceof GhostSoundEvent soundEvent
+            return !context.getModuleContext().getCustomData().getBoolean("manualMusic")
+                    && event instanceof GhostSoundEvent soundEvent
                     && soundEvent.soundType().equals(ID)
                     && soundEvent.type() == GhostSoundEvent.Type.INTERRUPTED
                     && soundEvent.listener().isAlive()
@@ -209,9 +246,12 @@ public final class GhostPianoModule implements GhostModule {
      */
     private static final class GhostPianoMusicAbility
             implements GhostAbility {
+        /** 仅由已满足语义的内部流程发动，不允许独立点选袭击。 */
+        @Override public boolean isPublicSkill() { return false; }
+
         /** 主动渠道与规则使用相同的袭击/保护语义，获准前不执行世界效果。 */
         @Override public GhostAbilityInfluence activeInfluence(GhostAbilityContext context) {
-            return GhostAbilityInfluence.of(context.getModuleContext().world().aimedTarget(8), GhostInfluenceType.ATTACK, context.getModuleContext().intensity());
+            return GhostAbilityInfluence.of(context.event() instanceof GhostSoundEvent sound ? sound.listener() : null, GhostInfluenceType.ATTACK, context.getModuleContext().intensity());
         }
 
             /** 技能图标由所属模块直接声明。 */
@@ -225,7 +265,7 @@ public final class GhostPianoModule implements GhostModule {
 
         @Override
         public boolean canExecute(GhostAbilityContext context) {
-            if (context.event() == null) return context.getModuleContext().world().validTarget(context.getModuleContext().world().aimedTarget(8));
+
             return context.event() instanceof GhostSoundEvent soundEvent
                     && soundEvent.soundType().equals(ID)
                     && soundEvent.type() == GhostSoundEvent.Type.INTERRUPTED
@@ -245,10 +285,6 @@ public final class GhostPianoModule implements GhostModule {
                 return false;
             }
 
-            if (context.event() == null) {
-                var module = context.getModuleContext();
-                return module.world().attack(module.world().aimedTarget(8), ModDamageTypes.GHOST_PIANO, module.intensity());
-            }
             if (!(context.event() instanceof GhostSoundEvent soundEvent)) return false;
 
             if (!canExecute(context)) {

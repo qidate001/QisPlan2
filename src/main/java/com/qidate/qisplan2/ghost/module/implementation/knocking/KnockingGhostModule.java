@@ -75,7 +75,7 @@ public final class KnockingGhostModule implements GhostModule {
                 var world = c.getModuleContext().world();
                 if (!world.present() || !c.isModuleAvailable()) return false;
                 if (c.abilityId().equals(KNOCK)) return door(c) != null && world.isDoor(door(c));
-                if (c.event() == null) return world.validTarget(world.aimedTarget(8));
+                if (c.event() == null) return false;
                 return c.abilityId().equals(ATTACK) && c.event() instanceof DoorKnockHeardEvent e
                         && world.isOrigin(e.source()) && e.target().isAlive() && world.sameWorld(e.target().level());
             }
@@ -180,9 +180,12 @@ public final class KnockingGhostModule implements GhostModule {
              * 注册、能力查找和规则分发使用此标识，不代表某个运行时实例。
              */
             @Override public ResourceLocation getId() { return ATTACK; }
+        /** 仅由已满足语义的内部流程发动，不允许独立点选袭击。 */
+        @Override public boolean isPublicSkill() { return false; }
+
             /** 主动渠道与规则使用相同的袭击/保护语义，获准前不执行世界效果。 */
             @Override public GhostAbilityInfluence activeInfluence(GhostAbilityContext context) {
-                return GhostAbilityInfluence.of(context.event() instanceof DoorKnockHeardEvent heard ? heard.target() : context.getModuleContext().world().aimedTarget(8), GhostInfluenceType.ATTACK, context.getModuleContext().effectiveIntensity());
+                return GhostAbilityInfluence.of(context.event() instanceof DoorKnockHeardEvent heard ? heard.target() : null, GhostInfluenceType.ATTACK, context.getModuleContext().effectiveIntensity());
             }
 
 
@@ -190,7 +193,7 @@ public final class KnockingGhostModule implements GhostModule {
              * 检查本次能力调用的事件、参数或环境是否可用于执行。
              * 模块可用性与媒介由统一执行器共同校验。
              */
-            @Override public boolean canExecute(GhostAbilityContext c) { return c.event() instanceof DoorKnockHeardEvent || c.getModuleContext().world().validTarget(c.getModuleContext().world().aimedTarget(8)); }
+            @Override public boolean canExecute(GhostAbilityContext c) { return c.event() instanceof DoorKnockHeardEvent heard && c.getModuleContext().world().validTarget(heard.target()); }
 
             /**
              * 执行当前能力的效果。
@@ -203,7 +206,8 @@ public final class KnockingGhostModule implements GhostModule {
              * 返回值供主动交互及成功后结算使用，不能等同于仅接受了调用。
              */
             @Override public boolean executeWithResult(GhostAbilityContext c) {
-                var target = c.event() instanceof DoorKnockHeardEvent e ? e.target() : c.getModuleContext().world().aimedTarget(8);
+                if (!(c.event() instanceof DoorKnockHeardEvent heard)) return false;
+                var target = heard.target();
                 return c.getModuleContext().world().attack(target,
                         ModDamageTypes.KNOCKING_GHOST, c.getModuleContext().effectiveIntensity());
             }

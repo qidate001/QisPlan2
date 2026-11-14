@@ -7,6 +7,9 @@ import java.util.UUID;
  * 宿主适配器负责解释暴露、环境压力、表现以及消耗如何落到世界中。
  */
 public interface GhostEnvironment {
+    /** 适配器把燃烧状态映射为实体火焰或物品表现，不向模块暴露载体。 */
+    default void setBurning(boolean burning) {}
+
     /** 当前模块是否覆盖一个存活实体的表面；具体覆盖方式由适配层解释。 */
     default boolean surfaceCovered() { return false; }
 

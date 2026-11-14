@@ -46,6 +46,7 @@ public final class PossessionInvocationTest {
         GhostBearingTest.run();
         ModuleCommandTextTest.run();
         AbilityWheelTest.run();
+        PrivateAbilityTest.run();
         ActiveInfluenceTest.run();
         GhostModuleRegistry.register(new GhostModule() {
             /**

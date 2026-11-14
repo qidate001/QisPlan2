@@ -48,6 +48,7 @@ public final class CallingGhostState {
         var data = read(host);
         data.putUUID("target", player.getUUID());
         data.putInt("callCount", 0);
+        data.putBoolean("callInitialized", false);
         data.putInt("callCooldown", 100);
         data.putFloat("lastPlayerYRot", player.getYRot());
         data.putBoolean("hasLastPlayerRotation", true);

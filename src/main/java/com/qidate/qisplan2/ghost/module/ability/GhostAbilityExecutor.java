@@ -84,6 +84,7 @@ public final class GhostAbilityExecutor {
 
         GhostAbility ability = context.getAbility();
 
+        if (context.source() == GhostAbilityContext.Source.POSSESSION && !ability.isPublicSkill()) return false;
         if (!ability.canExecute(context)) {
             return false;
         }
@@ -95,7 +96,7 @@ public final class GhostAbilityExecutor {
 
         // 主动调用不触发规则，但必须经过能力声明的灵异裁决。
         // 规则已有共享事件会话；不重复裁决。复苏刺激也只在获准后结算一次。
-        if (!adjudicated && context.source() == GhostAbilityContext.Source.POSSESSION) {
+        if (!adjudicated && (context.source() == GhostAbilityContext.Source.POSSESSION || context.source() == GhostAbilityContext.Source.CONTINUATION)) {
             GhostAbilityInfluence influence = ability.activeInfluence(context);
             if (influence != null) return influence.execute(context,
                     () -> execute(context, returnEffectResult, true));
@@ -258,7 +259,7 @@ public final class GhostAbilityExecutor {
         // 保留现有能力可执行性检查。
         GhostAbility ability = context.getAbility();
 
-        if (ability == null || !ability.canExecute(context)) {
+        if (ability == null || (context.source() == GhostAbilityContext.Source.POSSESSION && !ability.isPublicSkill()) || !ability.canExecute(context)) {
             return null;
         }
 

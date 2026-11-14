@@ -44,9 +44,10 @@ public record GhostAbilityContext(
         /** 由实体行为直接调用，不要求存在语义事件。 */
         BEHAVIOR,
 
-        /**
-         * 由驭鬼者主动调用。
-         */
+        /** 已由公开技能启动的可信持续流程，可调用私有能力；网络不能指定此来源。 */
+        CONTINUATION,
+
+        /** 由驭鬼者直接点选或热键调用，只允许公开技能。 */
         POSSESSION
     }
 
@@ -133,7 +134,7 @@ public record GhostAbilityContext(
     public boolean isModuleAvailable() {
         // 死机禁用自动规则和行为，但不禁止驭鬼者主动调用；媒介仍由执行器检查。
         return host.carriesModule(moduleId) && host.getModules().stream().anyMatch(entry -> entry.id().equals(moduleId)
-                && (source == Source.POSSESSION || GhostModuleCombatState.available(entry)));
+                && ((source == Source.POSSESSION || source == Source.CONTINUATION) || GhostModuleCombatState.available(entry)));
     }
 
     /**

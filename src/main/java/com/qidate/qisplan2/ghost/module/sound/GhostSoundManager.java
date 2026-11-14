@@ -1,5 +1,7 @@
 package com.qidate.qisplan2.ghost.module.sound;
 
+import com.qidate.qisplan2.core.ModTags;
+import com.qidate.qisplan2.ghost.module.GhostModuleRegistry;
 import com.qidate.qisplan2.ghost.isolation.GhostIsolationSystem;
 import com.qidate.qisplan2.ghost.GhostAvoidanceSystem;
 import com.qidate.qisplan2.ghost.module.GhostModuleHost;
@@ -568,6 +570,11 @@ public final class GhostSoundManager {
             return;
         }
 
+        for (var source : List.copyOf(SOURCES.values())) {
+            if (source.moduleId() != null && (!source.host().hasModule(source.moduleId())
+                    || !source.host().moduleWorld(source.moduleId()).present()
+                    || !source.host().moduleWorld(source.moduleId()).sameWorld(source.level()))) unregisterSource(source.key());
+        }
         for (ServerLevel level : event.getServer().getAllLevels()) {
             for (ServerPlayer player : level.players()) {
                 updatePlayer(player, level);
@@ -721,7 +728,7 @@ public final class GhostSoundManager {
         // 白烛只改变本轮传播结果，不能清空 HEARD_SOURCES 或提前跳过 updatePlayer。
         // 上轮已听见、本轮被屏蔽时，正常执行停止播放、LEFT 和按声音类别聚合的 INTERRUPTED；
         // 一开始就被屏蔽则没有中断，持续屏蔽也不会重复触发。熄灭后重新进入听觉范围。
-        if (GhostAvoidanceSystem.hasWhiteGhostCandle(player)) {
+        if (player.getType().is(ModTags.NO_HEARING) || GhostAvoidanceSystem.hasWhiteGhostCandle(player)) {
             return false;
         }
 
@@ -734,6 +741,14 @@ public final class GhostSoundManager {
      */
     private static boolean canReachListener(SoundSource source, ServerPlayer player) {
         if (source.level() != player.serverLevel()) return false;
+        if (source.moduleId() != null) {
+            var host = source.host();
+            var module = GhostModuleRegistry.get(source.moduleId());
+            var entry = host.getModules().stream().filter(e -> e.id().equals(source.moduleId())).findFirst().orElse(null);
+            if (module == null || entry == null || !host.carriesModule(entry.id())
+                    || !host.moduleEnvironment(entry.id()).exposed()
+                    || !module.soundEnabled(entry, host.allowsAutomaticAbilities())) return false;
+        }
         Vec3 start = source.position();
         Vec3 end = player.getEyePosition();
 
@@ -780,13 +795,13 @@ public final class GhostSoundManager {
      * 此查询不修改听觉快照，不派发事件。
      */
     public static double getBlockedSoundIntensity(ServerPlayer player) {
-        if (!GhostAvoidanceSystem.hasWhiteGhostCandle(player)) return 0;
+        if (player.getType().is(ModTags.NO_HEARING) || !GhostAvoidanceSystem.hasWhiteGhostCandle(player)) return 0;
         double strongest = 0;
         for (SoundSource source : SOURCES.values()) {
             if (!canReachListener(source, player)) continue;
             for (var entry : source.host().getModules()) {
                 if (source.moduleId() != null && !source.moduleId().equals(entry.id())) continue;
-                if (!GhostModuleCombatState.available(entry)) continue;
+                if (source.moduleId() == null && !GhostModuleCombatState.available(entry)) continue;
                 if (Double.isFinite(entry.intensity())) strongest = Math.max(strongest, entry.intensity());
             }
         }

@@ -1,5 +1,6 @@
 package com.qidate.qisplan2.core;
 
+import net.minecraft.world.entity.EntityType;
 import com.qidate.qisplan2.QisPlan2;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceLocation;
@@ -9,6 +10,10 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.level.block.Block;
 
 public class ModTags {
+    /** 数据包可填写没有听力的实体类型，默认空集合。 */
+    public static final TagKey<EntityType<?>> NO_HEARING = TagKey.create(
+            Registries.ENTITY_TYPE, ResourceLocation.fromNamespaceAndPath(QisPlan2.MODID, "no_hearing"));
+
 
     private ModTags() {
     }

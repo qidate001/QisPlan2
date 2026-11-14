@@ -1,5 +1,8 @@
 package com.qidate.qisplan2.ghost.module;
 
+import com.qidate.qisplan2.ghost.module.ability.GhostAbilityExecutor;
+import com.qidate.qisplan2.ghost.module.ability.GhostAbilityContext;
+import com.qidate.qisplan2.ghost.module.event.GhostEvent;
 import com.qidate.qisplan2.ghost.module.data.GhostModuleData;
 import com.qidate.qisplan2.ghost.module.environment.GhostEnvironment;
 import net.minecraft.nbt.CompoundTag;
@@ -37,6 +40,16 @@ public record GhostModuleContext(
      * 目标进度的存储位置由适配层决定，模块不识别自己的载体。
      */
     public GhostTargetState targetState() { return host.moduleTargetState(moduleId); }
+
+    /** 发布观察到的语义事实，来源宿主由中间层补全。 */
+    public void dispatchEvent(GhostEvent event) { GhostModuleRuntime.dispatch(host, event); }
+
+    /** 延续模块已经启动的能力，允许内部私有能力，但不能成为网络释放入口。 */
+    public boolean continueAbility(ResourceLocation abilityId, GhostEvent event) {
+        return GhostAbilityExecutor.tryExecuteWithResult(
+                new GhostAbilityContext(host, moduleId, abilityId,
+                        GhostAbilityContext.Source.CONTINUATION, event));
+    }
 
     /** 获取当前模块的世界操作接口，不返回具体载体。 */
     public GhostWorldAccess world() { return host.moduleWorld(moduleId); }
