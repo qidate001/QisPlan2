@@ -14,6 +14,9 @@ import net.minecraft.resources.ResourceLocation;
  * 不依赖某个特定的 GhostEvent 才能执行。
  */
 public interface GhostAbility {
+    /** 主动调用需要参加的灵异裁决；纯移动、声音、开关等不声明。规则仍使用其事件共享会话。 */
+    default GhostAbilityInfluence activeInfluence(GhostAbilityContext context) { return null; }
+
     /** 可选通用快捷操作；未声明的能力仍可由轮盘及其他接口调用。 */
     default GhostDomainShortcut domainShortcut() { return null; }
 

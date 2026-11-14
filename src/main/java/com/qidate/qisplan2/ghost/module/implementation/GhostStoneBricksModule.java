@@ -1,5 +1,6 @@
 package com.qidate.qisplan2.ghost.module.implementation;
 
+import com.qidate.qisplan2.ghost.module.ability.GhostAbilityInfluence;
 import com.qidate.qisplan2.QisPlan2;
 import com.qidate.qisplan2.death.ModDamageTypes;
 import com.qidate.qisplan2.ghost.module.GhostModule;
@@ -131,6 +132,11 @@ public final class GhostStoneBricksModule implements GhostModule {
 
     /** 三种宿主共用同一条“实际反击成功才撤销摧毁”的能力实现。 */
     private static final class RetaliationAbility implements GhostAbility {
+        /** 主动渠道与规则使用相同的袭击/保护语义，获准前不执行世界效果。 */
+        @Override public GhostAbilityInfluence activeInfluence(GhostAbilityContext context) {
+            return GhostAbilityInfluence.of(context.getModuleContext().world().aimedTarget(8), GhostInfluenceType.ATTACK, context.getModuleContext().intensity());
+        }
+
             /** 技能图标由所属模块直接声明。 */
             @Override public ResourceLocation iconTexture() { return ResourceLocation.parse("qisplan2:textures/block/ghost_stone_bricks.png"); }
 

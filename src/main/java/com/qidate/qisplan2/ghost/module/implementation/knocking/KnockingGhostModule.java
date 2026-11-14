@@ -1,5 +1,6 @@
 package com.qidate.qisplan2.ghost.module.implementation.knocking;
 
+import com.qidate.qisplan2.ghost.module.ability.GhostAbilityInfluence;
 import com.qidate.qisplan2.ghost.module.ability.GhostAbilityStimulation;
 import net.minecraft.core.BlockPos;
 import com.qidate.qisplan2.ghost.module.ability.GhostAbility;
@@ -179,6 +180,11 @@ public final class KnockingGhostModule implements GhostModule {
              * 注册、能力查找和规则分发使用此标识，不代表某个运行时实例。
              */
             @Override public ResourceLocation getId() { return ATTACK; }
+            /** 主动渠道与规则使用相同的袭击/保护语义，获准前不执行世界效果。 */
+            @Override public GhostAbilityInfluence activeInfluence(GhostAbilityContext context) {
+                return GhostAbilityInfluence.of(context.event() instanceof DoorKnockHeardEvent heard ? heard.target() : context.getModuleContext().world().aimedTarget(8), GhostInfluenceType.ATTACK, context.getModuleContext().effectiveIntensity());
+            }
+
 
             /**
              * 检查本次能力调用的事件、参数或环境是否可用于执行。

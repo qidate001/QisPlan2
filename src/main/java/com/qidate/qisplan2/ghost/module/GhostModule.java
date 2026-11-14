@@ -10,7 +10,6 @@ import com.qidate.qisplan2.ghost.corrosion.GhostCorrosion;
 import com.qidate.qisplan2.ghost.module.ability.GhostAbility;
 import com.qidate.qisplan2.ghost.module.ability.GhostAbilityContext;
 import com.qidate.qisplan2.ghost.module.data.GhostModuleInitialData;
-import com.qidate.qisplan2.ghost.module.influence.GhostInfluenceType;
 import com.qidate.qisplan2.ghost.module.sound.GhostSoundDefinition;
 import com.qidate.qisplan2.ghost.possession.classification.GhostClassification;
 import com.qidate.qisplan2.ghost.possession.classification.GhostTag;
@@ -248,8 +247,7 @@ public interface GhostModule {
         return null;
     }
 
-    /** 主动能力对目标产生的影响类型，未声明的操作不自动当作袭击。 */
-    default GhostInfluenceType activeInfluence() { return null; }
+
 
     /**
      * 修改驭鬼者的非灵异伤害减免。

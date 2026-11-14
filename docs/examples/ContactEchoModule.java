@@ -6,6 +6,7 @@ import com.qidate.qisplan2.ghost.module.GhostModule;
 import com.qidate.qisplan2.ghost.module.GhostRule;
 import com.qidate.qisplan2.ghost.module.GhostRuleContext;
 import com.qidate.qisplan2.ghost.module.ability.GhostAbility;
+import com.qidate.qisplan2.ghost.module.ability.GhostAbilityInfluence;
 import com.qidate.qisplan2.ghost.module.ability.GhostAbilityContext;
 import com.qidate.qisplan2.ghost.module.ability.GhostAbilityStimulation;
 import com.qidate.qisplan2.ghost.module.ability.GhostTargetParameters;
@@ -117,6 +118,12 @@ public final class ContactEchoModule implements GhostModule {
 
     /** 真正的技能实现；这里不认识实体宿主、玩家宿主或物品宿主。 */
     private static final class ContactAttack implements GhostAbility {
+        /** 主动技能也先参与裁决，不能绕过目标上的持续保护。 */
+        @Override public GhostAbilityInfluence activeInfluence(GhostAbilityContext context) {
+            return GhostAbilityInfluence.of(contactTarget(context),
+                    GhostInfluenceType.ATTACK, context.getModuleContext().intensity());
+        }
+
         /** 返回技能 ID，语言键默认由它推导。 */
         @Override public ResourceLocation getId() { return ATTACK; }
 

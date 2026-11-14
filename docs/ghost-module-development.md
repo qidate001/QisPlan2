@@ -206,6 +206,7 @@ import com.qidate.qisplan2.ghost.module.GhostModule;
 import com.qidate.qisplan2.ghost.module.GhostRule;
 import com.qidate.qisplan2.ghost.module.GhostRuleContext;
 import com.qidate.qisplan2.ghost.module.ability.GhostAbility;
+import com.qidate.qisplan2.ghost.module.ability.GhostAbilityInfluence;
 import com.qidate.qisplan2.ghost.module.ability.GhostAbilityContext;
 import com.qidate.qisplan2.ghost.module.ability.GhostAbilityStimulation;
 import com.qidate.qisplan2.ghost.module.ability.GhostTargetParameters;
@@ -317,6 +318,12 @@ public final class ContactEchoModule implements GhostModule {
 
     /** 真正的技能实现；这里不认识实体宿主、玩家宿主或物品宿主。 */
     private static final class ContactAttack implements GhostAbility {
+        /** 主动技能也先参与裁决，不能绕过目标上的持续保护。 */
+        @Override public GhostAbilityInfluence activeInfluence(GhostAbilityContext context) {
+            return GhostAbilityInfluence.of(contactTarget(context),
+                    GhostInfluenceType.ATTACK, context.getModuleContext().intensity());
+        }
+
         /** 返回技能 ID，语言键默认由它推导。 */
         @Override public ResourceLocation getId() { return ATTACK; }
 
@@ -683,19 +690,29 @@ boolean success = GhostAbilityExecutor.tryExecuteWithResult(invocation);
 
 规则中优先使用 `submitAbilityInfluence()` 提交袭击/保护竞争。它先准备能力，准备失败不提交；裁决通过后延迟调用执行器，执行时再次检查媒介。
 
-需要目标身上的诅咒也参与同一批次时，使用 `GhostInfluenceCollector.collectCurses(...)`。不要把事件里的“规则触发”直接等同于“已经成功击杀”。
+规则的 `submitInfluence()` 袭击入口会统一收集目标身上的有效保护诅咒；显式 `GhostInfluenceCollector.collectCurses(...)` 仍可使用，同一会话按诅咒实例去重。不要把“规则触发”直接等同于“已经成功击杀”。
 
 `GhostModuleRuntime.dispatch(List<...>, event)` 可以把多个宿主放进同一影响批次。需要竞争同一个事实时，应由外部调度统一组织批次，而非让模块自己查找全部宿主。
 
-### 10.2 执行器并不自动创建所有裁决
+### 10.2 主动能力的裁决声明
 
-这一点以当前实现为准：`GhostAbilityExecutor` 负责状态、媒介、条件、刺激和效果调用，**不是每次调用都自动创建 `GhostInfluenceSession`**。
+能力通过 `GhostAbility.activeInfluence(context)` 返回本次影响，声明目标、影响类型与实际强度。`GhostAbilityExecutor` 在主动渠道完成状态、媒介、执行条件检查后，收集持续保护并进行裁决；获准后重新校验并执行效果，复苏刺激只结算一次。被压制或死机的本次效果不执行。
 
-当前轮盘网络入口直接调用执行器。模块里的 `activeInfluence()` 虽仍保留，但当前统一轮盘入口没有读取它来自动提交影响。
+```java
+@Override
+public GhostAbilityInfluence activeInfluence(GhostAbilityContext context) {
+    return GhostAbilityInfluence.of(contactTarget(context),
+            GhostInfluenceType.ATTACK, context.getModuleContext().intensity());
+}
+```
 
-因此不能只覆盖 `activeInfluence()` 就声称主动技能已进入与规则相同的共享裁决批次。需要这种语义时，应通过通用调用编排层明确建立会话，并让模块声明其影响；不要恢复按模块 ID 硬编码的中央技能分发。
+声明使用作用对象与抽象环境接口，不读取宿主类型。轮盘、热键和直接 `POSSESSION` 调用共用此入口。旧的模块级 `activeInfluence()` 已移除；不同技能可以分别声明保护、袭击或无裁决。
 
-`world.attack()` 仍进入统一灵异死亡处理，目标侧的保护机制与“来源侧是否建立一个共享影响批次”是两个不同问题。本文示例保留现有两条入口的实际行为，不声称它们拥有完全相同的裁决编排。
+规则依旧共享其事件会话，不在执行器内重复提交。主动敲门的延迟袭击在实际执行时裁决。移动、开关鬼域、化虹、题字等不直接构成攻防竞争的操作返回 `null`；寿衣仍通过真实待处理袭击事件抵挡。不能把所有能力都强制当成袭击。
+
+鬼签的生签声明保护、死签声明袭击、鬼签结果不声明竞争。生签与同源同强度死签相遇时写入模块死机并清理该生签，本次死签不执行；死机之后，玩家依然可绕过自动规则主动使用满足媒介的能力。
+
+当前持续生签历史数据没有保存具体来源模块实例 UUID，来源区分兼容地依据提供者模块 ID；已经避免把鬼签保护与其他模块的袭击误认为同源。区分同类型但不同实例的来源仍需扩展诅咒存储，不能把模块类型标识当成完整的实例溯源。
 
 ### 10.3 三种刺激时机
 
@@ -789,7 +806,7 @@ boolean success = GhostAbilityExecutor.tryExecuteWithResult(invocation);
 - 例如寿衣抵挡当前需要真实待处理的灵异袭击；轮盘没有实现“预存一次未来抵挡”的机制，不能仅修改显示就声称支持主动蓄盾。
 - 当前鬼烛效果消费端还检查点燃和模块可用状态。新增“脱离点燃规则持续主动维持”的能力，需要同步定义持续期、代价及效果查询逻辑，不能仅调用一次 `emit()` 就认为已经完成。
 - 题字仍依赖题字能力出口和可题字对象，注册到玩家模块列表不会自动获得该物理交互能力。
-- 自动规则、主动输入的共享裁决编排存在第十节说明的差别。
+- 规则按语义事件共享裁决批次；主动能力按调用建立裁决批次，详见第十节。
 - `customData` 并非所有宿主都可读写，`GhostBehavior` 也仍是现有行为适配枚举。
 
 这些是当前实现需要明确面对的边界，不是建议在模块里绕过接口。后续扩展时应沿用“模块声明规则与效果，接口提供环境能力，宿主落实物理行为”的分工。

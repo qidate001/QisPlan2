@@ -1,6 +1,7 @@
 package com.qidate.qisplan2.ghost.module.implementation;
 
 
+import com.qidate.qisplan2.ghost.module.ability.GhostAbilityInfluence;
 import com.qidate.qisplan2.ghost.module.ability.GhostAbilityStimulation;
 import com.qidate.qisplan2.death.ModDamageTypes;
 import com.qidate.qisplan2.ghost.module.environment.GhostWorldAccess;
@@ -154,6 +155,11 @@ public final class ClosingGhostModule implements GhostModule {
         }
     }
     private static final class DoorAttackAbility implements GhostAbility {
+        /** 主动渠道与规则使用相同的袭击/保护语义，获准前不执行世界效果。 */
+        @Override public GhostAbilityInfluence activeInfluence(GhostAbilityContext context) {
+            return GhostAbilityInfluence.of(context.getModuleContext().world().doorMarkedTarget(false), GhostInfluenceType.ATTACK, context.getModuleContext().effectiveIntensity());
+        }
+
             /** 技能图标由所属模块直接声明。 */
             @Override public ResourceLocation iconTexture() { return ResourceLocation.parse("minecraft:textures/item/iron_door.png"); }
 

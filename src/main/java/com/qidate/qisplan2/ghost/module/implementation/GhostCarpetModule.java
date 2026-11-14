@@ -1,5 +1,6 @@
 package com.qidate.qisplan2.ghost.module.implementation;
 
+import com.qidate.qisplan2.ghost.module.ability.GhostAbilityInfluence;
 import net.minecraft.world.entity.LivingEntity;
 import com.qidate.qisplan2.death.ModDamageTypes;
 import com.qidate.qisplan2.ghost.module.*;
@@ -106,6 +107,11 @@ public final class GhostCarpetModule implements GhostModule {
     @Override
     public List<GhostAbility> getIntrinsicAbilities() {
         return List.of(new GhostAbility() {
+            /** 主动渠道与规则使用相同的袭击/保护语义，获准前不执行世界效果。 */
+            @Override public GhostAbilityInfluence activeInfluence(GhostAbilityContext context) {
+                return GhostAbilityInfluence.of(contactTarget(context), GhostInfluenceType.ATTACK, context.getModuleContext().intensity());
+            }
+
             /** 技能图标由所属模块直接声明。 */
             @Override public ResourceLocation iconTexture() { return ResourceLocation.parse("qisplan2:textures/block/ghost_carpet.png"); }
 

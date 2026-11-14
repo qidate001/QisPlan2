@@ -43,6 +43,11 @@ public final class GhostAbilityExecutor {
      * returnEffectResult 决定返回实际效果结果，还是返回调用是否被接受。
      */
     private static boolean execute(GhostAbilityContext context, boolean returnEffectResult) {
+        return execute(context, returnEffectResult, false);
+    }
+
+    /** 裁决获准后通过私有标记重入校验，不再次提交同一影响，也不让调用方绕过裁决。 */
+    private static boolean execute(GhostAbilityContext context, boolean returnEffectResult, boolean adjudicated) {
         Objects.requireNonNull(context, "context");
 
 
@@ -86,6 +91,14 @@ public final class GhostAbilityExecutor {
         // 4. 检查前置条件判断期间模块是否被移除。
         if (!context.isModuleAvailable()) {
             return false;
+        }
+
+        // 主动调用不触发规则，但必须经过能力声明的灵异裁决。
+        // 规则已有共享事件会话；不重复裁决。复苏刺激也只在获准后结算一次。
+        if (!adjudicated && context.source() == GhostAbilityContext.Source.POSSESSION) {
+            GhostAbilityInfluence influence = ability.activeInfluence(context);
+            if (influence != null) return influence.execute(context,
+                    () -> execute(context, returnEffectResult, true));
         }
 
         // 5. 获取本次能力声明的复苏刺激。

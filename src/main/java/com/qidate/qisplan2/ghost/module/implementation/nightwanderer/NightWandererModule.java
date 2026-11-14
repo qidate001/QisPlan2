@@ -1,5 +1,6 @@
 package com.qidate.qisplan2.ghost.module.implementation.nightwanderer;
 
+import com.qidate.qisplan2.ghost.module.ability.GhostAbilityInfluence;
 import com.qidate.qisplan2.ghost.module.ability.GhostAbility;
 import com.qidate.qisplan2.ghost.module.environment.GhostBehavior;
 
@@ -146,6 +147,11 @@ public final class NightWandererModule implements GhostModule {
              * 注册、能力查找和规则分发使用此标识，不代表某个运行时实例。
              */
             @Override public ResourceLocation getId() { return ATTACK; }
+            /** 主动渠道与规则使用相同的袭击/保护语义，获准前不执行世界效果。 */
+            @Override public GhostAbilityInfluence activeInfluence(GhostAbilityContext context) {
+                return GhostAbilityInfluence.of(attackTarget(context), GhostInfluenceType.ATTACK, context.getModuleContext().effectiveIntensity());
+            }
+
             /** 主动使用复苏代价由模块声明；规则与行为调用不重复收取。 */
             @Override public GhostAbilityStimulation getStimulation(GhostAbilityContext c) {
                 if (c.source() != GhostAbilityContext.Source.POSSESSION) return GhostAbilityStimulation.none();
@@ -209,10 +215,7 @@ public final class NightWandererModule implements GhostModule {
     }
 
 
-    /**
-     * 声明主动能力的影响类型，供调用入口建立灵异裁决。
-     */
-    @Override public GhostInfluenceType activeInfluence() { return GhostInfluenceType.ATTACK; }
+
 
 
     /** 成长只修改本模块数据，换载体不会丢失击杀数或复制强度。 */

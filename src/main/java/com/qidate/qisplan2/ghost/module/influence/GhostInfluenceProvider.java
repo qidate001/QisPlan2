@@ -1,5 +1,7 @@
 package com.qidate.qisplan2.ghost.module.influence;
 
+import net.minecraft.resources.ResourceLocation;
+
 /**
  * 声明一个对象能够向灵异影响系统提供影响。
  *
@@ -8,6 +10,10 @@ package com.qidate.qisplan2.ghost.module.influence;
  * 影响强度在获取时动态计算。
  */
 public interface GhostInfluenceProvider {
+
+    /** 提供影响的模块类型，避免把其他厉鬼留下的保护误认成本次袭击的同源影响。 */
+    default ResourceLocation influenceModuleId() { return null; }
+
 
     /**
      * 获取当前提供的影响类型。

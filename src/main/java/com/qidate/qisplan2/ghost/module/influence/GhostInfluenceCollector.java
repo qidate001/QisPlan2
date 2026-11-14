@@ -57,17 +57,8 @@ public final class GhostInfluenceCollector {
                 continue;
             }
 
-            context.submitInfluence(
-                    target,
-                    provider.getInfluenceType(),
-                    provider.getInfluenceIntensity(),
-                    () -> {
-                    },
-                    () -> CurseManager.remove(
-                            server,
-                            curse.getId()
-                    )
-            );
+            submitCurse(context.influenceSession(), context.host(), context.moduleId(), context.ruleId(),
+                    target, curse, provider, () -> CurseManager.remove(server, curse.getId()));
 
             submitted++;
         }
@@ -82,10 +73,18 @@ public final class GhostInfluenceCollector {
             ResourceLocation moduleId, ResourceLocation abilityId, UUID target, MinecraftServer server) {
         for (Curse curse : CurseManager.getByTarget(target)) {
             if (!curse.isValid(server) || !(curse instanceof GhostInfluenceProvider provider)) continue;
-            session.submit(new GhostInfluence(host, moduleId, abilityId, target,
-                    provider.getInfluenceType(), provider.getInfluenceIntensity(),
-                    session.getSourceId(host, moduleId), session.getBatchId()),
-                    () -> {}, () -> CurseManager.remove(server, curse.getId()));
+            submitCurse(session, host, moduleId, abilityId, target, curse, provider,
+                    () -> CurseManager.remove(server, curse.getId()));
         }
+    }
+    /** 保留保护的模块来源；其他模块的保护使用独立来源，不错误地使来袭模块死机。 */
+    static void submitCurse(GhostInfluenceSession session, GhostModuleHost host,
+            ResourceLocation moduleId, ResourceLocation abilityId, UUID target, Curse curse,
+            GhostInfluenceProvider provider, Runnable cleanup) {
+        if (!session.claimCurse(curse.getId())) return;
+        UUID source = moduleId.equals(provider.influenceModuleId())
+                ? session.getSourceId(host, moduleId) : curse.getId();
+        session.submit(new GhostInfluence(host, moduleId, abilityId, target, provider.getInfluenceType(),
+                provider.getInfluenceIntensity(), source, session.getBatchId()), () -> {}, cleanup);
     }
 }

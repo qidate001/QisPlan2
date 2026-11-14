@@ -33,6 +33,14 @@ public final class GhostInfluenceSession {
             sourceIds = new IdentityHashMap<>();
 
     private boolean finished;
+    private final Set<UUID> collectedCurses = new HashSet<>();
+
+    /** 同一事件中持续保护只收集一次，避免多个规则把同一生签保护重复叠加。 */
+    public boolean claimCurse(UUID curse) {
+        if (finished) throw new IllegalStateException("Influence session has finished");
+        return collectedCurses.add(curse);
+    }
+
 
     public GhostInfluenceSession() {
         this.batch = new GhostInfluenceBatch(nextBatchId());

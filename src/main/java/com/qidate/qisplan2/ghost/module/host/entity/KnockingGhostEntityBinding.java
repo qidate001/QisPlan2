@@ -4,9 +4,6 @@ import com.qidate.qisplan2.ghost.module.*;
 import com.qidate.qisplan2.ghost.module.ability.*;
 import com.qidate.qisplan2.ghost.module.event.DoorKnockHeardEvent;
 import com.qidate.qisplan2.ghost.module.host.player.PlayerGhostModuleHost;
-import com.qidate.qisplan2.ghost.module.influence.GhostInfluence;
-import com.qidate.qisplan2.ghost.module.influence.GhostInfluenceSession;
-import com.qidate.qisplan2.ghost.module.influence.GhostInfluenceType;
 import java.util.List;
 import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceLocation;
@@ -45,7 +42,7 @@ public final class KnockingGhostEntityBinding {
 
     /**
      * 将玩家敲门产生的听声事实接入主动能力链。
-     * 准备袭击、提交灵异裁决，获准后安排延迟执行；不重新走自动规则。
+     * 准备并安排延迟袭击；真正执行时由统一能力入口裁决，不重新走自动规则。
      */
     public static void attackFromPlayer(ServerPlayer player, DoorKnockHeardEvent heard) {
         var host = new PlayerGhostModuleHost(player);
@@ -53,11 +50,6 @@ public final class KnockingGhostEntityBinding {
         Runnable attack = GhostAbilityExecutor.prepareDeferred(new GhostAbilityContext(
                 host, ID, ATTACK, GhostAbilityContext.Source.POSSESSION, heard));
         if (attack == null) return;
-        GhostInfluenceSession session = new GhostInfluenceSession();
-        session.submit(new GhostInfluence(host, ID, ATTACK, heard.target().getUUID(),
-                GhostInfluenceType.ATTACK, GhostModuleHosts.strength(host, ID),
-                session.getSourceId(host, ID), session.getBatchId()),
-                () -> KnockingGhostDoorSystem.scheduleModuleAttack(attack));
-        session.resolveAndApply();
+        KnockingGhostDoorSystem.scheduleModuleAttack(attack);
     }
 }

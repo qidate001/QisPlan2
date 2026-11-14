@@ -1,5 +1,6 @@
 package com.qidate.qisplan2.ghost.curse.type.ghostdivination;
 
+import com.qidate.qisplan2.ghost.module.implementation.divinationslip.GhostDivinationSlipModule;
 import com.qidate.qisplan2.ghost.curse.AbstractCurse;
 import com.qidate.qisplan2.ghost.module.influence.GhostInfluenceProvider;
 import com.qidate.qisplan2.ghost.module.influence.GhostInfluenceType;
@@ -95,6 +96,9 @@ public class GhostDivinationCurse
     ) {
         tickDuration();
     }
+
+    /** 生签保护来自鬼签模块，不能与鬼草丛等其他模块误判为同源死机。 */
+    @Override public ResourceLocation influenceModuleId() { return GhostDivinationSlipModule.ID; }
 
     @Override
     public GhostInfluenceType getInfluenceType() {

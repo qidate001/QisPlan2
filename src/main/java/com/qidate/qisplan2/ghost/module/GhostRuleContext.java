@@ -5,6 +5,8 @@ import com.qidate.qisplan2.ghost.module.ability.GhostAbilityExecutor;
 import com.qidate.qisplan2.ghost.module.data.GhostModuleData;
 import com.qidate.qisplan2.ghost.module.event.GhostEvent;
 import com.qidate.qisplan2.ghost.module.influence.GhostInfluence;
+import com.qidate.qisplan2.ghost.module.influence.GhostInfluenceCollector;
+import net.neoforged.neoforge.server.ServerLifecycleHooks;
 import com.qidate.qisplan2.ghost.module.influence.GhostInfluenceSession;
 import com.qidate.qisplan2.ghost.module.influence.GhostInfluenceType;
 import net.minecraft.resources.ResourceLocation;
@@ -144,6 +146,13 @@ public record GhostRuleContext(
             );
         }
 
+        // 通用规则入口统一收集持续保护，避免只有鬼签、草丛和地毯参与攻防。
+        // 会话按诅咒实例去重，兼容已有规则显式收集。
+        var server = ServerLifecycleHooks.getCurrentServer();
+        if (type == GhostInfluenceType.ATTACK && server != null)
+            GhostInfluenceCollector.collectCurses(this, targetId, server);
+
+
         GhostInfluence influence = new GhostInfluence(
                 host,
                 moduleId,
@@ -204,6 +213,7 @@ public record GhostRuleContext(
         if (deferredAbility == null) {
             return false;
         }
+
 
         submitInfluence(
                 targetId,

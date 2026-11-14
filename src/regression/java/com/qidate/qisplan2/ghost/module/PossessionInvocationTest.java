@@ -2,6 +2,7 @@
 package com.qidate.qisplan2.ghost.module;
 
 import com.qidate.qisplan2.ghost.module.ability.*;
+import com.qidate.qisplan2.ghost.module.influence.ActiveInfluenceTest;
 import com.qidate.qisplan2.ghost.module.data.GhostModuleData;
 import com.qidate.qisplan2.ghost.module.event.ModuleTickEvent;
 import com.qidate.qisplan2.ghost.module.event.GhostEvent;
@@ -45,6 +46,7 @@ public final class PossessionInvocationTest {
         GhostBearingTest.run();
         ModuleCommandTextTest.run();
         AbilityWheelTest.run();
+        ActiveInfluenceTest.run();
         GhostModuleRegistry.register(new GhostModule() {
             /**
              * 获取当前定义的唯一标识。

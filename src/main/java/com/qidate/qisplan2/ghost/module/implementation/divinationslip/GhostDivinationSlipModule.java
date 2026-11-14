@@ -1,6 +1,7 @@
 package com.qidate.qisplan2.ghost.module.implementation.divinationslip;
 
 
+import com.qidate.qisplan2.ghost.module.ability.GhostAbilityInfluence;
 import com.qidate.qisplan2.ghost.module.ability.GhostInvocationParameters;
 import com.qidate.qisplan2.ghost.module.ability.GhostAbilityStimulation;
 import com.qidate.qisplan2.QisPlan2;
@@ -299,6 +300,11 @@ public final class GhostDivinationSlipModule implements GhostModule {
      * 复苏刺激仍由 GhostAbilityExecutor 负责。
      */
     private record DivinationSlipAbility(int result, String name) implements GhostAbility {
+        /** 主动渠道与规则使用相同的袭击/保护语义，获准前不执行世界效果。 */
+        @Override public GhostAbilityInfluence activeInfluence(GhostAbilityContext context) {
+            return result == GHOST_RESULT ? null : GhostAbilityInfluence.of(recipient(context), result == LIFE_RESULT ? GhostInfluenceType.PROTECTION : GhostInfluenceType.ATTACK, context.getModuleContext().intensity());
+        }
+
         /** 每种签文有自己的能力 ID。 */
         public ResourceLocation getId() { return resultAbility(result); }
         /** 各签文直接声明对应图标。 */
