@@ -44,6 +44,8 @@
 
 ## 厉鬼模块
 
+开发说明：[从零构建厉鬼模块](docs/ghost-module-development.md) · [宿主灵异承载](docs/ghost-bearing.md)
+
 本模组所有厉鬼都是厉鬼模块构成  
 厉鬼模块主要有三个部分构成
 - **规则**：描述厉鬼的行为逻辑

@@ -13,24 +13,24 @@ GLOBAL 仅为全局侵蚀来源，不是承载部位。玩家和基础实体有 
 ## 扩展方法
 
 鬼寿衣声明：
-
-    @Override
-    public GhostModuleForm form() {
-        return GhostModuleForm.replacing(SpiritualPart.SKIN);
-    }
-
+```java
+@Override
+public GhostModuleForm form() {
+    return GhostModuleForm.replacing(SpiritualPart.SKIN);
+}
+```
 特殊模型实体继承 ModularGhostEntity，并在构造器调用：
-
-    super(type, level, composition, defaultModules);
-
+```java
+super(type, level, composition, defaultModules);
+```
 自定义组成示例：
-
-    SpiritualPart core = new SpiritualPart(
-        ResourceLocation.fromNamespaceAndPath("qisplan2", "core"));
-    HostComposition composition = new HostComposition(Map.of(core, 1));
-    List<GhostModuleData.Entry> defaultModules =
-        List.of(new GhostModuleData.Entry(moduleId, 30));
-
+```java
+SpiritualPart core = new SpiritualPart(
+    ResourceLocation.fromNamespaceAndPath("qisplan2", "core"));
+HostComposition composition = new HostComposition(Map.of(core, 1));
+List<GhostModuleData.Entry> defaultModules =
+    List.of(new GhostModuleData.Entry(moduleId, 30));
+```
 模块需先注册，默认模块不满足组成约束时拒绝错误配置。基础实体仍为空白模块列表。
 新实体进入世界时绑定默认模块行为。读档有明确空列表时，不重新补回已经移除的默认模块；缺少整个模块字段时才保留构造默认值。
 独特模型的渲染注册仍由各实体类型负责。
