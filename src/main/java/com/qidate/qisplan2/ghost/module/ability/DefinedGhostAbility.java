@@ -5,7 +5,13 @@ import net.minecraft.resources.ResourceLocation;
 
 /** 通用能力定义容器；条件与效果由模块传入，本类不认识任何具体厉鬼或技能种类。 */
 public record DefinedGhostAbility(ResourceLocation getId, ResourceLocation iconTexture,
-        Predicate<GhostAbilityContext> requirement, Predicate<GhostAbilityContext> effect) implements GhostAbility {
+        Predicate<GhostAbilityContext> requirement, Predicate<GhostAbilityContext> effect,
+        GhostDomainShortcut domainShortcut) implements GhostAbility {
+    /** 普通能力无需声明快捷操作，原有四参数构造保持兼容。 */
+    public DefinedGhostAbility(ResourceLocation id, ResourceLocation icon,
+            Predicate<GhostAbilityContext> requirement, Predicate<GhostAbilityContext> effect) {
+        this(id, icon, requirement, effect, null);
+    }
     /** 模块给出的条件就是本技能自身的执行前提。 */
     public boolean canExecute(GhostAbilityContext context) { return requirement.test(context); }
     /** 兼容无需返回效果结果的调用方。 */

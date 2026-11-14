@@ -1,6 +1,7 @@
 package com.qidate.qisplan2.ghost.module.implementation.eye;
 
 import com.qidate.qisplan2.ghost.module.ability.DefinedGhostAbility;
+import com.qidate.qisplan2.ghost.module.ability.GhostDomainShortcut;
 import com.qidate.qisplan2.ghost.bearing.SpiritualPart;
 import com.qidate.qisplan2.ghost.corrosion.GhostCorrosion;
 import com.qidate.qisplan2.ghost.module.GhostModule;
@@ -82,19 +83,19 @@ public final class GhostEyeModule implements GhostModule {
         new DefinedGhostAbility(ResourceLocation.fromNamespaceAndPath(ID.getNamespace(), ID.getPath() + "/domain_up"),
                 ResourceLocation.parse("minecraft:textures/item/glowstone_dust.png"),
                 c -> c.getModuleContext().world().domain().exists(),
-                c -> c.getModuleContext().world().domain().setLayer(Math.min(6, c.getModuleContext().world().domain().layer() + 1))),
+                c -> c.getModuleContext().world().domain().setLayer(Math.min(6, c.getModuleContext().world().domain().layer() + 1)), GhostDomainShortcut.DOMAIN_UP),
         new DefinedGhostAbility(ResourceLocation.fromNamespaceAndPath(ID.getNamespace(), ID.getPath() + "/domain_down"),
                 ResourceLocation.parse("minecraft:textures/item/redstone.png"),
                 c -> c.getModuleContext().world().domain().exists(),
-                c -> c.getModuleContext().world().domain().setLayer(Math.max(1, c.getModuleContext().world().domain().layer() - 1))),
+                c -> c.getModuleContext().world().domain().setLayer(Math.max(1, c.getModuleContext().world().domain().layer() - 1)), GhostDomainShortcut.DOMAIN_DOWN),
         new DefinedGhostAbility(ResourceLocation.fromNamespaceAndPath(ID.getNamespace(), ID.getPath() + "/self_up"),
                 ResourceLocation.parse("minecraft:textures/item/feather.png"),
                 c -> c.getModuleContext().world().domain().exists(),
-                c -> c.getModuleContext().world().domain().setOccupiedLayer(Math.min(c.getModuleContext().world().domain().layer(), c.getModuleContext().world().domain().occupiedLayer() + 1))),
+                c -> c.getModuleContext().world().domain().setOccupiedLayer(Math.min(c.getModuleContext().world().domain().layer(), c.getModuleContext().world().domain().occupiedLayer() + 1)), GhostDomainShortcut.SELF_UP),
         new DefinedGhostAbility(ResourceLocation.fromNamespaceAndPath(ID.getNamespace(), ID.getPath() + "/self_down"),
                 ResourceLocation.parse("minecraft:textures/item/flint.png"),
                 c -> c.getModuleContext().world().domain().exists(),
-                c -> c.getModuleContext().world().domain().setOccupiedLayer(Math.max(1, c.getModuleContext().world().domain().occupiedLayer() - 1))),
+                c -> c.getModuleContext().world().domain().setOccupiedLayer(Math.max(1, c.getModuleContext().world().domain().occupiedLayer() - 1)), GhostDomainShortcut.SELF_DOWN),
         new DefinedGhostAbility(ResourceLocation.fromNamespaceAndPath(ID.getNamespace(), ID.getPath() + "/reboot"),
                 ResourceLocation.parse("minecraft:textures/item/clock_00.png"),
                 c -> c.getModuleContext().world().domain().layer() >= 6,
@@ -102,15 +103,15 @@ public final class GhostEyeModule implements GhostModule {
         new DefinedGhostAbility(ResourceLocation.fromNamespaceAndPath(ID.getNamespace(), ID.getPath() + "/teleport"),
                 ResourceLocation.parse("minecraft:textures/item/ender_pearl.png"),
                 c -> c.getModuleContext().world().domain().exists(),
-                c -> c.getModuleContext().world().domain().teleportToAim()),
+                c -> c.getModuleContext().world().domain().teleportToAim(), GhostDomainShortcut.TELEPORT),
         new DefinedGhostAbility(ResourceLocation.fromNamespaceAndPath(ID.getNamespace(), ID.getPath() + "/raise_target"),
                 ResourceLocation.parse("minecraft:textures/item/feather.png"),
                 c -> c.getModuleContext().world().domain().exists(),
-                c -> c.getModuleContext().world().domain().shiftTargetLayer(1)),
+                c -> c.getModuleContext().world().domain().shiftTargetLayer(1), GhostDomainShortcut.RAISE_TARGET),
         new DefinedGhostAbility(ResourceLocation.fromNamespaceAndPath(ID.getNamespace(), ID.getPath() + "/lower_target"),
                 ResourceLocation.parse("minecraft:textures/item/flint.png"),
                 c -> c.getModuleContext().world().domain().exists(),
-                c -> c.getModuleContext().world().domain().shiftTargetLayer(-1)));
+                c -> c.getModuleContext().world().domain().shiftTargetLayer(-1), GhostDomainShortcut.LOWER_TARGET));
     }
 
     /**

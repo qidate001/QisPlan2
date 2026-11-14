@@ -335,5 +335,12 @@
   "hud.qisplan2.ability_wheel.empty": "暂无主动能力",
   "hud.qisplan2.ability_wheel.cancel": "选择能力",
   "hud.qisplan2.ability_wheel.hint": "松开按键 / 左键释放 · 中心 / Esc 取消",
-  "hud.qisplan2.ability_wheel.unavailable": "§7当前不满足能力媒介，或没有有效目标。"
+  "hud.qisplan2.ability_wheel.unavailable": "§7当前不满足能力媒介，或没有有效目标。",
+"key.qisplan2.ghost_domain_teleport": "鬼域：化虹",
+  "key.qisplan2.ghost_domain_raise_layer": "鬼域：提升目标层数",
+  "key.qisplan2.ghost_domain_lower_layer": "鬼域：降低目标层数",
+  "key.qisplan2.ghost_domain_self_up": "鬼域：提升自身层数",
+  "key.qisplan2.ghost_domain_self_down": "鬼域：降低自身层数",
+  "key.qisplan2.ghost_domain_layer_up": "鬼域：提升总层数",
+  "key.qisplan2.ghost_domain_layer_down": "鬼域：降低总层数"
 }

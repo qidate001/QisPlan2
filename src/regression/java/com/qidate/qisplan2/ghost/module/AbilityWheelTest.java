@@ -59,6 +59,7 @@ public final class AbilityWheelTest {
     /** 覆盖一到十个槽位的方向、取消区和十项截取，以及执行期媒介。 */
     public static void run() {
         verifyDefinitions();
+        verifyDomainShortcuts();
         for (int count = 1; count <= 10; count++) {
             for (int index = 0; index < count; index++) {
                 double angle = -Math.PI / 2 + index * Math.PI * 2 / count;
@@ -120,6 +121,22 @@ public final class AbilityWheelTest {
         var before = slots.snapshot();
         slots.assign(-1, keys.get(0)); slots.clear(10);
         check(before.equals(slots.snapshot()), "无效槽位不能修改配置");
+    }
+
+    /** 快捷键只复用模块元数据，不能改变能力目录或产生另一份技能实现。 */
+    private static void verifyDomainShortcuts() {
+        var eye = new GhostEyeModule().getIntrinsicAbilities();
+        var mist = new GhostMistModule().getIntrinsicAbilities();
+        check(eye.stream().filter(a -> a.domainShortcut() != null).count() == 7, "鬼眼提供七项通用操作");
+        check(mist.stream().filter(a -> a.domainShortcut() != null).count() == 3, "鬼雾提供化虹和目标升降层");
+        for (var abilities : List.of(eye, mist)) {
+            var shortcuts = new HashSet<GhostDomainShortcut>();
+            for (var ability : abilities) if (ability.domainShortcut() != null) {
+                check(shortcuts.add(ability.domainShortcut()), "同一模块不可重复声明同一快捷操作");
+                check(ability instanceof DefinedGhostAbility, "通用操作必须保留模块能力实现");
+            }
+            check(shortcuts.contains(GhostDomainShortcut.TELEPORT), "不同鬼域均能声明同一化虹输入");
+        }
     }
 
     /** 检查正式模块能力 ID 唯一、主动声明有效，中英文语言资源完整。 */

@@ -329,5 +329,12 @@
   "hud.qisplan2.ability_wheel.empty": "No active abilities",
   "hud.qisplan2.ability_wheel.cancel": "Select an ability",
   "hud.qisplan2.ability_wheel.hint": "Release key / LMB to cast · Center / Esc to cancel",
-  "hud.qisplan2.ability_wheel.unavailable": "§7Requirements not met, or no valid target."
+  "hud.qisplan2.ability_wheel.unavailable": "§7Requirements not met, or no valid target.",
+"key.qisplan2.ghost_domain_teleport": "Domain: Teleport",
+  "key.qisplan2.ghost_domain_raise_layer": "Domain: Raise target layer",
+  "key.qisplan2.ghost_domain_lower_layer": "Domain: Lower target layer",
+  "key.qisplan2.ghost_domain_self_up": "Domain: Raise own layer",
+  "key.qisplan2.ghost_domain_self_down": "Domain: Lower own layer",
+  "key.qisplan2.ghost_domain_layer_up": "Domain: Increase total layers",
+  "key.qisplan2.ghost_domain_layer_down": "Domain: Decrease total layers"
 }

@@ -1,5 +1,6 @@
 package com.qidate.qisplan2.ghost.module.implementation.mist;
 import com.qidate.qisplan2.ghost.module.ability.DefinedGhostAbility;
+import com.qidate.qisplan2.ghost.module.ability.GhostDomainShortcut;
 import com.qidate.qisplan2.ghost.module.ability.GhostAbility;
 import com.qidate.qisplan2.ghost.module.environment.GhostBehavior;
 
@@ -178,15 +179,15 @@ public final class GhostMistModule implements GhostModule {
         new DefinedGhostAbility(ResourceLocation.fromNamespaceAndPath(ID.getNamespace(), ID.getPath() + "/teleport"),
                 ResourceLocation.parse("minecraft:textures/item/ender_pearl.png"),
                 c -> c.getModuleContext().world().domain().exists(),
-                c -> c.getModuleContext().world().domain().teleportToAim()),
+                c -> c.getModuleContext().world().domain().teleportToAim(), GhostDomainShortcut.TELEPORT),
         new DefinedGhostAbility(ResourceLocation.fromNamespaceAndPath(ID.getNamespace(), ID.getPath() + "/raise_target"),
                 ResourceLocation.parse("minecraft:textures/item/feather.png"),
                 c -> c.getModuleContext().world().domain().exists(),
-                c -> c.getModuleContext().world().domain().shiftTargetLayer(1)),
+                c -> c.getModuleContext().world().domain().shiftTargetLayer(1), GhostDomainShortcut.RAISE_TARGET),
         new DefinedGhostAbility(ResourceLocation.fromNamespaceAndPath(ID.getNamespace(), ID.getPath() + "/lower_target"),
                 ResourceLocation.parse("minecraft:textures/item/flint.png"),
                 c -> c.getModuleContext().world().domain().exists(),
-                c -> c.getModuleContext().world().domain().shiftTargetLayer(-1)));
+                c -> c.getModuleContext().world().domain().shiftTargetLayer(-1), GhostDomainShortcut.LOWER_TARGET));
     }
 
     /**

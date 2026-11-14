@@ -14,6 +14,9 @@ import net.minecraft.resources.ResourceLocation;
  * 不依赖某个特定的 GhostEvent 才能执行。
  */
 public interface GhostAbility {
+    /** 可选通用快捷操作；未声明的能力仍可由轮盘及其他接口调用。 */
+    default GhostDomainShortcut domainShortcut() { return null; }
+
     /** 名称由能力 ID 推导语言键，显示层不再把整个厉鬼名称当成唯一技能名称。 */
     default String translationKey() {
         return "ability." + getId().getNamespace() + "." + getId().getPath().replace('/', '.');
