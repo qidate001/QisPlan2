@@ -13,9 +13,7 @@ import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.client.event.RenderGuiEvent;
 
-@EventBusSubscriber(
-        modid = QisPlan2.MODID
-)
+@EventBusSubscriber(modid = QisPlan2.MODID)
 public class PossessionHudOverlay {
 
     /*

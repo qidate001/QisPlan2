@@ -12,6 +12,7 @@ import com.qidate.qisplan2.ghost.module.implementation.GhostCarpetModule;
 import com.qidate.qisplan2.ghost.module.implementation.GhostGrassModule;
 import com.qidate.qisplan2.ghost.module.implementation.UntouchableGhostModule;
 import com.qidate.qisplan2.client.screen.AbilityWheelLayout;
+import com.qidate.qisplan2.client.screen.AbilityWheelSlots;
 import com.qidate.qisplan2.ghost.module.ability.*;
 import com.qidate.qisplan2.ghost.module.data.GhostModuleData;
 import com.qidate.qisplan2.ghost.module.environment.GhostWorldAccess;
@@ -85,6 +86,7 @@ public final class AbilityWheelTest {
         var host = new Host();
         check(GhostAbilityCatalog.all(host).size() == 12, "列出全部模块声明能力且死机不隐藏技能");
         check(GhostAbilityCatalog.wheel(host).size() == 10, "轮盘只显示前十项");
+        verifySlots(GhostAbilityCatalog.all(host));
         var first = GhostAbilityCatalog.wheel(host).getFirst();
         var call = new GhostAbilityContext(host, ID, first.ability().getId(), GhostAbilityContext.Source.POSSESSION, null);
         allowed = false;
@@ -98,6 +100,28 @@ public final class AbilityWheelTest {
         check(effects == 1, "实际执行前必须重新校验媒介");
         System.out.println("Ability catalog, media and wheel geometry regression checks passed");
     }
+    /** 验证编辑器使用的固定槽位模型：交换、清空、缺失与恢复均不重排。 */
+    private static void verifySlots(List<GhostAbilityCatalog.Entry> entries) {
+        var keys = entries.stream().map(AbilityWheelSlots.Key::of).toList();
+        var slots = new AbilityWheelSlots(keys);
+        check(slots.snapshot().size() == 10, "配置必须截断到十槽");
+        slots.assign(0, keys.get(1));
+        check(slots.snapshot().get(1).equals(keys.get(0)), "已有能力应交换槽位");
+        slots.assign(0, keys.get(11));
+        check(slots.resolve(entries).get(0).equals(entries.get(11)), "第十二项也可通过编辑装备");
+        slots.clear(1);
+        check(slots.snapshot().get(1) == null && slots.snapshot().get(2).equals(keys.get(2)), "清空不得移动后续槽位");
+        check(slots.resolve(List.of()).stream().allMatch(java.util.Objects::isNull), "丢失能力只能解析为空");
+        check(slots.resolve(entries).get(0).equals(entries.get(11)), "重新拥有能力应恢复原位置");
+        var restored = new AbilityWheelSlots(slots.snapshot());
+        check(restored.snapshot().equals(slots.snapshot()), "保存的空槽应原位恢复");
+        var duplicate = new AbilityWheelSlots(List.of(keys.get(0), keys.get(0), keys.get(2)));
+        check(duplicate.snapshot().get(1) == null && duplicate.snapshot().get(2).equals(keys.get(2)), "重复项不挤占后续槽位");
+        var before = slots.snapshot();
+        slots.assign(-1, keys.get(0)); slots.clear(10);
+        check(before.equals(slots.snapshot()), "无效槽位不能修改配置");
+    }
+
     /** 检查正式模块能力 ID 唯一、主动声明有效，中英文语言资源完整。 */
     private static void verifyDefinitions() {
         try (var zhStream = AbilityWheelTest.class.getResourceAsStream("/assets/qisplan2/lang/zh_cn.json");

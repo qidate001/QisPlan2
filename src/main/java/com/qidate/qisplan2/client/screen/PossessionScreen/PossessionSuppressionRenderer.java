@@ -1,5 +1,6 @@
 package com.qidate.qisplan2.client.screen.PossessionScreen;
 
+import net.minecraft.network.chat.Component;
 import com.qidate.qisplan2.QisPlan2;
 import com.qidate.qisplan2.ghost.module.GhostModule;
 import com.qidate.qisplan2.ghost.module.GhostModuleRegistry;
@@ -275,7 +276,7 @@ public class PossessionSuppressionRenderer {
 
         graphics.drawString(
                 Minecraft.getInstance().font,
-                "压制额度",
+                Component.translatable("screen.qisplan2.possession.suppression_quota").getString(),
                 x + 8,
                 y + 34,
                 0xFFAAAAAA
@@ -1109,6 +1110,9 @@ public class PossessionSuppressionRenderer {
     /**
      * 清理当前压制拖动状态。
      */
+    public void cancelDrag() { clearDraggingState(); }
+
+    /** 清空拖拽字段，不提交压制变更。 */
     private void clearDraggingState() {
 
         draggingSuppression = false;

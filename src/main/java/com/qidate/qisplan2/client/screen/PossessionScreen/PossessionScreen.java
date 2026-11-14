@@ -5,561 +5,119 @@ import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 
+/** 驭鬼总面板，三个页面共享标题栏和面板坐标转换。 */
 public class PossessionScreen extends Screen {
+    public static final int ABILITIES_PAGE = 2;
+    private static final int PANEL_WIDTH = 600, PANEL_HEIGHT = 320;
+    private float panelScale = 1;
+    private int panelX, panelY, currentPage;
+    private final PossessionStatusRenderer statusRenderer = new PossessionStatusRenderer();
+    private final PossessionSuppressionRenderer suppressionRenderer = new PossessionSuppressionRenderer();
+    private final PossessionAbilityRenderer abilityRenderer = new PossessionAbilityRenderer();
+    private static final String[] PAGES = {"status", "supernatural", "ability_page"};
 
-    private static final int PANEL_WIDTH = 600;
-    private static final int PANEL_HEIGHT = 320;
+    /** H 默认打开状态页。 */
+    public PossessionScreen() { this(0); }
 
-    private float panelScale = 1.0F;
-
-    private int panelX;
-    private int panelY;
-
-    private int currentPage = 0;
-
-    private final PossessionStatusRenderer statusRenderer;
-
-    private final PossessionSuppressionRenderer suppressionRenderer;
-
-
-
-    public PossessionScreen() {
-
-        super(
-                Component.literal(
-                        "驭鬼者状态"
-                )
-        );
-
-        statusRenderer =
-                new PossessionStatusRenderer();
-
-        suppressionRenderer =
-                new PossessionSuppressionRenderer();
+    /** 快捷键可直接指定技能配置页。 */
+    public PossessionScreen(int page) {
+        super(Component.translatable("screen.qisplan2.possession.title"));
+        currentPage = Math.clamp(page, 0, 2);
     }
 
-    @Override
-    protected void init() {
-
-        panelScale = Math.min(
-                (float) this.width / (PANEL_WIDTH + 2),
-                (float) this.height / (PANEL_HEIGHT + 2)
-        );
-
-        int scaledWidth =
-                Math.round(PANEL_WIDTH * panelScale);
-
-        int scaledHeight =
-                Math.round(PANEL_HEIGHT * panelScale);
-
-        panelX =
-                (this.width - scaledWidth) / 2;
-
-        panelY =
-                (this.height - scaledHeight) / 2;
+    /** 按窗口计算整体缩放，所有子页使用统一的六百乘三百二十坐标。 */
+    @Override protected void init() {
+        panelScale = Math.min((float)width / (PANEL_WIDTH + 2), (float)height / (PANEL_HEIGHT + 2));
+        panelX = (width - Math.round(PANEL_WIDTH * panelScale)) / 2;
+        panelY = (height - Math.round(PANEL_HEIGHT * panelScale)) / 2;
+        abilityRenderer.cancelDrag();
     }
 
-    @Override
-    public void render(
-            GuiGraphics graphics,
-            int mouseX,
-            int mouseY,
-            float partialTick
-    ) {
-        this.renderBackground(
-                graphics,
-                mouseX,
-                mouseY,
-                partialTick
-        );
+    /** 局部 X 坐标转换，命中区域与视觉缩放一致。 */
+    private double localX(double x) { return (x - panelX) / panelScale; }
 
-        graphics.pose().pushPose();
+    /** 局部 Y 坐标转换。 */
+    private double localY(double y) { return (y - panelY) / panelScale; }
 
-        graphics.pose().translate(
-                panelX,
-                panelY,
-                0
-        );
-
-        graphics.pose().scale(
-                panelScale,
-                panelScale,
-                1.0F
-        );
-
-        drawPanel(graphics);
-        drawTabs(graphics);
-
-        if (currentPage == 0) {
-
-            statusRenderer.render(
-                    graphics,
-                    panelX,
-                    panelY,
-                    panelScale
-            );
-
-        } else {
-
-            suppressionRenderer.render(
-                    graphics
-            );
+    /** 绘制共享标题栏，再绘制当前页。 */
+    @Override public void render(GuiGraphics g, int mx, int my, float partial) {
+        renderBackground(g, mx, my, partial);
+        g.pose().pushPose();
+        g.pose().translate(panelX, panelY, 0);
+        g.pose().scale(panelScale, panelScale, 1);
+        g.fill(-1, -1, 601, 321, 0xff606060);
+        g.fill(0, 0, 600, 320, 0xf0101016);
+        g.fill(0, 0, 600, 26, 0xf0181820);
+        g.drawString(font, title, 12, 9, 0xffffffff);
+        for (int page = 0; page < PAGES.length; page++) {
+            int x = 302 + page * 96;
+            g.fill(x, 3, x + 92, 23, currentPage == page ? 0xff39525c : 0xff252732);
+            g.drawCenteredString(font, Component.translatable("screen.qisplan2.possession." + PAGES[page]),
+                    x + 46, 9, currentPage == page ? 0xffffffff : 0xffaaaaaa);
         }
-
-        graphics.pose().popPose();
+        if (currentPage == 0) statusRenderer.render(g, panelX, panelY, panelScale);
+        else if (currentPage == 1) suppressionRenderer.render(g);
+        else abilityRenderer.render(g, panelX, panelY, panelScale, localX(mx), localY(my));
+        g.pose().popPose();
     }
 
-    @Override
-    public boolean mouseClicked(
-            double mouseX,
-            double mouseY,
-            int button
-    ) {
-
-        if (button != 0) {
-            return super.mouseClicked(
-                    mouseX,
-                    mouseY,
-                    button
-            );
-        }
-
-        /*
-         * 将屏幕坐标转换为面板局部坐标。
-         */
-        double localX =
-                (mouseX - panelX) / panelScale;
-
-        double localY =
-                (mouseY - panelY) / panelScale;
-
-        /**
-         * 状态页的滚动条。
-         */
-        if (currentPage == 0) {
-
-            if (
-                    statusRenderer.mouseClicked(
-                            localX,
-                            localY
-                    )
-            ) {
-                return true;
-            }
-        }
-
-        /*
-         * 灵异页的压制交互。
-         */
-        if (
-                currentPage == 1
-                        && button == 0
-        ) {
-
-            if (
-                    suppressionRenderer.mouseClicked(
-                            localX,
-                            localY
-                    )
-            ) {
-                return true;
-            }
-        }
-
-        int tabY = 24;
-        int tabWidth = 70;
-        int tabHeight = 20;
-
-        int statusX = 12;
-        int suppressionX =
-                statusX + tabWidth + 4;
-
-        /*
-         * 状态页。
-         */
-        if (isInside(
-                localX,
-                localY,
-                statusX,
-                tabY,
-                tabWidth,
-                tabHeight
-        )) {
-
-            currentPage = 0;
-            return true;
-        }
-
-        /*
-         * 灵异页。
-         */
-        if (isInside(
-                localX,
-                localY,
-                suppressionX,
-                tabY,
-                tabWidth,
-                tabHeight
-        )) {
-
-            currentPage = 1;
-            return true;
-        }
-
-        return super.mouseClicked(
-                mouseX,
-                mouseY,
-                button
-        );
+    /** 切页先释放未完成拖动，避免另一个页面接收旧拖拽。 */
+    private void changePage(int page) {
+        abilityRenderer.cancelDrag();
+        statusRenderer.mouseReleased();
+        suppressionRenderer.cancelDrag();
+        currentPage = page;
     }
 
-    @Override
-    public boolean mouseScrolled(
-            double mouseX,
-            double mouseY,
-            double scrollX,
-            double scrollY
-    ) {
-
-        if (currentPage == 0) {
-
-            double localX =
-                    (mouseX - panelX)
-                            / panelScale;
-
-            double localY =
-                    (mouseY - panelY)
-                            / panelScale;
-
-            if (
-                    statusRenderer.mouseScrolled(
-                            localX,
-                            localY,
-                            scrollY
-                    )
-            ) {
-                return true;
-            }
+    /** 标题栏按钮优先命中，随后路由当前页交互。 */
+    @Override public boolean mouseClicked(double x, double y, int button) {
+        double lx = localX(x), ly = localY(y);
+        if (button == 0 && ly >= 3 && ly < 23) for (int page = 0; page < 3; page++) {
+            if (lx >= 302 + page * 96 && lx < 394 + page * 96) { changePage(page); return true; }
         }
-
-        return super.mouseScrolled(
-                mouseX,
-                mouseY,
-                scrollX,
-                scrollY
-        );
+        if (currentPage == 2 && abilityRenderer.mouseClicked(lx, ly, button)) return true;
+        if (button == 0 && currentPage == 0 && statusRenderer.mouseClicked(lx, ly)) return true;
+        if (button == 0 && currentPage == 1 && suppressionRenderer.mouseClicked(lx, ly)) return true;
+        return super.mouseClicked(x, y, button);
     }
 
-    @Override
-    public boolean mouseDragged(
-            double mouseX,
-            double mouseY,
-            int button,
-            double dragX,
-            double dragY
-    ) {
+    /** 滚轮按当前页的局部区域分发。 */
+    @Override public boolean mouseScrolled(double x, double y, double dx, double dy) {
+        if (currentPage == 0 && statusRenderer.mouseScrolled(localX(x), localY(y), dy)) return true;
+        if (currentPage == 2 && abilityRenderer.mouseScrolled(localX(x), localY(y), dy)) return true;
+        return super.mouseScrolled(x, y, dx, dy);
+    }
 
-        /*
-         * 将屏幕坐标转换为面板局部坐标。
-         */
-        double localX =
-                (mouseX - panelX)
-                        / panelScale;
-
-        double localY =
-                (mouseY - panelY)
-                        / panelScale;
-
-        /*
-         * =========================================================
-         * 滚动条拖动
-         * =========================================================
-         */
-        if (
-                currentPage == 0
-                        && button == 0
-        ) {
-
-            if (
-                    statusRenderer.mouseDragged(
-                            localX,
-                            localY
-                    )
-            ) {
-                return true;
-            }
+    /** 技能和压制各自拥有拖动状态。 */
+    @Override public boolean mouseDragged(double x, double y, int button, double dx, double dy) {
+        if (button == 0) {
+            if (currentPage == 0 && statusRenderer.mouseDragged(localX(x), localY(y))) return true;
+            if (currentPage == 1 && suppressionRenderer.mouseDragged(localX(x), localY(y))) return true;
+            if (currentPage == 2 && abilityRenderer.mouseDragged(localX(x), localY(y))) return true;
         }
+        return super.mouseDragged(x, y, button, dx, dy);
+    }
 
-        // =========================================================
-        // 压制拖动
-        // =========================================================
-        if (
-                currentPage == 1
-                        && button == 0
-        ) {
-
-            if (
-                    suppressionRenderer.mouseDragged(
-                            localX,
-                            localY
-                    )
-            ) {
-                return true;
-            }
+    /** 松开只完成当前页面的交互，编辑页绝不释放技能。 */
+    @Override public boolean mouseReleased(double x, double y, int button) {
+        if (button == 0) {
+            if (currentPage == 0 && statusRenderer.mouseReleased()) return true;
+            if (currentPage == 1 && suppressionRenderer.mouseReleased(localX(x), localY(y))) return true;
+            if (currentPage == 2 && abilityRenderer.mouseReleased(localX(x), localY(y))) return true;
         }
-
-        return super.mouseDragged(
-                mouseX,
-                mouseY,
-                button,
-                dragX,
-                dragY
-        );
+        return super.mouseReleased(x, y, button);
     }
 
-    @Override
-    public boolean mouseReleased(
-            double mouseX,
-            double mouseY,
-            int button
-    ) {
+    /** 面板不暂停世界。 */
+    @Override public boolean isPauseScreen() { return false; }
 
-        /*
-         * =========================================================
-         * 状态页滚动条
-         * =========================================================
-         */
-        if (
-                currentPage == 0
-                        && button == 0
-        ) {
-
-            if (
-                    statusRenderer.mouseReleased()
-            ) {
-                return true;
-            }
-        }
-
-        /*
-         * 灵异页压制释放。
-         */
-        if (
-                currentPage == 1
-                        && button == 0
-        ) {
-
-            double localX =
-                    (mouseX - panelX)
-                            / panelScale;
-
-            double localY =
-                    (mouseY - panelY)
-                            / panelScale;
-
-            if (
-                    suppressionRenderer.mouseReleased(
-                            localX,
-                            localY
-                    )
-            ) {
-                return true;
-            }
-        }
-
-        return super.mouseReleased(
-                mouseX,
-                mouseY,
-                button
-        );
+    /** H 再次关闭；Alt 加轮盘键可在面板内部直接切到配置页。 */
+    @Override public boolean keyPressed(int key, int scan, int modifiers) {
+        if (ModKeyMappings.OPEN_POSSESSION_SCREEN.matches(key, scan)) { onClose(); return true; }
+        if (hasAltDown() && ModKeyMappings.ABILITY_WHEEL.matches(key, scan)) { changePage(ABILITIES_PAGE); return true; }
+        return super.keyPressed(key, scan, modifiers);
     }
 
-    private void drawPanel(
-            GuiGraphics graphics
-    ) {
-
-        /*
-         * 外框。
-         */
-        graphics.fill(
-                -1,
-                -1,
-                PANEL_WIDTH + 1,
-                PANEL_HEIGHT + 1,
-                0xFF606060
-        );
-
-        /*
-         * 主背景。
-         */
-        graphics.fill(
-                0,
-                0,
-                PANEL_WIDTH,
-                PANEL_HEIGHT,
-                0xF0101016
-        );
-
-        /*
-         * 顶部标题区域。
-         */
-        graphics.fill(
-                0,
-                0,
-                PANEL_WIDTH,
-                24,
-                0xF0181820
-        );
-
-        /*
-         * 标题。
-         */
-
-        graphics.drawCenteredString(
-                this.font,
-                "驭鬼者状态",
-                PANEL_WIDTH / 2,
-                7,
-                0xFFFFFFFF
-        );
-    }
-
-    private void drawTabs(
-            GuiGraphics graphics
-    ) {
-
-        int tabY = 24;
-
-        int tabWidth = 70;
-        int tabHeight = 20;
-
-        int statusX = 12;
-        int suppressionX = statusX + tabWidth + 4;
-
-        // =========================
-        // 状态
-        // =========================
-
-        drawTab(
-                graphics,
-                statusX,
-                tabY,
-                tabWidth,
-                tabHeight,
-                "状态",
-                currentPage == 0
-        );
-
-        // =========================
-        // 灵异
-        // =========================
-
-        drawTab(
-                graphics,
-                suppressionX,
-                tabY,
-                tabWidth,
-                tabHeight,
-                "灵异",
-                currentPage == 1
-        );
-    }
-
-    private void drawTab(
-            GuiGraphics graphics,
-            int x,
-            int y,
-            int width,
-            int height,
-            String text,
-            boolean selected
-    ) {
-
-        int backgroundColor =
-                selected
-                        ? 0xFF30303A
-                        : 0xFF181820;
-
-        int borderColor =
-                selected
-                        ? 0xFF80808C
-                        : 0xFF383840;
-
-        // 外框
-        graphics.fill(
-                x,
-                y,
-                x + width,
-                y + height,
-                borderColor
-        );
-
-        // 内部
-        graphics.fill(
-                x + 1,
-                y + 1,
-                x + width - 1,
-                y + height - 1,
-                backgroundColor
-        );
-
-        graphics.drawCenteredString(
-                this.font,
-                text,
-                x + width / 2,
-                y + 6,
-                selected
-                        ? 0xFFFFFFFF
-                        : 0xFFAAAAAA
-        );
-    }
-
-    private boolean isInside(
-            double mouseX,
-            double mouseY,
-            int x,
-            int y,
-            int width,
-            int height
-    ) {
-
-        return mouseX >= x
-                && mouseX < x + width
-                && mouseY >= y
-                && mouseY < y + height;
-    }
-
-    @Override
-    public boolean isPauseScreen() {
-
-        return false;
-    }
-
-    @Override
-    public boolean keyPressed(
-            int keyCode,
-            int scanCode,
-            int modifiers
-    ) {
-
-        /*
-         * H 再按一次关闭。
-         */
-        if (keyCode ==
-                ModKeyMappings
-                        .OPEN_POSSESSION_SCREEN
-                        .getKey()
-                        .getValue()) {
-
-            this.onClose();
-
-            return true;
-        }
-
-        return super.keyPressed(
-                keyCode,
-                scanCode,
-                modifiers
-        );
-    }
+    /** 关闭或被替换时清理拖动；已完成的编辑已即时保存。 */
+    @Override public void removed() { abilityRenderer.cancelDrag(); suppressionRenderer.cancelDrag(); statusRenderer.mouseReleased(); super.removed(); }
 }

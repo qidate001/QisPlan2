@@ -4,6 +4,7 @@ import com.mojang.blaze3d.platform.InputConstants;
 import com.qidate.qisplan2.client.screen.PossessionScreen.PossessionScreen;
 import com.qidate.qisplan2.client.screen.AbilityWheelScreen;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.screens.Screen;
 import net.neoforged.neoforge.client.event.ClientTickEvent;
 import net.neoforged.neoforge.client.event.RegisterKeyMappingsEvent;
 import org.lwjgl.glfw.GLFW;
@@ -34,11 +35,18 @@ public final class ClientKeyHandler {
         if (!held) latched = false;
         if (mc.screen instanceof AbilityWheelScreen wheel) {
             if (!mc.isWindowActive() || mc.player == null || !mc.player.isAlive()) wheel.cancel();
+            else if (held && Screen.hasAltDown()) {
+                wheel.cancel();
+                mc.setScreen(new PossessionScreen(PossessionScreen.ABILITIES_PAGE));
+            }
             else if (!held) wheel.confirm();
         } else if (held && !latched) {
             latched = true;
             if (mc.screen == null && mc.player != null && mc.level != null && mc.player.isAlive()
-                    && !mc.player.isSpectator() && mc.isWindowActive()) mc.setScreen(new AbilityWheelScreen());
+                    && !mc.player.isSpectator() && mc.isWindowActive()) {
+                if (Screen.hasAltDown()) mc.setScreen(new PossessionScreen(PossessionScreen.ABILITIES_PAGE));
+                else mc.setScreen(new AbilityWheelScreen());
+            }
         }
         while (ModKeyMappings.OPEN_POSSESSION_SCREEN.consumeClick())
             if (mc.screen == null && mc.player != null) mc.setScreen(new PossessionScreen());

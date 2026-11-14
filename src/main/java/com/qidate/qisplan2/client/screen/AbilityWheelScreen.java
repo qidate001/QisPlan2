@@ -1,20 +1,15 @@
 package com.qidate.qisplan2.client.screen;
 
-import com.mojang.blaze3d.systems.RenderSystem;
-import com.mojang.blaze3d.vertex.BufferUploader;
-import com.mojang.blaze3d.vertex.DefaultVertexFormat;
-import com.mojang.blaze3d.vertex.Tesselator;
-import com.mojang.blaze3d.vertex.VertexFormat;
 import com.qidate.qisplan2.ghost.module.ability.GhostAbilityCatalog;
 import com.qidate.qisplan2.ghost.module.host.player.PlayerGhostModuleHost;
 import com.qidate.qisplan2.network.payload.GhostAbilityUsePayload;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.Screen;
-import net.minecraft.client.renderer.GameRenderer;
 import net.minecraft.network.chat.Component;
 import net.neoforged.neoforge.network.PacketDistributor;
 import org.lwjgl.glfw.GLFW;
 import java.util.List;
+import java.util.Objects;
 
 /** 以准星为中心的透明轮盘：不暂停世界，鼠标由原版 Screen 生命周期接管。 */
 public final class AbilityWheelScreen extends Screen {
@@ -30,7 +25,7 @@ public final class AbilityWheelScreen extends Screen {
 
     /** 将光标放到取消区，避免打开瞬间误选上一次鼠标位置。 */
     @Override protected void init() {
-        entries = minecraft.player == null ? List.of() : GhostAbilityCatalog.wheel(new PlayerGhostModuleHost(minecraft.player));
+        entries = minecraft.player == null ? List.of() : AbilityWheelPreferences.current().resolve(GhostAbilityCatalog.all(new PlayerGhostModuleHost(minecraft.player)));
         outer = Math.min(132, Math.min(width, height) * 0.36f);
         inner = outer * 0.44f;
         opened = System.nanoTime();
@@ -52,7 +47,7 @@ public final class AbilityWheelScreen extends Screen {
         if (finished) return;
         selected = currentSelection();
         finished = true;
-        if (minecraft.player != null && minecraft.player.isAlive() && minecraft.isWindowActive() && selected >= 0) {
+        if (minecraft.player != null && minecraft.player.isAlive() && minecraft.isWindowActive() && selected >= 0 && entries.get(selected) != null) {
             var entry = entries.get(selected);
             PacketDistributor.sendToServer(new GhostAbilityUsePayload(entry.moduleId(), entry.ability().getId()));
         }
@@ -78,40 +73,14 @@ public final class AbilityWheelScreen extends Screen {
         g.pose().pushPose();
         g.pose().translate(cx, cy, 0);
         g.pose().scale(scale, scale, 1);
-        g.flush();
-        int count = Math.max(1, entries.size());
-        for (int i = 0; i < count; i++) {
-            double start = AbilityWheelLayout.start(i, count);
-            double end = start + Math.PI * 2 / count;
-            boolean hover = i == selected;
-            ring(g, start + 0.012, end - 0.012, inner, outer,
-                    ((int)((hover ? 230 : 200) * eased) << 24) | (hover ? 0x24656c : 0x101924));
-            ring(g, start + 0.012, end - 0.012, outer - (hover ? 3 : 1), outer,
-                    ((int)(240 * eased) << 24) | (hover ? 0x80fff0 : 0x5b7584));
-            ring(g, start + 0.012, end - 0.012, inner, inner + 1,
-                    ((int)(200 * eased) << 24) | 0x5b7584);
-        }
-        for (int i = 0; i < entries.size(); i++) {
-            double angle = -Math.PI / 2 + i * Math.PI * 2 / entries.size();
-            float radius = (inner + outer) / 2;
-            int x = (int)(Math.cos(angle) * radius), y = (int)(Math.sin(angle) * radius);
-            g.blit(entries.get(i).ability().iconTexture(), x - 12, y - 12, 0, 0, 24, 24, 24, 24);
-            g.pose().pushPose();
-            g.pose().translate(x, y + 14, 0);
-            g.pose().scale(0.75f, 0.75f, 1);
-            int textWidth = Math.max(36, (int)(2 * radius * Math.sin(Math.PI / Math.max(3, entries.size())) / 0.75) - 8);
-            var nameLines = font.split(Component.translatable(entries.get(i).ability().translationKey()), textWidth);
-            for (int line = 0; line < Math.min(2, nameLines.size()); line++)
-                g.drawCenteredString(font, nameLines.get(line), 0, line * 10, i == selected ? 0x9affee : 0xc1d1dd);
-            g.pose().popPose();
-        }
-        Component label = selected < 0 ? Component.translatable(entries.isEmpty()
+        AbilityWheelRenderer.draw(g, font, entries, inner, outer, selected, eased);
+        Component label = selected < 0 || entries.get(selected) == null ? Component.translatable(entries.stream().allMatch(Objects::isNull)
                 ? "hud.qisplan2.ability_wheel.empty" : "hud.qisplan2.ability_wheel.cancel")
                 : Component.translatable(entries.get(selected).ability().translationKey());
         var lines = font.split(label, (int)(inner * 1.7));
         int y = -lines.size() * 5;
         for (var line : lines) { g.drawCenteredString(font, line, 0, y, 0xf0fffc); y += 10; }
-        if (selected >= 0) {
+        if (selected >= 0 && entries.get(selected) != null) {
             var id = entries.get(selected).moduleId();
             var origin = Component.translatable("module." + id.getNamespace() + "." + id.getPath());
             var originLines = font.split(origin, (int)(inner * 1.7));
@@ -120,25 +89,5 @@ public final class AbilityWheelScreen extends Screen {
         g.pose().popPose();
         g.drawCenteredString(font, Component.translatable("hud.qisplan2.ability_wheel.hint"), cx,
                 (int)(cy + outer + 12), 0xb3c8d4);
-    }
-    /** 用小四边形拼接圆环扇区，避免额外纹理并支持任意 GUI 缩放和槽位数。 */
-    private void ring(GuiGraphics g, double from, double to, float inside, float outside, int color) {
-        RenderSystem.enableBlend();
-        RenderSystem.defaultBlendFunc();
-        RenderSystem.disableCull();
-        RenderSystem.setShader(GameRenderer::getPositionColorShader);
-        var buffer = Tesselator.getInstance().begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_COLOR);
-        var matrix = g.pose().last().pose();
-        int steps = Math.max(2, (int)Math.ceil((to - from) * 28));
-        for (int step = 0; step < steps; step++) {
-            double a = from + (to - from) * step / steps, b = from + (to - from) * (step + 1) / steps;
-            buffer.addVertex(matrix, (float)Math.cos(a) * inside, (float)Math.sin(a) * inside, 0).setColor(color);
-            buffer.addVertex(matrix, (float)Math.cos(a) * outside, (float)Math.sin(a) * outside, 0).setColor(color);
-            buffer.addVertex(matrix, (float)Math.cos(b) * outside, (float)Math.sin(b) * outside, 0).setColor(color);
-            buffer.addVertex(matrix, (float)Math.cos(b) * inside, (float)Math.sin(b) * inside, 0).setColor(color);
-        }
-        BufferUploader.drawWithShader(buffer.buildOrThrow());
-        RenderSystem.enableCull();
-        RenderSystem.disableBlend();
     }
 }

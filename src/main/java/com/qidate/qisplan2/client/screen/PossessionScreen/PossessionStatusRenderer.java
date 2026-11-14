@@ -550,7 +550,7 @@ public class PossessionStatusRenderer {
 
         graphics.drawString(
                 this.font,
-                "驾驭鬼数量",
+                Component.translatable("screen.qisplan2.possession.ghost_count").getString(),
                 leftX,
                 topY,
                 0xFFAAAAAA
@@ -568,7 +568,7 @@ public class PossessionStatusRenderer {
 
         graphics.drawString(
                 this.font,
-                "肉身侵蚀",
+                Component.translatable("screen.qisplan2.possession.corrosion").getString(),
                 leftX,
                 topY,
                 0xFFAAAAAA
@@ -589,7 +589,7 @@ public class PossessionStatusRenderer {
 
         graphics.drawString(
                 this.font,
-                "非灵异减伤",
+                Component.translatable("screen.qisplan2.possession.damage_reduction").getString(),
                 leftX,
                 topY,
                 0xFFAAAAAA
@@ -610,7 +610,7 @@ public class PossessionStatusRenderer {
 
         graphics.drawString(
                 this.font,
-                "生命上限加成",
+                Component.translatable("screen.qisplan2.possession.health_bonus").getString(),
                 leftX,
                 topY,
                 0xFFAAAAAA
@@ -945,7 +945,7 @@ public class PossessionStatusRenderer {
 
         graphics.drawString(
                 this.font,
-                "复苏",
+                Component.translatable("screen.qisplan2.possession.revival").getString(),
                 x + 28,
                 y + 20,
                 0xFFCCCCCC
@@ -1011,7 +1011,7 @@ public class PossessionStatusRenderer {
 
             value =
                     String.format(
-                            "%.1fs",
+                            Component.translatable("screen.qisplan2.possession.seconds").getString(),
                             sec
                     );
 
@@ -1035,7 +1035,7 @@ public class PossessionStatusRenderer {
 
         graphics.drawString(
                 this.font,
-                "死机",
+                Component.translatable("screen.qisplan2.possession.deadlock").getString(),
                 x + 28,
                 y + 35,
                 0xFFCCCCCC
@@ -1072,7 +1072,7 @@ public class PossessionStatusRenderer {
 
         graphics.drawString(
                 this.font,
-                "压制",
+                Component.translatable("screen.qisplan2.possession.suppression").getString(),
                 x + 28,
                 y + 50,
                 0xFFCCCCCC
@@ -1394,7 +1394,7 @@ public class PossessionStatusRenderer {
             // 强度
             graphics.drawString(
                     this.font,
-                    "强度",
+                    Component.translatable("screen.qisplan2.possession.intensity").getString(),
                     x + 30,
                     cardY + 24,
                     0xFFAAAAAA
@@ -1414,7 +1414,7 @@ public class PossessionStatusRenderer {
             // 持续时间
             graphics.drawString(
                     this.font,
-                    "持续时间",
+                    Component.translatable("screen.qisplan2.possession.duration").getString(),
                     x + 30,
                     cardY + 39,
                     0xFFAAAAAA
