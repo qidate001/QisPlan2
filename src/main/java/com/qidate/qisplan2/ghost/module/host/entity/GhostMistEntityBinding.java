@@ -51,15 +51,14 @@ public final class GhostMistEntityBinding {
 
     /**
      * 维护实体来源的鬼域生命周期。
-     * 模块失效时清理运行时资源；有效时通过统一执行器调用鬼域能力。
+     * 模块失效时清理运行时资源；有效时维护鬼域，不反复调用开关技能。
      */
     public void onEntityTick(ModularGhostEntity host) {
         if (!isActive(host)) {
             onEntityDetached(host);
             return;
         }
-        GhostAbilityExecutor.tryExecute(new GhostAbilityContext(host, ID, DOMAIN,
-                GhostAbilityContext.Source.BEHAVIOR, null));
+        host.moduleWorld(ID).maintainDomain();
     }
 
     /**

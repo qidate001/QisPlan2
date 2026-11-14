@@ -1,7 +1,5 @@
 package com.qidate.qisplan2.ghost.module.implementation.nightwanderer;
 
-import com.qidate.qisplan2.ghost.module.ability.WorldActionAbility;
-import com.qidate.qisplan2.ghost.module.environment.GhostActiveAction;
 import com.qidate.qisplan2.ghost.module.ability.GhostAbility;
 import com.qidate.qisplan2.ghost.module.environment.GhostBehavior;
 
@@ -25,12 +23,6 @@ import static com.qidate.qisplan2.QisPlan2.MODID;
  * 击杀数和各项计时由 NightWandererState 写入模块 customData。
  */
 public final class NightWandererModule implements GhostModule {
-    /** 声明各个可主动选择的能力；定义只认识世界端口，不识别宿主类型。 */
-    @Override public List<GhostAbility> getActiveAbilities() {
-        return List.of(
-            WorldActionAbility.of(ID, "strike", "minecraft:textures/item/iron_sword.png", GhostActiveAction.MELEE)
-        );
-    }
 
     /**
      * 声明需要的自主行动类型。
@@ -39,9 +31,7 @@ public final class NightWandererModule implements GhostModule {
     @Override public GhostBehavior behavior() { return GhostBehavior.NIGHT_HUNT; }
     public static final ResourceLocation ID = id("night_wanderer");
     public static final double INITIAL_INTENSITY = 5.0D;
-    public static final ResourceLocation ACTIVITY = id("night_wanderer/activity");
     public static final ResourceLocation ATTACK = id("night_wanderer/attack");
-    public static final ResourceLocation GROWTH = id("night_wanderer/sleep_growth");
 
     /**
      * 构造或返回本定义使用的资源标识，保持注册与调用入口一致。
@@ -82,9 +72,7 @@ public final class NightWandererModule implements GhostModule {
             @Override public boolean allows(GhostAbilityContext c) {
                 var world = c.getModuleContext().world();
                 if (!world.present()) return false;
-                if (c.abilityId().equals(GROWTH)) return c.event() instanceof SleepTimeSkippedEvent e && e.skippedTicks() >= 600;
                 if (world.isDay()) return false;
-                if (c.abilityId().equals(ACTIVITY)) return true;
                 var target = attackTarget(c);
                 return world.validTarget(target) && world.position().distanceToSqr(target.position()) <= 9
                         && c.getModuleContext().getCustomData().getInt("attackCooldown") == 0;
@@ -137,7 +125,8 @@ public final class NightWandererModule implements GhostModule {
                     c.submitAbilityInfluence(ATTACK, e, nearby.target().getUUID(),
                             GhostInfluenceType.ATTACK, c.getModuleContext().intensity());
                 } else {
-                    c.tryExecuteAbility(GROWTH, e);
+                    if (e instanceof SleepTimeSkippedEvent sleep && sleep.skippedTicks() >= 600)
+                        addKills(c.getModuleContext(), (int)Math.min(Integer.MAX_VALUE, sleep.skippedTicks() / 600));
                 }
             }
         });
@@ -149,31 +138,24 @@ public final class NightWandererModule implements GhostModule {
      */
     @Override public List<GhostAbility> getIntrinsicAbilities() {
         return List.of(new GhostAbility() {
-            /**
-             * 获取当前定义的唯一标识。
-             * 注册、能力查找和规则分发使用此标识，不代表某个运行时实例。
-             */
-            @Override public ResourceLocation getId() { return ACTIVITY; }
+            /** 技能图标由所属模块直接声明。 */
+            @Override public ResourceLocation iconTexture() { return ResourceLocation.parse("minecraft:textures/item/iron_sword.png"); }
 
-            /**
-             * 检查本次能力调用的事件、参数或环境是否可用于执行。
-             * 模块可用性与媒介由统一执行器共同校验。
-             */
-            @Override public boolean canExecute(GhostAbilityContext c) { return c.getModuleContext().world().canMove(); }
-
-            /**
-             * 执行当前能力的效果。
-             * 调用方应使用统一执行器，以确保模块状态和媒介已经检查。
-             */
-            @Override public void execute(GhostAbilityContext c) {
-                c.getModuleContext().world().tickHunt();
-            }
-        }, new GhostAbility() {
             /**
              * 获取当前定义的唯一标识。
              * 注册、能力查找和规则分发使用此标识，不代表某个运行时实例。
              */
             @Override public ResourceLocation getId() { return ATTACK; }
+            /** 主动使用复苏代价由模块声明；规则与行为调用不重复收取。 */
+            @Override public GhostAbilityStimulation getStimulation(GhostAbilityContext c) {
+                if (c.source() != GhostAbilityContext.Source.POSSESSION) return GhostAbilityStimulation.none();
+                var data = c.getModuleContext().getCustomData();
+                long last = data.getLong("lastDirectUse");
+                long now = c.getModuleContext().world().gameTime();
+                double gain = data.contains("lastDirectUse") && now >= last && now - last < 200 ? 30 : 10;
+                return new GhostAbilityStimulation(gain, GhostAbilityStimulation.Timing.ON_ACCEPTED);
+            }
+
 
             /**
              * 检查本次能力调用的事件、参数或环境是否可用于执行。
@@ -194,6 +176,11 @@ public final class NightWandererModule implements GhostModule {
             @Override public boolean executeWithResult(GhostAbilityContext c) {
                 var context = c.getModuleContext();
                 var target = attackTarget(c);
+                if (c.source() == GhostAbilityContext.Source.POSSESSION) {
+                    var state = context.getCustomData();
+                    state.putLong("lastDirectUse", context.world().gameTime());
+                    context.setCustomData(state);
+                }
                 context.world().stopAndSwing();
                 boolean killed = context.world().attack(target, ModDamageTypes.GHOST_NIGHT_WANDERER, context.effectiveIntensity());
                 if (killed) addKills(context, 1);
@@ -201,28 +188,6 @@ public final class NightWandererModule implements GhostModule {
                 data.putInt("attackCooldown", Math.max(1, 200 - Math.max(0, data.getInt("killCount")) / 5));
                 context.setCustomData(data);
                 return killed;
-            }
-        }, new GhostAbility() {
-            /**
-             * 获取当前定义的唯一标识。
-             * 注册、能力查找和规则分发使用此标识，不代表某个运行时实例。
-             */
-            @Override public ResourceLocation getId() { return GROWTH; }
-
-            /**
-             * 检查本次能力调用的事件、参数或环境是否可用于执行。
-             * 模块可用性与媒介由统一执行器共同校验。
-             */
-            @Override public boolean canExecute(GhostAbilityContext c) { return c.event() instanceof SleepTimeSkippedEvent; }
-
-            /**
-             * 执行当前能力的效果。
-             * 调用方应使用统一执行器，以确保模块状态和媒介已经检查。
-             */
-            @Override public void execute(GhostAbilityContext c) {
-                long ticks = ((SleepTimeSkippedEvent)c.event()).skippedTicks();
-                addKills(c.getModuleContext(),
-                        (int)Math.min(Integer.MAX_VALUE, ticks / 600));
             }
         });
     }
@@ -263,6 +228,7 @@ public final class NightWandererModule implements GhostModule {
     /** 规则使用附近事实，主动输入使用目标参数，两条入口执行同一个袭击能力。 */
     private static LivingEntity attackTarget(GhostAbilityContext context) {
         if (context.parameters() instanceof GhostTargetParameters input) return input.target();
+        if (context.event() == null) return context.getModuleContext().world().aimedTarget(3);
         return context.event() instanceof EntityNearbyEvent event
                 && context.getModuleContext().world().isOrigin(event.observer()) ? event.target() : null;
     }

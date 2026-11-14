@@ -1,9 +1,19 @@
 package com.qidate.qisplan2.ghost.module;
 
+import com.qidate.qisplan2.ghost.module.implementation.calling.CallingGhostModule;
+import com.qidate.qisplan2.ghost.module.implementation.candle.WhiteGhostCandleModule;
+import com.qidate.qisplan2.ghost.module.implementation.candle.RedGhostCandleModule;
+import com.qidate.qisplan2.ghost.module.implementation.InvisibleGhostModule;
+import com.qidate.qisplan2.ghost.module.implementation.GhostPianoModule;
+import com.qidate.qisplan2.ghost.module.implementation.GhostTombstoneModule;
+import com.qidate.qisplan2.ghost.module.implementation.GhostStoneBricksModule;
+import com.qidate.qisplan2.ghost.module.implementation.GhostShroudModule;
+import com.qidate.qisplan2.ghost.module.implementation.GhostCarpetModule;
+import com.qidate.qisplan2.ghost.module.implementation.GhostGrassModule;
+import com.qidate.qisplan2.ghost.module.implementation.UntouchableGhostModule;
 import com.qidate.qisplan2.client.screen.AbilityWheelLayout;
 import com.qidate.qisplan2.ghost.module.ability.*;
 import com.qidate.qisplan2.ghost.module.data.GhostModuleData;
-import com.qidate.qisplan2.ghost.module.environment.GhostActiveAction;
 import com.qidate.qisplan2.ghost.module.environment.GhostWorldAccess;
 import java.lang.reflect.Proxy;
 import java.util.ArrayList;
@@ -37,8 +47,8 @@ public final class AbilityWheelTest {
         public GhostWorldAccess moduleWorld(ResourceLocation id) {
             return (GhostWorldAccess)Proxy.newProxyInstance(GhostWorldAccess.class.getClassLoader(),
                     new Class<?>[]{GhostWorldAccess.class}, (proxy, method, args) -> switch (method.getName()) {
-                        case "canActivate" -> allowed;
-                        case "activate" -> { effects++; yield true; }
+                        case "canToggleDomain" -> allowed;
+                        case "toggleDomain" -> { effects++; yield true; }
                         default -> throw new AssertionError("Unexpected world operation: " + method.getName());
                     });
         }
@@ -61,25 +71,19 @@ public final class AbilityWheelTest {
         GhostModuleRegistry.register(new GhostModule() {
             /** 测试模块使用单独命名空间，不污染正式模块。 */
             public ResourceLocation getId() { return ID; }
-            /** 超过十个技能时完整目录仍保留全部定义。 */
-            public List<GhostAbility> getActiveAbilities() {
+            /** 任意模块直接声明十二个技能，框架不需要认识其 ID。 */
+            public List<GhostAbility> getIntrinsicAbilities() {
                 var list = new ArrayList<GhostAbility>();
-                for (int i = 0; i < 12; i++) list.add(WorldActionAbility.of(ID, "action_"+i,
-                        "minecraft:textures/item/ender_eye.png", GhostActiveAction.TOGGLE_DOMAIN));
+                for (int i = 0; i < 12; i++) list.add(new DefinedGhostAbility(
+                        ResourceLocation.fromNamespaceAndPath(ID.getNamespace(), "custom_" + i),
+                        ResourceLocation.parse("minecraft:textures/item/ender_eye.png"),
+                        c -> c.getModuleContext().world().canToggleDomain(),
+                        c -> c.getModuleContext().world().toggleDomain()));
                 return list;
             }
-            /** 内部自动能力不应被网络目录列为主动技能。 */
-            public List<GhostAbility> getIntrinsicAbilities() { return List.of(new GhostAbility() {
-                /** 内部标识不能通过主动目录获得。 */
-                public ResourceLocation getId() { return ResourceLocation.fromNamespaceAndPath("qisplan2_test", "internal"); }
-                /** 内部测试能力本身可执行，过滤不能依赖它执行失败。 */
-                public boolean canExecute(GhostAbilityContext c) { return true; }
-                /** 记录执行，便于捕获意外调用。 */
-                public void execute(GhostAbilityContext c) { effects++; }
-            }); }
         });
         var host = new Host();
-        check(GhostAbilityCatalog.all(host).size() == 12, "只列出主动能力且死机不隐藏技能");
+        check(GhostAbilityCatalog.all(host).size() == 12, "列出全部模块声明能力且死机不隐藏技能");
         check(GhostAbilityCatalog.wheel(host).size() == 10, "轮盘只显示前十项");
         var first = GhostAbilityCatalog.wheel(host).getFirst();
         var call = new GhostAbilityContext(host, ID, first.ability().getId(), GhostAbilityContext.Source.POSSESSION, null);
@@ -102,13 +106,16 @@ public final class AbilityWheelTest {
             var zh = JsonParser.parseReader(new InputStreamReader(zhStream, StandardCharsets.UTF_8)).getAsJsonObject();
             var en = JsonParser.parseReader(new InputStreamReader(enStream, StandardCharsets.UTF_8)).getAsJsonObject();
             for (GhostModule module : List.of(new GhostEyeModule(), new GhostMistModule(), new OpeningGhostModule(),
-                    new ClosingGhostModule(), new KnockingGhostModule(), new NightWandererModule(), new GhostDivinationSlipModule())) {
+                    new ClosingGhostModule(), new KnockingGhostModule(), new NightWandererModule(), new GhostDivinationSlipModule(),
+                    new UntouchableGhostModule(), new GhostGrassModule(), new GhostCarpetModule(), new GhostShroudModule(), new GhostStoneBricksModule(), new GhostTombstoneModule(), new GhostPianoModule(), new InvisibleGhostModule(), new RedGhostCandleModule(), new WhiteGhostCandleModule(), new CallingGhostModule())) {
                 var ids = new HashSet<ResourceLocation>();
                 for (var ability : module.getAbilities()) {
                     check(ids.add(ability.getId()), "模块内部能力 ID 重复: " + ability.getId());
-                    if (!ability.manuallySelectable()) continue;
                     check(zh.has(ability.translationKey()) && en.has(ability.translationKey()), "缺少技能译名: " + ability.getId());
-                    check(ability.iconTexture() != null, "主动能力缺少图标");
+                    check(ability.iconTexture() != null, "能力缺少图标: " + ability.getId());
+                    if (ability.iconTexture().getNamespace().equals("qisplan2"))
+                        check(AbilityWheelTest.class.getResource("/assets/qisplan2/" + ability.iconTexture().getPath()) != null,
+                                "能力图标不存在: " + ability.iconTexture());
                 }
             }
         } catch (IOException error) { throw new AssertionError("无法读取语言文件", error); }

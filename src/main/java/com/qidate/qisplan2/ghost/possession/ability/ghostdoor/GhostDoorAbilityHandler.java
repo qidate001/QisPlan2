@@ -1,7 +1,5 @@
 package com.qidate.qisplan2.ghost.possession.ability.ghostdoor;
 
-import net.minecraft.resources.ResourceLocation;
-import com.qidate.qisplan2.QisPlan2;
 import com.qidate.qisplan2.death.ModDamageTypes;
 import com.qidate.qisplan2.death.SupernaturalDeathHandler;
 import com.qidate.qisplan2.ghost.bearing.SpiritualPart;
@@ -29,27 +27,7 @@ import net.minecraft.world.phys.Vec3;
  */
 public final class GhostDoorAbilityHandler {
     /** 按选定模块追袭对应标记者，每次只调用一只门鬼。 */
-    public static boolean use(ServerPlayer player, ResourceLocation moduleId) {
-        boolean opening = moduleId.equals(OpeningGhostModule.ID);
-        if ((!opening && !moduleId.equals(ClosingGhostModule.ID)) || !PossessionHandler.hasGhost(player, moduleId)) return false;
-        LivingEntity target = GhostDoorMarkManager.findNearestMarkedTarget(player, player.serverLevel(),
-                e -> opening ? GhostDoorMarkManager.hasOpeningMark(player, e.getUUID())
-                             : GhostDoorMarkManager.hasClosingMark(player, e.getUUID()));
-        if (target == null) return false;
-        BlockPos approach = findApproachPosition(player.serverLevel(), target);
-        if (approach == null) return false;
-        player.teleportTo(approach.getX() + 0.5, approach.getY(), approach.getZ() + 0.5);
-        player.setDeltaMovement(Vec3.ZERO);
-        faceTarget(player, target);
-        double strength = PossessionHandler.getEffectiveStrength(player, moduleId);
-        if (opening) attackWithOpeningGhost(player, target, strength);
-        else attackWithClosingGhost(player, target, strength);
-        var state = PossessionHandler.getState(player, moduleId);
-        if (state != null) PossessionHandler.setState(player, moduleId,
-                PossessionHandler.addRevival(player, moduleId, state, 5, SpiritualPart.HAND));
-        GhostDoorMarkManager.clearMarks(player, target.getUUID());
-        return true;
-    }
+
 
     /**
      * 驾驭后的开门鬼 / 关门鬼：
@@ -610,7 +588,7 @@ public final class GhostDoorAbilityHandler {
      * ============================================================
      */
 
-    private static BlockPos findApproachPosition(
+    public static BlockPos findApproachPosition(
             ServerLevel level,
             LivingEntity target
     ) {

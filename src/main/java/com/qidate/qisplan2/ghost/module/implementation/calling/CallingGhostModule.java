@@ -75,9 +75,10 @@ public final class CallingGhostModule implements GhostModule {
             @Override public boolean allows(GhostAbilityContext c) {
                 var world = c.getModuleContext().world();
                 if (!world.present()) return false;
-                var player = world.target();
+                var player = c.event() == null && c.source() == GhostAbilityContext.Source.POSSESSION ? world.aimedTarget(32) : world.target();
                 if (player == null || !world.canTrack(player)) return false;
-                if (c.abilityId().equals(FOLLOW)) return c.getModuleContext().getCustomBoolean("physicsOwned", false);
+                if (c.abilityId().equals(FOLLOW)) return c.source() == GhostAbilityContext.Source.POSSESSION || c.getModuleContext().getCustomBoolean("physicsOwned", false);
+                if (c.event() == null) return world.validTarget(player);
                 return c.event() instanceof EntityTurnedEvent e && world.isOrigin(e.observer())
                         && e.entity() == player && isTurnAround(e.previousYaw(), e.currentYaw())
                         && world.validTarget(player);
@@ -138,6 +139,9 @@ public final class CallingGhostModule implements GhostModule {
      */
     @Override public List<GhostAbility> getIntrinsicAbilities() {
         return List.of(new GhostAbility() {
+            /** 技能图标由所属模块直接声明。 */
+            @Override public ResourceLocation iconTexture() { return ResourceLocation.parse("minecraft:textures/item/name_tag.png"); }
+
             /**
              * 获取当前定义的唯一标识。
              * 注册、能力查找和规则分发使用此标识，不代表某个运行时实例。
@@ -156,7 +160,7 @@ public final class CallingGhostModule implements GhostModule {
              */
             @Override public void execute(GhostAbilityContext c) {
                 var world = c.getModuleContext().world();
-                var player = world.target();
+                var player = c.event() == null && c.source() == GhostAbilityContext.Source.POSSESSION ? world.aimedTarget(32) : world.target();
                 if (player == null) return;
                 Vec3 look = player.getLookAngle();
                 Vec3 destination = player.position().subtract(look.x * 2.5D, 0, look.z * 2.5D).add(0, 1, 0);
@@ -188,6 +192,9 @@ public final class CallingGhostModule implements GhostModule {
                 c.getModuleContext().setCustomData(data);
             }
         }, new GhostAbility() {
+            /** 技能图标由所属模块直接声明。 */
+            @Override public ResourceLocation iconTexture() { return ResourceLocation.parse("minecraft:textures/item/name_tag.png"); }
+
             /**
              * 获取当前定义的唯一标识。
              * 注册、能力查找和规则分发使用此标识，不代表某个运行时实例。
@@ -199,7 +206,8 @@ public final class CallingGhostModule implements GhostModule {
              * 模块可用性与媒介由统一执行器共同校验。
              */
             @Override public boolean canExecute(GhostAbilityContext c) {
-                return c.event() instanceof EntityTurnedEvent e && e.entity() instanceof ServerPlayer;
+                return c.event() instanceof EntityTurnedEvent e && e.entity() instanceof ServerPlayer
+                        || c.event() == null && c.getModuleContext().world().validTarget(c.getModuleContext().world().aimedTarget(32));
             }
 
             /**
@@ -213,8 +221,8 @@ public final class CallingGhostModule implements GhostModule {
              * 返回值供主动交互及成功后结算使用，不能等同于仅接受了调用。
              */
             @Override public boolean executeWithResult(GhostAbilityContext c) {
-                var event = (EntityTurnedEvent)c.event();
-                return c.getModuleContext().world().attack(event.entity(),
+                var target = c.event() instanceof EntityTurnedEvent event ? event.entity() : c.getModuleContext().world().aimedTarget(32);
+                return c.getModuleContext().world().attack(target,
                         ModDamageTypes.CALLING_GHOST, c.getModuleContext().intensity());
             }
         });

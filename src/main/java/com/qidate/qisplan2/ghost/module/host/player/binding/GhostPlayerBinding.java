@@ -2,9 +2,8 @@ package com.qidate.qisplan2.ghost.module.host.player.binding;
 
 import com.qidate.qisplan2.ghost.module.host.player.PlayerGhostModuleContext;
 import com.qidate.qisplan2.ghost.domain.GhostDomainManager;
-import net.minecraft.core.BlockPos;
 
-/** 兼容原有玩家输入与表现的适配协议；模块定义不依赖此协议。 */
+/** 玩家生命周期与表现的适配协议；模块定义不依赖此协议。 */
 public interface GhostPlayerBinding {
     /**
      * 处理刚完成驾驭后的载体初始化；默认实现不额外操作。
@@ -30,13 +29,4 @@ public interface GhostPlayerBinding {
      */
     default void onRelease(PlayerGhostModuleContext context) {}
 
-    /**
-     * 默认不处理主动输入，返回 false；有对应能力的适配器可覆盖此方法。
-     */
-    default boolean use(PlayerGhostModuleContext context) { return false; }
-
-    /**
-     * 默认不处理针对方块的主动输入，返回 false。
-     */
-    default boolean useOnBlock(PlayerGhostModuleContext context, BlockPos pos) { return false; }
 }

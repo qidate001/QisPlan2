@@ -10,7 +10,6 @@ public final class GhostPlayerBindings {
     private static final GhostPlayerBinding NONE = new GhostPlayerBinding() {};
     private static final Map<ResourceLocation, GhostPlayerBinding> BINDINGS = Map.of(
             ResourceLocation.fromNamespaceAndPath("qisplan2", "night_wanderer"), new NightWandererPlayerBinding(),
-            ResourceLocation.fromNamespaceAndPath("qisplan2", "knocking_ghost"), new KnockingGhostPlayerBinding(),
             ResourceLocation.fromNamespaceAndPath("qisplan2", "ghost_eye"), new GhostEyePlayerBinding(),
             ResourceLocation.fromNamespaceAndPath("qisplan2", "ghost_mist"), new GhostMistPlayerBinding());
 

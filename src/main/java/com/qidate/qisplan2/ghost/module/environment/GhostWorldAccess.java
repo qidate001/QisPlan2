@@ -16,11 +16,37 @@ import net.minecraft.world.phys.Vec3;
  * 目标实体是世界中的作用对象，与模块自己的载体不是同一个概念。
  */
 public interface GhostWorldAccess {
-    /** 查询主动操作媒介，不暴露来源对象或载体种类。 */
-    default boolean canActivate(GhostActiveAction action) { return false; }
+    /** 当前世界时间，供模块保存冷却与复苏间隔。 */
+    default long gameTime() { return 0; }
+    /** 返回门的有效下半部位置，避免重复操作上半部门。 */
+    default BlockPos normalizeDoor(BlockPos pos) { return pos; }
+    /** 查询直接听见当前敲门的目标数量，计费策略由模块决定。 */
+    default int hearingTargets(BlockPos pos) { return 0; }
+    /** 查询是否属于可传播敲门的特殊门。 */
+    default boolean supernaturalDoor(BlockPos pos) { return false; }
+    /** 摧毁指定方块，不附加技能规则。 */
+    default void destroyBlock(BlockPos pos) {}
 
-    /** 执行已经满足媒介的主动操作，目标由宿主适配层在服务端确定。 */
-    default boolean activate(GhostActiveAction action) { return false; }
+    /** 当前模块的鬼域操作能力；不提供出口时返回空实现。 */
+    default GhostDomainAccess domain() { return GhostDomainAccess.NONE; }
+
+    /** 解析当前输入指向的世界目标，不暴露来源对象。 */
+    default LivingEntity aimedTarget(double range) { return null; }
+
+    /** 解析当前输入指向的方块；缺少输入或无命中时返回 null。 */
+    default BlockPos aimedBlock(double range) { return null; }
+
+    /** 查询目标是否正在与来源接触；宿主如何形成接触由适配层解释。 */
+    default boolean touching(LivingEntity target) { return false; }
+
+    /** 为模块解析标记对应的目标，布尔值表示开门或关门事实。 */
+    default LivingEntity doorMarkedTarget(boolean opening) { return null; }
+
+    /** 移动到目标旁的安全位置，返回是否成功。 */
+    default boolean approach(LivingEntity target) { return false; }
+
+    /** 消费已经完成追袭的门标记。 */
+    default void clearDoorMarks(LivingEntity target) {}
 
     /** 尝试永久支付最大生命代价；不足时不修改属性，成功后保留指定生命下限。 */
     default boolean consumeMaxHealth(ResourceLocation lossId, double cost, double minimum) { return false; }

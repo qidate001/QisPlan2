@@ -1,5 +1,6 @@
 package com.qidate.qisplan2.ghost.module.implementation;
 
+import net.minecraft.world.entity.LivingEntity;
 import com.qidate.qisplan2.death.ModDamageTypes;
 import com.qidate.qisplan2.ghost.module.GhostMedium;
 import com.qidate.qisplan2.ghost.module.GhostModule;
@@ -57,8 +58,7 @@ public final class GhostGrassModule implements GhostModule {
 
             /** 瞬时或持续接触均可作为媒介，目标必须位于服务端且仍然存活。 */
             public boolean allows(GhostAbilityContext context) {
-                return context.event() instanceof TouchEvent touch
-                        && touch.target().isAlive() && !touch.target().level().isClientSide();
+                return contactTarget(context) != null;
             }
         });
     }
@@ -116,12 +116,15 @@ public final class GhostGrassModule implements GhostModule {
     @Override
     public List<GhostAbility> getIntrinsicAbilities() {
         return List.of(new GhostAbility() {
+            /** 技能图标由所属模块直接声明。 */
+            @Override public ResourceLocation iconTexture() { return ResourceLocation.parse("qisplan2:textures/block/ghost_grass.png"); }
+
             /** 返回草丛袭击能力标识。 */
             public ResourceLocation getId() { return ATTACK; }
 
             /** 只有接触事实才能为能力提供目标。 */
             public boolean canExecute(GhostAbilityContext context) {
-                return context.event() instanceof TouchEvent;
+                return contactTarget(context) != null;
             }
 
             /** 兼容无需取得效果结果的调用方。 */
@@ -132,7 +135,7 @@ public final class GhostGrassModule implements GhostModule {
              * 只有击杀成功才扩展附近已有草丛群落；袭击被保护挡住或失败时不蔓延。
              */
             public boolean executeWithResult(GhostAbilityContext context) {
-                var target = ((TouchEvent) context.event()).target();
+                var target = contactTarget(context);
                 var module = context.getModuleContext();
                 var world = module.world();
                 boolean killed = world.attack(target, ModDamageTypes.GHOST_GRASS, module.intensity());
@@ -140,5 +143,13 @@ public final class GhostGrassModule implements GhostModule {
                 return killed;
             }
         });
+    }    /** 接触是媒介，不要求先触发自动规则；主动释放仍必须正在接触目标。 */
+    private static LivingEntity contactTarget(GhostAbilityContext context) {
+        if (context.event() instanceof TouchEvent touch)
+            return touch.target().isAlive() && !touch.target().level().isClientSide() ? touch.target() : null;
+        var world = context.getModuleContext().world();
+        var target = world.aimedTarget(3);
+        return target != null && target.isAlive() && world.touching(target) ? target : null;
     }
+
 }

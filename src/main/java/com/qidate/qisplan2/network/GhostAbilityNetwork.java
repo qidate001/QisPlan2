@@ -1,6 +1,7 @@
 package com.qidate.qisplan2.network;
 
 import com.qidate.qisplan2.ghost.module.ability.GhostAbilityCatalog;
+import com.qidate.qisplan2.ghost.module.ability.GhostInvocationParameters;
 import com.qidate.qisplan2.ghost.module.ability.GhostAbilityContext;
 import com.qidate.qisplan2.ghost.module.ability.GhostAbilityExecutor;
 import com.qidate.qisplan2.ghost.module.host.player.PlayerGhostModuleHost;
@@ -30,7 +31,7 @@ public final class GhostAbilityNetwork {
                             entry.moduleId().equals(packet.moduleId()) && entry.ability().getId().equals(packet.abilityId()));
                     if (!known) return;
                     boolean success = GhostAbilityExecutor.tryExecuteWithResult(new GhostAbilityContext(host,
-                            packet.moduleId(), packet.abilityId(), GhostAbilityContext.Source.POSSESSION, null));
+                            packet.moduleId(), packet.abilityId(), GhostAbilityContext.Source.POSSESSION, null, () -> {}, new GhostInvocationParameters(player)));
                     if (!success) player.displayClientMessage(Component.translatable("hud.qisplan2.ability_wheel.unavailable"), true);
                 }));
     }

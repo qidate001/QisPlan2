@@ -96,7 +96,14 @@ public final class AbilityWheelScreen extends Screen {
             float radius = (inner + outer) / 2;
             int x = (int)(Math.cos(angle) * radius), y = (int)(Math.sin(angle) * radius);
             g.blit(entries.get(i).ability().iconTexture(), x - 12, y - 12, 0, 0, 24, 24, 24, 24);
-            g.drawCenteredString(font, Integer.toString(i + 1), x, y + 14, i == selected ? 0x9affee : 0x9baebd);
+            g.pose().pushPose();
+            g.pose().translate(x, y + 14, 0);
+            g.pose().scale(0.75f, 0.75f, 1);
+            int textWidth = Math.max(36, (int)(2 * radius * Math.sin(Math.PI / Math.max(3, entries.size())) / 0.75) - 8);
+            var nameLines = font.split(Component.translatable(entries.get(i).ability().translationKey()), textWidth);
+            for (int line = 0; line < Math.min(2, nameLines.size()); line++)
+                g.drawCenteredString(font, nameLines.get(line), 0, line * 10, i == selected ? 0x9affee : 0xc1d1dd);
+            g.pose().popPose();
         }
         Component label = selected < 0 ? Component.translatable(entries.isEmpty()
                 ? "hud.qisplan2.ability_wheel.empty" : "hud.qisplan2.ability_wheel.cancel")

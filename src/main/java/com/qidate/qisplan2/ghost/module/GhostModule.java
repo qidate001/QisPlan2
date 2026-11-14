@@ -1,6 +1,5 @@
 package com.qidate.qisplan2.ghost.module;
 
-import java.util.ArrayList;
 
 import com.qidate.qisplan2.ghost.bearing.GhostModuleForm;
 
@@ -120,16 +119,11 @@ public interface GhostModule {
      *
      * 默认没有能力，保证现有模块兼容。
      */
-    default List<GhostAbility> getAbilities() {
-        var abilities = new ArrayList<>(getActiveAbilities());
-        abilities.addAll(getIntrinsicAbilities());
-        return List.copyOf(abilities);
-    }
+        default List<GhostAbility> getAbilities() { return List.copyOf(getIntrinsicAbilities()); }
 
-    /** 明确列出本厉鬼可主动选择的多个能力，不再自动附加单一 player_action。 */
-    default List<GhostAbility> getActiveAbilities() { return List.of(); }
 
-    /** 内部效果和自动维护能力同样交由统一执行器处理，但不默认作为主动按钮。 */
+
+    /** 声明本厉鬼拥有的全部独立技能；规则、行为与轮盘直接调用同一个定义。 */
     default List<GhostAbility> getIntrinsicAbilities() {
         return List.of();
     }

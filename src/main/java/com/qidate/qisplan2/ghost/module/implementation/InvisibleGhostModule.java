@@ -22,7 +22,6 @@ import static com.qidate.qisplan2.QisPlan2.MODID;
  * 该鬼以模块强度发动灵异袭击。
  */
 public final class InvisibleGhostModule implements GhostModule {
-
     public static final ResourceLocation ID =
             ResourceLocation.fromNamespaceAndPath(
                     MODID,
@@ -114,6 +113,9 @@ public final class InvisibleGhostModule implements GhostModule {
 
     private static final class AttackAbility
             implements GhostAbility {
+            /** 技能图标由所属模块直接声明。 */
+            @Override public ResourceLocation iconTexture() { return ResourceLocation.parse("minecraft:textures/item/ender_eye.png"); }
+
 
         @Override
         public ResourceLocation getId() {
@@ -133,7 +135,8 @@ public final class InvisibleGhostModule implements GhostModule {
         @Override
         public boolean canExecute(GhostAbilityContext context) {
             return context.event() instanceof EntityPerceivedEvent event
-                    && event.observer() instanceof Player;
+                    && event.observer() instanceof Player || context.event() == null
+                    && context.getModuleContext().world().validTarget(context.getModuleContext().world().aimedTarget(8));
         }
 
         @Override
@@ -149,13 +152,14 @@ public final class InvisibleGhostModule implements GhostModule {
                 return false;
             }
 
-            if (!(context.event() instanceof EntityPerceivedEvent event)) {
-                return false;
+            if (context.event() == null) {
+                var module = context.getModuleContext();
+                return module.world().attack(module.world().aimedTarget(8), ModDamageTypes.INVISIBLE_GHOST, module.intensity());
             }
 
-            if (!(event.observer() instanceof Player player)) {
-                return false;
-            }
+            if (!(context.event() instanceof EntityPerceivedEvent event)) return false;
+
+            if (!(event.observer() instanceof Player player)) return false;
 
             return SupernaturalDeathHandler.tryKill(
                     player,

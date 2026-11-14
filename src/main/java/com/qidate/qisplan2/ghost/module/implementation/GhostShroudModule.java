@@ -25,7 +25,6 @@ import net.minecraft.resources.ResourceLocation;
 public final class GhostShroudModule implements GhostModule {
     public static final ResourceLocation ID = id("ghost_shroud");
     public static final ResourceLocation PROTECT = id("ghost_shroud/protect");
-    public static final ResourceLocation DRAIN = id("ghost_shroud/drain");
     // 沿用旧属性标识，让存档中已经支付的永久代价继续累计。
     private static final ResourceLocation LOSS = id("ghost_shroud_max_health_loss");
     private static final int DRAIN_INTERVAL = 500;
@@ -113,8 +112,7 @@ public final class GhostShroudModule implements GhostModule {
                 data.putInt("erosionTicks", ticks >= DRAIN_INTERVAL ? 0 : ticks);
                 module.setCustomData(data);
                 if (ticks >= DRAIN_INTERVAL) {
-                    var effect = context.prepareAbility(DRAIN, event);
-                    if (effect != null) effect.run();
+                    module.world().drainHealth(1);
                 }
             }
         });
@@ -123,6 +121,9 @@ public final class GhostShroudModule implements GhostModule {
     /** 能力只通过世界端口支付生命代价，不接触具体宿主实现。 */
     @Override public List<GhostAbility> getIntrinsicAbilities() {
         return List.of(new GhostAbility() {
+            /** 技能图标由所属模块直接声明。 */
+            @Override public ResourceLocation iconTexture() { return ResourceLocation.parse("qisplan2:textures/item/ghost_shroud.png"); }
+
             /** 返回保护能力标识。 */
             public ResourceLocation getId() { return PROTECT; }
 
@@ -146,20 +147,6 @@ public final class GhostShroudModule implements GhostModule {
                 // 只削弱已经支付代价的部分；未归零时，后续保护及原袭击继续处理剩余强度。
                 attack.absorb(absorbed);
                 return true;
-            }
-        }, new GhostAbility() {
-            /** 返回持续侵蚀能力标识。 */
-            public ResourceLocation getId() { return DRAIN; }
-
-            /** 持续侵蚀由生命周期事实驱动。 */
-            public boolean canExecute(GhostAbilityContext context) { return context.event() instanceof ModuleTickEvent; }
-
-            /** 委托真实生命操作。 */
-            public void execute(GhostAbilityContext context) { executeWithResult(context); }
-
-            /** 每次侵蚀扣一点当前生命，与永久抵挡代价分开结算。 */
-            public boolean executeWithResult(GhostAbilityContext context) {
-                return context.getModuleContext().world().drainHealth(1);
             }
         });
     }

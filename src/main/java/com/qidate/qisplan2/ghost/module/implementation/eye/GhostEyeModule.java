@@ -1,7 +1,6 @@
 package com.qidate.qisplan2.ghost.module.implementation.eye;
 
-import com.qidate.qisplan2.ghost.module.environment.GhostActiveAction;
-import com.qidate.qisplan2.ghost.module.ability.WorldActionAbility;
+import com.qidate.qisplan2.ghost.module.ability.DefinedGhostAbility;
 import com.qidate.qisplan2.ghost.bearing.SpiritualPart;
 import com.qidate.qisplan2.ghost.corrosion.GhostCorrosion;
 import com.qidate.qisplan2.ghost.module.GhostModule;
@@ -24,21 +23,6 @@ import net.minecraft.resources.ResourceLocation;
  * 鬼域持久状态保存在模块 customData，模块不读取具体载体。
  */
 public final class GhostEyeModule implements GhostModule {
-    /** 显式声明可主动调用的独立技能，宿主差异由世界端口处理。 */
-    @Override public List<GhostAbility> getActiveAbilities() {
-        return List.of(
-            WorldActionAbility.of(ID, "cast_toggle", "minecraft:textures/item/ender_eye.png", GhostActiveAction.TOGGLE_DOMAIN),
-            WorldActionAbility.of(ID, "domain_up", "minecraft:textures/item/glowstone_dust.png", GhostActiveAction.DOMAIN_UP),
-            WorldActionAbility.of(ID, "domain_down", "minecraft:textures/item/redstone.png", GhostActiveAction.DOMAIN_DOWN),
-            WorldActionAbility.of(ID, "self_up", "minecraft:textures/item/feather.png", GhostActiveAction.SELF_UP),
-            WorldActionAbility.of(ID, "self_down", "minecraft:textures/item/flint.png", GhostActiveAction.SELF_DOWN),
-            WorldActionAbility.of(ID, "reboot", "minecraft:textures/item/clock_00.png", GhostActiveAction.REBOOT),
-            WorldActionAbility.of(ID, "teleport", "minecraft:textures/item/ender_pearl.png", GhostActiveAction.TELEPORT),
-            WorldActionAbility.of(ID, "raise_target", "minecraft:textures/item/feather.png", GhostActiveAction.RAISE_TARGET),
-            WorldActionAbility.of(ID, "lower_target", "minecraft:textures/item/flint.png", GhostActiveAction.LOWER_TARGET)
-        );
-    }
-
     public static final ResourceLocation ID = ResourceLocation.fromNamespaceAndPath("qisplan2", "ghost_eye");
     public static final ResourceLocation TOGGLE_DOMAIN = ResourceLocation.fromNamespaceAndPath("qisplan2", "ghost_eye/toggle_domain");
 
@@ -67,6 +51,9 @@ public final class GhostEyeModule implements GhostModule {
      */
     @Override public List<GhostAbility> getIntrinsicAbilities() {
         return List.of(new GhostAbility() {
+            /** 技能图标由所属模块直接声明。 */
+            @Override public ResourceLocation iconTexture() { return ResourceLocation.parse("minecraft:textures/item/ender_eye.png"); }
+
             /**
              * 获取当前定义的唯一标识。
              * 注册、能力查找和规则分发使用此标识，不代表某个运行时实例。
@@ -91,7 +78,39 @@ public final class GhostEyeModule implements GhostModule {
             public boolean executeWithResult(GhostAbilityContext context) {
                 return context.getModuleContext().world().toggleDomain();
             }
-        });
+        },
+        new DefinedGhostAbility(ResourceLocation.fromNamespaceAndPath(ID.getNamespace(), ID.getPath() + "/domain_up"),
+                ResourceLocation.parse("minecraft:textures/item/glowstone_dust.png"),
+                c -> c.getModuleContext().world().domain().exists(),
+                c -> c.getModuleContext().world().domain().setLayer(Math.min(6, c.getModuleContext().world().domain().layer() + 1))),
+        new DefinedGhostAbility(ResourceLocation.fromNamespaceAndPath(ID.getNamespace(), ID.getPath() + "/domain_down"),
+                ResourceLocation.parse("minecraft:textures/item/redstone.png"),
+                c -> c.getModuleContext().world().domain().exists(),
+                c -> c.getModuleContext().world().domain().setLayer(Math.max(1, c.getModuleContext().world().domain().layer() - 1))),
+        new DefinedGhostAbility(ResourceLocation.fromNamespaceAndPath(ID.getNamespace(), ID.getPath() + "/self_up"),
+                ResourceLocation.parse("minecraft:textures/item/feather.png"),
+                c -> c.getModuleContext().world().domain().exists(),
+                c -> c.getModuleContext().world().domain().setOccupiedLayer(Math.min(c.getModuleContext().world().domain().layer(), c.getModuleContext().world().domain().occupiedLayer() + 1))),
+        new DefinedGhostAbility(ResourceLocation.fromNamespaceAndPath(ID.getNamespace(), ID.getPath() + "/self_down"),
+                ResourceLocation.parse("minecraft:textures/item/flint.png"),
+                c -> c.getModuleContext().world().domain().exists(),
+                c -> c.getModuleContext().world().domain().setOccupiedLayer(Math.max(1, c.getModuleContext().world().domain().occupiedLayer() - 1))),
+        new DefinedGhostAbility(ResourceLocation.fromNamespaceAndPath(ID.getNamespace(), ID.getPath() + "/reboot"),
+                ResourceLocation.parse("minecraft:textures/item/clock_00.png"),
+                c -> c.getModuleContext().world().domain().layer() >= 6,
+                c -> c.getModuleContext().world().domain().toggleReboot()),
+        new DefinedGhostAbility(ResourceLocation.fromNamespaceAndPath(ID.getNamespace(), ID.getPath() + "/teleport"),
+                ResourceLocation.parse("minecraft:textures/item/ender_pearl.png"),
+                c -> c.getModuleContext().world().domain().exists(),
+                c -> c.getModuleContext().world().domain().teleportToAim()),
+        new DefinedGhostAbility(ResourceLocation.fromNamespaceAndPath(ID.getNamespace(), ID.getPath() + "/raise_target"),
+                ResourceLocation.parse("minecraft:textures/item/feather.png"),
+                c -> c.getModuleContext().world().domain().exists(),
+                c -> c.getModuleContext().world().domain().shiftTargetLayer(1)),
+        new DefinedGhostAbility(ResourceLocation.fromNamespaceAndPath(ID.getNamespace(), ID.getPath() + "/lower_target"),
+                ResourceLocation.parse("minecraft:textures/item/flint.png"),
+                c -> c.getModuleContext().world().domain().exists(),
+                c -> c.getModuleContext().world().domain().shiftTargetLayer(-1)));
     }
 
     /**

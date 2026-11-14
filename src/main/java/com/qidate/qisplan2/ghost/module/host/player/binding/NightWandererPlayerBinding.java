@@ -8,15 +8,10 @@ import com.qidate.qisplan2.ghost.module.event.*;
 import com.qidate.qisplan2.ghost.module.host.player.PlayerGhostModuleContext;
 import com.qidate.qisplan2.ghost.possession.data.PossessedGhostState;
 import com.qidate.qisplan2.ghost.possession.manager.PossessionHandler;
-import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.sounds.SoundEvents;
-import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
-import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.attributes.AttributeInstance;
 import net.minecraft.world.entity.ai.attributes.AttributeModifier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
@@ -176,134 +171,7 @@ public final class NightWandererPlayerBinding implements GhostPlayerBinding {
      * 把主动使用输入转交相应模块能力或适配逻辑。
      * @return 本次输入是否得到成功处理
      */
-    @Override
-    public boolean use(
-            PlayerGhostModuleContext context
-    ) {
 
-        ServerPlayer player =
-                context.player();
-
-        LivingEntity target =
-                context.target();
-
-        if (target == null
-                || !target.isAlive()) {
-
-            return false;
-        }
-
-        var ability = new GhostAbilityContext(context.host(), ID, NightWandererModule.ATTACK,
-                GhostAbilityContext.Source.POSSESSION, null, () -> {}, new GhostTargetParameters(target));
-        if (GhostAbilityExecutor.prepareDeferred(ability) == null) return false;
-
-        PossessedGhostState state =
-                context.state();
-
-        long now =
-                player.serverLevel()
-                        .getGameTime();
-
-        /*
-         * 10 秒内再次使用：
-         * +30%
-         *
-         * 否则：
-         * +10%
-         */
-        boolean rapid =
-                now - state.lastAbilityUseTick()
-                        < TEN_SECONDS;
-
-        double revivalGain =
-                rapid
-                        ? RAPID_REVIVAL_GAIN
-                        : NORMAL_REVIVAL_GAIN;
-
-        /*
-         * 使用通用复苏机制。
-         */
-        PossessedGhostState newState =
-                PossessionHandler.addRevival(
-                        player,
-                        ID,
-                        state,
-                        revivalGain,
-                        SpiritualPart.HAND
-                );
-
-        /*
-         * 记录本次使用时间。
-         */
-        newState =
-                new PossessedGhostState(
-                        newState.revival(),
-                        state.strength(),
-                        newState.shallowStun(),
-                        newState.stunTicks(),
-                        newState.permanentStun(),
-                        now
-                );
-
-        context.setState(
-                newState
-        );
-
-        /*
-         * 复苏达到 100%：
-         * 玩家死亡。
-         */
-        if (newState.revival()
-                >= 1.0D) {
-
-            player.setHealth(0.0F);
-
-            return true;
-        }
-
-        /*
-         * ========================================================
-         * 音效 与 粒子效果
-         * ========================================================
-         */
-        if (player.level()
-                instanceof ServerLevel serverLevel) {
-
-            serverLevel.sendParticles(
-                    ParticleTypes.SOUL,
-                    target.getX(),
-                    target.getY()
-                            + target.getBbHeight()
-                            * 0.5D,
-                    target.getZ(),
-                    12,
-                    0.35D,
-                    0.45D,
-                    0.35D,
-                    0.03D
-            );
-
-            serverLevel.playSound(
-                    null,
-                    target.blockPosition(),
-                    SoundEvents.SOUL_ESCAPE.value(),
-                    SoundSource.HOSTILE,
-                    0.8F,
-                    0.7F
-            );
-        }
-
-        /*
-         * ========================================================
-         * 灵异袭击
-         * ========================================================
-         */
-
-return GhostAbilityExecutor.tryExecute(new GhostAbilityContext(context.host(), ID,
-                NightWandererModule.ATTACK, GhostAbilityContext.Source.POSSESSION, null,
-                () -> {}, new GhostTargetParameters(target)));
-
-    }
 
     /**
      * 在玩家离线或模块暂停时清理对应的运行时资源。

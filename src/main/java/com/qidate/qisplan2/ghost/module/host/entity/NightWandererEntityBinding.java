@@ -13,9 +13,7 @@ import com.qidate.qisplan2.ghost.module.implementation.nightwanderer.*;
 
 public final class NightWandererEntityBinding {
     private static final ResourceLocation ID = NightWandererModule.ID;
-    private static final ResourceLocation ACTIVITY = NightWandererModule.ACTIVITY;
     private static final ResourceLocation ATTACK = NightWandererModule.ATTACK;
-    private static final ResourceLocation GROWTH = NightWandererModule.GROWTH;
 
     /**
      * 为当前实体创建本模块独立的 Goal 实例。
@@ -37,10 +35,9 @@ public final class NightWandererEntityBinding {
     }
 
     /**
-     * 在模块有效时调用夜游鬼活动能力，不把能力调用包装成语义事件。
+     * 在模块有效时推进自主行动；寻路调度不注册为玩家技能。
      */
     public static void activity(ModularGhostEntity host) {
-        if (isActive(host)) GhostAbilityExecutor.tryExecute(new GhostAbilityContext(
-                host, ID, ACTIVITY, GhostAbilityContext.Source.BEHAVIOR, null));
+        if (isActive(host) && !host.level().isDay()) NightWandererBehavior.tickActivity(host);
     }
 }

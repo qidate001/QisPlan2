@@ -131,6 +131,9 @@ public final class GhostStoneBricksModule implements GhostModule {
 
     /** 三种宿主共用同一条“实际反击成功才撤销摧毁”的能力实现。 */
     private static final class RetaliationAbility implements GhostAbility {
+            /** 技能图标由所属模块直接声明。 */
+            @Override public ResourceLocation iconTexture() { return ResourceLocation.parse("qisplan2:textures/block/ghost_stone_bricks.png"); }
+
         /**
          * 获取当前定义的唯一标识。
          * 注册、能力查找和规则分发使用此标识，不代表某个运行时实例。
@@ -142,6 +145,7 @@ public final class GhostStoneBricksModule implements GhostModule {
          * 模块可用性与媒介由统一执行器共同校验。
          */
         @Override public boolean canExecute(GhostAbilityContext context) {
+            if (context.event() == null) return context.getModuleContext().world().validTarget(context.getModuleContext().world().aimedTarget(8));
             return context.event() instanceof DestructionAttemptEvent
                     && !((DestructionAttemptEvent)context.event()).isCanceled()
                     && target(context.event()) != null && target(context.event()).isAlive();
@@ -159,10 +163,10 @@ public final class GhostStoneBricksModule implements GhostModule {
          */
         @Override public boolean executeWithResult(GhostAbilityContext context) {
             if (!canExecute(context)) return false;
-            LivingEntity attacker = target(context.event());
+            LivingEntity attacker = context.event() == null ? context.getModuleContext().world().aimedTarget(8) : target(context.event());
             boolean succeeded = context.getModuleContext().world().attack(attacker,
                     ModDamageTypes.GHOST_STONE_BRICKS, context.getModuleContext().intensity());
-            if (succeeded) ((DestructionAttemptEvent)context.event()).cancel();
+            if (succeeded && context.event() instanceof DestructionAttemptEvent destruction) destruction.cancel();
             return succeeded;
         }
     }

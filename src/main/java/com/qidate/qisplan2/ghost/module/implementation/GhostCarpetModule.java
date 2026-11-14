@@ -1,5 +1,6 @@
 package com.qidate.qisplan2.ghost.module.implementation;
 
+import net.minecraft.world.entity.LivingEntity;
 import com.qidate.qisplan2.death.ModDamageTypes;
 import com.qidate.qisplan2.ghost.module.*;
 import com.qidate.qisplan2.ghost.module.ability.*;
@@ -47,8 +48,7 @@ public final class GhostCarpetModule implements GhostModule {
             public ResourceLocation getId() { return id("ghost_carpet/contact"); }
             /** 只接受服务端仍存活目标的接触事实，不用宿主类别决定能力资格。 */
             public boolean allows(GhostAbilityContext c) {
-                return c.event() instanceof TouchEvent touch && touch.target().isAlive()
-                        && !touch.target().level().isClientSide();
+                return contactTarget(c) != null;
             }
         });
     }
@@ -106,15 +106,18 @@ public final class GhostCarpetModule implements GhostModule {
     @Override
     public List<GhostAbility> getIntrinsicAbilities() {
         return List.of(new GhostAbility() {
+            /** 技能图标由所属模块直接声明。 */
+            @Override public ResourceLocation iconTexture() { return ResourceLocation.parse("qisplan2:textures/block/ghost_carpet.png"); }
+
             /** 返回灵异袭击能力标识。 */
             public ResourceLocation getId() { return ATTACK; }
             /** 确认本次调用具有接触目标。 */
-            public boolean canExecute(GhostAbilityContext c) { return c.event() instanceof TouchEvent; }
+            public boolean canExecute(GhostAbilityContext c) { return contactTarget(c) != null; }
             /** 兼容不需要取得袭击结果的调用入口。 */
             public void execute(GhostAbilityContext c) { executeWithResult(c); }
             /** 播放袭击表现并尝试击杀；只有实际击杀成功后才请求地毯蔓延。 */
             public boolean executeWithResult(GhostAbilityContext c) {
-                var target = ((TouchEvent)c.event()).target();
+                var target = contactTarget(c);
                 var world = c.getModuleContext().world();
                 world.contactAttackFeedback(target);
                 boolean killed = world.attack(target, ModDamageTypes.GHOST_CARPET, c.getModuleContext().intensity());
@@ -122,5 +125,13 @@ public final class GhostCarpetModule implements GhostModule {
                 return killed;
             }
         });
+    }    /** 接触是媒介，不要求先触发自动规则；主动释放仍必须正在接触目标。 */
+    private static LivingEntity contactTarget(GhostAbilityContext context) {
+        if (context.event() instanceof TouchEvent touch)
+            return touch.target().isAlive() && !touch.target().level().isClientSide() ? touch.target() : null;
+        var world = context.getModuleContext().world();
+        var target = world.aimedTarget(3);
+        return target != null && target.isAlive() && world.touching(target) ? target : null;
     }
+
 }

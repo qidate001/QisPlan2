@@ -208,6 +208,9 @@ public final class GhostPianoModule implements GhostModule {
      */
     private static final class GhostPianoMusicAbility
             implements GhostAbility {
+            /** 技能图标由所属模块直接声明。 */
+            @Override public ResourceLocation iconTexture() { return ResourceLocation.parse("qisplan2:textures/item/ghost_piano.png"); }
+
 
         @Override
         public ResourceLocation getId() {
@@ -216,6 +219,7 @@ public final class GhostPianoModule implements GhostModule {
 
         @Override
         public boolean canExecute(GhostAbilityContext context) {
+            if (context.event() == null) return context.getModuleContext().world().validTarget(context.getModuleContext().world().aimedTarget(8));
             return context.event() instanceof GhostSoundEvent soundEvent
                     && soundEvent.soundType().equals(ID)
                     && soundEvent.type() == GhostSoundEvent.Type.INTERRUPTED
@@ -235,9 +239,11 @@ public final class GhostPianoModule implements GhostModule {
                 return false;
             }
 
-            if (!(context.event() instanceof GhostSoundEvent soundEvent)) {
-                return false;
+            if (context.event() == null) {
+                var module = context.getModuleContext();
+                return module.world().attack(module.world().aimedTarget(8), ModDamageTypes.GHOST_PIANO, module.intensity());
             }
+            if (!(context.event() instanceof GhostSoundEvent soundEvent)) return false;
 
             if (!canExecute(context)) {
                 return false;

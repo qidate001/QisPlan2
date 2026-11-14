@@ -1,8 +1,7 @@
 package com.qidate.qisplan2.ghost.module.implementation;
 
-import com.qidate.qisplan2.ghost.module.ability.WorldActionAbility;
-import com.qidate.qisplan2.ghost.module.environment.GhostActiveAction;
 
+import com.qidate.qisplan2.ghost.module.ability.GhostAbilityStimulation;
 import com.qidate.qisplan2.death.ModDamageTypes;
 import com.qidate.qisplan2.ghost.module.environment.GhostWorldAccess;
 import net.minecraft.world.phys.Vec3;
@@ -33,12 +32,6 @@ import static com.qidate.qisplan2.QisPlan2.MODID;
  * 限制袭击必须由有效门事件触发，能力负责瞬移和裁决后的袭击。
  */
 public final class ClosingGhostModule implements GhostModule {
-    /** 声明各个可主动选择的能力；定义只认识世界端口，不识别宿主类型。 */
-    @Override public List<GhostAbility> getActiveAbilities() {
-        return List.of(
-            WorldActionAbility.of(ID, "hunt", "minecraft:textures/item/iron_door.png", GhostActiveAction.DOOR_HUNT)
-        );
-    }
 
     public static final ResourceLocation ID = ResourceLocation.fromNamespaceAndPath(MODID, "closing_ghost");
     public static final double INITIAL_INTENSITY = 5.0D;
@@ -119,6 +112,7 @@ public final class ClosingGhostModule implements GhostModule {
          * 返回 false 会阻止本次能力执行，主动使用也不能绕过该检查。
          */
         @Override public boolean allows(GhostAbilityContext context) {
+            if (context.event() == null) return context.getModuleContext().world().doorMarkedTarget(false) != null;
             // 媒介是能力执行前的硬性门槛：只有活着的玩家在服务端关闭有效门，
             // 且来源暴露在世界并处于触发范围内时，能力才可执行。
             return context.event() instanceof DoorChangedEvent event && isCloseEvent(event)
@@ -160,17 +154,28 @@ public final class ClosingGhostModule implements GhostModule {
         }
     }
     private static final class DoorAttackAbility implements GhostAbility {
+            /** 技能图标由所属模块直接声明。 */
+            @Override public ResourceLocation iconTexture() { return ResourceLocation.parse("minecraft:textures/item/iron_door.png"); }
+
         /**
          * 获取当前定义的唯一标识。
          * 注册、能力查找和规则分发使用此标识，不代表某个运行时实例。
          */
         @Override public ResourceLocation getId() { return ABILITY_ID; }
+        /** 主动追袭保留五点复苏代价，规则触发不重复结算。 */
+        @Override public GhostAbilityStimulation getStimulation(GhostAbilityContext context) {
+            return context.source() == GhostAbilityContext.Source.POSSESSION
+                    ? new GhostAbilityStimulation(5, GhostAbilityStimulation.Timing.ON_ACCEPTED)
+                    : GhostAbilityStimulation.none();
+        }
+
 
         /**
          * 检查本次能力调用的事件、参数或环境是否可用于执行。
          * 模块可用性与媒介由统一执行器共同校验。
          */
         @Override public boolean canExecute(GhostAbilityContext context) {
+            if (context.event() == null) return context.getModuleContext().world().doorMarkedTarget(false) != null;
             return context.event() instanceof DoorChangedEvent event && isCloseEvent(event)
                     && isValidDoorEvent(event) && isInRange(context.getModuleContext(), event);
         }
@@ -186,6 +191,16 @@ public final class ClosingGhostModule implements GhostModule {
          * 返回值供主动交互及成功后结算使用，不能等同于仅接受了调用。
          */
         @Override public boolean executeWithResult(GhostAbilityContext context) {
+            if (context.event() == null) {
+                var module = context.getModuleContext();
+                var world = module.world();
+                var target = world.doorMarkedTarget(false);
+                if (target == null || !world.approach(target)) return false;
+                boolean result = world.attack(target, ModDamageTypes.CLOSING_GHOST, module.effectiveIntensity());
+                world.clearDoorMarks(target);
+                return result;
+            }
+
             if (!context.isModuleAvailable()
                     || !(context.event() instanceof DoorChangedEvent event) || !canExecute(context)) return false;
             // 通过媒介与裁决后才执行世界操作：先移动到触发门附近，再尝试灵异秒杀。

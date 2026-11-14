@@ -1,7 +1,6 @@
 package com.qidate.qisplan2.ghost.module.implementation.mist;
+import com.qidate.qisplan2.ghost.module.ability.DefinedGhostAbility;
 import com.qidate.qisplan2.ghost.module.ability.GhostAbility;
-import com.qidate.qisplan2.ghost.module.environment.GhostActiveAction;
-import com.qidate.qisplan2.ghost.module.ability.WorldActionAbility;
 import com.qidate.qisplan2.ghost.module.environment.GhostBehavior;
 
 import com.qidate.qisplan2.death.ModDamageTypes;
@@ -19,15 +18,6 @@ import static com.qidate.qisplan2.QisPlan2.MODID;
 
 /** 完整鬼雾模块：独立维护鬼域生命周期，游荡参与行为调度，鬼域袭击经过统一裁决。 */
 public final class GhostMistModule implements GhostModule {
-    /** 显式声明可主动调用的独立技能，宿主差异由世界端口处理。 */
-    @Override public List<GhostAbility> getActiveAbilities() {
-        return List.of(
-            WorldActionAbility.of(ID, "cast_toggle", "minecraft:textures/item/ender_pearl.png", GhostActiveAction.TOGGLE_DOMAIN),
-            WorldActionAbility.of(ID, "teleport", "minecraft:textures/item/ender_pearl.png", GhostActiveAction.TELEPORT),
-            WorldActionAbility.of(ID, "raise_target", "minecraft:textures/item/feather.png", GhostActiveAction.RAISE_TARGET),
-            WorldActionAbility.of(ID, "lower_target", "minecraft:textures/item/flint.png", GhostActiveAction.LOWER_TARGET)
-        );
-    }
 
     /**
      * 声明需要的自主行动类型。
@@ -73,7 +63,9 @@ public final class GhostMistModule implements GhostModule {
             @Override public boolean allows(GhostAbilityContext c) {
                 var world = c.getModuleContext().world();
                 if (!world.present()) return false;
-                if (c.abilityId().equals(DOMAIN)) return world.canMaintainDomain();
+                if (c.abilityId().equals(DOMAIN)) return world.canToggleDomain();
+                if (!c.abilityId().equals(ATTACK)) return world.canToggleDomain();
+                if (c.event() == null) return world.domain().contains(world.aimedTarget(64));
                 return c.event() instanceof GhostDomainExposureEvent e && world.isOrigin(e.source())
                         && world.containsInDomain(e.domainId(), e.target());
             }
@@ -124,6 +116,9 @@ public final class GhostMistModule implements GhostModule {
      */
     @Override public List<GhostAbility> getIntrinsicAbilities() {
         return List.of(new GhostAbility() {
+            /** 技能图标由所属模块直接声明。 */
+            @Override public ResourceLocation iconTexture() { return ResourceLocation.parse("minecraft:textures/item/ender_pearl.png"); }
+
             /**
              * 获取当前定义的唯一标识。
              * 注册、能力查找和规则分发使用此标识，不代表某个运行时实例。
@@ -134,16 +129,21 @@ public final class GhostMistModule implements GhostModule {
              * 检查本次能力调用的事件、参数或环境是否可用于执行。
              * 模块可用性与媒介由统一执行器共同校验。
              */
-            @Override public boolean canExecute(GhostAbilityContext c) { return c.getModuleContext().world().canMaintainDomain(); }
+            @Override public boolean canExecute(GhostAbilityContext c) { return c.getModuleContext().world().canToggleDomain(); }
 
             /**
              * 执行当前能力的效果。
              * 调用方应使用统一执行器，以确保模块状态和媒介已经检查。
              */
-            @Override public void execute(GhostAbilityContext c) {
-                c.getModuleContext().world().maintainDomain();
+            @Override public void execute(GhostAbilityContext c) { executeWithResult(c); }
+            /** 返回开关实际结果，避免接口失败却被报告为成功。 */
+            @Override public boolean executeWithResult(GhostAbilityContext c) {
+                return c.getModuleContext().world().toggleDomain();
             }
         }, new GhostAbility() {
+            /** 技能图标由所属模块直接声明。 */
+            @Override public ResourceLocation iconTexture() { return ResourceLocation.parse("minecraft:textures/item/ender_pearl.png"); }
+
             /**
              * 获取当前定义的唯一标识。
              * 注册、能力查找和规则分发使用此标识，不代表某个运行时实例。
@@ -154,7 +154,7 @@ public final class GhostMistModule implements GhostModule {
              * 检查本次能力调用的事件、参数或环境是否可用于执行。
              * 模块可用性与媒介由统一执行器共同校验。
              */
-            @Override public boolean canExecute(GhostAbilityContext c) { return c.event() instanceof GhostDomainExposureEvent; }
+            @Override public boolean canExecute(GhostAbilityContext c) { return c.event() instanceof GhostDomainExposureEvent || c.getModuleContext().world().domain().contains(c.getModuleContext().world().aimedTarget(64)); }
 
             /**
              * 执行当前能力的效果。
@@ -168,12 +168,25 @@ public final class GhostMistModule implements GhostModule {
              */
             @Override public boolean executeWithResult(GhostAbilityContext c) {
                 var world = c.getModuleContext().world();
-                var e = (GhostDomainExposureEvent)c.event();
-                boolean killed = world.attack(e.target(), ModDamageTypes.GHOST_MIST, e.domainStrength() / 5.0D);
+                var target = c.event() instanceof GhostDomainExposureEvent e ? e.target() : world.aimedTarget(64);
+                double strength = c.event() instanceof GhostDomainExposureEvent e ? e.domainStrength() : world.domain().intensity();
+                boolean killed = world.attack(target, ModDamageTypes.GHOST_MIST, strength / 5.0D);
                 if (killed) world.growDomain();
                 return killed;
             }
-        });
+        },
+        new DefinedGhostAbility(ResourceLocation.fromNamespaceAndPath(ID.getNamespace(), ID.getPath() + "/teleport"),
+                ResourceLocation.parse("minecraft:textures/item/ender_pearl.png"),
+                c -> c.getModuleContext().world().domain().exists(),
+                c -> c.getModuleContext().world().domain().teleportToAim()),
+        new DefinedGhostAbility(ResourceLocation.fromNamespaceAndPath(ID.getNamespace(), ID.getPath() + "/raise_target"),
+                ResourceLocation.parse("minecraft:textures/item/feather.png"),
+                c -> c.getModuleContext().world().domain().exists(),
+                c -> c.getModuleContext().world().domain().shiftTargetLayer(1)),
+        new DefinedGhostAbility(ResourceLocation.fromNamespaceAndPath(ID.getNamespace(), ID.getPath() + "/lower_target"),
+                ResourceLocation.parse("minecraft:textures/item/flint.png"),
+                c -> c.getModuleContext().world().domain().exists(),
+                c -> c.getModuleContext().world().domain().shiftTargetLayer(-1)));
     }
 
     /**

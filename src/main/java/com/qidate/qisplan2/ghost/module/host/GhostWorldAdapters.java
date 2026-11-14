@@ -1,8 +1,14 @@
 package com.qidate.qisplan2.ghost.module.host;
 
-import com.qidate.qisplan2.ghost.module.environment.GhostActiveAction;
-import com.qidate.qisplan2.ghost.module.host.player.PlayerActiveActions;
 
+import net.minecraft.world.level.block.state.properties.DoubleBlockHalf;
+import net.minecraft.world.level.block.state.properties.BlockStateProperties;
+import com.qidate.qisplan2.ghost.module.implementation.mist.GhostMistModule;
+import net.minecraft.world.phys.HitResult;
+import net.minecraft.world.phys.BlockHitResult;
+import com.qidate.qisplan2.ghost.possession.ability.ghostdoor.GhostDoorAbilityHandler;
+import com.qidate.qisplan2.ghost.possession.ability.ghostdoor.GhostDoorMarkManager;
+import com.qidate.qisplan2.ghost.module.environment.GhostDomainAccess;
 import com.qidate.qisplan2.death.SupernaturalDeathHandler;
 import com.qidate.qisplan2.core.ModGameRules;
 import com.qidate.qisplan2.ghost.module.environment.BlockSpreadSpec;
@@ -53,14 +59,82 @@ public final class GhostWorldAdapters {
      */
     public static GhostWorldAccess bind(GhostModuleHost host, ResourceLocation id) {
         return new GhostWorldAccess() {
-            /** 主动输入的载体差异封闭在适配层，模块只看到操作是否受支持。 */
-            public boolean canActivate(GhostActiveAction action) {
-                return PlayerActiveActions.canActivate(host, id, action);
+            /** 返回服务端世界时间。 */
+            public long gameTime() { return level() == null ? 0 : level().getGameTime(); }
+            /** 将门上半部归一化为下半部。 */
+            public BlockPos normalizeDoor(BlockPos pos) {
+                if (pos == null || level() == null) return null;
+                var state = level().getBlockState(pos);
+                return state.hasProperty(BlockStateProperties.DOUBLE_BLOCK_HALF)
+                        && state.getValue(BlockStateProperties.DOUBLE_BLOCK_HALF) == DoubleBlockHalf.UPPER ? pos.below() : pos;
+            }
+            /** 实际声音传播范围由敲门系统决定。 */
+            public int hearingTargets(BlockPos pos) {
+                return level() instanceof ServerLevel server && source() != null && pos != null
+                        ? KnockingGhostDoorSystem.countHearingTargets(server, source(), pos) : 0;
+            }
+            /** 查询特殊门世界状态。 */
+            public boolean supernaturalDoor(BlockPos pos) { return level() != null && pos != null && KnockingGhostDoorSystem.isGhostDoor(level(), pos); }
+            /** 普通方块操作经过原世界销毁入口。 */
+            public void destroyBlock(BlockPos pos) { if (level() instanceof ServerLevel server && pos != null) server.destroyBlock(pos, false); }
+
+            /** 鬼域接口绑定当前模块，只提供基础读写操作。 */
+            public GhostDomainAccess domain() { return GhostDomainAdapters.bind(source(), id); }
+
+            /** 通过服务器视线解析目标，墙体和距离均由世界实际状态决定。 */
+            public LivingEntity aimedTarget(double range) {
+                var origin = source();
+                if (!present() || origin == null || range <= 0 || range > 128) return null;
+                var start = origin.getEyePosition();
+                var end = start.add(origin.getLookAngle().scale(range));
+                LivingEntity best = null;
+                double nearest = range * range;
+                for (var entity : level().getEntitiesOfClass(LivingEntity.class,
+                        origin.getBoundingBox().expandTowards(origin.getLookAngle().scale(range)).inflate(1),
+                        e -> e != origin && e.isAlive() && !e.isSpectator())) {
+                    var hit = entity.getBoundingBox().inflate(0.1).clip(start, end);
+                    if (hit.isPresent() && origin.hasLineOfSight(entity) && start.distanceToSqr(hit.get()) < nearest) {
+                        nearest = start.distanceToSqr(hit.get()); best = entity;
+                    }
+                }
+                return best;
             }
 
-            /** 再次检查并落实操作，不能由客户端传入目标或袭击强度。 */
-            public boolean activate(GhostActiveAction action) {
-                return PlayerActiveActions.activate(host, id, action);
+            /** 将输入映射为已加载的方块位置，不接受客户端传来的坐标。 */
+            public BlockPos aimedBlock(double range) {
+                if (!present() || source() == null || range <= 0 || range > 128) return null;
+                var hit = source().pick(range, 0, false);
+                return hit instanceof BlockHitResult block && hit.getType() == HitResult.Type.BLOCK
+                        && level().hasChunkAt(block.getBlockPos()) ? block.getBlockPos() : null;
+            }
+
+            /** 当前物理来源与目标包围盒接触时才满足接触媒介。 */
+            public boolean touching(LivingEntity target) {
+                return present() && source() != null && target != null && target != source()
+                        && sameWorld(target.level()) && source().getBoundingBox().inflate(0.1).intersects(target.getBoundingBox());
+            }
+
+            /** 已存在标记的检索是世界事实，技能是否使用它由模块决定。 */
+            public LivingEntity doorMarkedTarget(boolean opening) {
+                if (!(source() instanceof ServerPlayer player)) return null;
+                return GhostDoorMarkManager.findNearestMarkedTarget(player, player.serverLevel(), e -> opening
+                        ? GhostDoorMarkManager.hasOpeningMark(player, e.getUUID())
+                        : GhostDoorMarkManager.hasClosingMark(player, e.getUUID()));
+            }
+
+            /** 复用碰撞安全位置搜索，实际移动不包含袭击或技能逻辑。 */
+            public boolean approach(LivingEntity target) {
+                if (!canMove() || target == null || !(level() instanceof ServerLevel server)) return false;
+                var position = GhostDoorAbilityHandler.findApproachPosition(server, target);
+                if (position == null) return false;
+                teleport(position.getX() + 0.5, position.getY(), position.getZ() + 0.5, target);
+                return true;
+            }
+
+            /** 完成本次追袭后清理标记。 */
+            public void clearDoorMarks(LivingEntity target) {
+                if (source() instanceof ServerPlayer player && target != null)
+                    GhostDoorMarkManager.clearMarks(player, target.getUUID());
             }
 
             /**
@@ -306,6 +380,11 @@ public final class GhostWorldAdapters {
             public boolean toggleDomain() {
                 if (!canToggleDomain()) return false;
                 var player = (ServerPlayer)source();
+                if (id.equals(GhostMistModule.ID)) {
+                    boolean before = GhostMistDomainController.isOpen(player);
+                    GhostMistDomainController.toggle(player);
+                    return before != GhostMistDomainController.isOpen(player);
+                }
                 if (GhostEyeDomainController.isOpen(player)) {
                     GhostEyeDomainController.close(player);
                     return true;
@@ -329,7 +408,7 @@ public final class GhostWorldAdapters {
              * 按来源 UUID 和模块类型查询当前运行时鬼域。
              * 缺少世界、来源或对应鬼域时返回 null。
              */
-            private GhostDomain domain() {
+            private GhostDomain currentDomain() {
                 return level() instanceof ServerLevel server && source() != null
                         ? GhostDomainManager.get(server).getBySourceAndType(source().getUUID(),id) : null;
             }
@@ -339,7 +418,7 @@ public final class GhostWorldAdapters {
              * 同时验证目标资格和鬼域 ID，避免旧曝光事实作用于已更换的鬼域。
              */
             public boolean containsInDomain(UUID domainId, LivingEntity target) {
-                var domain = domain();
+                var domain = currentDomain();
                 return validTarget(target) && domain != null && domain.getId().equals(domainId)
                         && GhostDomainEntityTracker.get((ServerLevel)level()).getEffectiveEntities(domain).contains(target);
             }
@@ -349,7 +428,7 @@ public final class GhostWorldAdapters {
              * 调用方应仅在袭击实际成功后调用。
              */
             public void growDomain() {
-                var domain = domain();
+                var domain = currentDomain();
                 if (domain == null) return;
                 if (source() instanceof ModularGhostEntity ghost) GhostMistDomainController.grow((ServerLevel)level(),ghost,domain);
                 else if (source() instanceof ServerPlayer player) GhostMistDomainController.grow(player,domain);

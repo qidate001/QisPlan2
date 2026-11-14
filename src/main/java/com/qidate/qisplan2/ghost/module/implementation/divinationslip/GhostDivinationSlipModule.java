@@ -1,8 +1,8 @@
 package com.qidate.qisplan2.ghost.module.implementation.divinationslip;
 
-import com.qidate.qisplan2.ghost.module.ability.WorldActionAbility;
-import com.qidate.qisplan2.ghost.module.environment.GhostActiveAction;
 
+import com.qidate.qisplan2.ghost.module.ability.GhostInvocationParameters;
+import com.qidate.qisplan2.ghost.module.ability.GhostAbilityStimulation;
 import com.qidate.qisplan2.QisPlan2;
 import com.qidate.qisplan2.death.ModDamageTypes;
 import com.qidate.qisplan2.death.SupernaturalDeathHandler;
@@ -38,16 +38,6 @@ import net.minecraft.world.entity.LivingEntity;
 import static com.qidate.qisplan2.QisPlan2.MODID;
 
 public final class GhostDivinationSlipModule implements GhostModule {
-    /** 声明各个可主动选择的能力；定义只认识世界端口，不识别宿主类型。 */
-    @Override public List<GhostAbility> getActiveAbilities() {
-        return List.of(
-            WorldActionAbility.of(ID, "life", "qisplan2:textures/item/life_sign.png", GhostActiveAction.DIVINATION_LIFE),
-            WorldActionAbility.of(ID, "death", "qisplan2:textures/item/death_sign.png", GhostActiveAction.DIVINATION_DEATH),
-            WorldActionAbility.of(ID, "ghost", "qisplan2:textures/item/ghost_sign.png", GhostActiveAction.DIVINATION_GHOST)
-        );
-    }
-
-
     public static final ResourceLocation ID =
             ResourceLocation.fromNamespaceAndPath(
                     MODID,
@@ -60,11 +50,13 @@ public final class GhostDivinationSlipModule implements GhostModule {
                     "ghost_divination_slip/use_rule"
             );
 
-    public static final ResourceLocation USE_ABILITY_ID =
-            ResourceLocation.fromNamespaceAndPath(
-                    MODID,
-                    "ghost_divination_slip/use"
-            );
+    /** 每个签文结果就是一个独立能力，规则与主动调用共用标识。 */
+    public static ResourceLocation resultAbility(int result) {
+        return ResourceLocation.fromNamespaceAndPath(MODID, "ghost_divination_slip/" + switch (result) {
+            case 0 -> "life"; case 1 -> "death"; case 2 -> "ghost";
+            default -> throw new IllegalArgumentException("Unknown divination result");
+        });
+    }
 
     private static final int LIFE_RESULT = 0;
     private static final int DEATH_RESULT = 1;
@@ -76,7 +68,8 @@ public final class GhostDivinationSlipModule implements GhostModule {
             List.of(new DivinationSlipUseRule());
 
     private static final List<GhostAbility> ABILITIES =
-            List.of(new DivinationSlipUseAbility());
+            List.of(new DivinationSlipAbility(LIFE_RESULT, "life"),
+                    new DivinationSlipAbility(DEATH_RESULT, "death"), new DivinationSlipAbility(GHOST_RESULT, "ghost"));
 
     /**
      * 获取当前定义的唯一标识。
@@ -259,7 +252,7 @@ public final class GhostDivinationSlipModule implements GhostModule {
                     );
 
                     context.submitAbilityInfluence(
-                            USE_ABILITY_ID,
+                            resultAbility(result),
                             resultEvent,
                             user.getUUID(),
                             GhostInfluenceType.PROTECTION,
@@ -275,7 +268,7 @@ public final class GhostDivinationSlipModule implements GhostModule {
                     );
 
                     context.submitAbilityInfluence(
-                            USE_ABILITY_ID,
+                            resultAbility(result),
                             resultEvent,
                             user.getUUID(),
                             GhostInfluenceType.ATTACK,
@@ -287,7 +280,7 @@ public final class GhostDivinationSlipModule implements GhostModule {
                     // 鬼签不参与保护/攻击竞争。
                     // 保持原有的无额外效果语义。
                     context.tryExecuteAbility(
-                            USE_ABILITY_ID,
+                            resultAbility(result),
                             resultEvent
                     );
                 }
@@ -305,67 +298,40 @@ public final class GhostDivinationSlipModule implements GhostModule {
      * 生签与死签的能力效果由统一裁决控制。
      * 复苏刺激仍由 GhostAbilityExecutor 负责。
      */
-    private static final class DivinationSlipUseAbility
-            implements GhostAbility {
-
-        /**
-         * 获取当前定义的唯一标识。
-         * 注册、能力查找和规则分发使用此标识，不代表某个运行时实例。
-         */
-        @Override
-        public ResourceLocation getId() {
-            return USE_ABILITY_ID;
+    private record DivinationSlipAbility(int result, String name) implements GhostAbility {
+        /** 每种签文有自己的能力 ID。 */
+        public ResourceLocation getId() { return resultAbility(result); }
+        /** 各签文直接声明对应图标。 */
+        public ResourceLocation iconTexture() { return ResourceLocation.fromNamespaceAndPath(MODID, "textures/item/" + name + "_sign.png"); }
+        /** 规则提供抽签事实，主动输入提供作用对象，两者不是宿主引用。 */
+        private LivingEntity recipient(GhostAbilityContext c) {
+            if (c.event() instanceof DivinationSlipResultEvent event) return event.user();
+            return c.parameters() instanceof GhostInvocationParameters input ? input.recipient() : null;
         }
-
-        /**
-         * 检查本次能力调用的事件、参数或环境是否可用于执行。
-         * 模块可用性与媒介由统一执行器共同校验。
-         */
-        @Override
-        public boolean canExecute(GhostAbilityContext context) {
-            return context.event() instanceof DivinationSlipResultEvent resultEvent
-                    && resultEvent.user().level() instanceof ServerLevel;
+        /** 目标必须处于服务端且存活；主动调用不需要伪造抽签事件。 */
+        public boolean canExecute(GhostAbilityContext c) {
+            var target = recipient(c);
+            return target != null && target.isAlive() && target.level() instanceof ServerLevel;
         }
-
-        /**
-         * 执行当前能力的效果。
-         * 调用方应使用统一执行器，以确保模块状态和媒介已经检查。
-         */
-        @Override
-        public void execute(GhostAbilityContext context) {
-            executeWithResult(context);
+        /** 主动使用的复苏代价归模块声明，统一执行器负责结算。 */
+        public GhostAbilityStimulation getStimulation(GhostAbilityContext c) {
+            return c.source() == GhostAbilityContext.Source.POSSESSION
+                    ? new GhostAbilityStimulation(20, GhostAbilityStimulation.Timing.ON_ACCEPTED)
+                    : GhostAbilityStimulation.none();
         }
-
-        /**
-         * 执行能力并返回实际效果是否成功。
-         * 返回值供主动交互及成功后结算使用，不能等同于仅接受了调用。
-         */
-        @Override
-        public boolean executeWithResult(GhostAbilityContext context) {
-            if (!context.isModuleAvailable()) {
-                return false;
-            }
-
-            if (!(context.event()
-                    instanceof DivinationSlipResultEvent resultEvent)) {
-                return false;
-            }
-
-            LivingEntity user = resultEvent.user();
-
-            if (!(user.level() instanceof ServerLevel)) {
-                return false;
-            }
-
-            return switch (resultEvent.result()) {
-                case LIFE_RESULT -> useLife(user, context);
-                case DEATH_RESULT -> useDeath(user, context);
-                case GHOST_RESULT -> useGhost(user, context);
+        /** 委托返回效果结果的实现。 */
+        public void execute(GhostAbilityContext c) { executeWithResult(c); }
+        /** 每个实例只执行自己声明的结果，没有中央技能预设。 */
+        public boolean executeWithResult(GhostAbilityContext c) {
+            var target = recipient(c);
+            return switch (result) {
+                case LIFE_RESULT -> useLife(target, c);
+                case DEATH_RESULT -> useDeath(target, c);
+                case GHOST_RESULT -> useGhost(target, c);
                 default -> false;
             };
         }
     }
-
 
     /**
      * 执行生签效果，处理目标身上的生签诅咒或相应保护状态。

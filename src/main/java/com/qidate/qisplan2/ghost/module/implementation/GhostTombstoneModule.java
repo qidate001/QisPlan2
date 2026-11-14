@@ -1,5 +1,7 @@
 package com.qidate.qisplan2.ghost.module.implementation;
 
+import com.qidate.qisplan2.ghost.module.ability.GhostInvocationParameters;
+import net.minecraft.world.entity.LivingEntity;
 import com.qidate.qisplan2.core.ModTags;
 import com.qidate.qisplan2.ghost.module.GhostModule;
 import com.qidate.qisplan2.ghost.module.GhostRule;
@@ -137,6 +139,9 @@ public final class GhostTombstoneModule implements GhostModule {
 
     private static final class InscriptionAbility
             implements GhostAbility {
+            /** 技能图标由所属模块直接声明。 */
+            @Override public ResourceLocation iconTexture() { return ResourceLocation.parse("minecraft:textures/item/feather.png"); }
+
 
         /**
          * 获取当前定义的唯一标识。
@@ -153,8 +158,7 @@ public final class GhostTombstoneModule implements GhostModule {
          */
         @Override
         public boolean canExecute(GhostAbilityContext context) {
-            return context.event() instanceof GhostUseEvent useEvent
-                    && useEvent.user() instanceof Player player
+            return recipient(context) instanceof Player player
                     && context.getModuleContext().world().canInscribe()
                     && isInscribable(player.getMainHandItem());
         }
@@ -169,15 +173,12 @@ public final class GhostTombstoneModule implements GhostModule {
                 return;
             }
 
-            if (!(context.event() instanceof GhostUseEvent useEvent)) {
-                return;
-            }
 
             if (!context.getModuleContext().world().canInscribe()) {
                 return;
             }
 
-            if (!(useEvent.user() instanceof Player player)) {
+            if (!(recipient(context) instanceof Player player)) {
                 return;
             }
 
@@ -187,7 +188,7 @@ public final class GhostTombstoneModule implements GhostModule {
                 return;
             }
 
-            context.getModuleContext().world().inscribe(useEvent.user());
+            context.getModuleContext().world().inscribe(recipient(context));
         }
 
         /**
@@ -196,5 +197,10 @@ public final class GhostTombstoneModule implements GhostModule {
         private static boolean isInscribable(ItemStack stack) {
             return stack.is(ModTags.Items.GHOST_TOMBSTONE_INSCRIBABLE);
         }
+    }    /** 自动交互与主动输入共用同一个题字对象，不读取模块宿主。 */
+    private static LivingEntity recipient(GhostAbilityContext context) {
+        if (context.event() instanceof GhostUseEvent event) return event.user();
+        return context.parameters() instanceof GhostInvocationParameters input ? input.recipient() : null;
     }
+
 }

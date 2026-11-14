@@ -16,14 +16,14 @@ public final class GhostAbilityCatalog {
     /** 工具类无需实例化。 */
     private GhostAbilityCatalog() {}
 
-    /** 按模块保存顺序及能力声明顺序列出主动技能，死机不会隐藏仍可主动调用的能力。 */
+    /** 按模块保存顺序及能力声明顺序列出模块技能，死机不会隐藏仍可主动调用的能力。 */
     public static List<Entry> all(GhostModuleHost host) {
         var result = new ArrayList<Entry>();
         for (var entry : host.getModules()) {
             var module = GhostModuleRegistry.get(entry.id());
             if (module == null || !host.carriesModule(entry.id())) continue;
             for (var ability : module.getAbilities())
-                if (ability.manuallySelectable()) result.add(new Entry(entry.id(), ability));
+                result.add(new Entry(entry.id(), ability));
         }
         return List.copyOf(result);
     }

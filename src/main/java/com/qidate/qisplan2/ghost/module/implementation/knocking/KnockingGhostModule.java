@@ -1,7 +1,7 @@
 package com.qidate.qisplan2.ghost.module.implementation.knocking;
 
-import com.qidate.qisplan2.ghost.module.ability.WorldActionAbility;
-import com.qidate.qisplan2.ghost.module.environment.GhostActiveAction;
+import com.qidate.qisplan2.ghost.module.ability.GhostAbilityStimulation;
+import net.minecraft.core.BlockPos;
 import com.qidate.qisplan2.ghost.module.ability.GhostAbility;
 import com.qidate.qisplan2.ghost.module.environment.GhostBehavior;
 
@@ -25,12 +25,6 @@ import static com.qidate.qisplan2.QisPlan2.MODID;
  * 听声规则提交延迟袭击裁决，能力负责敲门、鬼门传播和获准后的灵异袭击。
  */
 public final class KnockingGhostModule implements GhostModule {
-    /** 声明各个可主动选择的能力；定义只认识世界端口，不识别宿主类型。 */
-    @Override public List<GhostAbility> getActiveAbilities() {
-        return List.of(
-            WorldActionAbility.of(ID, "cast_knock", "minecraft:textures/item/iron_door.png", GhostActiveAction.KNOCK)
-        );
-    }
 
     /**
      * 声明需要的自主行动类型。
@@ -79,8 +73,8 @@ public final class KnockingGhostModule implements GhostModule {
             @Override public boolean allows(GhostAbilityContext c) {
                 var world = c.getModuleContext().world();
                 if (!world.present() || !c.isModuleAvailable()) return false;
-                if (c.parameters() instanceof DoorKnockParameters e) return c.abilityId().equals(KNOCK)
-                        && world.isDoor(e.door());
+                if (c.abilityId().equals(KNOCK)) return door(c) != null && world.isDoor(door(c));
+                if (c.event() == null) return world.validTarget(world.aimedTarget(8));
                 return c.abilityId().equals(ATTACK) && c.event() instanceof DoorKnockHeardEvent e
                         && world.isOrigin(e.source()) && e.target().isAlive() && world.sameWorld(e.target().level());
             }
@@ -136,17 +130,30 @@ public final class KnockingGhostModule implements GhostModule {
      */
     @Override public List<GhostAbility> getIntrinsicAbilities() {
         return List.of(new GhostAbility() {
+            /** 技能图标由所属模块直接声明。 */
+            @Override public ResourceLocation iconTexture() { return ResourceLocation.parse("minecraft:textures/item/iron_door.png"); }
+
             /**
              * 获取当前定义的唯一标识。
              * 注册、能力查找和规则分发使用此标识，不代表某个运行时实例。
              */
             @Override public ResourceLocation getId() { return KNOCK; }
+            /** 主动使用复苏代价由模块声明；规则与行为调用不重复收取。 */
+            @Override public GhostAbilityStimulation getStimulation(GhostAbilityContext c) {
+                if (c.source() != GhostAbilityContext.Source.POSSESSION) return GhostAbilityStimulation.none();
+                var data = c.getModuleContext().getCustomData();
+                long last = data.getLong("lastDirectUse");
+                long now = c.getModuleContext().world().gameTime();
+                double gain = data.contains("lastDirectUse") && now >= last && now - last < 200 ? 30 : 10;
+                return new GhostAbilityStimulation(gain + c.getModuleContext().world().hearingTargets(door(c)) * 2, GhostAbilityStimulation.Timing.ON_ACCEPTED);
+            }
+
 
             /**
              * 检查本次能力调用的事件、参数或环境是否可用于执行。
              * 模块可用性与媒介由统一执行器共同校验。
              */
-            @Override public boolean canExecute(GhostAbilityContext c) { return c.parameters() instanceof DoorKnockParameters; }
+            @Override public boolean canExecute(GhostAbilityContext c) { return door(c) != null; }
 
             /**
              * 执行当前能力的效果。
@@ -154,9 +161,19 @@ public final class KnockingGhostModule implements GhostModule {
              */
             @Override public void execute(GhostAbilityContext c) {
                 var world = c.getModuleContext().world();
-                world.knock(((DoorKnockParameters)c.parameters()).door(), c.getModuleContext().effectiveIntensity());
+                var position = door(c);
+                world.knock(position, c.getModuleContext().effectiveIntensity());
+                if (c.source() == GhostAbilityContext.Source.POSSESSION) {
+                    var state = c.getModuleContext().getCustomData();
+                    state.putLong("lastDirectUse", world.gameTime());
+                    c.getModuleContext().setCustomData(state);
+                    if (!world.supernaturalDoor(position)) world.destroyBlock(position);
+                }
             }
         }, new GhostAbility() {
+            /** 技能图标由所属模块直接声明。 */
+            @Override public ResourceLocation iconTexture() { return ResourceLocation.parse("minecraft:textures/item/iron_door.png"); }
+
             /**
              * 获取当前定义的唯一标识。
              * 注册、能力查找和规则分发使用此标识，不代表某个运行时实例。
@@ -167,7 +184,7 @@ public final class KnockingGhostModule implements GhostModule {
              * 检查本次能力调用的事件、参数或环境是否可用于执行。
              * 模块可用性与媒介由统一执行器共同校验。
              */
-            @Override public boolean canExecute(GhostAbilityContext c) { return c.event() instanceof DoorKnockHeardEvent; }
+            @Override public boolean canExecute(GhostAbilityContext c) { return c.event() instanceof DoorKnockHeardEvent || c.getModuleContext().world().validTarget(c.getModuleContext().world().aimedTarget(8)); }
 
             /**
              * 执行当前能力的效果。
@@ -180,8 +197,8 @@ public final class KnockingGhostModule implements GhostModule {
              * 返回值供主动交互及成功后结算使用，不能等同于仅接受了调用。
              */
             @Override public boolean executeWithResult(GhostAbilityContext c) {
-                DoorKnockHeardEvent e = (DoorKnockHeardEvent)c.event();
-                return c.getModuleContext().world().attack(e.target(),
+                var target = c.event() instanceof DoorKnockHeardEvent e ? e.target() : c.getModuleContext().world().aimedTarget(8);
+                return c.getModuleContext().world().attack(target,
                         ModDamageTypes.KNOCKING_GHOST, c.getModuleContext().effectiveIntensity());
             }
         });
@@ -242,5 +259,10 @@ public final class KnockingGhostModule implements GhostModule {
         return 20.0D;
     }
 
+    /** 行为传入门参数；主动输入由世界接口解析，二者共用同一敲门能力。 */
+    private static BlockPos door(GhostAbilityContext context) {
+        var world = context.getModuleContext().world();
+        return world.normalizeDoor(context.parameters() instanceof DoorKnockParameters input ? input.door() : world.aimedBlock(8));
+    }
 
 }

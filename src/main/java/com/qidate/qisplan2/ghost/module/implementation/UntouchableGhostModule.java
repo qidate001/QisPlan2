@@ -1,5 +1,6 @@
 package com.qidate.qisplan2.ghost.module.implementation;
 
+import net.minecraft.world.entity.LivingEntity;
 import com.qidate.qisplan2.death.ModDamageTypes;
 import com.qidate.qisplan2.ghost.module.*;
 import com.qidate.qisplan2.ghost.module.ability.GhostAbility;
@@ -89,7 +90,7 @@ public final class UntouchableGhostModule implements GhostModule {
 
         @Override
         public boolean allows(GhostAbilityContext context) {
-            return context.event() instanceof TouchEvent;
+            return contactTarget(context) != null;
         }
     }
 
@@ -145,6 +146,9 @@ public final class UntouchableGhostModule implements GhostModule {
      */
     private static final class UntouchableAttackAbility
             implements GhostAbility {
+            /** 技能图标由所属模块直接声明。 */
+            @Override public ResourceLocation iconTexture() { return ResourceLocation.parse("minecraft:textures/item/iron_sword.png"); }
+
 
         @Override
         public ResourceLocation getId() {
@@ -163,7 +167,7 @@ public final class UntouchableGhostModule implements GhostModule {
 
         @Override
         public boolean canExecute(GhostAbilityContext context) {
-            return context.event() instanceof TouchEvent;
+            return contactTarget(context) != null;
         }
 
         @Override
@@ -177,15 +181,22 @@ public final class UntouchableGhostModule implements GhostModule {
                 return false;
             }
 
-            if (!(context.event() instanceof TouchEvent touchEvent)) {
-                return false;
-            }
+            if (contactTarget(context) == null) return false;
 
             GhostModuleContext moduleContext =
                     context.getModuleContext();
 
-            return moduleContext.world().attack(touchEvent.target(),
+            return moduleContext.world().attack(contactTarget(context),
                     ModDamageTypes.UNTOUCHABLE_GHOST, moduleContext.intensity());
         }
+    }
+
+    /** 接触是媒介，不要求先触发自动规则；主动释放仍必须正在接触目标。 */
+    private static LivingEntity contactTarget(GhostAbilityContext context) {
+        if (context.event() instanceof TouchEvent touch)
+            return touch.target().isAlive() && !touch.target().level().isClientSide() ? touch.target() : null;
+        var world = context.getModuleContext().world();
+        var target = world.aimedTarget(3);
+        return target != null && target.isAlive() && world.touching(target) ? target : null;
     }
 }
