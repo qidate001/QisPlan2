@@ -112,6 +112,8 @@
   "module.qisplan2.ghost_carpet": "Ghost Carpet",
   "module.qisplan2.white_ghost_candle": "White Ghost Candle",
   "module.qisplan2.red_ghost_candle": "Red Ghost Candle",
+  "module.qisplan2.ghost_door": "Ghost Door",
+  "module.qisplan2.ghost_door_plate": "Ghost Door Plate",
 
   "curse.qisplan2.ghost_divination": "Life Sign",
   "curse.qisplan2.ghost_tombstone": "Ghost Tombstone",
@@ -141,6 +143,7 @@
   "death.attack.ghost_door_plate": "%1$s has been torn in half",
   "death.attack.calling_ghost": "%1$s lost its soul",
   "death.attack.ghost_mist": "%1$s became part of this thick mist",
+  "death.attack.ghost_door": "%1$s was consumed by a closing ghost door",
 
   "command.qisplan2.player_only": "§cThis command must be executed by a player.",
   "command.qisplan2.entity_only": "§cThis command must be executed by an entity.",
@@ -349,6 +352,9 @@
   "ability.qisplan2.white_ghost_candle.extinguish": "Extinguish white candle",
   "ability.qisplan2.red_ghost_candle.ignite": "Ignite red candle",
   "ability.qisplan2.red_ghost_candle.extinguish": "Extinguish red candle",
+  "ability.qisplan2.ghost_door_plate.travel": "Door Transit",
+  "ability.qisplan2.ghost_door_plate.set_number": "Change Door Number",
+  "ability.qisplan2.ghost_door.close_attack": "Closing Assault",
 
   "hud.qisplan2.ability_wheel.title": "Ghost Abilities",
   "hud.qisplan2.ability_wheel.empty": "No active abilities",

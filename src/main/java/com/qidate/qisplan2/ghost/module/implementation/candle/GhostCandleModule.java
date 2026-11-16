@@ -130,6 +130,7 @@ public abstract class GhostCandleModule implements GhostModule {
              * 注册、能力查找和规则分发使用此标识，不代表某个运行时实例。
              */
             public ResourceLocation getId() { return effectId(); }
+
             /** 吸引或屏蔽只由燃烧过程维持，不能作为独立技能。 */
             @Override public boolean isPublicSkill() { return false; }
 
@@ -156,6 +157,7 @@ public abstract class GhostCandleModule implements GhostModule {
             }
         });
     }
+
     /** 已主动点燃的持续能力独立于自动规则，但仍每 tick 通过暴露媒介。 */
     @Override public void tickAbilities(GhostModuleContext context) {
         var data = context.getCustomData();

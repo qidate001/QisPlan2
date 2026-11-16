@@ -31,10 +31,20 @@ import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
 import net.minecraft.world.level.block.state.BlockBehaviour;
 
+import net.minecraft.world.level.block.entity.BlockEntityTicker;
+import net.minecraft.world.level.block.entity.BlockEntityType;
+
 public class GhostDoorPlateBlock
         extends HorizontalDirectionalBlock
         implements EntityBlock
 {
+
+    /** 只提供周期事件，方块自身不执行传送规则。 */
+    @Override public <T extends BlockEntity> BlockEntityTicker<T> getTicker(Level level, BlockState state, BlockEntityType<T> type) {
+        return level.isClientSide() ? null : (world, pos, current, entity) -> {
+            if (entity instanceof GhostDoorPlateBlockEntity plate) plate.tickModules();
+        };
+    }
 
     /**
      * 鬼门牌朝向。

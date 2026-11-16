@@ -1,6 +1,7 @@
 package com.qidate.qisplan2.client.key;
 
 import com.qidate.qisplan2.client.screen.AbilityWheelPreferences;
+import com.qidate.qisplan2.client.screen.GhostAbilityInputScreen;
 import com.mojang.blaze3d.platform.InputConstants;
 import com.qidate.qisplan2.client.screen.PossessionScreen.PossessionScreen;
 import com.qidate.qisplan2.client.screen.AbilityWheelScreen;
@@ -72,7 +73,7 @@ public final class ClientKeyHandler {
             var slots = AbilityWheelPreferences.current()
                     .resolve(GhostAbilityCatalog.all(new PlayerGhostModuleHost(mc.player)));
             var entry = slots.get(i);
-            if (entry != null) PacketDistributor.sendToServer(new GhostAbilityUsePayload(entry.moduleId(), entry.ability().getId()));
+            if (entry != null) GhostAbilityInputScreen.invoke(entry);
         }
         boolean held = wheelHeld();
         if (!held) latched = false;

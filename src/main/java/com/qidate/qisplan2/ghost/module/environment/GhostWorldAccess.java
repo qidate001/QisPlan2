@@ -16,6 +16,8 @@ import net.minecraft.world.phys.Vec3;
  * 目标实体是世界中的作用对象，与模块自己的载体不是同一个概念。
  */
 public interface GhostWorldAccess {
+    /** 门相关空间事实和世界操作由适配层统一实现。 */
+    default GhostDoorAccess doors() { return GhostDoorAccess.NONE; }
     /** 观察者的视野与无遮挡视线是否实际覆盖当前来源。 */
     default boolean sourceVisibleTo(LivingEntity observer) { return false; }
     /** 将目标视角朝实际来源转动，包含俯仰；返回本次实际转角，不能越过来源朝向。 */

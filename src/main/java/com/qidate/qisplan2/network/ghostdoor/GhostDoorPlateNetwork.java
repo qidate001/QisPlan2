@@ -1,6 +1,10 @@
 package com.qidate.qisplan2.network.ghostdoor;
 
 import com.qidate.qisplan2.block.entity.GhostDoorPlateBlockEntity;
+import com.qidate.qisplan2.ghost.module.ability.GhostAbilityContext;
+import com.qidate.qisplan2.ghost.module.ability.GhostAbilityExecutor;
+import com.qidate.qisplan2.ghost.module.ability.GhostInvocationParameters;
+import com.qidate.qisplan2.ghost.module.implementation.GhostDoorPlateModule;
 import com.qidate.qisplan2.client.screen.GhostDoorPlateScreen;
 import com.qidate.qisplan2.network.payload.OpenGhostDoorPlateScreenPayload;
 import com.qidate.qisplan2.network.payload.SetGhostDoorPlateNumberPayload;
@@ -72,6 +76,7 @@ public final class GhostDoorPlateNetwork {
                 return;
             }
 
+            if (player.distanceToSqr(payload.pos().getCenter()) > 64 || !player.serverLevel().hasChunkAt(payload.pos())) return;
             if (!(player.level()
                     .getBlockEntity(payload.pos())
                     instanceof GhostDoorPlateBlockEntity blockEntity)) {
@@ -91,9 +96,10 @@ public final class GhostDoorPlateNetwork {
                 return;
             }
 
-            blockEntity.setNumber(
-                    payload.number()
-            );
+            if (!player.isAlive() || player.isSpectator() || !blockEntity.hasModule(GhostDoorPlateModule.ID)) return;
+            GhostAbilityExecutor.tryExecuteWithResult(new GhostAbilityContext(blockEntity,
+                    GhostDoorPlateModule.ID, GhostDoorPlateModule.NUMBER, GhostAbilityContext.Source.POSSESSION,
+                    null, () -> {}, new GhostInvocationParameters(player, payload.number())));
         });
     }
 

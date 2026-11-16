@@ -14,6 +14,8 @@ import net.minecraft.resources.ResourceLocation;
  * 不依赖某个特定的 GhostEvent 才能执行。
  */
 public interface GhostAbility {
+    /** 可选整数输入，未声明时不打开输入面板。 */
+    default GhostIntegerInput integerInput() { return null; }
     /** 私有能力只允许规则、行为和已启动能力的内部延续调用，不作为玩家技能。 */
     default boolean isPublicSkill() { return true; }
 

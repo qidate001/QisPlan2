@@ -7,6 +7,7 @@ import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.level.block.entity.BlockEntity;
+import com.qidate.qisplan2.block.entity.GhostDoorPlateBlockEntity;
 import net.minecraft.core.BlockPos;
 
 public class GhostDoorPlateScreen extends Screen {
@@ -19,7 +20,7 @@ public class GhostDoorPlateScreen extends Screen {
             BlockPos blockPos
     ) {
         super(
-                Component.literal("鬼门牌")
+                Component.translatable("module.qisplan2.ghost_door_plate")
         );
 
         this.blockPos = blockPos;
@@ -52,7 +53,7 @@ public class GhostDoorPlateScreen extends Screen {
                         boxY,
                         boxWidth,
                         boxHeight,
-                        Component.literal("门牌号")
+                        Component.translatable("ability.qisplan2.ghost_door_plate.set_number")
                 );
 
         /*
@@ -79,7 +80,7 @@ public class GhostDoorPlateScreen extends Screen {
                     );
 
             if (blockEntity
-                    instanceof com.qidate.qisplan2.block.entity.GhostDoorPlateBlockEntity ghostDoorPlate) {
+                    instanceof GhostDoorPlateBlockEntity ghostDoorPlate) {
 
                 numberBox.setValue(
                         String.valueOf(
@@ -132,7 +133,7 @@ public class GhostDoorPlateScreen extends Screen {
 
         addRenderableWidget(
                 Button.builder(
-                        Component.literal("确定"),
+                        Component.translatable("gui.done"),
                         button -> confirm()
                 ).bounds(
                         buttonX,

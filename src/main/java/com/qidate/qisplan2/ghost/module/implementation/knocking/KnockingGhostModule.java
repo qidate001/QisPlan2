@@ -132,7 +132,7 @@ public final class KnockingGhostModule implements GhostModule {
     @Override public List<GhostAbility> getIntrinsicAbilities() {
         return List.of(new GhostAbility() {
             /** 技能图标由所属模块直接声明。 */
-            @Override public ResourceLocation iconTexture() { return ResourceLocation.parse("minecraft:textures/item/iron_door.png"); }
+            @Override public ResourceLocation iconTexture() { return ResourceLocation.parse("qisplan2:textures/item/ghost_door.png"); }
 
             /**
              * 获取当前定义的唯一标识。
@@ -173,21 +173,21 @@ public final class KnockingGhostModule implements GhostModule {
             }
         }, new GhostAbility() {
             /** 技能图标由所属模块直接声明。 */
-            @Override public ResourceLocation iconTexture() { return ResourceLocation.parse("minecraft:textures/item/iron_door.png"); }
+            @Override public ResourceLocation iconTexture() { return ResourceLocation.parse("qisplan2:textures/item/ghost_door.png"); }
 
             /**
              * 获取当前定义的唯一标识。
              * 注册、能力查找和规则分发使用此标识，不代表某个运行时实例。
              */
             @Override public ResourceLocation getId() { return ATTACK; }
-        /** 仅由已满足语义的内部流程发动，不允许独立点选袭击。 */
-        @Override public boolean isPublicSkill() { return false; }
+
+            /** 仅由已满足语义的内部流程发动，不允许独立点选袭击。 */
+            @Override public boolean isPublicSkill() { return false; }
 
             /** 主动渠道与规则使用相同的袭击/保护语义，获准前不执行世界效果。 */
             @Override public GhostAbilityInfluence activeInfluence(GhostAbilityContext context) {
                 return GhostAbilityInfluence.of(context.event() instanceof DoorKnockHeardEvent heard ? heard.target() : null, GhostInfluenceType.ATTACK, context.getModuleContext().effectiveIntensity());
             }
-
 
             /**
              * 检查本次能力调用的事件、参数或环境是否可用于执行。
@@ -237,7 +237,6 @@ public final class KnockingGhostModule implements GhostModule {
      */
     @Override
     public GhostClassification classification() {
-
         return GhostClassification.of(
                 GhostTag.ENTITY,
                 GhostTag.EXISTENCE_FORM,
@@ -274,5 +273,4 @@ public final class KnockingGhostModule implements GhostModule {
         var world = context.getModuleContext().world();
         return world.normalizeDoor(context.parameters() instanceof DoorKnockParameters input ? input.door() : world.aimedBlock(8));
     }
-
 }

@@ -183,6 +183,10 @@ public class ModDamageTypes {
     /**
      * 鬼门牌撕裂
      */
+    public static final ResourceKey<DamageType> GHOST_DOOR = ResourceKey.create(
+            Registries.DAMAGE_TYPE, ResourceLocation.fromNamespaceAndPath(QisPlan2.MODID, "ghost_door"));
+
+    /** 鬼门牌一对多撕裂使用独立伤害类型。 */
     public static final ResourceKey<DamageType> GHOST_DOOR_PLATE =
             ResourceKey.create(
                     Registries.DAMAGE_TYPE,

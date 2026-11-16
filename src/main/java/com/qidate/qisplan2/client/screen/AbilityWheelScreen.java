@@ -47,11 +47,11 @@ public final class AbilityWheelScreen extends Screen {
         if (finished) return;
         selected = currentSelection();
         finished = true;
+        minecraft.setScreen(null);
         if (minecraft.player != null && minecraft.player.isAlive() && minecraft.isWindowActive() && selected >= 0 && entries.get(selected) != null) {
             var entry = entries.get(selected);
-            PacketDistributor.sendToServer(new GhostAbilityUsePayload(entry.moduleId(), entry.ability().getId()));
+            GhostAbilityInputScreen.invoke(entry);
         }
-        minecraft.setScreen(null);
     }
     /** 取消不发送技能包，供 Esc、失焦和死亡调用。 */
     public void cancel() { if (!finished) { finished = true; minecraft.setScreen(null); } }

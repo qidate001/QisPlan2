@@ -259,6 +259,9 @@ public class ModBlocks {
                     )
             );
 
+    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<GhostDoorBlockEntity>> GHOST_DOOR_BLOCK_ENTITY =
+            BLOCK_ENTITY_TYPES.register("ghost_door", () -> BlockEntityType.Builder.of(GhostDoorBlockEntity::new, GHOST_DOOR.get()).build(null));
+
     public static final DeferredItem<BlockItem> GHOST_DOOR_ITEM =
             ITEMS.registerSimpleBlockItem(GHOST_DOOR);
 

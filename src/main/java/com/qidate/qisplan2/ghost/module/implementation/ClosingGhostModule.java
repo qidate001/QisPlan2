@@ -160,8 +160,8 @@ public final class ClosingGhostModule implements GhostModule {
             return GhostAbilityInfluence.of(context.getModuleContext().world().doorMarkedTarget(false), GhostInfluenceType.ATTACK, context.getModuleContext().effectiveIntensity());
         }
 
-            /** 技能图标由所属模块直接声明。 */
-            @Override public ResourceLocation iconTexture() { return ResourceLocation.parse("minecraft:textures/item/iron_door.png"); }
+        /** 技能图标由所属模块直接声明。 */
+        @Override public ResourceLocation iconTexture() { return ResourceLocation.parse("qisplan2:textures/item/ghost_door.png"); }
 
         /**
          * 获取当前定义的唯一标识。

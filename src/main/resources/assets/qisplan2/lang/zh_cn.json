@@ -58,8 +58,6 @@
   "fluid_type.qisplan2.ghost_lake_water": "§4鬼湖水",
   "fluid_type.qisplan2.ghost_blood": "§4鬼血",
 
-  "effect.qisplan2.life_sign_protection": "§4鬼签守护",
-
   "item.qisplan2.ghost_blank_sword": "灵异白板剑",
   "item.qisplan2.death_curse_sword": "§4必死诅咒之剑",
   "item.qisplan2.ghost_coin": "鬼金币",
@@ -112,6 +110,8 @@
   "module.qisplan2.ghost_carpet": "鬼地毯",
   "module.qisplan2.white_ghost_candle": "白色鬼烛",
   "module.qisplan2.red_ghost_candle": "红色鬼烛",
+  "module.qisplan2.ghost_door": "鬼门",
+  "module.qisplan2.ghost_door_plate": "鬼门牌",
 
   "curse.qisplan2.ghost_divination": "生签",
   "curse.qisplan2.ghost_tombstone": "鬼墓碑",
@@ -119,7 +119,6 @@
   "screen.qisplan2.ghost_book": "§4鬼书",
 
   "container.qisplan2.ghost_stove": "§4鬼灶台",
-
 
   "tooltip.qisplan2.ghost_painting.landscape": "§6一幅诡异的风景画",
   "tooltip.qisplan2.ghost_painting.orokin": "§6奥罗金帝国",
@@ -142,18 +141,14 @@
   "death.attack.ghost_door_plate": "%1$s 被撕成了两半",
   "death.attack.calling_ghost": "%1$s 丧失了灵魂",
   "death.attack.ghost_mist": "%1$s 化为了这浓雾的一部分",
-
-
-
-
-
-
-  "command.qisplan2.player_only": "§c这个命令必须由玩家执行。",
-  "command.qisplan2.entity_only": "§c这个命令必须由实体执行。",
+  "death.attack.ghost_door": "%1$s 被关闭的鬼门吞噬了",
 
   "qisplan2.death_curse.triggered": "☠ §4死亡诅咒§r触发！§4死亡诅咒之剑§r已损坏！",
   "qisplan2.death_curse.reflection": "☠ §4死亡诅咒§r反噬！",
   "qisplan2.death_curse.infected": "☠ 你沾染了一道§4死亡诅咒§r！当前层数：%1$d/10",
+
+  "command.qisplan2.player_only": "§c这个命令必须由玩家执行。",
+  "command.qisplan2.entity_only": "§c这个命令必须由实体执行。",
 
   "command.qisplan2.kill.default": "已清除附近 §e%s§r 个灵异实体。",
   "command.qisplan2.kill.radius": "已清除 §e%s§r 格内的 §e%s§r 个灵异实体。",
@@ -308,7 +303,7 @@
   "corrosion.qisplan2.hair": "发",
   "corrosion.qisplan2.universal": "万能部位",
 
-  "ability.qisplan2.ghost_divination_slip.life": "活签",
+  "ability.qisplan2.ghost_divination_slip.life": "生签",
   "ability.qisplan2.ghost_divination_slip.death": "死签",
   "ability.qisplan2.ghost_divination_slip.ghost": "鬼签",
   "ability.qisplan2.opening_ghost.hunt": "追袭开门者",
@@ -355,6 +350,9 @@
   "ability.qisplan2.white_ghost_candle.extinguish": "熄灭白色鬼烛",
   "ability.qisplan2.red_ghost_candle.ignite": "点燃红色鬼烛",
   "ability.qisplan2.red_ghost_candle.extinguish": "熄灭红色鬼烛",
+  "ability.qisplan2.ghost_door.close_attack": "关门袭击",
+  "ability.qisplan2.ghost_door_plate.travel": "穿门传送",
+  "ability.qisplan2.ghost_door_plate.set_number": "修改门牌号",
 
   "hud.qisplan2.ability_wheel.title": "厉鬼能力",
   "hud.qisplan2.ability_wheel.empty": "暂无主动能力",

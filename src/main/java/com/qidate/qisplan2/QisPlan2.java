@@ -14,7 +14,6 @@ import com.qidate.qisplan2.ghost.domain.GhostDomainEntityEvents;
 import com.qidate.qisplan2.ghost.domain.GhostDomainPlayerLogout;
 import com.qidate.qisplan2.ghost.domain.GhostDomainPlayerSync;
 import com.qidate.qisplan2.ghost.domain.client.renderer.GhostDomainShaderRegistry;
-import com.qidate.qisplan2.ghost.doorplate.GhostDoorPlateTeleportHandler;
 import com.qidate.qisplan2.ghost.isolation.GhostIsolationPlayerSync;
 import com.qidate.qisplan2.ghost.layer.GhostLayerInteractionHandler;
 import com.qidate.qisplan2.ghost.module.GhostModuleInteractionHandler;
@@ -118,20 +117,12 @@ public class QisPlan2 {
                 GhostSoundManager.class
         );
 
-        // 驭鬼注册表注册
-
-
         // 诅咒注册表注册
         CurseRegistry.bootstrap();
-
-        // 驭鬼事件注册
-
 
         // 厉鬼模块注册
         GhostModuleRegistry.bootstrap();
 
-        // 鬼门牌注册
-        GhostDoorPlateTeleportHandler.register();
     }
 
     private static void registerShaders(

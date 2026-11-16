@@ -27,11 +27,13 @@ public final class GhostAbilityNetwork {
                     Long previous = LAST_REQUEST.put(player, now);
                     if (previous != null && now >= previous && now - previous < 2) return;
                     var host = new PlayerGhostModuleHost(player);
-                    boolean known = GhostAbilityCatalog.all(host).stream().anyMatch(entry ->
-                            entry.moduleId().equals(packet.moduleId()) && entry.ability().getId().equals(packet.abilityId()));
-                    if (!known) return;
+                    var selected = GhostAbilityCatalog.all(host).stream().filter(entry ->
+                            entry.moduleId().equals(packet.moduleId()) && entry.ability().getId().equals(packet.abilityId())).findFirst().orElse(null);
+                    if (selected == null) return;
+                    var input = selected.ability().integerInput();
+                    if (input != null ? packet.number() == null || !input.accepts(packet.number()) : packet.number() != null) return;
                     boolean success = GhostAbilityExecutor.tryExecuteWithResult(new GhostAbilityContext(host,
-                            packet.moduleId(), packet.abilityId(), GhostAbilityContext.Source.POSSESSION, null, () -> {}, new GhostInvocationParameters(player)));
+                            packet.moduleId(), packet.abilityId(), GhostAbilityContext.Source.POSSESSION, null, () -> {}, new GhostInvocationParameters(player, packet.number())));
                     if (!success) player.displayClientMessage(Component.translatable("hud.qisplan2.ability_wheel.unavailable"), true);
                 }));
     }

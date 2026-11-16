@@ -1,6 +1,7 @@
 package com.qidate.qisplan2.ghost.module.host;
 
 import com.qidate.qisplan2.core.ModTags;
+import com.qidate.qisplan2.ghost.module.environment.GhostDoorAccess;
 
 import net.minecraft.world.level.block.state.properties.DoubleBlockHalf;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
@@ -62,6 +63,8 @@ public final class GhostWorldAdapters {
      */
     public static GhostWorldAccess bind(GhostModuleHost host, ResourceLocation id) {
         return new GhostWorldAccess() {
+            /** 门操作由独立的世界适配器负责。 */
+            public GhostDoorAccess doors() { return new GhostDoorWorldAdapter(host, id); }
             /** 服务端使用前方 120 度视锥及真实遮挡；不依赖客户端画面设置。 */
             public boolean sourceVisibleTo(LivingEntity observer) {
                 var origin = source();
