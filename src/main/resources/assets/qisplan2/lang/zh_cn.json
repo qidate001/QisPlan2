@@ -112,6 +112,7 @@
   "module.qisplan2.red_ghost_candle": "红色鬼烛",
   "module.qisplan2.ghost_door": "鬼门",
   "module.qisplan2.ghost_door_plate": "鬼门牌",
+  "module.qisplan2.ghost_stove": "鬼灶台",
 
   "curse.qisplan2.ghost_divination": "生签",
   "curse.qisplan2.ghost_tombstone": "鬼墓碑",
@@ -353,6 +354,8 @@
   "ability.qisplan2.ghost_door.close_attack": "关门袭击",
   "ability.qisplan2.ghost_door_plate.travel": "穿门传送",
   "ability.qisplan2.ghost_door_plate.set_number": "修改门牌号",
+  "ability.qisplan2.ghost_stove.food_attack": "袭击携食者",
+  "ability.qisplan2.ghost_stove.workstation": "打开鬼灶台",
 
   "hud.qisplan2.ability_wheel.title": "厉鬼能力",
   "hud.qisplan2.ability_wheel.empty": "暂无主动能力",

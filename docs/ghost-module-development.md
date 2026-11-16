@@ -878,10 +878,3 @@ public GhostAbilityInfluence activeInfluence(GhostAbilityContext context) {
 | 技能目录与网络 | `ghost/module/ability/GhostAbilityCatalog.java`、`network/GhostAbilityNetwork.java` |
 | 轮盘 | `client/screen/AbilityWheelScreen.java`、`AbilityWheelLayout.java` |
 | 宿主承载 | `ghost/bearing/`；另见本文关联的承载文档 |
-
-
-### 门能力空间行为补充
-
-- 鬼门关门后调用 `doors().attackLine(pos, 16)`，沿门法线前后各检测最多 16 格，命中一格宽、两格高直线体积内的生命实体碰撞箱。两侧独立截断，任何一侧的上下两格遇 `GhostIsolationBlockRegistry` 判定的隔绝方块就停止；普通墙体不阻断，发动能力的门本身不作为障碍。未加载区块边界停止检测，不主动加载袭击沿途区块。
-- 正常穿门按两门朝向转换偏航角和运动速度，保留俯仰角；根据入门方向落在目的门的出口侧。静止主动释放时用视线方向选择出口侧。虚空后果不做正常门坐标转换。
-- 整数输入仍通过能力声明控制。新增 `integerInputInitial(GhostModuleContext)` 供模块读取当前实例数据；鬼门牌从 `customData.number` 读取，仅缺少字段时返回 666。面板调整大小保留未提交的编辑内容。

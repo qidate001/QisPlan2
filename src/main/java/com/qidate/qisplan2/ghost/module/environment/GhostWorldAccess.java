@@ -1,6 +1,12 @@
 package com.qidate.qisplan2.ghost.module.environment;
 
 import java.util.UUID;
+import net.minecraft.core.particles.SimpleParticleType;
+import net.minecraft.sounds.SoundEvent;
+import java.util.List;
+import java.util.function.Predicate;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.phys.AABB;
 import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
@@ -16,6 +22,18 @@ import net.minecraft.world.phys.Vec3;
  * 目标实体是世界中的作用对象，与模块自己的载体不是同一个概念。
  */
 public interface GhostWorldAccess {
+    /** 查询相对当前环境位置的 AABB 内目标；适配器使用世界实体空间索引，不遍历方块。 */
+    default List<LivingEntity> livingEntities(AABB relativeBounds) { return List.of(); }
+    /** 重查目标碰撞箱是否仍与相对范围相交，用于延迟能力的媒介验证。 */
+    default boolean inArea(LivingEntity target, AABB relativeBounds) { return false; }
+    /** 按通用物品条件检查目标携带物；背包和装备差异由适配器处理。 */
+    default boolean hasCarriedItem(LivingEntity target, Predicate<ItemStack> condition) { return false; }
+    /** 取得当前模块的工作台出口。 */
+    default GhostWorkstationAccess workstations() { return GhostWorkstationAccess.NONE; }
+    /** 播放指定粒子与声音的袭击表现，不触发伤害或规则。 */
+    default void attackFeedback(LivingEntity target, SimpleParticleType particle,
+            SoundEvent sound) {}
+
     /** 门相关空间事实和世界操作由适配层统一实现。 */
     default GhostDoorAccess doors() { return GhostDoorAccess.NONE; }
     /** 观察者的视野与无遮挡视线是否实际覆盖当前来源。 */

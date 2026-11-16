@@ -1,6 +1,6 @@
 package com.qidate.qisplan2.menu;
 
-import com.qidate.qisplan2.block.entity.GhostStoveBlockEntity;
+import net.minecraft.world.inventory.ContainerData;
 import com.qidate.qisplan2.core.ModMenus;
 import net.minecraft.world.Container;
 import net.minecraft.world.SimpleContainer;
@@ -22,7 +22,7 @@ public class GhostStoveMenu
      *
      * 服务端则使用 BlockEntity 的 ContainerData。
      */
-    private final net.minecraft.world.inventory.ContainerData data;
+    private final ContainerData data;
 
     /**
      * 客户端构造。
@@ -42,21 +42,9 @@ public class GhostStoveMenu
         );
     }
 
-    /**
-     * 服务端构造。
-     */
-    public GhostStoveMenu(
-            int containerId,
-            Inventory inventory,
-            GhostStoveBlockEntity stove
-    ) {
-        this(
-                ModMenus.GHOST_STOVE_MENU.get(),
-                containerId,
-                inventory,
-                stove,
-                stove.getData()
-        );
+    /** 服务端接收通用库存和进度接口，不要求来源是方块实体。 */
+    public GhostStoveMenu(int containerId, Inventory inventory, Container container, ContainerData data) {
+        this(ModMenus.GHOST_STOVE_MENU.get(),containerId,inventory,container,data);
     }
 
     private GhostStoveMenu(
@@ -64,7 +52,7 @@ public class GhostStoveMenu
             int containerId,
             Inventory inventory,
             Container container,
-            net.minecraft.world.inventory.ContainerData data
+            ContainerData data
     ) {
         super(
                 menuType,

@@ -1,6 +1,14 @@
 package com.qidate.qisplan2.ghost.module.host;
 
 import com.qidate.qisplan2.core.ModTags;
+import com.qidate.qisplan2.ghost.module.environment.GhostWorkstationAccess;
+import net.minecraft.world.phys.AABB;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.Container;
+import net.minecraft.core.particles.SimpleParticleType;
+import net.minecraft.sounds.SoundEvent;
+import java.util.List;
+import java.util.function.Predicate;
 import com.qidate.qisplan2.ghost.module.environment.GhostDoorAccess;
 
 import net.minecraft.world.level.block.state.properties.DoubleBlockHalf;
@@ -63,8 +71,47 @@ public final class GhostWorldAdapters {
      */
     public static GhostWorldAccess bind(GhostModuleHost host, ResourceLocation id) {
         return new GhostWorldAccess() {
+            /** AABB 使用世界实体分区索引；空环境不进行查询。 */
+            public List<LivingEntity> livingEntities(AABB bounds) {
+                return present() ? level().getEntitiesOfClass(LivingEntity.class, bounds.move(position()), this::validTarget) : List.of();
+            }
+
+            /** 延迟执行重新校验实时位置与目标资格，防止离开范围后仍被袭击。 */
+            public boolean inArea(LivingEntity target, AABB bounds) {
+                return validTarget(target) && bounds.move(position()).intersects(target.getBoundingBox());
+            }
+
+            /** 玩家检查完整背包，普通生物检查装备；有 Container 的实体额外检查其容器。 */
+            public boolean hasCarriedItem(LivingEntity target, Predicate<ItemStack> condition) {
+                if (target == null || !target.isAlive() || !sameWorld(target.level())) return false;
+                for (var stack : target.getAllSlots()) if (!stack.isEmpty() && condition.test(stack)) return true;
+                if (target instanceof Player player) {
+                    for (int slot = 0; slot < player.getInventory().getContainerSize(); slot++) {
+                        var stack = player.getInventory().getItem(slot);
+                        if (!stack.isEmpty() && condition.test(stack)) return true;
+                    }
+                } else if (target instanceof Container inventory) {
+                    for (int slot = 0; slot < inventory.getContainerSize(); slot++) {
+                        var stack = inventory.getItem(slot);
+                        if (!stack.isEmpty() && condition.test(stack)) return true;
+                    }
+                }
+                return false;
+            }
+
+            /** 工作台服务独立适配不同载体，不向模块公开菜单实现。 */
+            public GhostWorkstationAccess workstations() { return GhostWorkstationAdapters.bind(host, id); }
+
+            /** 表现参数来自能力定义，实际发包与声音播放留在适配层。 */
+            public void attackFeedback(LivingEntity target, SimpleParticleType particle, SoundEvent sound) {
+                if (target == null || !(target.level() instanceof ServerLevel server)) return;
+                server.sendParticles(particle, target.getX(), target.getY()+.5, target.getZ(),20,.4,.5,.4,.05);
+                server.playSound(null,target.blockPosition(),sound,SoundSource.BLOCKS,1,.8f);
+            }
+
             /** 门操作由独立的世界适配器负责。 */
             public GhostDoorAccess doors() { return new GhostDoorWorldAdapter(host, id); }
+
             /** 服务端使用前方 120 度视锥及真实遮挡；不依赖客户端画面设置。 */
             public boolean sourceVisibleTo(LivingEntity observer) {
                 var origin = source();
@@ -72,6 +119,7 @@ public final class GhostWorldAdapters {
                 if (observer instanceof Player player && origin.isInvisibleTo(player)) return false;
                 return GhostSight.inView(observer.getLookAngle(), origin.getEyePosition().subtract(observer.getEyePosition()));
             }
+
             /** 按实际来源计算水平和垂直角度；玩家视角通过连接同步，生物同步头部朝向。 */
             public float turnTargetTowardSource(LivingEntity target, float maximumDegrees) {
                 if (!canHearCall(target) || source() == null || !Float.isFinite(maximumDegrees) || maximumDegrees <= 0) return 0;
@@ -97,6 +145,7 @@ public final class GhostWorldAdapters {
             }
             /** 返回服务端世界时间。 */
             public long gameTime() { return level() == null ? 0 : level().getGameTime(); }
+
             /** 将门上半部归一化为下半部。 */
             public BlockPos normalizeDoor(BlockPos pos) {
                 if (pos == null || level() == null) return null;
@@ -104,13 +153,16 @@ public final class GhostWorldAdapters {
                 return state.hasProperty(BlockStateProperties.DOUBLE_BLOCK_HALF)
                         && state.getValue(BlockStateProperties.DOUBLE_BLOCK_HALF) == DoubleBlockHalf.UPPER ? pos.below() : pos;
             }
+
             /** 实际声音传播范围由敲门系统决定。 */
             public int hearingTargets(BlockPos pos) {
                 return level() instanceof ServerLevel server && source() != null && pos != null
                         ? KnockingGhostDoorSystem.countHearingTargets(server, source(), pos) : 0;
             }
+
             /** 查询特殊门世界状态。 */
             public boolean supernaturalDoor(BlockPos pos) { return level() != null && pos != null && KnockingGhostDoorSystem.isGhostDoor(level(), pos); }
+
             /** 普通方块操作经过原世界销毁入口。 */
             public void destroyBlock(BlockPos pos) { if (level() instanceof ServerLevel server && pos != null) server.destroyBlock(pos, false); }
 

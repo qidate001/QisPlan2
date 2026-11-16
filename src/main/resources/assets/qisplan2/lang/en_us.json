@@ -114,6 +114,7 @@
   "module.qisplan2.red_ghost_candle": "Red Ghost Candle",
   "module.qisplan2.ghost_door": "Ghost Door",
   "module.qisplan2.ghost_door_plate": "Ghost Door Plate",
+  "module.qisplan2.ghost_stove": "Ghost Stove",
 
   "curse.qisplan2.ghost_divination": "Life Sign",
   "curse.qisplan2.ghost_tombstone": "Ghost Tombstone",
@@ -355,6 +356,8 @@
   "ability.qisplan2.ghost_door_plate.travel": "Door Transit",
   "ability.qisplan2.ghost_door_plate.set_number": "Change Door Number",
   "ability.qisplan2.ghost_door.close_attack": "Closing Assault",
+  "ability.qisplan2.ghost_stove.food_attack": "Attack Food Carrier",
+  "ability.qisplan2.ghost_stove.workstation": "Open Ghost Stove",
 
   "hud.qisplan2.ability_wheel.title": "Ghost Abilities",
   "hud.qisplan2.ability_wheel.empty": "No active abilities",

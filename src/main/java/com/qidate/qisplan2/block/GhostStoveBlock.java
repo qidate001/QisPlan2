@@ -1,11 +1,13 @@
 package com.qidate.qisplan2.block;
 
 import com.mojang.serialization.MapCodec;
-import com.qidate.qisplan2.QisPlan2;
 import com.qidate.qisplan2.block.entity.GhostStoveBlockEntity;
 import com.qidate.qisplan2.core.ModBlocks;
+import com.qidate.qisplan2.ghost.module.ability.GhostAbilityContext;
+import com.qidate.qisplan2.ghost.module.ability.GhostAbilityExecutor;
+import com.qidate.qisplan2.ghost.module.ability.GhostInvocationParameters;
+import com.qidate.qisplan2.ghost.module.implementation.GhostStoveModule;
 import net.minecraft.core.BlockPos;
-import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.player.Player;
@@ -97,11 +99,11 @@ public class GhostStoveBlock
                 && level.getBlockEntity(pos)
                 instanceof GhostStoveBlockEntity blockEntity) {
 
-            serverPlayer.openMenu(
-                    blockEntity
-            );
-
-            return InteractionResult.CONSUME;
+            if (!blockEntity.hasModule(GhostStoveModule.ID)) return InteractionResult.PASS;
+            boolean opened = GhostAbilityExecutor.tryExecuteWithResult(new GhostAbilityContext(blockEntity,
+                    GhostStoveModule.ID,GhostStoveModule.WORKSTATION,GhostAbilityContext.Source.POSSESSION,
+                    null,() -> {},new GhostInvocationParameters(serverPlayer)));
+            return opened ? InteractionResult.CONSUME : InteractionResult.PASS;
         }
 
         return InteractionResult.sidedSuccess(
