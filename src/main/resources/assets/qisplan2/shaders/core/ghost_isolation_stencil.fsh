@@ -64,15 +64,15 @@ bool rayPassesThroughCuboid(
     } else {
 
         float invDirection =
-        1.0 / direction.x;
+            1.0 / direction.x;
 
         float t1 =
-        (cuboidMin.x - rayOrigin.x)
-        * invDirection;
+            (cuboidMin.x - rayOrigin.x)
+            * invDirection;
 
         float t2 =
-        (cuboidMax.x - rayOrigin.x)
-        * invDirection;
+            (cuboidMax.x - rayOrigin.x)
+            * invDirection;
 
         if (t1 > t2) {
             float temp = t1;
@@ -103,15 +103,15 @@ bool rayPassesThroughCuboid(
     } else {
 
         float invDirection =
-        1.0 / direction.y;
+            1.0 / direction.y;
 
         float t1 =
-        (cuboidMin.y - rayOrigin.y)
-        * invDirection;
+            (cuboidMin.y - rayOrigin.y)
+            * invDirection;
 
         float t2 =
-        (cuboidMax.y - rayOrigin.y)
-        * invDirection;
+            (cuboidMax.y - rayOrigin.y)
+            * invDirection;
 
         if (t1 > t2) {
             float temp = t1;
@@ -145,12 +145,12 @@ bool rayPassesThroughCuboid(
         1.0 / direction.z;
 
         float t1 =
-        (cuboidMin.z - rayOrigin.z)
-        * invDirection;
+            (cuboidMin.z - rayOrigin.z)
+            * invDirection;
 
         float t2 =
-        (cuboidMax.z - rayOrigin.z)
-        * invDirection;
+            (cuboidMax.z - rayOrigin.z)
+            * invDirection;
 
         if (t1 > t2) {
             float temp = t1;
@@ -167,7 +167,7 @@ bool rayPassesThroughCuboid(
     }
 
     return tMax >= 0.0
-    && tMin <= 1.0;
+        && tMin <= 1.0;
 }
 
 
@@ -229,10 +229,10 @@ void main() {
      * ========================================================
      */
     float depth =
-    texture(
+        texture(
             MainDepthSampler,
             texCoord
-    ).r;
+        ).r;
 
 
     /*
@@ -240,23 +240,22 @@ void main() {
      * 屏幕坐标 → NDC
      * ========================================================
      */
-    vec2 ndcXY =
-    texCoord * 2.0 - 1.0;
+    vec2 ndcXY = texCoord * 2.0 - 1.0;
 
 
     vec4 nearNDC =
-    vec4(
+        vec4(
             ndcXY,
             -1.0,
             1.0
-    );
+        );
 
     vec4 farNDC =
-    vec4(
+        vec4(
             ndcXY,
             1.0,
             1.0
-    );
+        );
 
 
     /*
@@ -265,14 +264,14 @@ void main() {
      * ========================================================
      */
     vec4 nearView =
-    inverse(
+        inverse(
             IsolationProjMat
-    ) * nearNDC;
+        ) * nearNDC;
 
     vec4 farView =
-    inverse(
+        inverse(
             IsolationProjMat
-    ) * farNDC;
+        ) * farNDC;
 
     nearView /= nearView.w;
     farView /= farView.w;
@@ -284,14 +283,14 @@ void main() {
      * ========================================================
      */
     vec4 nearWorld =
-    inverse(
+        inverse(
             IsolationModelViewMat
-    ) * nearView;
+        ) * nearView;
 
     vec4 farWorld =
-    inverse(
+        inverse(
             IsolationModelViewMat
-    ) * farView;
+        ) * farView;
 
     nearWorld /= nearWorld.w;
     farWorld /= farWorld.w;
@@ -304,12 +303,12 @@ void main() {
      * 因此重新加回 Camera Position。
      */
     vec3 rayStart =
-    nearWorld.xyz
-    + IsolationCameraPos;
+        nearWorld.xyz
+        + IsolationCameraPos;
 
     vec3 rayEnd =
-    farWorld.xyz
-    + IsolationCameraPos;
+        farWorld.xyz
+        + IsolationCameraPos;
 
 
     /*
@@ -318,23 +317,23 @@ void main() {
      * ========================================================
      */
     vec4 sceneNDC =
-    vec4(
+        vec4(
             ndcXY,
             depth * 2.0 - 1.0,
             1.0
-    );
+        );
 
     vec4 sceneView =
-    inverse(
+        inverse(
             IsolationProjMat
-    ) * sceneNDC;
+        ) * sceneNDC;
 
     sceneView /= sceneView.w;
 
     vec4 sceneWorld =
-    inverse(
+        inverse(
             IsolationModelViewMat
-    ) * sceneView;
+        ) * sceneView;
 
     sceneWorld /= sceneWorld.w;
 
@@ -356,8 +355,7 @@ void main() {
      * 遍历所有 Cuboid。
      * ========================================================
      */
-    int count =
-    int(IsolationCuboidCount);
+    int count = int(IsolationCuboidCount);
 
     const int MAX_CUBOIDS = 256;
 

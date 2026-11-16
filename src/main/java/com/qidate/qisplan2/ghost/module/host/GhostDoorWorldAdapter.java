@@ -4,6 +4,8 @@ import com.qidate.qisplan2.block.entity.GhostDoorPlateBlockEntity;
 import com.qidate.qisplan2.ghost.doorplate.GhostDoorPlateRegistry;
 import com.qidate.qisplan2.ghost.module.GhostModuleHost;
 import com.qidate.qisplan2.ghost.module.environment.GhostDoorAccess;
+import com.qidate.qisplan2.ghost.module.environment.GhostDoorGeometry;
+import com.qidate.qisplan2.ghost.isolation.GhostIsolationBlockRegistry;
 import com.qidate.qisplan2.ghost.module.implementation.GhostDoorPlateModule;
 import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceLocation;
@@ -96,6 +98,15 @@ public final class GhostDoorWorldAdapter implements GhostDoorAccess {
         var box = new AABB(door).expandTowards(0, 1, 0).inflate(Math.abs(f.getStepX()), 0, Math.abs(f.getStepZ()));
         return level().getEntitiesOfClass(LivingEntity.class, box, e -> e.isAlive() && !e.isSpectator());
     }
+    /** 直线袭击不被普通墙体截断；隔绝注册表统一决定上下两格的阻断状态。 */
+    public List<LivingEntity> attackLine(BlockPos pos, double range) {
+        var door = normalize(pos); if (door == null) return List.of();
+        var facing = level().getBlockState(door).getValue(DoorBlock.FACING);
+        var box = GhostDoorGeometry.attackBounds(door, facing, range,
+                block -> !level().hasChunkAt(block)
+                        || GhostIsolationBlockRegistry.canBlockSupernatural(level().getBlockState(block)));
+        return level().getEntitiesOfClass(LivingEntity.class, box, entity -> entity.isAlive() && !entity.isSpectator());
+    }
     /** 门洞宽一格、高两格；必须与该空间相交，不能只在旁边路过。 */
     private boolean inOpening(LivingEntity target, BlockPos pos) {
         return target != null && target.isAlive() && !target.isSpectator() && target.level() == level()
@@ -160,14 +171,30 @@ public final class GhostDoorWorldAdapter implements GhostDoorAccess {
         var world = level().getServer().getLevel(destination.dimension()); if (world == null) return false;
         var state = world.getBlockState(destination.pos());
         if (!(state.getBlock() instanceof DoorBlock) || state.getValue(DoorBlock.OPEN) == voidTravel) return false;
-        Vec3 arrival = voidTravel ? new Vec3(destination.pos().getX()+.5, world.getMinBuildHeight()-64, destination.pos().getZ()+.5)
-                : Vec3.atBottomCenterOf(destination.pos());
-        if (target instanceof ServerPlayer player) {
-            player.teleportTo(world, arrival.x, arrival.y, arrival.z, player.getYRot(), player.getXRot());
-            player.setDeltaMovement(Vec3.ZERO); return true;
+        float yaw = target.getYRot();
+        Vec3 velocity = Vec3.ZERO;
+        Vec3 arrival = new Vec3(destination.pos().getX()+.5, world.getMinBuildHeight()-64, destination.pos().getZ()+.5);
+        if (!voidTravel) {
+            var origin = linkedDoor(); if (origin == null) return false;
+            var originFacing = level().getBlockState(origin).getValue(DoorBlock.FACING);
+            var destinationFacing = state.getValue(DoorBlock.FACING);
+            float rotation = GhostDoorGeometry.rotation(originFacing, destinationFacing);
+            yaw += rotation;
+            velocity = GhostDoorGeometry.rotate(target.getDeltaMovement(), rotation);
+            arrival = GhostDoorGeometry.exitPosition(destination.pos(), originFacing, destinationFacing,
+                    target.getDeltaMovement(), target.getLookAngle());
         }
-        if (target.level() == world) { target.teleportTo(arrival.x, arrival.y, arrival.z); target.setDeltaMovement(Vec3.ZERO); return true; }
-        return target.changeDimension(new DimensionTransition(world, arrival, Vec3.ZERO,
-                target.getYRot(), target.getXRot(), DimensionTransition.DO_NOTHING)) != null;
+        if (target instanceof ServerPlayer player) {
+            player.teleportTo(world, arrival.x, arrival.y, arrival.z, yaw, player.getXRot());
+            player.setDeltaMovement(velocity);
+            player.hurtMarked = true; return true;
+        }
+        if (target.level() == world) {
+            target.teleportTo(arrival.x, arrival.y, arrival.z);
+            target.setYRot(yaw); target.setYHeadRot(yaw); target.setYBodyRot(yaw);
+            target.setDeltaMovement(velocity); target.hurtMarked = true; return true;
+        }
+        return target.changeDimension(new DimensionTransition(world, arrival, velocity,
+                yaw, target.getXRot(), DimensionTransition.DO_NOTHING)) != null;
     }
 }

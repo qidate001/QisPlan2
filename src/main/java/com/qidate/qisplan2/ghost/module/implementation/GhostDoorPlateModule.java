@@ -103,6 +103,8 @@ public final class GhostDoorPlateModule implements GhostModule {
             public ResourceLocation iconTexture() { return ResourceLocation.parse("minecraft:textures/item/name_tag.png"); }
             /** 通用数字输入由模块声明，UI 与网络不识别鬼门牌类型。 */
             public GhostIntegerInput integerInput() { return new GhostIntegerInput(0, 999999999, DEFAULT_NUMBER); }
+            /** 显示已保存号码；只有没有 number 字段的新实例才回退为 666。 */
+            public int integerInputInitial(GhostModuleContext context) { return number(context); }
             /** 无需站在门中即可编辑自己的模块号码。 */
             public boolean canExecute(GhostAbilityContext c) {
                 return c.parameters() instanceof GhostInvocationParameters p && p.number() != null && integerInput().accepts(p.number());

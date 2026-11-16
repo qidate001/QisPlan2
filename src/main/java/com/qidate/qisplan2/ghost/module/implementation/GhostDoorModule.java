@@ -87,7 +87,7 @@ public final class GhostDoorModule implements GhostModule {
                 var m = c.getModuleContext(); var doors = m.world().doors(); var pos = doors.frontDoor();
                 if (pos == null || !doors.close(pos)) return false;
                 var data = m.getCustomData(); data.remove("closeAt"); data.remove("timedDoor"); m.setCustomData(data);
-                for (var target : doors.nearby(pos)) {
+                for (var target : doors.attackLine(pos, 16)) {
                     if (!c.isModuleAvailable()) break;
                     if (m.world().isOrigin(target)) continue;
                     var influence = GhostAbilityInfluence.of(target, GhostInfluenceType.ATTACK, m.intensity());

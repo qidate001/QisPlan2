@@ -49,10 +49,10 @@ void main() {
     // =========================================================
 
     float pixelRegion =
-    texture(
+        texture(
             GhostUmbrellaRegionIdentity,
             texCoord
-    ).r;
+        ).r;
 
 
     // =========================================================

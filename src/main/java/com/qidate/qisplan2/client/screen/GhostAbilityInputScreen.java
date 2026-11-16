@@ -1,6 +1,8 @@
 package com.qidate.qisplan2.client.screen;
 
 import com.qidate.qisplan2.ghost.module.ability.GhostAbilityCatalog;
+import com.qidate.qisplan2.ghost.module.GhostModuleContext;
+import com.qidate.qisplan2.ghost.module.host.player.PlayerGhostModuleHost;
 import com.qidate.qisplan2.network.payload.GhostAbilityUsePayload;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
@@ -26,9 +28,17 @@ public final class GhostAbilityInputScreen extends Screen {
     }
     /** 创建有界数字输入；服务器也会独立验证范围。 */
     protected void init() {
+        String previous = input == null ? null : input.getValue();
         input = new EditBox(font, width/2-80, height/2-12, 160, 20, title);
         input.setMaxLength(11); input.setFilter(value -> value.matches("-?[0-9]*"));
-        input.setValue(Integer.toString(entry.ability().integerInput().initial()));
+        int initial = entry.ability().integerInput().initial();
+        if (minecraft != null && minecraft.player != null) {
+            var host = new PlayerGhostModuleHost(minecraft.player);
+            if (host.hasModule(entry.moduleId()))
+                initial = entry.ability().integerInputInitial(new GhostModuleContext(host, entry.moduleId()));
+        }
+        // 调整窗口大小时保留尚未提交的输入，不重新覆盖为存档值。
+        input.setValue(previous == null ? Integer.toString(initial) : previous);
         addRenderableWidget(input); setInitialFocus(input);
         addRenderableWidget(Button.builder(Component.translatable("gui.done"), b -> confirm())
                 .bounds(width/2-40,height/2+20,80,20).build());

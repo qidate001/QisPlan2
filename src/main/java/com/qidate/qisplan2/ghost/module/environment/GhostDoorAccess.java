@@ -21,6 +21,8 @@ public interface GhostDoorAccess {
     default boolean close(BlockPos pos) { return false; }
     /** 返回门前、门后及门洞内的存活目标。 */
     default List<LivingEntity> nearby(BlockPos pos) { return List.of(); }
+    /** 查询沿门前后直线范围内的目标，各方向遇隔绝方块或达到范围时停止。 */
+    default List<LivingEntity> attackLine(BlockPos pos, double range) { return List.of(); }
     /** 确认目标处于门洞内，且当前没有穿门冷却。 */
     default boolean inside(LivingEntity target, BlockPos pos) { return false; }
     /** 维护当前来源的实时门端点；无有效门或失去暴露时撤销。 */

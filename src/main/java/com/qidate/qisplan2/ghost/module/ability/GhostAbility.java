@@ -1,6 +1,7 @@
 package com.qidate.qisplan2.ghost.module.ability;
 
 import com.qidate.qisplan2.ghost.module.GhostMedium;
+import com.qidate.qisplan2.ghost.module.GhostModuleContext;
 import java.util.List;
 
 import net.minecraft.resources.ResourceLocation;
@@ -16,6 +17,13 @@ import net.minecraft.resources.ResourceLocation;
 public interface GhostAbility {
     /** 可选整数输入，未声明时不打开输入面板。 */
     default GhostIntegerInput integerInput() { return null; }
+
+    /** 编辑初值由模块结合自己的实例数据提供；客户端不按具体模块 ID 分支。 */
+    default int integerInputInitial(GhostModuleContext context) {
+        var input = integerInput();
+        return input == null ? 0 : input.initial();
+    }
+
     /** 私有能力只允许规则、行为和已启动能力的内部延续调用，不作为玩家技能。 */
     default boolean isPublicSkill() { return true; }
 
@@ -35,13 +43,11 @@ public interface GhostAbility {
         return ResourceLocation.fromNamespaceAndPath("minecraft", "textures/item/nether_star.png");
     }
 
-
     /** 能力自己的硬性媒介，统一执行器在每次调用和延迟执行前重新检查。 */
     default List<GhostMedium> media(GhostAbilityContext context) { return List.of(); }
 
     /** 默认同时继承模块媒介；独立主动操作可完整声明自身媒介。 */
     default boolean inheritsModuleMedia() { return true; }
-
 
     /**
      * 获取能力在所属模块中的唯一标识。

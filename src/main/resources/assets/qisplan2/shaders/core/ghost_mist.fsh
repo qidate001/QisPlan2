@@ -596,8 +596,7 @@ void main() {
                  */
 
                 float density =
-                    0.045
-                    * mistStrength;
+                    0.045 * mistStrength;
 
 
                 /*
@@ -607,12 +606,7 @@ void main() {
                  */
 
                 float baseFog =
-                    1.0
-                    -
-                    exp(
-                        -fogLength
-                        * density
-                    );
+                    1.0 - exp(-fogLength * density);
 
 
                 /*

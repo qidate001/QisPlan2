@@ -120,15 +120,15 @@ bool rayPassesThroughCuboid(
     } else {
 
         float invDirection =
-        1.0 / direction.x;
+            1.0 / direction.x;
 
         float t1 =
-        (cuboidMin.x - rayOrigin.x)
-        * invDirection;
+            (cuboidMin.x - rayOrigin.x)
+            * invDirection;
 
         float t2 =
-        (cuboidMax.x - rayOrigin.x)
-        * invDirection;
+            (cuboidMax.x - rayOrigin.x)
+            * invDirection;
 
         if (t1 > t2) {
             float temp = t1;
@@ -164,12 +164,12 @@ bool rayPassesThroughCuboid(
         1.0 / direction.y;
 
         float t1 =
-        (cuboidMin.y - rayOrigin.y)
-        * invDirection;
+            (cuboidMin.y - rayOrigin.y)
+            * invDirection;
 
         float t2 =
-        (cuboidMax.y - rayOrigin.y)
-        * invDirection;
+            (cuboidMax.y - rayOrigin.y)
+            * invDirection;
 
         if (t1 > t2) {
             float temp = t1;
@@ -205,12 +205,12 @@ bool rayPassesThroughCuboid(
         1.0 / direction.z;
 
         float t1 =
-        (cuboidMin.z - rayOrigin.z)
-        * invDirection;
+            (cuboidMin.z - rayOrigin.z)
+            * invDirection;
 
         float t2 =
-        (cuboidMax.z - rayOrigin.z)
-        * invDirection;
+            (cuboidMax.z - rayOrigin.z)
+            * invDirection;
 
         if (t1 > t2) {
             float temp = t1;
@@ -269,49 +269,48 @@ void main() {
      * 当前像素深度。
      */
     float depth =
-    texture(
+        texture(
             MainDepthSampler,
             texCoord
-    ).r;
+        ).r;
 
 
     /*
      * 屏幕坐标 → NDC。
      */
-    vec2 ndcXY =
-    texCoord * 2.0 - 1.0;
+    vec2 ndcXY = texCoord * 2.0 - 1.0;
 
 
     /*
      * Near / Far NDC。
      */
     vec4 nearNDC =
-    vec4(
+        vec4(
             ndcXY,
             -1.0,
             1.0
-    );
+        );
 
     vec4 farNDC =
-    vec4(
+        vec4(
             ndcXY,
             1.0,
             1.0
-    );
+        );
 
 
     /*
      * NDC → View Space。
      */
     vec4 nearView =
-    inverse(
+        inverse(
             IsolationProjMat
-    ) * nearNDC;
+        ) * nearNDC;
 
     vec4 farView =
-    inverse(
+        inverse(
             IsolationProjMat
-    ) * farNDC;
+        ) * farNDC;
 
     nearView /= nearView.w;
     farView /= farView.w;
@@ -321,14 +320,14 @@ void main() {
      * View Space → World Space。
      */
     vec4 nearWorld =
-    inverse(
+        inverse(
             IsolationModelViewMat
-    ) * nearView;
+        ) * nearView;
 
     vec4 farWorld =
-    inverse(
+        inverse(
             IsolationModelViewMat
-    ) * farView;
+        ) * farView;
 
     nearWorld /= nearWorld.w;
     farWorld /= farWorld.w;
@@ -339,41 +338,41 @@ void main() {
      * 的坐标，因此加回 Camera Position。
      */
     vec3 rayStart =
-    nearWorld.xyz
-    + IsolationCameraPos;
+        nearWorld.xyz
+        + IsolationCameraPos;
 
     vec3 rayEnd =
-    farWorld.xyz
-    + IsolationCameraPos;
+        farWorld.xyz
+        + IsolationCameraPos;
 
 
     /*
      * 根据深度恢复当前像素世界坐标。
      */
     vec4 sceneNDC =
-    vec4(
+        vec4(
             ndcXY,
             depth * 2.0 - 1.0,
             1.0
-    );
+        );
 
     vec4 sceneView =
-    inverse(
+        inverse(
             IsolationProjMat
-    ) * sceneNDC;
+        ) * sceneNDC;
 
     sceneView /= sceneView.w;
 
     vec4 sceneWorld =
-    inverse(
+        inverse(
             IsolationModelViewMat
-    ) * sceneView;
+        ) * sceneView;
 
     sceneWorld /= sceneWorld.w;
 
     vec3 sceneWorldPos =
-    sceneWorld.xyz
-    + IsolationCameraPos;
+        sceneWorld.xyz
+        + IsolationCameraPos;
 
 
     /*
@@ -386,8 +385,7 @@ void main() {
     float regionIndex = 0.0;
 
 
-    int count =
-    int(IsolationCuboidCount);
+    int count = int(IsolationCuboidCount);
 
     const int MAX_CUBOIDS = 256;
 
@@ -403,14 +401,11 @@ void main() {
             break;
         }
 
-        vec4 cuboidMinData =
-        getCuboidMinData(i);
+        vec4 cuboidMinData = getCuboidMinData(i);
 
-        vec3 cuboidMin =
-        cuboidMinData.xyz;
+        vec3 cuboidMin = cuboidMinData.xyz;
 
-        vec3 cuboidMax =
-        getCuboidMax(i);
+        vec3 cuboidMax = getCuboidMax(i);
 
 
         if (rayPassesThroughCuboid(
@@ -429,8 +424,7 @@ void main() {
              *     Region 1 = 2
              *     ...
              */
-            regionIndex =
-            cuboidMinData.w + 1.0;
+            regionIndex = cuboidMinData.w + 1.0;
 
             break;
         }
@@ -462,15 +456,14 @@ void main() {
      * 这样可以安全写入普通 TextureTarget。
      * ========================================================
      */
-    float encodedRegion =
-    regionIndex / REGION_IDENTITY_SCALE;
+    float encodedRegion = regionIndex / REGION_IDENTITY_SCALE;
 
     fragColor =
-    vec4(
+        vec4(
             encodedRegion,
             0.0,
             0.0,
             1.0
-    );
+        );
 
 }

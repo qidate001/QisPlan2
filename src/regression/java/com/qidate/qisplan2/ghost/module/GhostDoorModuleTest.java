@@ -7,6 +7,10 @@ import com.qidate.qisplan2.ghost.module.event.ModuleTickEvent;
 import com.qidate.qisplan2.ghost.module.implementation.GhostDoorModule;
 import com.qidate.qisplan2.ghost.module.implementation.GhostDoorPlateModule;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.Vec3;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.NbtOps;
 import net.minecraft.resources.ResourceLocation;
@@ -20,6 +24,11 @@ public final class GhostDoorModuleTest {
         BlockPos front = BlockPos.ZERO;
         boolean opened = true;
         int closed;
+        int lineScans;
+        /** 确认实际模块先关门，再按十六格的线性端口寻找目标。 */
+        public List<LivingEntity> attackLine(BlockPos pos, double range) {
+            check(!opened && range == 16, "必须关门后再沿直线检测十六格"); lineScans++; return List.of();
+        }
         /** 模拟适配器报告的正面门。 */
         public BlockPos frontDoor() { return front; }
         /** 模拟实时开门状态。 */
@@ -62,10 +71,43 @@ public final class GhostDoorModuleTest {
         return GhostAbilityExecutor.tryExecuteWithResult(new GhostAbilityContext(host, host.id, ability,
                 GhostAbilityContext.Source.POSSESSION, null, () -> {}, new GhostInvocationParameters(null, number)));
     }
+    /** 覆盖四个朝向的双向传送、距离上限及前后独立隔绝边界。 */
+    private static void verifyGeometry() {
+        for (var origin : Direction.Plane.HORIZONTAL) for (var destination : Direction.Plane.HORIZONTAL) {
+            Vec3 inward = Vec3.atLowerCornerOf(origin.getNormal());
+            float rotation = GhostDoorGeometry.rotation(origin,destination);
+            Vec3 outward = Vec3.atLowerCornerOf(destination.getOpposite().getNormal());
+            check(GhostDoorGeometry.rotate(inward,rotation).distanceTo(outward) < 1.0E-6,
+                    "来源入门方向必须旋转成目的门出门方向");
+            check(GhostDoorGeometry.rotate(GhostDoorGeometry.rotate(inward,rotation),
+                    GhostDoorGeometry.rotation(destination,origin)).distanceTo(inward) < 1.0E-6,
+                    "往返转换应还原原方向");
+            Vec3 exit = GhostDoorGeometry.exitPosition(BlockPos.ZERO,origin,destination,inward,inward);
+            check(exit.subtract(Vec3.atBottomCenterOf(BlockPos.ZERO)).dot(outward) > 0,
+                    "落点必须在出门方向一侧");
+            Vec3 reverse = GhostDoorGeometry.exitPosition(BlockPos.ZERO,origin,destination,inward.scale(-1),inward);
+            check(reverse.subtract(Vec3.atBottomCenterOf(BlockPos.ZERO)).dot(outward) < 0,
+                    "反向穿门应从相反侧离开");
+        }
+        var full = GhostDoorGeometry.attackBounds(BlockPos.ZERO,Direction.SOUTH,16,pos -> pos.equals(BlockPos.ZERO));
+        check(full.minZ == -15.5 && full.maxZ == 16.5, "门前后分别延伸十六格，来源门不自我阻断");
+        check(full.intersects(new AABB(0.2,0,15.9,0.8,1.8,16.4)), "范围末端仍应命中实体碰撞箱");
+        check(!full.intersects(new AABB(0.2,0,16.5,0.8,1.8,17)), "范围外不得命中");
+        check(!full.intersects(new AABB(1.01,0,3,1.5,1.8,4)), "直线侧面的实体不得命中");
+        var blocked = GhostDoorGeometry.attackBounds(BlockPos.ZERO,Direction.SOUTH,16,
+                pos -> pos.equals(new BlockPos(0,1,4)));
+        check(blocked.maxZ == 4 && blocked.minZ == -15.5, "上半格隔绝也应阻断，但不能影响另一侧");
+        check(!blocked.intersects(new AABB(.2,0,4.1,.8,1.8,4.8)), "隔绝方块后的目标不能命中");
+        var west = GhostDoorGeometry.attackBounds(BlockPos.ZERO,Direction.WEST,16,
+                pos -> pos.equals(new BlockPos(-2,0,0)));
+        check(west.minX == -1 && west.maxX == 16.5, "负轴方向同样截断在隔绝方块近侧");
+    }
+
     /** 执行周期规则、持久化回读、死机与非法主动输入等边界。 */
     public static void run() {
         if (!GhostModuleRegistry.contains(GhostDoorModule.ID)) GhostModuleRegistry.register(new GhostDoorModule());
         if (!GhostModuleRegistry.contains(GhostDoorPlateModule.ID)) GhostModuleRegistry.register(new GhostDoorPlateModule());
+        verifyGeometry();
         var host = new Host(GhostDoorModule.ID);
         GhostModuleRuntime.dispatch(host, new ModuleTickEvent());
         long deadline = host.data.getLong("closeAt");
@@ -84,10 +126,19 @@ public final class GhostDoorModuleTest {
         check(!host.data.contains("closeAt"), "离开门前后旧计时应失效");
         host.doors.front = BlockPos.ZERO; GhostModuleRuntime.dispatch(host,new ModuleTickEvent());
         host.time = host.data.getLong("closeAt"); GhostModuleRuntime.dispatch(host,new ModuleTickEvent());
-        check(host.doors.closed == 2, "规则到期必须调用相同的关门能力");
+        check(host.doors.closed == 2 && host.doors.lineScans == 2, "规则和主动关门必须调用相同的直线袭击出口");
         var plate = new Host(GhostDoorPlateModule.ID); plate.deadlocked = true;
         check(invoke(plate,GhostDoorPlateModule.NUMBER,123), "无门及死机状态下仍可修改号码");
         check(plate.data.getInt("number") == 123, "号码必须写回模块 customData");
+        var editAbility = GhostAbilityCatalog.all(plate).stream()
+                .filter(entry -> entry.ability().getId().equals(GhostDoorPlateModule.NUMBER)).findFirst().orElseThrow().ability();
+        check(editAbility.integerInputInitial(new GhostModuleContext(plate,plate.id)) == 123,
+                "改号初值应读取实例数据，不能固定显示 666");
+        var fresh = new Host(GhostDoorPlateModule.ID);
+        check(editAbility.integerInputInitial(new GhostModuleContext(fresh,fresh.id)) == 666, "仅未保存号码时回退默认值");
+        check(invoke(plate,GhostDoorPlateModule.NUMBER,0)
+                && editAbility.integerInputInitial(new GhostModuleContext(plate,plate.id)) == 0, "零是合法号码，不能被当成没有数据");
+        invoke(plate,GhostDoorPlateModule.NUMBER,123);
         check(!invoke(plate,GhostDoorPlateModule.NUMBER,-1) && !invoke(plate,GhostDoorPlateModule.NUMBER,1000000000)
                 && !invoke(plate,GhostDoorPlateModule.NUMBER,null), "负数、越界、缺少输入必须拒绝");
         check(plate.data.getInt("number") == 123, "非法输入不得修改原号码");
