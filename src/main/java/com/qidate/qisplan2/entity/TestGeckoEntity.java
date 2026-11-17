@@ -1,5 +1,8 @@
 package com.qidate.qisplan2.entity;
 
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.PathfinderMob;
@@ -28,7 +31,7 @@ import software.bernie.geckolib.util.GeckoLibUtil;
  *
  * 当前阶段：
  * - 不添加 AI
- * - 不添加动画
+ * - 预览厉鬼待机、移动、攻击、受击和歪头动画
  * - 不添加特殊能力
  * - 不添加任何 QisPlan2 灵异逻辑
  *
@@ -60,29 +63,40 @@ public class TestGeckoEntity extends PathfinderMob implements GeoEntity {
                 .add(Attributes.MOVEMENT_SPEED, 0.25D);
     }
 
-    @Override
-    public void registerControllers(
-            AnimatableManager.ControllerRegistrar controllers
-    ) {
-        controllers.add(
-                new AnimationController<>(
-                        this,
-                        "test_controller",
-                        0,
-                        state -> {
-                            if (state.isMoving()) {
-                                return state.setAndContinue(
-                                        RawAnimation.begin()
-                                                .thenLoop(
-                                                        "animation.qisplan2_test_gecko.move"
-                                                )
-                                );
-                            }
+    private static final RawAnimation IDLE = RawAnimation.begin()
+            .thenLoop("animation.qisplan2_corpse_ghost.idle");
+    private static final RawAnimation MOVE = RawAnimation.begin()
+            .thenLoop("animation.qisplan2_corpse_ghost.move");
+    private static final RawAnimation ATTACK = RawAnimation.begin()
+            .thenPlay("animation.qisplan2_corpse_ghost.attack");
+    private static final RawAnimation HURT = RawAnimation.begin()
+            .thenPlay("animation.qisplan2_corpse_ghost.hurt");
+    private static final RawAnimation LOOK = RawAnimation.begin()
+            .thenPlay("animation.qisplan2_corpse_ghost.look");
 
-                            return PlayState.STOP;
-                        }
-                )
+    @Override
+    public void registerControllers(AnimatableManager.ControllerRegistrar controllers) {
+        controllers.add(
+                new AnimationController<>(this, "movement", 4,
+                        state -> state.setAndContinue(state.isMoving() ? MOVE : IDLE)),
+                new AnimationController<>(this, "action", 0, state -> {
+                    if (this.hurtTime > 0) {
+                        return state.setAndContinue(HURT);
+                    }
+                    return PlayState.STOP;
+                })
+                        .triggerableAnim("attack", ATTACK)
+                        .triggerableAnim("look", LOOK)
         );
+    }
+
+    /** Right-click previews attack; sneak-right-click previews the head tilt. */
+    @Override
+    protected InteractionResult mobInteract(Player player, InteractionHand hand) {
+        if (!level().isClientSide) {
+            triggerAnim("action", player.isShiftKeyDown() ? "look" : "attack");
+        }
+        return InteractionResult.sidedSuccess(level().isClientSide);
     }
 
     @Override

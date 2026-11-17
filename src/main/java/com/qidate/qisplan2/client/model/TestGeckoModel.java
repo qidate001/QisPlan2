@@ -16,8 +16,7 @@ import software.bernie.geckolib.model.GeoModel;
  * 2. 纹理 PNG 在哪里
  * 3. 动画 JSON 在哪里
  *
- * 当前测试阶段暂时没有动画，
- * 因此动画资源先返回一个不存在的测试路径。
+ * 使用通用尸体厉鬼模型、贴图及基础动画。
  */
 public class TestGeckoModel extends GeoModel<TestGeckoEntity> {
 
@@ -27,30 +26,25 @@ public class TestGeckoModel extends GeoModel<TestGeckoEntity> {
     private static final ResourceLocation MODEL =
             ResourceLocation.fromNamespaceAndPath(
                     QisPlan2.MODID,
-                    "geo/test_gecko.geo.json"
+                    "geo/corpse_ghost.geo.json"
             );
 
     /**
      * 实体纹理。
-     *
-     * 目前如果还没有 PNG，
-     * 下一步我们再处理纹理。
      */
     private static final ResourceLocation TEXTURE =
             ResourceLocation.fromNamespaceAndPath(
                     QisPlan2.MODID,
-                    "textures/entity/test_gecko.png"
+                    "textures/entity/corpse_ghost.png"
             );
 
     /**
      * 动画文件。
-     *
-     * 第一阶段没有动画，因此这里只是提供一个路径。
      */
     private static final ResourceLocation ANIMATION =
             ResourceLocation.fromNamespaceAndPath(
                     QisPlan2.MODID,
-                    "animations/entity/test_gecko.animation.json"
+                    "animations/entity/corpse_ghost.animation.json"
             );
 
     @Override
