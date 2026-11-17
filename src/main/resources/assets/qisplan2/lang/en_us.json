@@ -363,5 +363,10 @@
   "hud.qisplan2.ability_wheel.empty": "No active abilities",
   "hud.qisplan2.ability_wheel.cancel": "Select an ability",
   "hud.qisplan2.ability_wheel.hint": "Release key / LMB to cast · Center / Esc to cancel",
-  "hud.qisplan2.ability_wheel.unavailable": "§7Requirements not met, or no valid target."
+  "hud.qisplan2.ability_wheel.unavailable": "§7Requirements not met, or no valid target.",
+  "module.qisplan2.ghost_book": "Ghost Book",
+  "ability.qisplan2.ghost_book.read": "Read Ghost Book",
+  "module.qisplan2.death_curse_sword": "Death Curse Sword",
+  "ability.qisplan2.death_curse_sword.curse": "Inflict Death Curse",
+  "qisplan2.death_curse.activated": "☠ The §4Death Curse§r reached ten stacks and triggered a supernatural attack!"
 }

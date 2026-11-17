@@ -22,6 +22,13 @@ import net.minecraft.world.phys.Vec3;
  * 目标实体是世界中的作用对象，与模块自己的载体不是同一个概念。
  */
 public interface GhostWorldAccess {
+    /** 必死诅咒的共享层数、反噬对象及消耗出口。 */
+    default GhostDeathCurseAccess deathCurses() { return GhostDeathCurseAccess.NONE; }
+    /** 校验交互者是否可以打开指定的能力界面。 */
+    default boolean canOpenScreen(ResourceLocation screen, LivingEntity user) { return false; }
+    /** 服务端授权打开界面；客户端配置与凭据不会进入网络消息。 */
+    default boolean openScreen(ResourceLocation screen, LivingEntity user) { return false; }
+
     /** 查询相对当前环境位置的 AABB 内目标；适配器使用世界实体空间索引，不遍历方块。 */
     default List<LivingEntity> livingEntities(AABB relativeBounds) { return List.of(); }
     /** 重查目标碰撞箱是否仍与相对范围相交，用于延迟能力的媒介验证。 */

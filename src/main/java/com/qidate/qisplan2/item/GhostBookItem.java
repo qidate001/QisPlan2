@@ -1,47 +1,16 @@
 package com.qidate.qisplan2.item;
 
-import com.qidate.qisplan2.client.screen.GhostBookScreen;
-import com.qidate.qisplan2.core.QisConfig;
-import net.minecraft.client.Minecraft;
-import net.minecraft.world.InteractionHand;
-import net.minecraft.world.InteractionResultHolder;
-import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.item.Item;
-import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.level.Level;
+import com.qidate.qisplan2.core.ModDataComponents;
+import com.qidate.qisplan2.ghost.module.data.GhostModuleData;
+import com.qidate.qisplan2.ghost.module.host.item.GhostModuleItem;
+import com.qidate.qisplan2.ghost.module.implementation.GhostBookModule;
+import java.util.List;
 
-public class GhostBookItem extends Item {
-
+/** 自带完整鬼书模块的普通物品；右键、驾驭及周期处理复用通用物品入口。 */
+public class GhostBookItem extends GhostModuleItem {
+    /** 仅声明默认模块，物品不再直接读取配置或打开客户端界面。 */
     public GhostBookItem(Properties properties) {
-        super(properties);
-    }
-
-    @Override
-    public InteractionResultHolder<ItemStack> use(
-            Level level,
-            Player player,
-            InteractionHand hand
-    ) {
-
-        if (level.isClientSide()) {
-
-            String apiKey =
-                    QisConfig.CLIENT.API_KEY.get();
-
-            String modelName =
-                    QisConfig.CLIENT.MODEL_NAME.get();
-
-            Minecraft.getInstance().setScreen(
-                    new GhostBookScreen(
-                            apiKey,
-                            modelName
-                    )
-            );
-        }
-
-        return InteractionResultHolder.sidedSuccess(
-                player.getItemInHand(hand),
-                level.isClientSide()
-        );
+        super(properties.component(ModDataComponents.GHOST_MODULES.get(),
+                List.of(new GhostModuleData.Entry(GhostBookModule.ID,1))));
     }
 }

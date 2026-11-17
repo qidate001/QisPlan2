@@ -32,6 +32,7 @@ public final class QisNetwork {
 
         GhostPossessionNetwork.register(event);
         GhostAbilityNetwork.register(event);
+        GhostScreenNetwork.register(event);
 
         /*
          * ========================================================

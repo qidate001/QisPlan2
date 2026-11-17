@@ -361,5 +361,10 @@
   "hud.qisplan2.ability_wheel.empty": "暂无主动能力",
   "hud.qisplan2.ability_wheel.cancel": "选择能力",
   "hud.qisplan2.ability_wheel.hint": "松开按键 / 左键释放 · 中心 / Esc 取消",
-  "hud.qisplan2.ability_wheel.unavailable": "§7当前不满足能力媒介，或没有有效目标。"
+  "hud.qisplan2.ability_wheel.unavailable": "§7当前不满足能力媒介，或没有有效目标。",
+  "module.qisplan2.ghost_book": "鬼书",
+  "ability.qisplan2.ghost_book.read": "阅读鬼书",
+  "module.qisplan2.death_curse_sword": "必死诅咒之剑",
+  "ability.qisplan2.death_curse_sword.curse": "施加必死诅咒",
+  "qisplan2.death_curse.activated": "☠ §4必死诅咒§r达到十层，灵异袭击触发！"
 }

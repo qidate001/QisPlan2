@@ -1,6 +1,6 @@
 # 厉鬼模块开发指南：从零构建一只完整的厉鬼
 
-适用版本：本文按 2026-11-14 当前仓库实现编写，Minecraft 1.21.1 / NeoForge / Java 21。
+适用版本：本文按 2026-11-17 当前仓库实现编写，Minecraft 1.21.1 / NeoForge / Java 21。
 
 本文同时说明**当前实现**与**新模块应遵循的约定**，不把尚未提供的宿主能力当成已经实现的功能。示例完整源文件见 [ContactEchoModule.java](examples/ContactEchoModule.java)，它属于文档示例，不会自动注册到游戏。
 

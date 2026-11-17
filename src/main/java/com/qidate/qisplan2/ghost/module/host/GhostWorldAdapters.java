@@ -1,6 +1,8 @@
 package com.qidate.qisplan2.ghost.module.host;
 
 import com.qidate.qisplan2.core.ModTags;
+import com.qidate.qisplan2.ghost.module.environment.GhostDeathCurseAccess;
+import com.qidate.qisplan2.network.GhostScreenNetwork;
 import com.qidate.qisplan2.ghost.module.environment.GhostWorkstationAccess;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.item.ItemStack;
@@ -71,6 +73,20 @@ public final class GhostWorldAdapters {
      */
     public static GhostWorldAccess bind(GhostModuleHost host, ResourceLocation id) {
         return new GhostWorldAccess() {
+            /** 返回诅咒状态适配器，不将来源实体暴露给模块。 */
+            public GhostDeathCurseAccess deathCurses() { return new GhostDeathCurseAdapter(host,id); }
+            /** 读者必须处于相同世界、八格内且来源暴露；不使用袭击目标过滤排除本人。 */
+            public boolean canOpenScreen(ResourceLocation screen,LivingEntity user) {
+                return GhostScreenNetwork.supports(screen) && present() && user instanceof ServerPlayer player
+                        && player.isAlive() && !player.isSpectator() && sameWorld(player.level())
+                        && player.distanceToSqr(position())<=64;
+            }
+            /** 只向已验证读者发送界面标识，客户端自行读取其配置。 */
+            public boolean openScreen(ResourceLocation screen,LivingEntity user) {
+                if (!canOpenScreen(screen,user)) return false;
+                GhostScreenNetwork.open((ServerPlayer)user,screen); return true;
+            }
+
             /** AABB 使用世界实体分区索引；空环境不进行查询。 */
             public List<LivingEntity> livingEntities(AABB bounds) {
                 return present() ? level().getEntitiesOfClass(LivingEntity.class, bounds.move(position()), this::validTarget) : List.of();
