@@ -3,6 +3,7 @@ package com.qidate.qisplan2.ghost.module;
 
 import com.qidate.qisplan2.ghost.module.ability.*;
 import com.qidate.qisplan2.ghost.module.influence.ActiveInfluenceTest;
+import com.qidate.qisplan2.ghost.module.influence.AttackResponseTest;
 import com.qidate.qisplan2.ghost.module.data.GhostModuleData;
 import com.qidate.qisplan2.ghost.module.event.ModuleTickEvent;
 import com.qidate.qisplan2.ghost.module.event.GhostEvent;
@@ -48,6 +49,7 @@ public final class PossessionInvocationTest {
         AbilityWheelTest.run();
         PrivateAbilityTest.run();
         ActiveInfluenceTest.run();
+        AttackResponseTest.run();
         GhostDoorModuleTest.run();
         GhostStoveModuleTest.run();
         BookSwordModuleTest.run();

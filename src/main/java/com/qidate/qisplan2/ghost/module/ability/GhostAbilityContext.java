@@ -1,5 +1,7 @@
 package com.qidate.qisplan2.ghost.module.ability;
 
+import java.util.UUID;
+import com.qidate.qisplan2.ghost.module.influence.GhostInfluenceExecution;
 import com.qidate.qisplan2.ghost.module.GhostModule;
 import com.qidate.qisplan2.ghost.module.GhostModuleCombatState;
 import com.qidate.qisplan2.ghost.module.GhostModuleContext;
@@ -30,6 +32,12 @@ public record GhostAbilityContext(
         Runnable stimulationCheckpoint,
         GhostAbilityParameters parameters
 ) {
+
+    /** 读取指定目标本次效果的最终强度；未处于裁决回调时使用调用方提供的原始值。 */
+    public double resolvedIntensity(UUID target, double original) {
+        var attack = GhostInfluenceExecution.resolvedAttack(target);
+        return attack == null ? original : attack.remainingIntensity();
+    }
 
     /**
      * 能力调用来源。

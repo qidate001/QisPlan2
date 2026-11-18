@@ -56,14 +56,19 @@ public final class GhostInfluenceBatch {
      * 只计算裁决结果，不应用游戏效果。
      */
     public List<GhostInfluenceResolution> resolve() {
+        return resolveDetailed().stream().map(GhostInfluenceOutcome::status).toList();
+    }
+
+    /** 结束批次并返回每条影响的剩余强度。 */
+    public List<GhostInfluenceOutcome> resolveDetailed() {
         if (resolved) {
             throw new IllegalStateException(
                     "Batch has already been resolved"
             );
         }
 
-        List<GhostInfluenceResolution> results =
-                GhostInfluenceResolver.resolve(influences);
+        List<GhostInfluenceOutcome> results =
+                GhostInfluenceResolver.resolveDetailed(influences);
 
         resolved = true;
 

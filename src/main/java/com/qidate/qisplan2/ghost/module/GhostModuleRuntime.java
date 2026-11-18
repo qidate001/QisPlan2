@@ -1,5 +1,8 @@
 package com.qidate.qisplan2.ghost.module;
 
+import com.qidate.qisplan2.ghost.module.influence.GhostAttackContext;
+import com.qidate.qisplan2.ghost.module.event.SupernaturalAttackEvent;
+import com.qidate.qisplan2.ghost.module.influence.GhostAttackResponses;
 import com.qidate.qisplan2.ghost.module.sound.GhostModuleSoundManager;
 import com.qidate.qisplan2.ghost.module.event.ModuleTickEvent;
 import com.qidate.qisplan2.ghost.module.data.GhostModuleData;
@@ -54,6 +57,12 @@ public final class GhostModuleRuntime {
             return;
         }
 
+        if (event instanceof SupernaturalAttackEvent attack) {
+            var context = new GhostAttackContext(
+                    attack, null, () -> {}, attack::remainingIntensity);
+            GhostAttackResponses.apply(
+                    GhostAttackResponses.collect(hosts), context);
+        }
         GhostInfluenceSession session =
                 new GhostInfluenceSession();
 

@@ -1,5 +1,6 @@
 package com.qidate.qisplan2.ghost.module.implementation;
 
+import com.qidate.qisplan2.ghost.module.influence.GhostAttackResponse;
 import com.qidate.qisplan2.ghost.bearing.GhostModuleForm;
 
 import com.qidate.qisplan2.ghost.bearing.SpiritualPart;
@@ -72,27 +73,14 @@ public final class GhostShroudModule implements GhostModule {
         });
     }
 
-    /** 两条规则分别处理来袭事实与覆盖期间的持续侵蚀。 */
+    /** 对抗声明只调用本模块的保护能力，规则状态、媒介和付费逻辑仍由执行器检查。 */
+    @Override public List<GhostAttackResponse> getAttackResponses() {
+        return List.of((module, attack) -> module.reactAbility(PROTECT, attack.event()));
+    }
+
+    /** 持续侵蚀仍属于自动规则；袭击抵挡由对抗声明参与。 */
     @Override public List<GhostRule> getRules() {
         return List.of(new GhostRule() {
-            /** 返回来袭规则标识。 */
-            public ResourceLocation getId() { return id("ghost_shroud/attacked"); }
-
-            /** 只响应灵异袭击，普通伤害不触发抵挡。 */
-            public boolean supports(GhostEvent event) { return event instanceof SupernaturalAttackEvent; }
-
-            /** 已被抵挡的袭击不再提交保护。 */
-            public boolean canTrigger(GhostRuleContext context, GhostEvent event) {
-                return event instanceof SupernaturalAttackEvent attack && !attack.isBlocked();
-            }
-
-            /** 提交保护能力，最终是否阻断袭击取决于实际代价支付结果。 */
-            public void onTrigger(GhostRuleContext context, GhostEvent event) {
-                var attack = (SupernaturalAttackEvent) event;
-                context.submitAbilityInfluence(PROTECT, event, attack.target(),
-                        GhostInfluenceType.PROTECTION, context.getModuleContext().intensity());
-            }
-        }, new GhostRule() {
             /** 返回持续侵蚀规则标识。 */
             public ResourceLocation getId() { return id("ghost_shroud/erosion"); }
 

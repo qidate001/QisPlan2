@@ -1,5 +1,6 @@
 package com.qidate.qisplan2.ghost.module.ability;
 
+import java.util.function.DoublePredicate;
 import com.qidate.qisplan2.ghost.module.influence.GhostInfluence;
 import com.qidate.qisplan2.ghost.module.influence.GhostInfluenceCollector;
 import com.qidate.qisplan2.ghost.module.influence.GhostInfluenceSession;
@@ -24,6 +25,11 @@ public record GhostAbilityInfluence(UUID target, GhostInfluenceType type, double
         if (server != null) GhostInfluenceCollector.collectCurses(session, context.host(), context.moduleId(),
                 context.abilityId(), target, server);
         return resolve(session, context, effect);
+    }
+
+    /** 显式接收裁决后的有效强度，供侵蚀、位移等非伤害效果使用。 */
+    public boolean executeResolved(GhostAbilityContext context, DoublePredicate effect) {
+        return execute(context, () -> effect.test(context.resolvedIntensity(target, intensity)));
     }
 
     /** 可向已有影响会话加入本次能力并完成裁决，返回实际效果结果。 */

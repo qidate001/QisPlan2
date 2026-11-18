@@ -760,9 +760,42 @@ public GhostAbilityInfluence activeInfluence(GhostAbilityContext context) {
 
 `prepareDeferred()` 可能返回 `null`。延迟 Runnable 执行时重新检查，不代表它自动提供一次性执行保证；调度层仍需避免重复排队。
 
-## 11. 调试、测试与常见问题
+## 11. 声明模块参与灵异对抗的方式
 
-### 11.1 推荐开发顺序
+对抗不是在 `tryKill` 中追加某个厉鬼的专用判断。模块通过 `getAttackResponses()` 声明响应，适配层只收集受袭目标当前承载的模块、装备和有效持续诅咒；没有声明的模块不执行对抗逻辑。
+
+```java
+/** 收到袭击时调用既有的私有保护能力。 */
+@Override
+public List<GhostAttackResponse> getAttackResponses() {
+    return List.of((module, attack) -> module.reactAbility(PROTECT, attack.event()));
+}
+```
+
+这里的 `module` 是 `GhostModuleContext`，只能使用状态和环境端口，不能获取或识别宿主。`reactAbility` 走规则来源的统一执行器，继续检查死机、沉睡、媒介与能力条件。持续主动能力如白烛则根据已启动状态与暴露媒介声明响应，不能无条件绕过状态判断。
+
+`GhostAttackResponse.order()` 决定先后顺序，默认 100。当前约定屏蔽使用 0，支付代价的吸收使用 100，累计型持续保护使用 200；相同顺序保留收集次序。不要依赖具体厉鬼 ID 排序。
+
+响应使用 `attack.event().remainingIntensity()` 获取当前剩余强度。支付代价成功后调用 `absorb(amount)`，完全抵挡可调用 `block()`。支付失败不改变袭击。前层完全阻断后，后层不执行、不会重复扣费。未声明累计型保护时不统计其历史；`attack.recentIntensity()` 在一次袭击中最多记录一次。
+
+脱离原宿主持续存在的影响，可以由 `GhostInfluenceProvider.attackResponse(remove)` 提供响应。诅咒只桥接存续状态、强度和注销出口，具体保护政策仍可放在所属模块中。返回响应后，自动收集器不会再将其作为静态强度保护重复提交。生签保留“最近一秒累计低于保护强度时抵挡，达到上限击穿”的政策；同源强度相当时优先死机并注销该保护。
+
+### 使用真正的裁决强度
+
+`GhostInfluenceOutcome` 包含状态、原始强度、最终有效强度与抵挡量。新回调可用 `session.submitResolved(...)` 接收结果；主动调用可用 `GhostAbilityInfluence.executeResolved(...)` 接收最终强度。能力内部也可调用：
+
+```java
+double actual = context.resolvedIntensity(target.getUUID(), originalIntensity);
+```
+
+不要把模块 `intensity()` 改成临时剩余值：它仍代表模块本身强度。最终伤害入口会领取同一同步效果的裁决结果，避免寿衣重复付费、生签重复累计；同一回调的第二次实际伤害需要重新结算。嵌套裁决独立保存并恢复上下文，异常退出也会清理。
+
+同步作用域不能跨 tick 或线程保留。延迟能力应在真正生效时重新提交影响，不能保存“已获准”状态后跳过目标的新防护。当前同源政策仍按同类灵异判定，尚未引入跨宿主保存的模块实例身份；不要把会话来源 UUID 当作永久实例 ID。
+
+
+## 12. 调试、测试与常见问题
+
+### 12.1 推荐开发顺序
 
 1. 完成设计表，决定哪些是规则、媒介、技能、内部维护。
 2. 写模块和真实能力实现，先使用已有世界接口。
@@ -771,7 +804,7 @@ public GhostAbilityInfluence activeInfluence(GhostAbilityContext context) {
 5. 验证自动触发、主动释放、失效条件、死机和保存恢复。
 6. 最后接入专用物品外观、实体模型或新物理采集入口。
 
-### 11.2 构建检查
+### 12.2 构建检查
 
 项目根目录执行：
 
@@ -785,7 +818,7 @@ public GhostAbilityInfluence activeInfluence(GhostAbilityContext context) {
 
 回归测试位于 `src/regression/java`，由 `PossessionInvocationTest` 串联。新增测试类不会仅因放进目录就自动执行，需要接入该入口或独立 Gradle 任务。
 
-### 11.3 至少验证这些行为
+### 12.3 至少验证这些行为
 
 | 检查 | 预期 |
 | --- | --- |
@@ -804,7 +837,7 @@ public GhostAbilityInfluence activeInfluence(GhostAbilityContext context) {
 
 编译通过不能替代真实客户端的鼠标、文字布局、声音和动画测试。
 
-### 11.4 常见问题
+### 12.4 常见问题
 
 **模块注册了，轮盘里没有？**
 
@@ -830,7 +863,8 @@ public GhostAbilityInfluence activeInfluence(GhostAbilityContext context) {
 
 它当前不是可变专属数据宿主。按第七节选择关系状态或提供持久化能力，不能靠捕获异常吞掉存档失败。
 
-## 12. 现阶段边界与发布清单
+
+## 13. 现阶段边界与发布清单
 
 ### 当前边界
 

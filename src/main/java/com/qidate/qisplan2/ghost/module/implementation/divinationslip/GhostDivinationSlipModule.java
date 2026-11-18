@@ -1,5 +1,6 @@
 package com.qidate.qisplan2.ghost.module.implementation.divinationslip;
 
+import com.qidate.qisplan2.ghost.module.influence.GhostAttackContext;
 
 import com.qidate.qisplan2.ghost.module.ability.GhostAbilityInfluence;
 import com.qidate.qisplan2.ghost.module.ability.GhostInvocationParameters;
@@ -39,6 +40,20 @@ import net.minecraft.world.entity.LivingEntity;
 import static com.qidate.qisplan2.QisPlan2.MODID;
 
 public final class GhostDivinationSlipModule implements GhostModule {
+    /** 生签持续保护的对抗声明：同源相当触发死机，其余按最近一秒累计强度抵挡。 */
+    public static void resolveLifeProtection(
+            GhostAttackContext attack, double strength,
+            Runnable remove) {
+        double incoming = attack.event().remainingIntensity();
+        if (attack.isSameNature(ID) && strength > 0 && incoming > 0
+                && Math.abs(incoming - strength) / Math.max(incoming, strength) <= 0.07D) {
+            attack.deadlock();
+            remove.run();
+        } else if (attack.recentIntensity() < strength) {
+            attack.event().block();
+        }
+    }
+
     public static final ResourceLocation ID =
             ResourceLocation.fromNamespaceAndPath(
                     MODID,

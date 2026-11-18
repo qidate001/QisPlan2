@@ -57,6 +57,7 @@ public final class GhostInfluenceCollector {
                 continue;
             }
 
+            if (provider.attackResponse(() -> {}) != null) continue;
             submitCurse(context.influenceSession(), context.host(), context.moduleId(), context.ruleId(),
                     target, curse, provider, () -> CurseManager.remove(server, curse.getId()));
 
@@ -73,6 +74,7 @@ public final class GhostInfluenceCollector {
             ResourceLocation moduleId, ResourceLocation abilityId, UUID target, MinecraftServer server) {
         for (Curse curse : CurseManager.getByTarget(target)) {
             if (!curse.isValid(server) || !(curse instanceof GhostInfluenceProvider provider)) continue;
+            if (provider.attackResponse(() -> {}) != null) continue;
             submitCurse(session, host, moduleId, abilityId, target, curse, provider,
                     () -> CurseManager.remove(server, curse.getId()));
         }

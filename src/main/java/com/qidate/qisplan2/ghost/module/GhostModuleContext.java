@@ -44,6 +44,12 @@ public record GhostModuleContext(
     /** 发布观察到的语义事实，来源宿主由中间层补全。 */
     public void dispatchEvent(GhostEvent event) { GhostModuleRuntime.dispatch(host, event); }
 
+    /** 自动对抗触发能力，遵守死机、沉睡和媒介限制，不伪装为玩家主动调用。 */
+    public boolean reactAbility(ResourceLocation abilityId, GhostEvent event) {
+        return GhostAbilityExecutor.tryExecuteWithResult(new GhostAbilityContext(host, moduleId,
+                abilityId, GhostAbilityContext.Source.RULE, event));
+    }
+
     /** 延续模块已经启动的能力，允许内部私有能力，但不能成为网络释放入口。 */
     public boolean continueAbility(ResourceLocation abilityId, GhostEvent event) {
         return GhostAbilityExecutor.tryExecuteWithResult(

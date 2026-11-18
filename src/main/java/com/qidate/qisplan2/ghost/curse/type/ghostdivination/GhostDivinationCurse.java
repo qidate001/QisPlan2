@@ -1,5 +1,6 @@
 package com.qidate.qisplan2.ghost.curse.type.ghostdivination;
 
+import com.qidate.qisplan2.ghost.module.influence.GhostAttackResponses;
 import com.qidate.qisplan2.ghost.module.implementation.divinationslip.GhostDivinationSlipModule;
 import com.qidate.qisplan2.ghost.curse.AbstractCurse;
 import com.qidate.qisplan2.ghost.module.influence.GhostInfluenceProvider;
@@ -95,6 +96,12 @@ public class GhostDivinationCurse
             MinecraftServer server
     ) {
         tickDuration();
+    }
+
+    /** 持续诅咒只桥接模块声明，不要求原宿主仍在场，也不把保护挂在袭击者身上。 */
+    @Override public GhostAttackResponses.Response attackResponse(Runnable remove) {
+        return new GhostAttackResponses.Response(200,
+                attack -> GhostDivinationSlipModule.resolveLifeProtection(attack, getStrength(), remove));
     }
 
     /** 生签保护来自鬼签模块，不能与鬼草丛等其他模块误判为同源死机。 */

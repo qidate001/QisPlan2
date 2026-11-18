@@ -18,7 +18,7 @@ import java.util.UUID;
  * 2. 袭击依次面对防护。
  * 3. 袭击强于防护时，防护被击穿，袭击保留剩余强度。
  * 4. 防护强于袭击时，袭击被抵挡，防护保留剩余强度。
- * 5. 强度相当时，同源导致死机，异源进入争夺。
+ * 5. 强度相当时，同源导致死机，异源保护抵挡且不消耗。
  * 6. 死机立即终止该目标本批次的后续攻防计算。
  *
  * 本类只计算裁决结果，不执行游戏效果。
@@ -39,6 +39,11 @@ public final class GhostInfluenceResolver {
     public static List<GhostInfluenceResolution> resolve(
             List<GhostInfluence> influences
     ) {
+        return resolveDetailed(influences).stream().map(GhostInfluenceOutcome::status).toList();
+    }
+
+    /** 同时返回获准状态与真正剩余的强度，避免效果重新使用原始强度。 */
+    public static List<GhostInfluenceOutcome> resolveDetailed(List<GhostInfluence> influences) {
         Objects.requireNonNull(influences, "influences");
 
         List<GhostInfluence> entries = List.copyOf(influences);
@@ -50,6 +55,7 @@ public final class GhostInfluenceResolver {
             results.add(GhostInfluenceResolution.ACCEPTED);
         }
 
+        double[] remaining = entries.stream().mapToDouble(GhostInfluence::intensity).toArray();
         Map<ConflictKey, List<Integer>> groups = new HashMap<>();
 
         for (int i = 0; i < entries.size(); i++) {
@@ -67,16 +73,19 @@ public final class GhostInfluenceResolver {
         }
 
         for (List<Integer> group : groups.values()) {
-            resolveGroup(entries, results, group);
+            resolveGroup(entries, results, group, remaining);
         }
 
-        return List.copyOf(results);
+        var outcomes = new ArrayList<GhostInfluenceOutcome>();
+        for (int i = 0; i < entries.size(); i++) outcomes.add(new GhostInfluenceOutcome(results.get(i),
+                entries.get(i).intensity(), results.get(i) == GhostInfluenceResolution.ACCEPTED ? remaining[i] : 0));
+        return List.copyOf(outcomes);
     }
 
     private static void resolveGroup(
             List<GhostInfluence> entries,
             List<GhostInfluenceResolution> results,
-            List<Integer> group
+            List<Integer> group, double[] remaining
     ) {
         List<Integer> protections = new ArrayList<>();
         List<Integer> attacks = new ArrayList<>();
@@ -91,7 +100,8 @@ public final class GhostInfluenceResolver {
             }
         }
 
-        if (protections.isEmpty() || attacks.isEmpty()) {
+        if (!GhostInfluenceConflictRegistry.areMutuallyExclusive(GhostInfluenceType.PROTECTION,
+                GhostInfluenceType.ATTACK) || protections.isEmpty() || attacks.isEmpty()) {
             return;
         }
 
@@ -160,7 +170,17 @@ public final class GhostInfluenceResolver {
                                 GhostInfluenceResolution.DEADLOCKED
                         );
 
-                        // 同源死机：立即停止该目标本批次的后续攻防。
+                        // 终止目标批次时显式压制尚未计算的袭击，不能保留默认获准状态。
+                        boolean after = false;
+                        for (int pending : attacks) {
+                            if (after) results.set(pending, GhostInfluenceResolution.SUPPRESSED);
+                            if (pending == attackIndex) after = true;
+                        }
+                        for (int defense : protections) {
+                            remaining[defense] = remainingProtection.get(defense);
+                            if (results.get(defense) == GhostInfluenceResolution.ACCEPTED)
+                                results.set(defense, GhostInfluenceResolution.SUPPRESSED);
+                        }
                         return;
                     }
 
@@ -212,6 +232,7 @@ public final class GhostInfluenceResolver {
                 }
             }
 
+            remaining[attackIndex] = attackStopped ? 0 : remainingAttack;
             if (!attackStopped && remainingAttack > 0.0D) {
                 // 所有防护均被击穿，袭击仍有剩余强度。
                 results.set(
@@ -220,6 +241,7 @@ public final class GhostInfluenceResolver {
                 );
             }
         }
+        for (int defense : protections) remaining[defense] = remainingProtection.get(defense);
     }
 
     /**

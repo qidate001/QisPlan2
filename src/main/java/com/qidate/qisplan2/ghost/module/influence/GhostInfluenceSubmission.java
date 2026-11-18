@@ -1,5 +1,6 @@
 package com.qidate.qisplan2.ghost.module.influence;
 
+import java.util.function.Consumer;
 import java.util.Objects;
 
 /**
@@ -11,7 +12,7 @@ import java.util.Objects;
  */
 public record GhostInfluenceSubmission(
         GhostInfluence influence,
-        Runnable acceptedEffect,
+        Consumer<GhostInfluenceOutcome> acceptedEffect,
         Runnable deadlockedEffect
 ) {
 
@@ -32,7 +33,7 @@ public record GhostInfluenceSubmission(
     ) {
         this(
                 influence,
-                acceptedEffect,
+                ignored -> acceptedEffect.run(),
                 () -> {}
         );
     }
@@ -40,8 +41,8 @@ public record GhostInfluenceSubmission(
     /**
      * 执行裁决通过后的效果。
      */
-    public void executeAcceptedEffect() {
-        acceptedEffect.run();
+    public GhostInfluenceOutcome executeAcceptedEffect(GhostInfluenceOutcome outcome) {
+        return GhostInfluenceExecution.execute(influence, outcome, acceptedEffect);
     }
 
     /**

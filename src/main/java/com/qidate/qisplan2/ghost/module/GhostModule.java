@@ -1,5 +1,6 @@
 package com.qidate.qisplan2.ghost.module;
 
+import com.qidate.qisplan2.ghost.module.influence.GhostAttackResponse;
 import com.qidate.qisplan2.ghost.module.event.GhostEvent;
 import com.qidate.qisplan2.ghost.module.data.GhostModuleData;
 
@@ -34,32 +35,6 @@ import net.minecraft.resources.ResourceLocation;
  * 不属于模块实例的当前状态。
  */
 public interface GhostModule {
-    /** 已启动能力可接收后续事实；此入口不启动自动规则。 */
-    default void onAbilityEvent(GhostModuleContext context, GhostEvent event) {}
-
-    /** 生命周期维护已启动的持续能力；不是自动规则，不能借此启动未授权技能。 */
-    default void tickAbilities(GhostModuleContext context) {}
-
-    /** 声音默认随可自主运行的状态播放；受控来源默认不自动播放。 */
-    default boolean soundEnabled(GhostModuleData.Entry entry, boolean automatic) {
-        return automatic && GhostModuleCombatState.available(entry);
-    }
-
-    /**
-     * 声明需要的自主行动类型。
-     * 具体 Goal 的创建、资源竞争和停止清理由行动适配层负责。
-     */
-    default GhostBehavior behavior() { return GhostBehavior.NONE; }
-
-    /** 可被点燃是模块性质，点燃操作由输入适配器提供。 */
-    default boolean supportsIgnition() { return false; }
-
-    /**
-     * 声明能力输出的环境效果类型，供世界系统统一查询。
-     */
-    default GhostEnvironmentalEffect environmentalEffect() {
-        return GhostEnvironmentalEffect.NONE;
-    }
 
     /**
      * 获取模块的唯一标识。
@@ -131,7 +106,7 @@ public interface GhostModule {
      *
      * 默认没有能力，保证现有模块兼容。
      */
-        default List<GhostAbility> getAbilities() { return List.copyOf(getIntrinsicAbilities()); }
+    default List<GhostAbility> getAbilities() { return List.copyOf(getIntrinsicAbilities()); }
 
 
 
@@ -163,6 +138,38 @@ public interface GhostModule {
      */
     default GhostRevivalPolicy getRevivalPolicy() {
         return GhostRevivalPolicy.allowAll();
+    }
+
+    /**
+     * 声明需要的自主行动类型。
+     * 具体 Goal 的创建、资源竞争和停止清理由行动适配层负责。
+     */
+    default GhostBehavior behavior() { return GhostBehavior.NONE; }
+
+    /** 可被点燃是模块性质，点燃操作由输入适配器提供。 */
+    default boolean supportsIgnition() { return false; }
+
+    /**
+     * 声明能力输出的环境效果类型，供世界系统统一查询。
+     */
+    default GhostEnvironmentalEffect environmentalEffect() {
+        return GhostEnvironmentalEffect.NONE;
+    }
+
+    /** 声明本模块参与袭击对抗的方式；默认不参与，不需要裁决器识别具体厉鬼。 */
+    default List<GhostAttackResponse> getAttackResponses() {
+        return List.of();
+    }
+
+    /** 已启动能力可接收后续事实；此入口不启动自动规则。 */
+    default void onAbilityEvent(GhostModuleContext context, GhostEvent event) {}
+
+    /** 生命周期维护已启动的持续能力；不是自动规则，不能借此启动未授权技能。 */
+    default void tickAbilities(GhostModuleContext context) {}
+
+    /** 声音默认随可自主运行的状态播放；受控来源默认不自动播放。 */
+    default boolean soundEnabled(GhostModuleData.Entry entry, boolean automatic) {
+        return automatic && GhostModuleCombatState.available(entry);
     }
 
     /**

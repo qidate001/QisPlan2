@@ -1,5 +1,6 @@
 package com.qidate.qisplan2.ghost.module.influence;
 
+import java.util.function.Consumer;
 import com.qidate.qisplan2.ghost.module.GhostModuleHost;
 import net.minecraft.resources.ResourceLocation;
 
@@ -108,6 +109,12 @@ public final class GhostInfluenceSession {
             Runnable acceptedEffect,
             Runnable deadlockedEffect
     ) {
+        submitResolved(influence, ignored -> acceptedEffect.run(), deadlockedEffect);
+    }
+
+    /** 新能力可以显式接收最终有效强度；兼容旧回调但不丢失结算结果。 */
+    public void submitResolved(GhostInfluence influence,
+            Consumer<GhostInfluenceOutcome> acceptedEffect, Runnable deadlockedEffect) {
         Objects.requireNonNull(influence, "influence");
         Objects.requireNonNull(acceptedEffect, "acceptedEffect");
         Objects.requireNonNull(deadlockedEffect, "deadlockedEffect");
@@ -155,7 +162,8 @@ public final class GhostInfluenceSession {
         finished = true;
 
         List<GhostInfluence> influences = batch.getInfluences();
-        List<GhostInfluenceResolution> results = batch.resolve();
+        List<GhostInfluenceOutcome> outcomes = batch.resolveDetailed();
+        List<GhostInfluenceResolution> results = outcomes.stream().map(GhostInfluenceOutcome::status).toList();
 
         // 第一阶段：先应用全部死机状态。
         int deadlockedCount = GhostInfluenceApplier.apply(
@@ -172,7 +180,8 @@ public final class GhostInfluenceSession {
             submissions.get(i).executeDeadlockedEffect();
         }
 
-        // 第三阶段：只执行仍然获准的效果。
+        // 第三阶段：持续保护也可能在执行前判定死机；同目标后续效果必须停止。
+        Set<UUID> terminatedTargets = new HashSet<>();
         for (int i = 0; i < results.size(); i++) {
             if (results.get(i) != GhostInfluenceResolution.ACCEPTED) {
                 continue;
@@ -185,7 +194,13 @@ public final class GhostInfluenceSession {
                 continue;
             }
 
-            submission.executeAcceptedEffect();
+            if (terminatedTargets.contains(influence.targetId())) continue;
+            var actual = submission.executeAcceptedEffect(outcomes.get(i));
+            if (actual.status() == GhostInfluenceResolution.DEADLOCKED) {
+                terminatedTargets.add(influence.targetId());
+                submission.executeDeadlockedEffect();
+                deadlockedCount++;
+            }
         }
 
         return deadlockedCount;

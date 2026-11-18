@@ -13,6 +13,7 @@ public final class SupernaturalAttackEvent implements GhostEvent {
     private final double intensity;
     private double remainingIntensity;
     private boolean blocked;
+    private boolean deadlocked;
 
     /** 记录受袭目标及来袭强度；无效数值不能用于购买保护。 */
     public SupernaturalAttackEvent(UUID target, double intensity) {
@@ -43,6 +44,12 @@ public final class SupernaturalAttackEvent implements GhostEvent {
         remainingIntensity = Math.max(0, remainingIntensity - amount);
         if (remainingIntensity == 0) block();
     }
+
+    /** 标记同源矛盾，供外层会话终止该目标的后续影响。 */
+    public void deadlock() { deadlocked = true; block(); }
+
+    /** 查询本次阻断是否由同源死机导致。 */
+    public boolean isDeadlocked() { return deadlocked; }
 
     /** 查询是否已有能力完整抵挡本次袭击。 */
     public boolean isBlocked() { return blocked; }

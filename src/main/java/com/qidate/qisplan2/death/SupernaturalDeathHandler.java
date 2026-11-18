@@ -3,10 +3,7 @@ package com.qidate.qisplan2.death;
 import com.qidate.qisplan2.event.GhostEntityDestructionHandler;
 import com.qidate.qisplan2.ghost.module.host.GhostAttackBridge;
 import com.qidate.qisplan2.core.ModGameRules;
-import com.qidate.qisplan2.ghost.curse.type.ghostdivination.GhostDivinationCurse;
 import com.qidate.qisplan2.ghost.layer.GhostLayerHandler;
-import com.qidate.qisplan2.ghost.module.implementation.divinationslip.GhostDivinationSlipSystem;
-import com.qidate.qisplan2.ghost.GhostAvoidanceSystem;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.LivingEntity;
 
@@ -95,46 +92,10 @@ public class SupernaturalDeathHandler {
         supernaturalIntensity =
                 Math.max(0.0D, supernaturalIntensity);
 
-        // 手持燃烧白烛令袭击停止，不再采用旧版“挨打后扣耐久抵消强度”。
-        // 延迟袭击也在这里读取最新状态，点燃后立即有效，熄灭或燃尽后立即失效。
-        if (GhostAvoidanceSystem.hasWhiteGhostCandle(entity)) return false;
-
-        // 模块先处理完整或部分抵挡，后续保护与停滞计算只接收剩余强度。
+        // 所有对抗由模块/持续影响声明；这里只接收统一流程的最终剩余强度。
         var attack = GhostAttackBridge.resolve(entity, supernaturalIntensity);
-        if (attack.isBlocked()) return false;
+        if (attack.isBlocked() || attack.remainingIntensity() <= 0) return false;
         supernaturalIntensity = attack.remainingIntensity();
-
-        // 生签统计真正穿过前层防护的强度，不重新计入已被寿衣抵挡的部分。
-        double recentIntensity =
-                SupernaturalIntensityTracker
-                        .addAndGetRecentIntensity(
-                                entity,
-                                supernaturalIntensity
-                        );
-
-        /*
-         * 生签：
-         *
-         * 最近一秒累计灵异强度
-         * V级时，小于 50 时抵挡。
-         *
-         * 达到或超过 50，
-         * 本次袭击击穿。
-         */
-        GhostDivinationCurse lifeCurse =
-                GhostDivinationSlipSystem.getLifeCurse(
-                        entity.getUUID()
-                );
-
-        if (lifeCurse != null) {
-
-            double protectionStrength =
-                    lifeCurse.getStrength();
-
-            if (recentIntensity < protectionStrength) {
-                return false;
-            }
-        }
 
         /*
          * 灵异实体受到灵异攻击
