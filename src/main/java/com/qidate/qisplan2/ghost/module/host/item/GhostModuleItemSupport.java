@@ -42,7 +42,7 @@ public interface GhostModuleItemSupport {
                                 // 驾驭失败只解除选中模块的死机，不影响物品上的其他模块。
                                 if (!host.hasModule(entry.id())) return;
                                 host.setDeadlocked(entry.id(), false);
-                                GhostModuleCombatState.set(host, entry, 0, false);
+                                // 沉睡与压制不因驾驭失败被清除。
                             }));
                     return started ? InteractionResultHolder.consume(stack) : InteractionResultHolder.fail(stack);
                 }

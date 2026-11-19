@@ -26,7 +26,7 @@ import com.qidate.qisplan2.ghost.module.host.GhostWorldAdapters;
 public interface GhostModuleHost {
 
     /** 查询中间层已建立的持续压制状态；默认没有关系，模块不识别载体类型。 */
-    default GhostSuppressionState suppression(ResourceLocation module) { return GhostSuppressionState.NONE; }
+    default GhostSuppressionState suppression(ResourceLocation module) { return GhostModuleCombatState.attackSuppression(this, module); }
 
     /** 只有真正的驭鬼承载关系可以豁免体内压制。附着于身体不代表驾驭。 */
     default boolean controlsIntrinsicModules() { return false; }

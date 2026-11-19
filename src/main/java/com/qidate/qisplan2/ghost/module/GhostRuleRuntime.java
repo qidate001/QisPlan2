@@ -49,7 +49,8 @@ public final class GhostRuleRuntime {
             return;
         }
 
-        if (!canRunRules(host, entry.id())) {
+        boolean observingSleep = entry.sleeping() && !entry.deadlocked() && host.carriesModule(entry.id());
+        if (!observingSleep && !canRunRules(host, entry.id())) {
             return;
         }
 
@@ -64,7 +65,7 @@ public final class GhostRuleRuntime {
                 List.copyOf(module.getRules());
 
         for (GhostRule rule : rules) {
-            if (!canRunRules(host, entry.id())) {
+            if (!observingSleep && !canRunRules(host, entry.id())) {
                 break;
             }
 
@@ -80,12 +81,14 @@ public final class GhostRuleRuntime {
                             session
                     );
 
-            if (!rule.canTrigger(context, event)) {
+            if (observingSleep) {
+                if (rule.disturbedWhileSleeping(context, event)) GhostModuleCombatState.disturbed(host, entry.id());
                 continue;
             }
+            if (!rule.canTrigger(context, event)) continue;
 
             // canTrigger 也可能改变模块状态。
-            if (!canRunRules(host, entry.id())) {
+            if (!observingSleep && !canRunRules(host, entry.id())) {
                 break;
             }
 

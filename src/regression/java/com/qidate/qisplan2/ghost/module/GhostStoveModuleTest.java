@@ -76,9 +76,9 @@ public final class GhostStoveModuleTest {
         check(!invoke(host,GhostStoveModule.ATTACK), "无携食目标不能因主动释放而绕过媒介");
         host.usable=false; check(!invoke(host,GhostStoveModule.WORKSTATION), "适配器拒绝交互时不能打开菜单");
         host.deadlocked=false; host.sleeping=true; GhostModuleRuntime.dispatch(host,new ModuleTickEvent());
-        check(host.queries == 1, "沉睡同样不得自动扫描目标");
+        check(host.queries == 2, "沉睡仍观察携食条件，但不得发动袭击");
         host.sleeping=false; host.exposed=false; GhostModuleRuntime.dispatch(host,new ModuleTickEvent());
-        check(host.queries == 1, "未暴露到世界的来源不能扫描实体");
+        check(host.queries == 2, "未暴露到世界的来源不能扫描实体");
         int before=host.maintenance; host.removed=true; GhostModuleRuntime.dispatch(host,new ModuleTickEvent());
         check(host.maintenance == before, "模块移除后不能继续维护工作台");
         var another=new Host(); check(GhostAbilityCatalog.all(another).size() == 2, "独立公开袭击与工作台能力");

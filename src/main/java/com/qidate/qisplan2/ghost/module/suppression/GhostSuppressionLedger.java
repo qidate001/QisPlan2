@@ -29,13 +29,16 @@ public final class GhostSuppressionLedger {
         if (old != null && old.strength() == strength) return old.state();
         var external = GhostSuppression.Level.NONE;
         var internal = GhostSuppression.Level.NONE;
+        double pressure = 0;
         for (var relation : relations.values()) {
             if (module.equals(relation.excludedModule())) continue;
             var level = relation.suppression().level(strength);
+            pressure = Math.max(pressure, relation.suppression().kind() == GhostSuppression.Kind.ABSOLUTE
+                    ? Double.POSITIVE_INFINITY : relation.suppression().strength());
             if (relation.internal()) { if (level.ordinal() > internal.ordinal()) internal = level; }
             else if (level.ordinal() > external.ordinal()) external = level;
         }
-        var result = new GhostSuppressionState(external, internal);
+        var result = new GhostSuppressionState(external, internal, pressure);
         cache.put(module, new Cached(strength, result));
         return result;
     }

@@ -41,6 +41,11 @@ public final class GhostDoorPlateModule implements GhostModule {
             public boolean supports(GhostEvent e) { return e instanceof ModuleTickEvent; }
             /** 只扫描暴露的世界环境。 */
             public boolean canTrigger(GhostRuleContext c, GhostEvent e) { return c.getModuleContext().world().present(); }
+            /** 进入已打开的关联门洞才触犯沉睡规则；不执行传送。 */
+            public boolean disturbedWhileSleeping(GhostRuleContext c, GhostEvent event) {
+                var doors = c.getModuleContext().world().doors(); var pos = doors.linkedDoor();
+                return pos != null && doors.open(pos) && doors.nearby(pos).stream().anyMatch(entity -> doors.inside(entity, pos));
+            }
             /** 所有生命实体都使用相同门洞判定，不局限于玩家。 */
             public void onTrigger(GhostRuleContext c, GhostEvent e) {
                 var doors = c.getModuleContext().world().doors(); var pos = doors.linkedDoor();

@@ -54,7 +54,7 @@ public final class GhostIgnitionInputs {
         boolean handled = false;
         for (var entry : host.getModules()) {
             var module = GhostModuleRegistry.get(entry.id());
-            if (module == null || !module.supportsIgnition() || !GhostModuleCombatState.available(entry)) continue;
+            if (module == null || !module.supportsIgnition() || entry.deadlocked()) continue;
             handled |= setLit(host, entry.id(), !entry.customData().getBoolean("lit"));
         }
         syncModel(host);

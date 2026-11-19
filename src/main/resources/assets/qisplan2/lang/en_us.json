@@ -191,7 +191,7 @@
   "command.qisplan2.possessed.header": "Currently possessed:",
   "command.qisplan2.possessed.entry": " - Revival: %s",
 
-  "command.qisplan2.stun.success": "%s has entered normal shutdown for %s seconds.",
+  "command.qisplan2.sleep.success": "%s has entered sleep for %s seconds.",
   "command.qisplan2.permanent_stun.success": "%s has entered permanent shutdown.",
 
   "command.qisplan2.corrosion.title": "§6========== Corrosion System ==========",
@@ -248,7 +248,7 @@
   "command.qisplan2.module.unknown_value": "§eUnknown§r",
   "command.qisplan2.module.values": "§7  Intensity: §b%s§7; revival: §d%s§7 / §d%s§7.§r",
   "command.qisplan2.module.bearing": "§7  Form: §d%s§7; required part: §b%s§7; occupied part: §b%s§7; bearing: §a%s§7.§r",
-  "command.qisplan2.module.states": "§7  Sleeping: §e%s§7; adjudication deadlock: §e%s§7; temporary stun remaining: §e%s§7 ticks; permanent stun: §e%s§7; rules ready: §b%s§7 (media checked separately).§r",
+  "command.qisplan2.module.states": "§7  Sleeping: §e%s§7; adjudication deadlock: §e%s§7; natural awakening remaining: §e%s§7 ticks; rules ready: §b%s§7 (media checked separately).§r",
   "command.qisplan2.module.custom_data": "§8  Custom data: §b%s§8 top-level fields (hover for full NBT).§r",
 
   "screen.qisplan2.possession.title": "Ghost Control Panel",
@@ -272,7 +272,7 @@
   "screen.qisplan2.possession.damage_reduction": "Damage reduction",
   "screen.qisplan2.possession.health_bonus": "Max health bonus",
   "screen.qisplan2.possession.revival": "Revival",
-  "screen.qisplan2.possession.deadlock": "Deadlock",
+  "screen.qisplan2.possession.deadlock": "Deadlock / Sleep",
   "screen.qisplan2.possession.suppression": "Suppression",
   "screen.qisplan2.possession.intensity": "Strength",
   "screen.qisplan2.possession.duration": "Duration",

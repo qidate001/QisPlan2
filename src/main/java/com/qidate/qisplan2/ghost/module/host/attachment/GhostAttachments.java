@@ -136,7 +136,8 @@ public final class GhostAttachments {
         if (cached != null && cached.strength() == strength) return cached.state();
         var level = GhostSuppression.Level.NONE;
         for (var relation : snapshot.relations) if (relation.level(strength).ordinal() > level.ordinal()) level = relation.level(strength);
-        var state = new GhostSuppressionState(level, GhostSuppression.Level.NONE);
+        var state = new GhostSuppressionState(level, GhostSuppression.Level.NONE,
+                snapshot.relations.stream().mapToDouble(GhostSuppression::strength).max().orElse(0));
         snapshot.states.put(module, new Cached(strength, state));
         return state;
     }

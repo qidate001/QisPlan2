@@ -72,7 +72,7 @@ public final class EntityGhostPossessionTarget
 
         if (ghost instanceof SupernaturalEntity supernatural) {
 
-            supernatural.clearSupernaturalStun();
+            // 失败不清除沉睡或外来压制，状态仍由各自生命周期管理。
         }
     }
 }

@@ -227,7 +227,7 @@ public final class GhostDivinationSlipSystem {
                     lifeCurse.getId()
             );
 
-            PossessionHandler.testStun(
+            PossessionHandler.testSleep(
                     player,
                     GhostDivinationSlipModule.ID,
                     STUN_TIME

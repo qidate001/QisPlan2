@@ -49,6 +49,11 @@ public final class GhostStoveModule implements GhostModule {
         public boolean supports(GhostEvent event) { return event instanceof ModuleTickEvent; }
         /** 没有暴露到世界的模块不产生范围效果。 */
         public boolean canTrigger(GhostRuleContext c, GhostEvent event) { return c.getModuleContext().world().present(); }
+        /** 仅附近确有携食实体才算触犯，单纯 Tick 不惊醒。 */
+        public boolean disturbedWhileSleeping(GhostRuleContext c, GhostEvent event) {
+            var m = c.getModuleContext();
+            return m.world().present() && m.world().livingEntities(AREA).stream().anyMatch(target -> eligible(m, target));
+        }
         /** 不扫描方块、不在模块中分辨玩家背包或其他载体。 */
         public void onTrigger(GhostRuleContext c, GhostEvent event) {
             var m = c.getModuleContext();

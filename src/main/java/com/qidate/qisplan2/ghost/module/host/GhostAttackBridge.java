@@ -2,6 +2,7 @@ package com.qidate.qisplan2.ghost.module.host;
 
 import com.qidate.qisplan2.ghost.curse.CurseManager;
 import com.qidate.qisplan2.ghost.module.GhostModuleHost;
+import com.qidate.qisplan2.ghost.module.GhostModuleRuntime;
 import com.qidate.qisplan2.ghost.module.GhostModuleDataModifier;
 import com.qidate.qisplan2.ghost.module.event.SupernaturalAttackEvent;
 import com.qidate.qisplan2.ghost.module.influence.GhostAttackContext;
@@ -50,6 +51,7 @@ public final class GhostAttackBridge {
                     && source.host().hasModule(source.moduleId())) modifier.setDeadlocked(source.moduleId(), true);
         }, () -> SupernaturalIntensityTracker.addAndGetRecentIntensity(target, event.remainingIntensity()));
         GhostAttackResponses.apply(responses, context);
+        GhostModuleRuntime.observeSleeping(hosts, event);
         return event;
     }
 }

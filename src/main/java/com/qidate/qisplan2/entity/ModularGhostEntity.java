@@ -1,5 +1,6 @@
 package com.qidate.qisplan2.entity;
 
+import com.qidate.qisplan2.ghost.module.GhostModuleCombatState;
 import com.qidate.qisplan2.ghost.module.host.GhostSoundSuppression;
 import com.qidate.qisplan2.ghost.module.host.attachment.GhostAttachments;
 import com.qidate.qisplan2.ghost.module.suppression.GhostSuppressionState;
@@ -45,7 +46,6 @@ import static com.qidate.qisplan2.QisPlan2.MODID;
 public class ModularGhostEntity extends PathfinderMob
         implements GhostModuleDataModifier, GhostModuleCustomDataModifier, SupernaturalEntity {
 
-    private static final double BASE_SUPERNATURAL_DEFENSE = 4.0D;
 
     private static final String NBT_GHOST_MODULES = "QisPlan2GhostModules";
     private static final String NBT_MODULE_REVIVAL = "revival";
@@ -397,20 +397,10 @@ public class ModularGhostEntity extends PathfinderMob
         return getModules().stream().mapToDouble(GhostModuleData.Entry::intensity).max().orElse(0);
     }
 
-    /**
-     * 返回灵异防御值，供伤害结算使用。
-     */
-    @Override public double getSupernaturalDefense() {
-        return getModules().stream().map(entry -> GhostModuleRegistry.get(entry.id()))
-                .filter(Objects::nonNull).mapToDouble(GhostModule::getSupernaturalDefense)
-                .filter(value -> Double.isFinite(value) && value >= 0)
-                .max().orElse(BASE_SUPERNATURAL_DEFENSE);
-    }
-
     /** 返回本模块受到的外来关系，不在实体内维护钉住布尔量。 */
     @Override public GhostSuppressionState suppression(ResourceLocation module) {
         return GhostAttachments.suppression(this, module).merge(
-                GhostSoundSuppression.state(this, module));
+                GhostSoundSuppression.state(this, module)).merge(GhostModuleCombatState.attackSuppression(this, module));
     }
 
     /**
@@ -422,43 +412,11 @@ public class ModularGhostEntity extends PathfinderMob
                 e -> GhostModuleCombatState.available(e) && suppression(e.id()).canAct());
     }
 
-    /**
-     * 只有模块列表非空且每个模块都被标记为永久死机时，返回 true。
-     */
-    @Override public boolean isPermanentlySupernaturallyStunned() {
-        return !getModules().isEmpty() && getModules().stream().allMatch(GhostModuleCombatState::permanent);
+    /** 灵异袭击按残余强度建立一秒压制，重复命中不叠加时间。 */
+    @Override public void onSupernaturalAttack(double strength) {
+        GhostModuleCombatState.attacked(this, strength);
+        if (isSupernaturallyStunned()) stopGhostMovement();
     }
-
-    /** 旧交互的全体死机操作适配为逐模块写入，宿主不再保存另一份倒计时。 */
-    public void setSupernaturalStunTicks(int ticks) {
-        for (var entry : List.copyOf(getModules()))
-            GhostModuleCombatState.set(this, entry, ticks, GhostModuleCombatState.permanent(entry));
-    }
-
-    /**
-     * 把灵异压制作用写入模块死机状态，供后续行为与规则检查。
-     */
-    @Override public void onSupernaturalAttack(int ticks) {
-        for (var entry : List.copyOf(getModules())) {
-            int total = Math.clamp((long)GhostModuleCombatState.ticks(entry) + ticks, 0, Integer.MAX_VALUE);
-            GhostModuleCombatState.set(this, entry, total, GhostModuleCombatState.permanent(entry));
-        }
-        stopGhostMovement();
-    }
-
-    /**
-     * 应用永久灵异死机，并停止当前实体行动。
-     */
-    @Override public void onPermanentSupernaturalAttack() {
-        for (var entry : List.copyOf(getModules())) GhostModuleCombatState.set(this, entry, 0, true);
-        stopGhostMovement();
-    }
-
-    /**
-     * 清零各模块的临时死机倒计时。
-     * 沿用状态写入接口，保留永久死机标记；不能用此方法解除永久死机。
-     */
-    @Override public void clearSupernaturalStun() { setSupernaturalStunTicks(0); }
 
     /**
      * 停止当前导航，清除攻击目标和攻击姿态。
@@ -476,12 +434,9 @@ public class ModularGhostEntity extends PathfinderMob
     @Override public void aiStep() {
         super.aiStep();
         if (!level().isClientSide) {
-            GhostModuleCombatState.tick(this);
-            if (isSupernaturallyStunned()) {
-                stopGhostMovement();
-                return;
-            }
+            // 压制只停止行动，不能停止状态推进和环境事实观察。
             tickGhostAI();
+            if (isSupernaturallyStunned()) stopGhostMovement();
         }
     }
 
@@ -677,8 +632,8 @@ public class ModularGhostEntity extends PathfinderMob
             int legacyTicks = Math.max(0, tag.getInt("QisPlan2SupernaturalStunTicks"));
             boolean legacyPermanent = tag.getBoolean("QisPlan2PermanentSupernaturalStun");
             for (var entry : List.copyOf(getModules())) {
-                GhostModuleCombatState.set(this, entry, Math.max(legacyTicks, GhostModuleCombatState.ticks(entry)),
-                        legacyPermanent || GhostModuleCombatState.permanent(entry));
+                if (legacyTicks > 0) GhostModuleCombatState.sleep(this, entry, legacyTicks);
+                if (legacyPermanent) setDeadlocked(entry.id(), true);
             }
         }
         refreshModuleBindings();

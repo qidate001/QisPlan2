@@ -369,7 +369,7 @@ public final class PossessionHandler {
                 revival,
                 state.strength(),
                 shallowStun,
-                state.stunTicks(),
+                state.sleepTicks(),
                 state.permanentStun(),
                 state.lastAbilityUseTick()
         );
@@ -1114,7 +1114,7 @@ public final class PossessionHandler {
                 state.revival(),
                 state.strength(),
                 newShallowStun,
-                state.stunTicks(),
+                state.sleepTicks(),
                 state.permanentStun(),
                 state.lastAbilityUseTick()
         );
@@ -1123,11 +1123,11 @@ public final class PossessionHandler {
 
     /*
      * ============================================================
-     * 普通死机
+     * 沉睡
      * ============================================================
      */
 
-    public static boolean testStun(
+    public static boolean testSleep(
             ServerPlayer player,
             ResourceLocation ghost,
             long ticks
@@ -1135,7 +1135,7 @@ public final class PossessionHandler {
         var host = new PlayerGhostModuleHost(player);
         var entry = host.getModules().stream().filter(e -> e.id().equals(ghost)).findFirst().orElse(null);
         if (entry == null) return false;
-        GhostModuleCombatState.set(host, entry, (int)Math.clamp(ticks, 1, Integer.MAX_VALUE), false);
+        GhostModuleCombatState.sleep(host, entry, Math.max(1, ticks));
         return true;
 
     }
@@ -1167,11 +1167,10 @@ public final class PossessionHandler {
             ServerPlayer player
     ) {
         var host = new PlayerGhostModuleHost(player);
-        GhostModuleCombatState.tick(host);
         for (var entry : List.copyOf(host.getModules())) {
             GhostModule module = GhostModuleRegistry.get(entry.id());
             if (module == null || !host.hasModule(entry.id())) continue;
-            if (entry.revival() >= module.getMaxRevival()) {
+            if (!entry.sleeping() && entry.revival() >= module.getMaxRevival()) {
                 GhostBreakoutHandler.breakout(player);
                 QisDeathHandler.forceKillAndCleanup(player);
                 return;

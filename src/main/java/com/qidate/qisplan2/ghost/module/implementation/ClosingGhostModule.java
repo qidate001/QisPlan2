@@ -57,11 +57,6 @@ public final class ClosingGhostModule implements GhostModule {
     @Override public GhostModuleInitialData getInitialData() { return new GhostModuleInitialData(INITIAL_INTENSITY, 0.0D); }
 
     /**
-     * 返回灵异防御值，供伤害结算使用。
-     */
-    @Override public double getSupernaturalDefense() { return 6.0D; }
-
-    /**
      * 声明能力执行前必须满足的媒介。
      * 主动调用同样需要通过媒介；规则是否触发由规则层单独判断。
      */

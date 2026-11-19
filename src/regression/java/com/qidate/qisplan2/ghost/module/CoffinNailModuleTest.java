@@ -61,11 +61,11 @@ public final class CoffinNailModuleTest {
     private static GhostAbilityContext context(Host host, GhostAbilityContext.Source source) {
         return new GhostAbilityContext(host, host.id, host.id.equals(TEST) ? ABILITY : CoffinNailModule.EMBED, source, null);
     }
-    /** 无解压制不参与算术；普通压制严格采用三个大于阈值。 */
+    /** 无解压制不参与算术；基础/高度严格大于，完全压制包含1.5倍边界。 */
     private static void thresholds() {
         check(new GhostSuppression(GhostSuppression.Kind.NORMAL, 100).level(100) == GhostSuppression.Level.NONE, "等强不压制");
         check(new GhostSuppression(GhostSuppression.Kind.NORMAL, 130).level(100) == GhostSuppression.Level.BASIC, "130仍为基础");
-        check(new GhostSuppression(GhostSuppression.Kind.NORMAL, 150).level(100) == GhostSuppression.Level.HIGH, "150仍为高度");
+        check(new GhostSuppression(GhostSuppression.Kind.NORMAL, 150).level(100) == GhostSuppression.Level.COMPLETE, "150进入完全压制");
         check(new GhostSuppression(GhostSuppression.Kind.NORMAL, 151).level(100) == GhostSuppression.Level.COMPLETE, "151完全压制");
         check(GhostSuppression.absolute().level(Double.MAX_VALUE) == GhostSuppression.Level.COMPLETE, "无解不比较强度");
     }

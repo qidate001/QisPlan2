@@ -189,7 +189,7 @@
   "command.qisplan2.possessed.header": "当前驾驭：",
   "command.qisplan2.possessed.entry": " - 复苏值：%s",
 
-  "command.qisplan2.stun.success": "%s 已进入普通死机 %s 秒。",
+  "command.qisplan2.sleep.success": "%s 已进入沉睡 %s 秒。",
   "command.qisplan2.permanent_stun.success": "%s 已进入永久死机。",
 
   "command.qisplan2.corrosion.title": "§6========== 侵蚀系统 ==========",
@@ -246,7 +246,7 @@
   "command.qisplan2.module.unknown_value": "§e未知§r",
   "command.qisplan2.module.values": "§7  灵异强度：§b%s§7；复苏：§d%s§7 / §d%s§7。§r",
   "command.qisplan2.module.bearing": "§7  形式：§d%s§7；所需部位：§b%s§7；实际占位：§b%s§7；承载状态：§a%s§7。§r",
-  "command.qisplan2.module.states": "§7  沉睡：§e%s§7；裁决死机：§e%s§7；临时死机剩余：§e%s§7 tick；永久死机：§e%s§7；规则状态就绪：§b%s§7（媒介另行检查）。§r",
+  "command.qisplan2.module.states": "§7  沉睡：§e%s§7；裁决死机：§e%s§7；自然苏醒剩余：§e%s§7 tick；规则状态就绪：§b%s§7（媒介另行检查）。§r",
   "command.qisplan2.module.custom_data": "§8  独有数据：§b%s§8 个顶层字段（悬停查看完整 NBT）。§r",
 
   "screen.qisplan2.possession.title": "驭鬼面板",
@@ -270,7 +270,7 @@
   "screen.qisplan2.possession.damage_reduction": "非灵异减伤",
   "screen.qisplan2.possession.health_bonus": "生命上限加成",
   "screen.qisplan2.possession.revival": "复苏",
-  "screen.qisplan2.possession.deadlock": "死机",
+  "screen.qisplan2.possession.deadlock": "死机 / 沉睡",
   "screen.qisplan2.possession.suppression": "压制",
   "screen.qisplan2.possession.intensity": "强度",
   "screen.qisplan2.possession.duration": "持续时间",

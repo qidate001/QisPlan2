@@ -162,7 +162,7 @@ flowchart TD
 
 `RULE`、`BEHAVIOR` 要求模块满足 `GhostModuleCombatState.available()`；承载失败、沉睡、死机等会使其不可用。
 
-当前 `GhostAbilityContext.isModuleAvailable()` 对 `POSSESSION` 的实现，是检查模块存在且可承载，然后绕过整个 `available()` 检查。因此当前代码不只是绕过裁决死机，也绕过该检查包含的沉睡、普通和永久死机状态。若未来要单独限制主动调用时的沉睡行为，需要修改统一策略，不能在各技能里悄悄添加宿主分支。
+当前 `GhostAbilityContext.isModuleAvailable()` 对 `POSSESSION` 的实现，是检查模块存在且可承载，然后绕过整个 `available()` 检查。因此当前代码不只是绕过裁决死机，也绕过该检查包含的沉睡和裁决死机状态。若未来要单独限制主动调用时的沉睡行为，需要修改统一策略，不能在各技能里悄悄添加宿主分支。
 
 这不意味着主动技能无条件成功：媒介、目标资格、能力条件、世界接口支持范围仍然有效。
 
@@ -587,7 +587,7 @@ public GhostCorrosion corrosion() {
 id / intensity / revival / sleeping / deadlocked / customData
 ```
 
-强度、复苏、沉睡和裁决死机不应在 `customData` 中重复保存。普通/永久死机等框架状态有自己的保留结构，例如 `qisplan2:combat`，不要覆盖它。
+强度、复苏、沉睡和裁决死机不应在 `customData` 中重复保存。压制积累、沉睡剩余深度与短时袭击等框架状态存放在保留结构 `qisplan2:combat`，不要覆盖它。
 
 `getInitialData()` 只提供新建实例初始值。修改定义初始强度不会自动重置已有存档。
 
@@ -938,3 +938,19 @@ double actual = context.resolvedIntensity(target.getUUID(), originalIntensity);
 | 技能目录与网络 | `ghost/module/ability/GhostAbilityCatalog.java`、`network/GhostAbilityNetwork.java` |
 | 轮盘 | `client/screen/AbilityWheelScreen.java`、`AbilityWheelLayout.java` |
 | 宿主承载 | `ghost/bearing/`；另见本文关联的承载文档 |
+
+## 压制入睡与沉睡规则观察
+
+灵异防御数值和临时死机倒计时已移除。最终灵异袭击的残余强度直接建立普通压制，持续 20 tick；再次命中替换本次强度并刷新到期时间，不叠加时长。到期仅解除这一短时来源，音乐与附着物等关系仍独立有效。
+
+普通完全压制改为 `P ≥ 1.5 × S`（且 P > 0），基础与高度仍保持严格大于。令 `q = (P / (1.5 × S))²`，连续完全压制达到 `6000 / q` tick 后进入沉睡；恰好1.5倍对应五分钟。完全压制中断便清零入睡进度。无解压制单独取 q=20，即十五秒入睡，不向 NBT 保存无穷大。
+
+初次沉睡获得六十秒自然苏醒深度。沉睡时每个有效宿主 tick 自然减少 1 tick 深度；完全压制每 tick 增加 `2q`，与自然苏醒合并后净增 `2q-1`。普通上限为 `12000q` tick（基础十分钟，三倍强度时四十分钟），无解上限二十四小时。更弱来源接管不会瞬间抹掉已有深度；超过新上限时自然恢复。稳定上限不重复写入状态。卸载/离线不补算时间，数据随模块保存和转移；恢复宿主生命周期后继续。
+
+`entry.sleeping()` 是唯一沉睡开关，`qisplan2:combat.sleepTicks` 只是对应的自然苏醒剩余深度；不要另建一份沉睡布尔量。沉睡恢复不修改玩家原有失控复苏值，也不解除裁决 deadlocked。旧 stunTicks 迁移为沉睡深度，旧 permanentStun 迁移为模块 deadlocked，迁移后移除旧字段。调试命令由 `/qisplan2 stun` 改为 `/qisplan2 sleep`。
+
+新增 `GhostRule.disturbedWhileSleeping(context, event)`：返回 true 表示本次确实触犯沉睡规则。运行时只调用此观察方法，不执行 `onTrigger` 或反击。默认离散事件复用 canTrigger，ModuleTick 默认不算触犯。以 Tick 查询目标、累计接触或等待开门的规则必须覆写，允许维护接触/计时数据，但禁止操作世界、提交影响、释放能力。鬼地毯继续累计满十五秒才惊醒；鬼灶台必须确有携食目标；鬼门必须计时到点且袭击线上有人。鬼寿衣的受袭观察也从统一对抗管线接收事实，不会重复抵挡。
+
+触犯每秒最多削减一次沉睡深度，削减 `5 × sqrt(max(1, S))` 秒，越强越快苏醒。即使本次耗尽沉睡深度，也不会用本次事件反击，下一次新的事实才恢复正常规则。普通自动行为与持续能力停止；驾驭者主动能力仍遵守原有主动调用策略和压制权限，不能绕过外来完全压制。
+
+状态推进接入宿主已有 ModuleTick，不能因为 AI 被禁用而停止 Tick 或环境事实派发。模块定义只读取世界端口与自己的数据，不识别宿主类型。关系求值继续复用缓存，不新增全世界厉鬼扫描。

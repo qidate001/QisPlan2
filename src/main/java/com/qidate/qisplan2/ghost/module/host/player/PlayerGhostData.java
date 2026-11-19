@@ -55,8 +55,8 @@ public final class PlayerGhostData {
         var custom = entry.customData();
         var player = custom.getCompound(PLAYER_STATE);
         var state = new PossessedGhostState(entry.revival() / maximum(entry.id()), entry.intensity(),
-                player.getDouble("shallowStun"), GhostModuleCombatState.ticks(entry),
-                (entry.deadlocked() || GhostModuleCombatState.permanent(entry)), player.getLong("lastAbilityUseTick"));
+                player.getDouble("shallowStun"), GhostModuleCombatState.sleepTicks(entry),
+                entry.deadlocked(), player.getLong("lastAbilityUseTick"));
         Optional<PossessedGhostDomainData> domain = Optional.empty();
         if (custom.contains("domainStrength")) {
             domain = Optional.of(new PossessedGhostDomainData(custom.getBoolean("domainOpen"),
@@ -86,7 +86,7 @@ public final class PlayerGhostData {
         if (previous == null) {
             // 仅旧存档迁移读取旧死机字段；运行时死机始终由模块接口修改。
             CompoundTag combat = new CompoundTag();
-            combat.putInt("stunTicks", (int)Math.clamp(state.stunTicks(), 0, Integer.MAX_VALUE));
+            combat.putInt("stunTicks", (int)Math.clamp(state.sleepTicks(), 0, Integer.MAX_VALUE));
             custom.put(COMBAT, combat);
         }
         value.domain().ifPresent(domain -> {

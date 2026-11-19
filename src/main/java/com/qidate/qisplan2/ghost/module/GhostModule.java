@@ -66,16 +66,6 @@ public interface GhostModule {
      */
     default GhostModuleForm form() { return GhostModuleForm.independent(); }
 
-    /**
-     * 获取该厉鬼模块声明的灵异防御基础值。
-     *
-     * 运行时根据当前安装的模块重新计算防御；
-     * 多模块宿主采用各模块声明值中的最高值，避免安装顺序改变结果。
-     * 默认值与通用模块化宿主的基础防御保持一致。
-     */
-    default double getSupernaturalDefense() {
-        return 4.0D;
-    }
 
     /**
      * 获取自然复苏速度。

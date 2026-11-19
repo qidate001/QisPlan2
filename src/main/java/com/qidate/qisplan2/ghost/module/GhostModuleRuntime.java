@@ -24,6 +24,18 @@ import java.util.List;
  */
 public final class GhostModuleRuntime {
 
+    /**
+     * 对抗管线已经完成响应后，只向沉睡模块报告事实。
+     * 不再次执行抵挡、持续能力或正常规则；即使本次惊醒也不会参与本次反击。
+     */
+    public static void observeSleeping(List<? extends GhostModuleHost> hosts, GhostEvent event) {
+        var session = new GhostInfluenceSession();
+        try {
+            for (var host : hosts) for (var entry : List.copyOf(host.getModules()))
+                if (entry.sleeping()) GhostRuleRuntime.dispatchModule(host, entry, event, session);
+        } finally { session.resolveAndApply(); }
+    }
+
     private GhostModuleRuntime() {
     }
 
@@ -69,6 +81,7 @@ public final class GhostModuleRuntime {
         try {
             for (GhostModuleHost host : List.copyOf(hosts)) {
                 if (host == null) continue;
+                if (event instanceof ModuleTickEvent) GhostModuleCombatState.tick(host);
                 if (event instanceof ModuleTickEvent)
                     GhostModuleSoundManager.syncCarriedHost(host);
                 List<GhostModuleData.Entry> entries = List.copyOf(host.getModules());
@@ -76,9 +89,9 @@ public final class GhostModuleRuntime {
                     if (!host.hasModule(entry.id())) continue;
                     GhostModule module = GhostModuleRegistry.get(entry.id());
                     if (module == null) continue;
-                    if (host.carriesModule(entry.id()) && host.suppression(entry.id()).canUseAbility(host.controlsIntrinsicModules())) module.onAbilityEvent(new GhostModuleContext(host, entry.id()), event);
+                    if ((!entry.sleeping() || host.controlsIntrinsicModules()) && host.carriesModule(entry.id()) && host.suppression(entry.id()).canUseAbility(host.controlsIntrinsicModules())) module.onAbilityEvent(new GhostModuleContext(host, entry.id()), event);
                     if (!host.hasModule(entry.id())) continue;
-                    if (event instanceof ModuleTickEvent && host.carriesModule(entry.id())
+                    if (event instanceof ModuleTickEvent && (!entry.sleeping() || host.controlsIntrinsicModules()) && host.carriesModule(entry.id())
                             && host.suppression(entry.id()).canUseAbility(host.controlsIntrinsicModules()))
                         module.tickAbilities(new GhostModuleContext(host, entry.id()));
                     if (host.hasModule(entry.id())) GhostRuleRuntime.dispatchModule(host, entry, event, session);

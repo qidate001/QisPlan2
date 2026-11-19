@@ -179,7 +179,7 @@ public class PossessionStatusRenderer {
     private static final int SHALLOW_STUN_COLOR = 0xFF6AA6FF;
 
     /**
-     * 普通死机状态颜色。
+     * 沉睡状态颜色。
      */
     private static final int STUN_COLOR = 0xFFE5484D;
 
@@ -986,7 +986,7 @@ public class PossessionStatusRenderer {
          *
          * 永久死机
          *     ↓
-         * 普通死机
+         * 沉睡
          *     ↓
          * 浅层死机
          */
@@ -996,10 +996,10 @@ public class PossessionStatusRenderer {
             color = PERMANENT_STUN_COLOR;
             value = "∞";
 
-        } else if (state.isStunned()) {
+        } else if (state.isSleeping()) {
 
             double sec =
-                    state.stunTicks() / 20.0D;
+                    state.sleepTicks() / 20.0D;
 
             progress =
                     Math.min(

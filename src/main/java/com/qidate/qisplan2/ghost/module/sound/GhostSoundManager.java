@@ -584,7 +584,7 @@ public final class GhostSoundManager {
         var host = source.host();
         var module = GhostModuleRegistry.get(source.moduleId());
         var entry = host.getModules().stream().filter(e -> e.id().equals(source.moduleId())).findFirst().orElse(null);
-        return module != null && entry != null && host.carriesModule(entry.id())
+        return module != null && entry != null && (!entry.sleeping() || host.controlsIntrinsicModules()) && host.carriesModule(entry.id())
                 && host.moduleEnvironment(entry.id()).exposed()
                 && host.suppression(entry.id()).canUseAbility(host.controlsIntrinsicModules())
                 && module.soundEnabled(entry, host.allowsAutomaticAbilities());

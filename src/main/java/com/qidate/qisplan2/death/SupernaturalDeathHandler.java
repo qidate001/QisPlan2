@@ -11,23 +11,6 @@ public class SupernaturalDeathHandler {
 
 
     /**
-     * 基础灵异停滞时间：
-     *
-     * 100 tick = 5 秒
-     *
-     * 攻击强度 1 + 防御 1 时使用这个时间。
-     */
-    private static final int BASE_STUN_TIME = 100;
-
-    /**
-     * 最低停滞时间：
-     *
-     * 5 tick = 0.25 秒
-     */
-    private static final int MIN_STUN_TIME = 5;
-
-
-    /**
      * 普通灵异攻击。
      *
      * 默认灵异强度 = 1。
@@ -101,31 +84,7 @@ public class SupernaturalDeathHandler {
          * 灵异实体受到灵异攻击
          */
         if (entity instanceof SupernaturalEntity supernaturalEntity) {
-//            QisPlan2.LOGGER.info(
-//                    "[QisPlan2] 灵异攻击命中灵异实体：{}",
-//                    entity.getName().getString()
-//            );
-            double defense =
-                    Math.max(
-                            0.01D,
-                            supernaturalEntity.getSupernaturalDefense()
-                    );
-
-            double stunTicksDouble =
-                    BASE_STUN_TIME
-                            * supernaturalIntensity
-                            / defense;
-
-            int stunTicks =
-                    Math.max(
-                            MIN_STUN_TIME,
-                            (int) Math.round(stunTicksDouble)
-                    );
-
-            supernaturalEntity.onSupernaturalAttack(
-                    stunTicks
-            );
-
+            supernaturalEntity.onSupernaturalAttack(supernaturalIntensity);
             return false;
         }
 

@@ -69,8 +69,8 @@ public final class GhostBreakoutHandler {
             var module = GhostModuleRegistry.get(entry.id());
             double max = module == null ? 100 : Math.max(1, module.getMaxRevival());
             int delay = (int)Math.max(0, Math.round((1 - entry.revival() / max) * MAX_STUN_TICKS));
-            int previous = GhostModuleCombatState.ticks(entry);
-            ghost.setSupernaturalStunTicks(Math.max(previous, delay));
+            int previous = GhostModuleCombatState.sleepTicks(entry);
+            GhostModuleCombatState.sleep(ghost, entry, Math.max(previous, delay));
             ghost.moveTo(player.getX(), player.getY(), player.getZ(), player.getYRot(), player.getXRot());
             if (player.serverLevel().addFreshEntity(ghost)) {
                 // 成功放入世界后才从玩家移除，避免创建失败时丢失模块。

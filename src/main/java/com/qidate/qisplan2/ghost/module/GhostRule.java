@@ -1,6 +1,7 @@
 package com.qidate.qisplan2.ghost.module;
 
 import com.qidate.qisplan2.ghost.module.event.GhostEvent;
+import com.qidate.qisplan2.ghost.module.event.ModuleTickEvent;
 import net.minecraft.resources.ResourceLocation;
 
 /**
@@ -15,6 +16,17 @@ import net.minecraft.resources.ResourceLocation;
  * 规则负责决定何时触发，能力负责产生具体效果。
  */
 public interface GhostRule {
+
+    /**
+     * 沉睡时观察规则是否被真正触犯，不执行 onTrigger 或任何能力。
+     * 离散语义默认复用触发条件；Tick 维护不算触犯，范围与计时规则需覆写。
+     * 可维护规则自己的接触/计时进度，但不得改变世界、提交影响或释放能力。
+     */
+    default boolean disturbedWhileSleeping(GhostRuleContext context, GhostEvent event) {
+        return !(event instanceof ModuleTickEvent)
+                && canTrigger(context, event);
+    }
+
 
     /**
      * 获取规则在所属模块中的唯一标识。

@@ -6,6 +6,9 @@ import com.qidate.qisplan2.ghost.curse.CurseManager;
 import com.qidate.qisplan2.ghost.curse.type.ghosttombstone.GhostTombstoneCurseSource;
 import com.qidate.qisplan2.ghost.module.GhostModuleRuntime;
 import com.qidate.qisplan2.ghost.module.event.GhostUseEvent;
+import com.qidate.qisplan2.ghost.module.event.ModuleTickEvent;
+import net.minecraft.world.level.block.entity.BlockEntityTicker;
+import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerPlayer;
@@ -35,6 +38,16 @@ import net.minecraft.world.phys.shapes.VoxelShape;
 public class GhostTombstoneBlock
         extends HorizontalDirectionalBlock
         implements EntityBlock {
+
+    /** 墓碑原本没有周期行为；下半部接入通用模块生命周期，以便沉睡能够自然恢复。 */
+    @Override public <T extends BlockEntity> BlockEntityTicker<T> getTicker(
+            Level level, BlockState state, BlockEntityType<T> type) {
+        if (level.isClientSide() || state.getValue(PART) != Part.LOWER) return null;
+        return (world, pos, current, block) -> {
+            if (block instanceof GhostTombstoneBlockEntity tombstone)
+                GhostModuleRuntime.dispatch(tombstone, new ModuleTickEvent());
+        };
+    }
 
     public static final MapCodec<GhostTombstoneBlock> CODEC =
             simpleCodec(GhostTombstoneBlock::new);

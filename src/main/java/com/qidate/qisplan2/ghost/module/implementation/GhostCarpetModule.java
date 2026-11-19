@@ -69,6 +69,15 @@ public final class GhostCarpetModule implements GhostModule {
                 return event instanceof TouchEvent touch && touch.target().isAlive()
                         && !touch.target().level().isClientSide();
             }
+            /** 沉睡仍累计真实接触，满一轮才惊醒；不袭击、不蔓延。 */
+            public boolean disturbedWhileSleeping(GhostRuleContext c, GhostEvent event) {
+                if (!canTrigger(c, event)) return false;
+                var touch = (TouchEvent) event; var m = c.getModuleContext();
+                var state = m.targetState().read(touch.target());
+                int attempts = accumulate(state, touch.elapsedTicks(), m.world().contactIntervalTicks(touch.target(), CONTACT_TICKS));
+                m.targetState().write(touch.target(), state);
+                return attempts > 0;
+            }
             /** 每次先保存新进度，再提交裁决；袭击被挡住也已消耗本轮接触时间。 */
             public void onTrigger(GhostRuleContext c, GhostEvent event) {
                 var touch = (TouchEvent) event;

@@ -15,6 +15,7 @@ import com.qidate.qisplan2.ghost.module.event.*;
 import com.qidate.qisplan2.ghost.module.influence.GhostInfluenceType;
 import java.util.List;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.phys.AABB;
 import net.minecraft.resources.ResourceLocation;
 import static com.qidate.qisplan2.QisPlan2.MODID;
 
@@ -50,11 +51,6 @@ public final class NightWandererModule implements GhostModule {
      * 仅用于初始化；已存在实例以保存的模块数据为准。
      */
     @Override public GhostModuleInitialData getInitialData() { return new GhostModuleInitialData(INITIAL_INTENSITY, 0); }
-
-    /**
-     * 返回灵异防御值，供伤害结算使用。
-     */
-    @Override public double getSupernaturalDefense() { return 6; }
 
     /** 实体行为直接调用活动能力，不以请求伪装语义事件。 */
 
@@ -107,6 +103,17 @@ public final class NightWandererModule implements GhostModule {
              */
             @Override public boolean canTrigger(GhostRuleContext c, GhostEvent e) {
                 return c.getModuleContext().world().present();
+            }
+
+            /** 沉睡不主动追击；夜间三格内仍有目标时可以被惊醒，不依赖已停止的 Goal。 */
+            @Override public boolean disturbedWhileSleeping(GhostRuleContext c, GhostEvent e) {
+                var world = c.getModuleContext().world();
+                if (!world.present() || world.isDay()) return false;
+                if (e instanceof SleepTimeSkippedEvent sleep) return sleep.skippedTicks() >= 600;
+                if (e instanceof EntityNearbyEvent nearby)
+                    return world.validTarget(nearby.target()) && world.position().distanceToSqr(nearby.target().position()) <= 9;
+                return world.livingEntities(new AABB(-3,-3,-3,3,3,3)).stream()
+                        .anyMatch(target -> world.validTarget(target) && world.position().distanceToSqr(target.position()) <= 9);
             }
 
             /**

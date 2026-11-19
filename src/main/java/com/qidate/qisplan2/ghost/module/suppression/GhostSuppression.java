@@ -12,10 +12,10 @@ public record GhostSuppression(Kind kind, double strength) {
     }
     /** 创建由媒介维持的无解压制。 */
     public static GhostSuppression absolute() { return new GhostSuppression(Kind.ABSOLUTE, 0); }
-    /** 严格大于才进入下一等级；比较目标本质强度，避免压制递归放大。 */
+    /** 基础/高度保持严格大于；完全压制从1.5倍起，作为五分钟入睡的精确基准。 */
     public Level level(double targetStrength) {
         if (kind == Kind.ABSOLUTE) return Level.COMPLETE;
-        if (strength > targetStrength * 1.5) return Level.COMPLETE;
+        if (strength > 0 && strength >= targetStrength * 1.5) return Level.COMPLETE;
         if (strength > targetStrength * 1.3) return Level.HIGH;
         return strength > targetStrength ? Level.BASIC : Level.NONE;
     }

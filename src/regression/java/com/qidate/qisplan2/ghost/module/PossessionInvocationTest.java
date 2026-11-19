@@ -55,6 +55,7 @@ public final class PossessionInvocationTest {
         BookSwordModuleTest.run();
         CoffinNailModuleTest.run();
         PianoSuppressionTest.run();
+        SuppressionSleepTest.run();
         GhostModuleRegistry.register(new GhostModule() {
             /**
              * 获取当前定义的唯一标识。
@@ -136,14 +137,14 @@ public final class PossessionInvocationTest {
         Host host = new Host();
         CompoundTag timed = new CompoundTag();
         CompoundTag combat = new CompoundTag();
-        combat.putInt("stunTicks", 200);
+        combat.putDouble("sleepTicks", 200);
         timed.put("qisplan2:combat", combat);
         CompoundTag permanent = timed.copy();
         permanent.getCompound("qisplan2:combat").putBoolean("permanentStun", true);
         for (var entry : List.of(
                 new GhostModuleData.Entry(ID, 10, 0, false, true, new CompoundTag()),
-                new GhostModuleData.Entry(ID, 10, 0, false, false, timed),
-                new GhostModuleData.Entry(ID, 10, 0, false, false, permanent))) {
+                new GhostModuleData.Entry(ID, 10, 0, true, false, timed),
+                new GhostModuleData.Entry(ID, 10, 0, false, true, permanent))) {
             host.entries = List.of(entry);
             int before = effects;
             var active = new GhostAbilityContext(host, ID, ID, GhostAbilityContext.Source.POSSESSION, null);
@@ -177,8 +178,8 @@ public final class PossessionInvocationTest {
         check(!GhostCandleModule.isLit(new GhostModuleData.Entry(ID, 5, 0, true, false, lit)),
                 "沉睡鬼烛不能提供效果");
         lit.put("qisplan2:combat", combat);
-        check(!GhostCandleModule.isLit(new GhostModuleData.Entry(ID, 5, 0, false, false, lit)),
-                "限时死机鬼烛不能提供效果");
+        check(!GhostCandleModule.isLit(new GhostModuleData.Entry(ID, 5, 0, true, false, lit)),
+                "沉睡鬼烛不能提供效果");
         check(GhostCandleModule.soundBurnPerTick(0) == 0, "没有声音压力时不额外燃烧");
         check(GhostCandleModule.soundBurnPerTick(10) * 20 == 1, "10强度应额外消耗1耐久每秒");
         check(GhostCandleModule.soundBurnPerTick(50) * 20 == 5, "声音压力应随强度线性增加");

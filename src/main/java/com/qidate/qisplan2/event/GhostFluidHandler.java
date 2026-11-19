@@ -509,7 +509,7 @@ public final class GhostFluidHandler {
                             newRevival,
                             state.strength(),
                             state.shallowStun(),
-                            state.stunTicks(),
+                            state.sleepTicks(),
                             state.permanentStun(),
                             state.lastAbilityUseTick()
                     );

@@ -32,13 +32,13 @@ public final class PianoSuppressionTest {
         ledger.put(first, relation);
         check(ledger.state(TARGET, 15).external() == GhostSuppression.Level.NONE, "等强不压制");
         check(ledger.state(TARGET, 14).external() == GhostSuppression.Level.BASIC, "15对14基础压制");
-        check(ledger.state(TARGET, 10).external() == GhostSuppression.Level.HIGH, "15对10只能高度，必须严格大于1.5倍");
+        check(ledger.state(TARGET, 10).external() == GhostSuppression.Level.COMPLETE, "15对10恰好进入完全压制");
         check(ledger.state(TARGET, 9).external() == GhostSuppression.Level.COMPLETE, "15对9完全压制");
         long version = ledger.revision(); var state = ledger.state(TARGET, 9);
         for (int i = 0; i < 1000; i++) ledger.put(first, relation);
         check(ledger.revision() == version && ledger.state(TARGET, 9) == state, "稳定听觉关系不得反复重算状态");
         ledger.put(second, new GhostSuppressionLedger.Relation(offer(100), false, null));
-        check(ledger.state(TARGET, 20).external() == GhostSuppression.Level.HIGH, "多来源取最强且不简单相加");
+        check(ledger.state(TARGET, 20).external() == GhostSuppression.Level.COMPLETE, "多来源取最强且不简单相加");
         ledger.remove(second);
         check(ledger.state(TARGET, 20).external() == GhostSuppression.Level.NONE && !ledger.isEmpty(), "停一台仍保留另一台关系");
         ledger.put(first, new GhostSuppressionLedger.Relation(offer(200), false, null));

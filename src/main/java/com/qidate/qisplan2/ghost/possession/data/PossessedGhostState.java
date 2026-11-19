@@ -54,10 +54,10 @@ public record PossessedGhostState(
 
         /*
          * ============================================================
-         * 普通死机剩余 Tick
+         * 沉睡剩余 Tick
          * ============================================================
          */
-        long stunTicks,
+        long sleepTicks,
 
         /*
          * ============================================================
@@ -111,10 +111,10 @@ public record PossessedGhostState(
                         MAX_SHALLOW_STUN
                 );
 
-        stunTicks =
+        sleepTicks =
                 Math.max(
                         0L,
-                        stunTicks
+                        sleepTicks
                 );
     }
 
@@ -153,7 +153,7 @@ public record PossessedGhostState(
                                             0L
                                     )
                                     .forGetter(
-                                            PossessedGhostState::stunTicks
+                                            PossessedGhostState::sleepTicks
                                     ),
 
                             Codec.BOOL
@@ -204,7 +204,7 @@ public record PossessedGhostState(
                     PossessedGhostState::shallowStun,
 
                     ByteBufCodecs.VAR_LONG,
-                    PossessedGhostState::stunTicks,
+                    PossessedGhostState::sleepTicks,
 
                     ByteBufCodecs.BOOL,
                     PossessedGhostState::permanentStun,
@@ -249,12 +249,12 @@ public record PossessedGhostState(
      */
 
     /**
-     * 是否处于普通死机。
+     * 是否处于沉睡。
      */
-    public boolean isStunned() {
+    public boolean isSleeping() {
 
         return !permanentStun
-                && stunTicks > 0;
+                && sleepTicks > 0;
     }
 
 
@@ -273,6 +273,6 @@ public record PossessedGhostState(
     public boolean isAnyStun() {
 
         return permanentStun
-                || stunTicks > 0;
+                || sleepTicks > 0;
     }
 }

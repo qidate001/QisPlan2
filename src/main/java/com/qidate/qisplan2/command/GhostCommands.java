@@ -176,12 +176,12 @@ public final class GhostCommands {
 
         /*
          * ========================================================
-         * /qisplan2 stun <ghost> <seconds>
+         * /qisplan2 sleep <ghost> <seconds>
          * ========================================================
          */
 
         root.then(
-                Commands.literal("stun")
+                Commands.literal("sleep")
                         .then(
                                 Commands.argument(
                                                 "ghost",
@@ -210,7 +210,7 @@ public final class GhostCommands {
                                                                 }
                                                         )
                                                         .executes(
-                                                                GhostCommands::stun
+                                                                GhostCommands::sleep
                                                         )
                                         )
                         )
@@ -813,11 +813,11 @@ public final class GhostCommands {
 
     /*
      * ============================================================
-     * 普通死机
+     * 沉睡
      * ============================================================
      */
 
-    private static int stun(
+    private static int sleep(
             CommandContext<CommandSourceStack> context
     ) {
 
@@ -856,7 +856,7 @@ public final class GhostCommands {
                 );
 
         boolean success =
-                PossessionHandler.testStun(
+                PossessionHandler.testSleep(
                         player,
                         ghost,
                         seconds * 20L
@@ -878,7 +878,7 @@ public final class GhostCommands {
         context.getSource()
                 .sendSuccess(
                         () -> Component.translatable(
-                                "command.qisplan2.stun.success",
+                                "command.qisplan2.sleep.success",
                                 ghostName,
                                 seconds
                         ),
@@ -1654,7 +1654,7 @@ public final class GhostCommands {
 
     /**
      * 全部宿主共用详细信息输出。占位来自承载分配结果，不能将模块要求的皮肤误报为物品实际占据的部位。
-     * 临时死机 tick、永久死机和裁决死机分别显示；规则就绪不代表当前能力媒介已经满足。
+     * 沉睡剩余 tick 与裁决死机分别显示；规则就绪不代表当前能力媒介已经满足。
      * 独有数据放在悬浮文本里，避免较大的 NBT 直接刷满聊天栏。
      */
     private static int printModuleInfo(CommandSourceStack source, GhostModuleHost host, Component header) {
@@ -1683,8 +1683,7 @@ public final class GhostCommands {
             source.sendSuccess(() -> moduleText("values", entry.intensity(), entry.revival(), maximum), false);
             source.sendSuccess(() -> moduleText("bearing", form, required, actual, status), false);
             source.sendSuccess(() -> moduleText("states", moduleBoolean(entry.sleeping()),
-                    moduleBoolean(entry.deadlocked()), GhostModuleCombatState.ticks(entry),
-                    moduleBoolean(GhostModuleCombatState.permanent(entry)),
+                    moduleBoolean(entry.deadlocked()), GhostModuleCombatState.sleepTicks(entry),
                     moduleBoolean(carried && GhostModuleCombatState.available(entry))), false);
             source.sendSuccess(() -> moduleText("custom_data", entry.customData().getAllKeys().size())
                     .withStyle(style -> style.withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT,

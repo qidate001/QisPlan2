@@ -85,11 +85,18 @@ public final class GhostShroudModule implements GhostModule {
             public ResourceLocation getId() { return id("ghost_shroud/erosion"); }
 
             /** 只接收统一模块生命周期事件。 */
-            public boolean supports(GhostEvent event) { return event instanceof ModuleTickEvent; }
+            public boolean supports(GhostEvent event) { return event instanceof ModuleTickEvent || event instanceof SupernaturalAttackEvent; }
+
+            /** 受到覆盖表面的灵异袭击才惊醒；不支付生命代价、不抵挡本次袭击。 */
+            public boolean disturbedWhileSleeping(GhostRuleContext c, GhostEvent event) {
+                return event instanceof SupernaturalAttackEvent attack
+                        && c.getModuleContext().environment().surfaceCovered()
+                        && c.getModuleContext().environment().coversSurface(attack.target());
+            }
 
             /** 未覆盖时暂停计时；死机和沉睡由规则运行时统一阻止。 */
             public boolean canTrigger(GhostRuleContext context, GhostEvent event) {
-                return context.getModuleContext().environment().surfaceCovered();
+                return event instanceof ModuleTickEvent && context.getModuleContext().environment().surfaceCovered();
             }
 
             /** 计时存入模块独有数据，迁移或保存时随模块一起保留。 */

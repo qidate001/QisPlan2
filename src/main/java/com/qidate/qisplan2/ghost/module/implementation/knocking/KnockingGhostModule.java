@@ -51,11 +51,6 @@ public final class KnockingGhostModule implements GhostModule {
      */
     @Override public GhostModuleInitialData getInitialData() { return new GhostModuleInitialData(INITIAL_INTENSITY, 0); }
 
-    /**
-     * 返回灵异防御值，供伤害结算使用。
-     */
-    @Override public double getSupernaturalDefense() { return 6; }
-
 
     /** 玩家敲门产生的后续袭击属于主动能力链，不重新经过自动听声规则。 */
 

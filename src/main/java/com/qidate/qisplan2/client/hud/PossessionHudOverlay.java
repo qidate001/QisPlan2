@@ -210,16 +210,16 @@ public class PossessionHudOverlay {
             stunColor =
                     PERMANENT_STUN_COLOR;
 
-        } else if (state.isStunned()) {
+        } else if (state.isSleeping()) {
 
             /*
-             * 普通死机
+             * 沉睡
              *
              * 10 秒 = 满条
              */
 
             double seconds =
-                    state.stunTicks()
+                    state.sleepTicks()
                             / 20.0D;
 
             stunProgress =

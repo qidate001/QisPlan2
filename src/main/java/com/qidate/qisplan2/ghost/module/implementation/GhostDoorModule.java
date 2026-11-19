@@ -50,6 +50,24 @@ public final class GhostDoorModule implements GhostModule {
             public boolean supports(GhostEvent e) { return e instanceof ModuleTickEvent; }
             /** 只在暴露的世界环境中计时。 */
             public boolean canTrigger(GhostRuleContext c, GhostEvent e) { return c.getModuleContext().world().present(); }
+            /** 沉睡期间只维护开门计时；到点且射线上有人才惊醒，不关门、不袭击。 */
+            public boolean disturbedWhileSleeping(GhostRuleContext c, GhostEvent event) {
+                var m = c.getModuleContext(); var doors = m.world().doors(); var pos = doors.frontDoor();
+                var data = m.getCustomData();
+                if (pos == null || !doors.open(pos)) {
+                    if (data.contains("closeAt")) { data.remove("closeAt"); data.remove("timedDoor"); m.setCustomData(data); }
+                    return false;
+                }
+                long now = m.world().gameTime();
+                if (!data.contains("closeAt") || data.getLong("timedDoor") != pos.asLong()) {
+                    data.putLong("timedDoor", pos.asLong());
+                    data.putLong("closeAt", now + ThreadLocalRandom.current().nextInt(300, 801));
+                    m.setCustomData(data); return false;
+                }
+                if (now < data.getLong("closeAt")) return false;
+                data.remove("closeAt"); m.setCustomData(data);
+                return doors.attackLine(pos, 16).stream().anyMatch(target -> !m.world().isOrigin(target));
+            }
             /** 新门或新一轮开启重新随机计时；手动关闭会清除本轮，避免旧延迟误关新一轮。 */
             public void onTrigger(GhostRuleContext c, GhostEvent e) {
                 var m = c.getModuleContext(); var doors = m.world().doors(); var pos = doors.frontDoor();

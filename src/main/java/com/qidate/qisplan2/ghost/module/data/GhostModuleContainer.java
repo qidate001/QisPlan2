@@ -232,7 +232,13 @@ public final class GhostModuleContainer {
             return false;
         }
 
-        putEntry(current.withSleeping(sleeping));
+        var updated = current.withSleeping(sleeping);
+        var custom = updated.customData().copy();
+        var combat = custom.getCompound("qisplan2:combat").copy();
+        if (sleeping && combat.getDouble("sleepTicks") <= 0) combat.putDouble("sleepTicks", 1200);
+        if (!sleeping) { combat.remove("sleepTicks"); combat.remove("lastDisturbed"); }
+        custom.put("qisplan2:combat", combat);
+        putEntry(updated.withCustomData(custom));
         return true;
     }
 

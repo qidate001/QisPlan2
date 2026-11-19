@@ -177,7 +177,7 @@ public final class GhostStrengthSystem {
                 state.revival(),
                 newStrength,
                 state.shallowStun(),
-                state.stunTicks(),
+                state.sleepTicks(),
                 state.permanentStun(),
                 state.lastAbilityUseTick()
         );
@@ -210,7 +210,7 @@ public final class GhostStrengthSystem {
                         strength
                 ),
                 state.shallowStun(),
-                state.stunTicks(),
+                state.sleepTicks(),
                 state.permanentStun(),
                 state.lastAbilityUseTick()
         );

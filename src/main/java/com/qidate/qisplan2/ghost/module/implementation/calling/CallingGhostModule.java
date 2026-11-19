@@ -59,9 +59,14 @@ public final class CallingGhostModule implements GhostModule {
         /** 返回能力或模块的稳定标识。 */
         public ResourceLocation getId() { return id("calling_ghost/turn_rule"); }
         /** 只筛选本规则能处理的语义事件。 */
-        public boolean supports(GhostEvent e) { return e instanceof SourceSeenEvent; }
+        public boolean supports(GhostEvent e) { return e instanceof SourceSeenEvent || e instanceof ModuleTickEvent; }
         /** 判定本事件是否应触发自动规则。 */
-        public boolean canTrigger(GhostRuleContext c, GhostEvent e) { return !c.getModuleContext().getCustomData().getBoolean("manualCalling"); }
+        public boolean canTrigger(GhostRuleContext c, GhostEvent e) { return e instanceof SourceSeenEvent && !c.getModuleContext().getCustomData().getBoolean("manualCalling"); }
+        /** 沉睡后停止跟随和扭头，但仍观察原目标是否真正看见来源。 */
+        public boolean disturbedWhileSleeping(GhostRuleContext c, GhostEvent e) {
+            var m = c.getModuleContext(); var target = m.world().target();
+            return target != null && m.world().validTarget(target) && m.world().sourceVisibleTo(target);
+        }
         /** 在当前事件会话中提交能力影响。 */
         public void onTrigger(GhostRuleContext c, GhostEvent e) {
             var turn = (SourceSeenEvent)e;

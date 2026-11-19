@@ -4,6 +4,8 @@ import com.qidate.qisplan2.block.GhostPianoBlock;
 import com.qidate.qisplan2.core.ModBlocks;
 import com.qidate.qisplan2.ghost.isolation.GhostIsolationSystem;
 import com.qidate.qisplan2.ghost.module.GhostModule;
+import com.qidate.qisplan2.ghost.module.GhostModuleRuntime;
+import com.qidate.qisplan2.ghost.module.event.ModuleTickEvent;
 import com.qidate.qisplan2.ghost.module.GhostModuleRegistry;
 import com.qidate.qisplan2.ghost.module.data.GhostModuleContainer;
 import com.qidate.qisplan2.ghost.module.data.GhostModuleInitialData;
@@ -158,6 +160,8 @@ public class GhostPianoBlockEntity
                 != GhostPianoBlock.Part.LEFT) {
             return;
         }
+
+        GhostModuleRuntime.dispatch(blockEntity, new ModuleTickEvent());
 
         /*
          * 平均约每 5 tick 生成一次音符粒子。
