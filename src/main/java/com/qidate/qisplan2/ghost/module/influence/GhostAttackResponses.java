@@ -25,7 +25,8 @@ public final class GhostAttackResponses {
                 if (definition == null) continue;
                 for (var response : definition.getAttackResponses()) {
                     responses.add(new Response(response.order(), attack -> {
-                        if (host.carriesModule(entry.id()))
+                        if (host.carriesModule(entry.id())
+                                && host.suppression(entry.id()).canUseAbility(host.controlsIntrinsicModules()))
                             response.respond(new GhostModuleContext(host, entry.id()), attack);
                     }));
                 }

@@ -44,9 +44,7 @@ public record GhostAbilityContext(
      */
     public enum Source {
 
-        /**
-         * 由厉鬼规则触发。
-         */
+        /** 由厉鬼规则触发。*/
         RULE,
 
         /** 由实体行为直接调用，不要求存在语义事件。 */
@@ -141,6 +139,12 @@ public record GhostAbilityContext(
      */
     public boolean isModuleAvailable() {
         // 死机禁用自动规则和行为，但不禁止驭鬼者主动调用；媒介仍由执行器检查。
+        boolean controlled = host.controlsIntrinsicModules()
+                && (source == Source.POSSESSION || source == Source.CONTINUATION);
+        var suppression = host.suppression(moduleId);
+        if (!suppression.canUseAbility(controlled)
+                || (source == Source.RULE && !suppression.canRunRules())
+                || (source == Source.BEHAVIOR && !suppression.canAct())) return false;
         return host.carriesModule(moduleId) && host.getModules().stream().anyMatch(entry -> entry.id().equals(moduleId)
                 && ((source == Source.POSSESSION || source == Source.CONTINUATION) || GhostModuleCombatState.available(entry)));
     }

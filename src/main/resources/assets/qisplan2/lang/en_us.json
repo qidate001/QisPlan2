@@ -368,5 +368,7 @@
   "ability.qisplan2.ghost_book.read": "Read Ghost Book",
   "module.qisplan2.death_curse_sword": "Death Curse Sword",
   "ability.qisplan2.death_curse_sword.curse": "Inflict Death Curse",
-  "qisplan2.death_curse.activated": "☠ The §4Death Curse§r reached ten stacks and triggered a supernatural attack!"
+  "qisplan2.death_curse.activated": "☠ The §4Death Curse§r reached ten stacks and triggered a supernatural attack!",
+  "module.qisplan2.coffin_nail": "Coffin Nail",
+  "ability.qisplan2.coffin_nail.embed": "Embed"
 }

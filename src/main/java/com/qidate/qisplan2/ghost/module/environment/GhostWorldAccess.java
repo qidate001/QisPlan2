@@ -22,6 +22,9 @@ import net.minecraft.world.phys.Vec3;
  * 目标实体是世界中的作用对象，与模块自己的载体不是同一个概念。
  */
 public interface GhostWorldAccess {
+    /** 独立附着来源的建立与媒介查询接口。 */
+    default GhostAttachmentAccess attachments() { return GhostAttachmentAccess.NONE; }
+
     /** 必死诅咒的共享层数、反噬对象及消耗出口。 */
     default GhostDeathCurseAccess deathCurses() { return GhostDeathCurseAccess.NONE; }
     /** 校验交互者是否可以打开指定的能力界面。 */

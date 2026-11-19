@@ -53,6 +53,7 @@ public final class PossessionInvocationTest {
         GhostDoorModuleTest.run();
         GhostStoveModuleTest.run();
         BookSwordModuleTest.run();
+        CoffinNailModuleTest.run();
         GhostModuleRegistry.register(new GhostModule() {
             /**
              * 获取当前定义的唯一标识。

@@ -1,5 +1,7 @@
 package com.qidate.qisplan2.entity;
 
+import com.qidate.qisplan2.ghost.module.host.attachment.GhostAttachments;
+import com.qidate.qisplan2.ghost.module.suppression.GhostSuppressionState;
 import com.qidate.qisplan2.ghost.bearing.HostComposition;
 import com.qidate.qisplan2.ghost.module.host.entity.GhostEntityBindings;
 
@@ -404,23 +406,18 @@ public class ModularGhostEntity extends PathfinderMob
                 .max().orElse(BASE_SUPERNATURAL_DEFENSE);
     }
 
-    /** 棺材钉属于实体上插入的物品；它压制宿主，但不覆盖模块原有休眠或永久死机状态。 */
-    public boolean isCoffinNailed() { return getPersistentData().getBoolean("QisPlan2CoffinNailed"); }
-
-    /**
-     * 更新棺材钉约束状态，供实体行动控制检查。
-     */
-    public void setCoffinNailed(boolean nailed) {
-        getPersistentData().putBoolean("QisPlan2CoffinNailed", nailed);
+    /** 返回本模块受到的外来关系，不在实体内维护钉住布尔量。 */
+    @Override public GhostSuppressionState suppression(ResourceLocation module) {
+        return GhostAttachments.suppression(this, module);
     }
 
     /**
      * 判断实体是否应整体停止自主行为。
-     * 棺材钉约束直接阻止行动；有模块但没有任何可用模块时，也视为整体受限。
+     * 每个模块独立查询持续压制；没有任何模块允许自主行动时整体停止。
      */
     @Override public boolean isSupernaturallyStunned() {
-        return isCoffinNailed() || (!getModules().isEmpty()
-                && getModules().stream().noneMatch(GhostModuleCombatState::available));
+        return !getModules().isEmpty() && getModules().stream().noneMatch(
+                e -> GhostModuleCombatState.available(e) && suppression(e.id()).canAct());
     }
 
     /**

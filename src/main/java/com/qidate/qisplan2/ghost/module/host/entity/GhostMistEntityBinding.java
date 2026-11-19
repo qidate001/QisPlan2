@@ -45,8 +45,8 @@ public final class GhostMistEntityBinding {
      */
     public static boolean isActive(ModularGhostEntity host) {
         return host.level() instanceof ServerLevel && host.isAlive() && !host.isRemoved()
-                && !host.isCoffinNailed() && !host.isSupernaturallyStunned()
-                && host.getModules().stream().anyMatch(e -> e.id().equals(ID) && GhostModuleCombatState.available(e));
+                && !host.isSupernaturallyStunned()
+                && host.getModules().stream().anyMatch(e -> e.id().equals(ID) && GhostModuleCombatState.available(e) && host.suppression(ID).canAct());
     }
 
     /**

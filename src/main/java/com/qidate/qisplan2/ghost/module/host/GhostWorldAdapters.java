@@ -1,5 +1,7 @@
 package com.qidate.qisplan2.ghost.module.host;
 
+import com.qidate.qisplan2.ghost.module.environment.GhostAttachmentAccess;
+import com.qidate.qisplan2.ghost.module.host.attachment.GhostAttachments;
 import com.qidate.qisplan2.core.ModTags;
 import com.qidate.qisplan2.ghost.module.environment.GhostDeathCurseAccess;
 import com.qidate.qisplan2.network.GhostScreenNetwork;
@@ -73,6 +75,11 @@ public final class GhostWorldAdapters {
      */
     public static GhostWorldAccess bind(GhostModuleHost host, ResourceLocation id) {
         return new GhostWorldAccess() {
+            /** 插入来源由专用适配器解释，模块只得到附着能力。 */
+            @Override public GhostAttachmentAccess attachments() {
+                return GhostAttachments.bind(host);
+            }
+
             /** 返回诅咒状态适配器，不将来源实体暴露给模块。 */
             public GhostDeathCurseAccess deathCurses() { return new GhostDeathCurseAdapter(host,id); }
             /** 读者必须处于相同世界、八格内且来源暴露；不使用袭击目标过滤排除本人。 */
@@ -416,6 +423,7 @@ public final class GhostWorldAdapters {
              * 先检查目标世界，再交给统一死亡处理；返回实际击杀是否成功。
              */
             public boolean attack(LivingEntity target, ResourceKey<DamageType> type, double intensity) {
+                if (!host.suppression(id).canUseAbility(host.controlsIntrinsicModules())) return false;
                 // 静态来源没有实体形体；由目标所在的服务端世界提供伤害注册表。
                 // 有已知世界时仍严格检查维度，不能跨维度袭击。
                 if (target == null || !(target.level() instanceof ServerLevel)

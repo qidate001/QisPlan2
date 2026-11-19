@@ -14,6 +14,7 @@ import com.qidate.qisplan2.ghost.module.ability.GhostAbility;
 import com.qidate.qisplan2.ghost.module.ability.GhostAbilityContext;
 import com.qidate.qisplan2.ghost.module.data.GhostModuleInitialData;
 import com.qidate.qisplan2.ghost.module.sound.GhostSoundDefinition;
+import com.qidate.qisplan2.ghost.module.suppression.GhostSuppression;
 import com.qidate.qisplan2.ghost.possession.classification.GhostClassification;
 import com.qidate.qisplan2.ghost.possession.classification.GhostTag;
 import com.qidate.qisplan2.ghost.possession.data.PossessedGhostDomainData;
@@ -35,6 +36,12 @@ import net.minecraft.resources.ResourceLocation;
  * 不属于模块实例的当前状态。
  */
 public interface GhostModule {
+    /** 是否接收手持来源对实体的交互事实，输入桥不硬编码具体厉鬼。 */
+    default boolean supportsEntityUse() { return false; }
+    /** 附着时的独立模型资源，null 表示不额外显示。 */
+    default ResourceLocation attachmentModel() { return null; }
+
+
 
     /**
      * 获取模块的唯一标识。
@@ -108,8 +115,6 @@ public interface GhostModule {
      */
     default List<GhostAbility> getAbilities() { return List.copyOf(getIntrinsicAbilities()); }
 
-
-
     /** 声明本厉鬼拥有的全部独立技能；规则、行为与轮盘直接调用同一个定义。 */
     default List<GhostAbility> getIntrinsicAbilities() {
         return List.of();
@@ -121,6 +126,11 @@ public interface GhostModule {
      * 默认没有媒介，保证现有模块兼容。
      */
     default List<GhostMedium> getMedia() {
+        return List.of();
+    }
+
+    /** 持续关系的强度与类型由模块声明；框架只在媒介关系变化时重新收集。 */
+    default List<GhostSuppression> getSuppressions(GhostModuleContext context) {
         return List.of();
     }
 

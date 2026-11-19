@@ -747,6 +747,7 @@ public final class GhostSoundManager {
             var entry = host.getModules().stream().filter(e -> e.id().equals(source.moduleId())).findFirst().orElse(null);
             if (module == null || entry == null || !host.carriesModule(entry.id())
                     || !host.moduleEnvironment(entry.id()).exposed()
+                    || !host.suppression(entry.id()).canUseAbility(host.controlsIntrinsicModules())
                     || !module.soundEnabled(entry, host.allowsAutomaticAbilities())) return false;
         }
         Vec3 start = source.position();

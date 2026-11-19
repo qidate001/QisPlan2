@@ -4,6 +4,7 @@ import com.qidate.qisplan2.ghost.bearing.HostComposition;
 import com.qidate.qisplan2.ghost.bearing.GhostBearing;
 
 import com.qidate.qisplan2.ghost.module.data.GhostModuleData;
+import com.qidate.qisplan2.ghost.module.suppression.GhostSuppressionState;
 import net.minecraft.resources.ResourceLocation;
 
 import java.util.List;
@@ -23,6 +24,13 @@ import com.qidate.qisplan2.ghost.module.host.GhostWorldAdapters;
  * 宿主能够保存模块数据，不代表它必须允许模块状态变化。
  */
 public interface GhostModuleHost {
+
+    /** 查询中间层已建立的持续压制状态；默认没有关系，模块不识别载体类型。 */
+    default GhostSuppressionState suppression(ResourceLocation module) { return GhostSuppressionState.NONE; }
+
+    /** 只有真正的驭鬼承载关系可以豁免体内压制。附着于身体不代表驾驭。 */
+    default boolean controlsIntrinsicModules() { return false; }
+
     /** 是否允许未显式启动的自主表现；受控宿主可关闭，模块无需得知载体身份。 */
     default boolean allowsAutomaticAbilities() { return true; }
 

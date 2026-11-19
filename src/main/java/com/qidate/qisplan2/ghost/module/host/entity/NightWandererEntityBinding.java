@@ -29,9 +29,8 @@ public final class NightWandererEntityBinding {
      * 行为在开始或继续执行前使用此检查，避免已失效模块继续操作世界。
      */
     public static boolean isActive(ModularGhostEntity host) {
-        return host.level() instanceof ServerLevel && host.isAlive() && !host.isCoffinNailed()
-                && !host.isSupernaturallyStunned() && host.getModules().stream()
-                .anyMatch(e -> e.id().equals(ID) && GhostModuleCombatState.available(e));
+        return host.level() instanceof ServerLevel && host.isAlive() && !host.isSupernaturallyStunned() && host.getModules().stream()
+                .anyMatch(e -> e.id().equals(ID) && GhostModuleCombatState.available(e) && host.suppression(ID).canAct());
     }
 
     /**

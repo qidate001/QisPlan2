@@ -97,6 +97,7 @@ public final class GhostModuleRegistry {
         register(new GhostDoorModule());
         register(new GhostStoveModule());
         register(new GhostBookModule());
+        register(new CoffinNailModule());
         register(new DeathCurseSwordModule());
         register(new GhostDoorPlateModule());
         register(new GhostGrassModule());

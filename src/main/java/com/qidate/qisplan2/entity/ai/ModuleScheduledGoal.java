@@ -54,7 +54,7 @@ public final class ModuleScheduledGoal extends Goal {
      * 造成找门重复扫描或行为内部冷却在一刻内减少多次。
      */
     private boolean hasDemand() {
-        if (!host.isAlive() || host.isSupernaturallyStunned() || host.isCoffinNailed()
+        if (!host.isAlive() || host.isSupernaturallyStunned() || !host.suppression(moduleId).canAct()
                 || host.getModules().stream().noneMatch(e -> e.id().equals(moduleId)
                         && GhostModuleCombatState.available(e))) return false;
         long now = host.level().getGameTime();

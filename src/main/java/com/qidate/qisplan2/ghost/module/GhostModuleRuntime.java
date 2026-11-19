@@ -76,9 +76,10 @@ public final class GhostModuleRuntime {
                     if (!host.hasModule(entry.id())) continue;
                     GhostModule module = GhostModuleRegistry.get(entry.id());
                     if (module == null) continue;
-                    if (host.carriesModule(entry.id())) module.onAbilityEvent(new GhostModuleContext(host, entry.id()), event);
+                    if (host.carriesModule(entry.id()) && host.suppression(entry.id()).canUseAbility(host.controlsIntrinsicModules())) module.onAbilityEvent(new GhostModuleContext(host, entry.id()), event);
                     if (!host.hasModule(entry.id())) continue;
-                    if (event instanceof ModuleTickEvent && host.carriesModule(entry.id()))
+                    if (event instanceof ModuleTickEvent && host.carriesModule(entry.id())
+                            && host.suppression(entry.id()).canUseAbility(host.controlsIntrinsicModules()))
                         module.tickAbilities(new GhostModuleContext(host, entry.id()));
                     if (host.hasModule(entry.id())) GhostRuleRuntime.dispatchModule(host, entry, event, session);
                 }

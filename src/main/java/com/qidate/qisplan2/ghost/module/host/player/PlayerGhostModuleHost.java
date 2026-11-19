@@ -1,5 +1,7 @@
 package com.qidate.qisplan2.ghost.module.host.player;
 
+import com.qidate.qisplan2.ghost.module.host.attachment.GhostAttachments;
+import com.qidate.qisplan2.ghost.module.suppression.GhostSuppressionState;
 import com.qidate.qisplan2.ghost.bearing.HostComposition;
 
 import com.qidate.qisplan2.ghost.module.GhostModuleCustomDataModifier;
@@ -28,6 +30,13 @@ public final class PlayerGhostModuleHost
 
 
     private final Player player;
+    /** 驭鬼模块才属于体内来源，插入的物品不会加入本适配器的数据。 */
+    @Override public boolean controlsIntrinsicModules() { return true; }
+    /** 只读附着关系计算出的状态，不从背包或世界扫描压制来源。 */
+    @Override public GhostSuppressionState suppression(ResourceLocation module) {
+        return GhostAttachments.suppression(player, module);
+    }
+
 
     /** 玩家固定采用二十一个人形承载部位。 */
     @Override public HostComposition composition() { return HostComposition.HUMANOID; }

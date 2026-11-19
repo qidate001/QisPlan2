@@ -1,103 +1,16 @@
 package com.qidate.qisplan2.item;
 
-import com.qidate.qisplan2.QisPlan2;
-import com.qidate.qisplan2.entity.ModularGhostEntity;
+import com.qidate.qisplan2.core.ModDataComponents;
+import com.qidate.qisplan2.ghost.module.data.GhostModuleData;
+import com.qidate.qisplan2.ghost.module.host.item.GhostModuleItem;
+import com.qidate.qisplan2.ghost.module.implementation.CoffinNailModule;
+import java.util.List;
 
-import net.minecraft.world.InteractionHand;
-import net.minecraft.world.InteractionResult;
-import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.item.Item;
-import net.minecraft.world.item.ItemStack;
-
-public class CoffinNailItem
-        extends Item {
-
-    public CoffinNailItem(
-            Properties properties
-    ) {
-        super(properties);
-    }
-
-    @Override
-    public InteractionResult interactLivingEntity(
-            ItemStack stack,
-            Player player,
-            LivingEntity target,
-            InteractionHand hand
-    ) {
-
-        /*
-         * ========================================================
-         * 只处理厉鬼。
-         * ========================================================
-         */
-        if (!(target instanceof ModularGhostEntity ghost)) {
-
-            return InteractionResult.PASS;
-        }
-
-        /*
-         * ========================================================
-         * Shift + 右键：
-         *
-         * 不在这里处理。
-         *
-         * 拔钉由 ModularGhostEntity.mobInteract()
-         * 统一处理，而且空手也可以拔。
-         * ========================================================
-         */
-        if (player.isShiftKeyDown()) {
-
-            return InteractionResult.PASS;
-        }
-
-        /*
-         * ========================================================
-         * 客户端预测。
-         * ========================================================
-         */
-        if (player.level().isClientSide()) {
-
-            return InteractionResult.SUCCESS;
-        }
-
-        /*
-         * ========================================================
-         * 已经被棺材钉钉住。
-         *
-         * 不重复钉，也不消耗物品。
-         * ========================================================
-         */
-        if (ghost.isCoffinNailed()) {
-
-            return InteractionResult.CONSUME;
-        }
-
-        /*
-         * ========================================================
-         * 钉入棺材钉。
-         * ========================================================
-         */
-        ghost.setCoffinNailed(
-                true
-        );
-
-        /*
-         * 立即开始普通死机。
-         */
-        ghost.setSupernaturalStunTicks(
-                20
-        );
-
-        /*
-         * 非创造模式消耗一根。
-         */
-        if (!player.isCreative()) {
-
-            stack.shrink(1);
-        }
-
-        return InteractionResult.CONSUME;
+/** 自带棺材钉模块的物品；不识别实体类型，不直接写入死机状态。 */
+public class CoffinNailItem extends GhostModuleItem {
+    /** 模块数据跟随物品栈保存，插入后原样进入独立附着容器。 */
+    public CoffinNailItem(Properties properties) {
+        super(properties.component(ModDataComponents.GHOST_MODULES.get(),
+                List.of(new GhostModuleData.Entry(CoffinNailModule.ID, 1))));
     }
 }

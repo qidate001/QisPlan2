@@ -22,6 +22,7 @@ public final class GhostEnvironmentalEffects {
      */
     public static boolean active(GhostModuleHost host, GhostEnvironmentalEffect effect) {
         return host.getModules().stream().anyMatch(e -> host.carriesModule(e.id()) && (GhostModuleCombatState.available(e) || e.customData().getBoolean("manualBurn"))
+                && host.suppression(e.id()).canUseAbility(host.controlsIntrinsicModules())
                 && e.customData().getBoolean("lit")
                 && effect.name().equals(e.customData().getString("activeEffect"))
                 && host.moduleEnvironment(e.id()).exposed());

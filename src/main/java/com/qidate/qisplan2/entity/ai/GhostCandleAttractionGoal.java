@@ -26,7 +26,7 @@ public final class GhostCandleAttractionGoal extends Goal {
      * 检查行为需要的模块状态、环境或目标条件，交由 Goal 调度器决定是否取得控制。
      */
     @Override public boolean canUse() {
-        if (!host.isAlive() || host.isCoffinNailed() || host.isSupernaturallyStunned()
+        if (!host.isAlive() || host.isSupernaturallyStunned()
                 || host.getModules().stream().noneMatch(GhostModuleCombatState::available)) return false;
         target = GhostAvoidanceSystem.preferredTarget(host, GhostAvoidanceSystem.ATTRACTION_RANGE, p -> true);
         return target != null;

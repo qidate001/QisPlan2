@@ -1,6 +1,5 @@
 package com.qidate.qisplan2.ghost.possession;
 
-import com.qidate.qisplan2.core.ModItems;
 import com.qidate.qisplan2.ghost.module.GhostModuleCombatState;
 import com.qidate.qisplan2.entity.ModularGhostEntity;
 import com.qidate.qisplan2.ghost.possession.manager.GhostPossessionManager;
@@ -11,7 +10,6 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.item.ItemStack;
 
 public final class GhostPossessionInteractionSystem {
 
@@ -30,37 +28,8 @@ public final class GhostPossessionInteractionSystem {
             return InteractionResult.PASS;
         }
 
-        /*
-         * Shift：棺材钉交互。
-         */
-        if (player.isShiftKeyDown()) {
-
-            if (ghost.isCoffinNailed()) {
-
-                if (!ghost.level().isClientSide()
-                        && player instanceof ServerPlayer serverPlayer) {
-
-                    ghost.setCoffinNailed(false);
-                    ghost.setSupernaturalStunTicks(0);
-
-                    ItemStack nail =
-                            new ItemStack(ModItems.COFFIN_NAIL.get());
-
-                    if (!serverPlayer.isCreative()) {
-
-                        if (!serverPlayer.getInventory().add(nail)) {
-                            serverPlayer.drop(nail, false);
-                        }
-                    }
-
-                    return InteractionResult.CONSUME;
-                }
-
-                return InteractionResult.SUCCESS;
-            }
-
-            return InteractionResult.PASS;
-        }
+        // 附着物拔出由统一实体交互桥处理，驾驭系统不拥有附着物。
+        if (player.isShiftKeyDown()) return InteractionResult.PASS;
 
         /*
          * 必须空手。
@@ -72,7 +41,7 @@ public final class GhostPossessionInteractionSystem {
         /*
          * 必须死机。
          */
-        if (!ghost.isCoffinNailed() && ghost.getModules().stream().allMatch(GhostModuleCombatState::available)) {
+        if (ghost.getModules().stream().allMatch(e -> GhostModuleCombatState.available(e) && ghost.suppression(e.id()).canRunRules())) {
             return InteractionResult.PASS;
         }
 
@@ -84,7 +53,7 @@ public final class GhostPossessionInteractionSystem {
 
             var moduleId = ghost.getModules().stream()
                     .filter(e -> !PossessionHandler.hasGhost(serverPlayer, e.id()))
-                    .filter(e -> ghost.isCoffinNailed() || !GhostModuleCombatState.available(e))
+                    .filter(e -> !ghost.suppression(e.id()).canRunRules() || !GhostModuleCombatState.available(e))
                     .map(e -> e.id()).findFirst().orElse(null);
             if (moduleId == null) {
                 serverPlayer.displayClientMessage(Component.literal("没有可以驾驭的死机厉鬼模块。"), true);
