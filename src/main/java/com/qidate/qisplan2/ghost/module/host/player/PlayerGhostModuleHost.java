@@ -1,5 +1,6 @@
 package com.qidate.qisplan2.ghost.module.host.player;
 
+import com.qidate.qisplan2.ghost.module.host.GhostSoundSuppression;
 import com.qidate.qisplan2.ghost.module.host.attachment.GhostAttachments;
 import com.qidate.qisplan2.ghost.module.suppression.GhostSuppressionState;
 import com.qidate.qisplan2.ghost.bearing.HostComposition;
@@ -34,7 +35,8 @@ public final class PlayerGhostModuleHost
     @Override public boolean controlsIntrinsicModules() { return true; }
     /** 只读附着关系计算出的状态，不从背包或世界扫描压制来源。 */
     @Override public GhostSuppressionState suppression(ResourceLocation module) {
-        return GhostAttachments.suppression(player, module);
+        return GhostAttachments.suppression(player, module).merge(
+                GhostSoundSuppression.state(player, module));
     }
 
 

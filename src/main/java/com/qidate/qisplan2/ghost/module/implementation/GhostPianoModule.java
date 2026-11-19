@@ -1,5 +1,6 @@
 package com.qidate.qisplan2.ghost.module.implementation;
 
+import com.qidate.qisplan2.ghost.module.suppression.GhostSuppression;
 import com.qidate.qisplan2.ghost.module.GhostModuleCombatState;
 import com.qidate.qisplan2.ghost.module.GhostModuleContext;
 import com.qidate.qisplan2.ghost.module.data.GhostModuleData;
@@ -117,6 +118,13 @@ public final class GhostPianoModule implements GhostModule {
                         32.0D
                 )
         );
+    }
+
+    /** 鬼音乐媒介成立时，以当前模块本质强度的 30% 持续压制其他模块。 */
+    @Override public GhostSuppression soundSuppression(
+            GhostModuleContext context, ResourceLocation soundType) {
+        return ID.equals(soundType) ? new GhostSuppression(
+                GhostSuppression.Kind.NORMAL, context.intensity() * 0.30D) : null;
     }
 
     /** 自主状态默认播放；显式开始的音乐不因规则死机而被取消。 */

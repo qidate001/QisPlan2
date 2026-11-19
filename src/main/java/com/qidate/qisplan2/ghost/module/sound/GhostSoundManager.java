@@ -15,6 +15,13 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.phys.AABB;
+import java.lang.ref.WeakReference;
+import java.util.LinkedHashMap;
+import com.qidate.qisplan2.ghost.module.host.GhostSoundSuppression;
+import net.neoforged.neoforge.event.entity.EntityLeaveLevelEvent;
+import net.neoforged.neoforge.event.server.ServerStoppedEvent;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.bus.api.SubscribeEvent;
@@ -29,9 +36,9 @@ import java.util.function.Predicate;
  *
  * 核心职责：
  * 1. 注册、更新和注销方块及实体声音源。
- * 2. 判断玩家是否处于声音传播范围内。
+ * 2. 判断所有生物是否处于声音传播范围内。
  * 3. 判断声音传播路径是否被指定方块阻挡。
- * 4. 追踪每名玩家正在听到的具体声音源。
+ * 4. 追踪每个生物正在听到的具体声音源。
  * 5. 将声音传播事件派发给发声模块宿主。
  * 6. 通过播放适配器通知客户端开始或停止播放。
  *
@@ -55,23 +62,27 @@ public final class GhostSoundManager {
      * 当前已注册的声音源。
      *
      * 每个声源使用稳定的 SourceKey 标识。
-     * 同一个 key 重复注册时只更新配置，不会直接重置玩家听觉状态。
+     * 同一个 key 重复注册时只更新配置，不会直接重置听众的听觉状态。
      */
     private static final Map<SourceKey, SoundSource> SOURCES =
             new HashMap<>();
 
     /**
-     * 每名玩家当前听到的声音源快照。
+     * 每个生物当前听到的声音源快照。
      *
      * 使用 SoundSource 快照，而不是只保存 SourceKey。
      *
      * 原因：
-     * 声源可能在玩家下一次检查之前就被注销。
+     * 声源可能在听众下一次检查之前就被注销。
      * 保存快照后，管理器仍然可以找到原宿主和播放适配器，
      * 正确停止声音，并判断该声音类别是否彻底中断。
      */
     private static final Map<UUID, Map<SourceKey, SoundSource>> HEARD_SOURCES =
             new HashMap<>();
+
+    /** 仅跟踪当前或上一轮听众，不保留已卸载实体的强引用。 */
+    private static final Map<UUID, WeakReference<LivingEntity>> LISTENERS = new HashMap<>();
+
 
     private GhostSoundManager() {
     }
@@ -454,10 +465,10 @@ public final class GhostSoundManager {
     /**
      * 注销声音源。
      *
-     * 对仍在听该声源的玩家：
+     * 对仍在听该声源的生物：
      * 1. 派发 LEFT 事件。
      * 2. 停止客户端播放。
-     * 3. 判断该玩家是否仍能听到同类别的其他声源。
+     * 3. 判断该听众是否仍能听到同类别的其他声源。
      * 4. 如果同类别声源全部消失，只派发一次 INTERRUPTED。
      *
      * 注意：
@@ -465,244 +476,118 @@ public final class GhostSoundManager {
      * 否则从 SOURCES 删除后就无法找到原宿主。
      */
     private static void unregisterSource(SourceKey key) {
-        SoundSource source = SOURCES.get(key);
-
-        if (source == null) {
-            return;
+        // 先注销，避免中断规则执行期间重新进入同一注销流程。
+        SoundSource source = SOURCES.remove(key);
+        if (source == null) return;
+        for (var entry : List.copyOf(HEARD_SOURCES.entrySet())) {
+            var heard = entry.getValue();
+            var previous = heard.remove(key);
+            if (previous == null) continue;
+            GhostSoundSuppression.remove(entry.getKey(), createNetworkSourceId(key));
+            var reference = LISTENERS.get(entry.getKey());
+            var listener = reference == null ? null : reference.get();
+            if (heard.isEmpty()) { HEARD_SOURCES.remove(entry.getKey()); LISTENERS.remove(entry.getKey()); }
+            if (listener == null) continue;
+            safeStop(previous, listener);
+            if (!listener.isAlive() || listener.isRemoved() || listener.level() != source.level()) continue;
+            dispatch(previous, GhostSoundEvent.Type.LEFT, listener);
+            if (!hasHeardSoundType(heard, previous.soundType()))
+                dispatch(previous, GhostSoundEvent.Type.INTERRUPTED, listener);
         }
-
-        /*
-         * 收集需要更新的玩家，避免遍历 HEARD_SOURCES 时修改其内部集合。
-         */
-        List<UUID> affectedPlayers = new ArrayList<>();
-
-        for (Map.Entry<UUID, Map<SourceKey, SoundSource>> entry
-                : HEARD_SOURCES.entrySet()) {
-            if (entry.getValue().containsKey(key)) {
-                affectedPlayers.add(entry.getKey());
-            }
-        }
-
-        /*
-         * 对每位仍在听该声源的玩家执行退出传播处理。
-         */
-        for (UUID playerId : affectedPlayers) {
-            Map<SourceKey, SoundSource> heard =
-                    HEARD_SOURCES.get(playerId);
-
-            if (heard == null) {
-                continue;
-            }
-
-            SoundSource previousSource = heard.remove(key);
-
-            if (previousSource == null) {
-                continue;
-            }
-
-            ServerPlayer player = source.level()
-                    .getServer()
-                    .getPlayerList()
-                    .getPlayer(playerId);
-
-            /*
-             * 玩家可能已离线，或已经切换维度。
-             * 离线玩家不再需要发送播放停止数据包。
-             */
-            if (player == null || player.level() != source.level()) {
-                continue;
-            }
-
-            /*
-             * 该声源不再向这名玩家传播。
-             */
-            dispatch(
-                    previousSource,
-                    GhostSoundEvent.Type.LEFT,
-                    player
-            );
-
-            safeStop(previousSource, player);
-
-            /*
-             * 只有同类别的其他声源也全部不可听时，
-             * 才触发一次 INTERRUPTED。
-             */
-            boolean stillHearsSameType = hasHeardSoundType(
-                    heard,
-                    previousSource.soundType()
-            );
-
-            if (!stillHearsSameType) {
-                dispatch(
-                        previousSource,
-                        GhostSoundEvent.Type.INTERRUPTED,
-                        player
-                );
-            }
-
-            /*
-             * 没有任何听觉状态时清理玩家条目。
-             */
-            if (heard.isEmpty()) {
-                HEARD_SOURCES.remove(playerId);
-            }
-        }
-
-        /*
-         * 所有听众状态处理完成后，再正式移除声源。
-         */
-        SOURCES.remove(key);
     }
 
-    // =========================================================
-    // 服务端 tick
-    // =========================================================
-
     /**
-     * 定期刷新所有在线玩家的声音传播状态。
-     *
-     * 本方法应由现有的 NeoForge 事件注册机制调用。
+     * 每五 tick 检查活跃声源附近的空间索引及上一轮听众，不遍历世界全部生物。
+     * 先完成整轮传播采样，再更新关系，避免本轮按声源遍历先后改变传播判定。
+     * 相同来源、目标和强度的关系更新是幂等操作，稳定压制不会重新计算。
      */
-    @SubscribeEvent
-    public static void onServerTick(ServerTickEvent.Post event) {
-        if (event.getServer().getTickCount() % CHECK_INTERVAL != 0) {
-            return;
-        }
-
+    @SubscribeEvent public static void onServerTick(ServerTickEvent.Post event) {
+        if (event.getServer().getTickCount() % CHECK_INTERVAL != 0) return;
         for (var source : List.copyOf(SOURCES.values())) {
             if (source.moduleId() != null && (!source.host().hasModule(source.moduleId())
                     || !source.host().moduleWorld(source.moduleId()).present()
                     || !source.host().moduleWorld(source.moduleId()).sameWorld(source.level()))) unregisterSource(source.key());
         }
-        for (ServerLevel level : event.getServer().getAllLevels()) {
-            for (ServerPlayer player : level.players()) {
-                updatePlayer(player, level);
+        Map<LivingEntity, Map<SourceKey, SoundSource>> next = new LinkedHashMap<>();
+        for (var entry : List.copyOf(LISTENERS.entrySet())) {
+            var listener = entry.getValue().get();
+            if (listener == null) {
+                HEARD_SOURCES.remove(entry.getKey()); LISTENERS.remove(entry.getKey());
+                GhostSoundSuppression.removeTarget(entry.getKey());
+            } else if (!listener.isAlive() || listener.isRemoved()) removeListener(listener);
+            else next.put(listener, new HashMap<>());
+        }
+        for (var source : List.copyOf(SOURCES.values())) {
+            if (!sourceEnabled(source)) continue;
+            var point = source.position();
+            var area = new AABB(point, point).inflate(source.range());
+            for (var listener : source.level().getEntitiesOfClass(LivingEntity.class, area,
+                    candidate -> candidate.isAlive() && !candidate.isRemoved())) {
+                if (canHear(source, listener)) next.computeIfAbsent(listener, ignored -> new HashMap<>()).put(source.key(), source);
             }
+        }
+        // 一次性提交本轮所有关系变化，随后再派发可能引发袭击的语义事件。
+        for (var entry : next.entrySet()) syncRelations(entry.getKey(), entry.getValue());
+        for (var entry : next.entrySet()) updateListener(entry.getKey(), entry.getValue());
+    }
+
+    /** 按声源身份维护关系，离开一个声源不撤销其他声源；持续听到时也能更新强度。 */
+    private static void syncRelations(LivingEntity listener, Map<SourceKey, SoundSource> current) {
+        var previous = HEARD_SOURCES.getOrDefault(listener.getUUID(), Map.of());
+        for (var key : previous.keySet()) if (!current.containsKey(key))
+            GhostSoundSuppression.remove(listener.getUUID(), createNetworkSourceId(key));
+        for (var source : current.values()) GhostSoundSuppression.update(createNetworkSourceId(source.key()),
+                source.host(), source.moduleId(), source.soundType(), listener);
+    }
+
+    /** 所有生物共享进入、离开和同类别中断语义；只有玩家需要客户端播放包。 */
+    private static void updateListener(LivingEntity listener, Map<SourceKey, SoundSource> current) {
+        if (!listener.isAlive() || listener.isRemoved()) { removeListener(listener); return; }
+        UUID id = listener.getUUID();
+        // 前一个听众的语义事件可能注销声源；丢弃过期采样，避免重新建立已解除的听觉状态。
+        current.entrySet().removeIf(entry -> {
+            if (SOURCES.containsKey(entry.getKey())) return false;
+            GhostSoundSuppression.remove(id, createNetworkSourceId(entry.getKey()));
+            return true;
+        });
+        var previous = new HashMap<>(HEARD_SOURCES.getOrDefault(id, Map.of()));
+        var transition = GhostSoundTransition.between(soundTypes(previous), soundTypes(current));
+        if (current.isEmpty()) { HEARD_SOURCES.remove(id); LISTENERS.remove(id); }
+        else { HEARD_SOURCES.put(id, new HashMap<>(current)); LISTENERS.put(id, new WeakReference<>(listener)); }
+        for (var source : current.values()) {
+            if (!transition.entered().contains(source.key())) continue;
+            dispatch(source, GhostSoundEvent.Type.ENTERED, listener);
+            if (listener.isAlive() && !listener.isRemoved() && SOURCES.containsKey(source.key())) safeStart(source, listener);
+        }
+        for (var source : previous.values()) {
+            if (!transition.left().contains(source.key())) continue;
+            safeStop(source, listener);
+            if (listener.isAlive() && !listener.isRemoved()) dispatch(source, GhostSoundEvent.Type.LEFT, listener);
+        }
+        for (var type : transition.interrupted()) {
+            if (!listener.isAlive() || listener.isRemoved()) continue;
+            var source = findSourceByType(previous, type);
+            if (source != null) dispatch(source, GhostSoundEvent.Type.INTERRUPTED, listener);
         }
     }
 
-    /**
-     * 计算玩家当前能听到的所有声源，并与上次状态比较。
-     */
-    private static void updatePlayer(
-            ServerPlayer player,
-            ServerLevel level
-    ) {
-        UUID playerId = player.getUUID();
+    /** 提取声音类别供纯差异计算，不向模块暴露具体来源身份。 */
+    private static Map<SourceKey, ResourceLocation> soundTypes(Map<SourceKey, SoundSource> sources) {
+        var result = new HashMap<SourceKey, ResourceLocation>();
+        sources.forEach((key, source) -> result.put(key, source.soundType()));
+        return result;
+    }
 
-        Map<SourceKey, SoundSource> previous =
-                HEARD_SOURCES.computeIfAbsent(
-                        playerId,
-                        ignored -> new HashMap<>()
-                );
-
-        Map<SourceKey, SoundSource> current = new HashMap<>();
-
-        /*
-         * 找出当前维度内，玩家能够听到的所有声源。
-         */
-        for (SoundSource source : SOURCES.values()) {
-            if (source.level() != level) {
-                continue;
-            }
-
-            if (canHear(source, player)) {
-                current.put(source.key(), source);
-            }
-        }
-
-        /*
-         * 处理新进入听觉范围的声源。
-         *
-         * 只有此前没有听到该具体声源时，才发送开始播放通知。
-         */
-        for (Map.Entry<SourceKey, SoundSource> entry : current.entrySet()) {
-            SourceKey key = entry.getKey();
-            SoundSource source = entry.getValue();
-
-            if (previous.containsKey(key)) {
-                continue;
-            }
-
-            dispatch(
-                    source,
-                    GhostSoundEvent.Type.ENTERED,
-                    player
-            );
-
-            safeStart(source, player);
-        }
-
-        /*
-         * 处理离开听觉范围的声源。
-         *
-         * 此处使用 previous 中的旧快照，而不是从 SOURCES 查询。
-         * 因此即使配置发生更新，也能正确处理上次听到的声源。
-         */
-        for (Map.Entry<SourceKey, SoundSource> entry : previous.entrySet()) {
-            SourceKey key = entry.getKey();
-            SoundSource oldSource = entry.getValue();
-
-            if (current.containsKey(key)) {
-                continue;
-            }
-
-            dispatch(
-                    oldSource,
-                    GhostSoundEvent.Type.LEFT,
-                    player
-            );
-
-            safeStop(oldSource, player);
-        }
-
-        /*
-         * 按 soundType 聚合听觉状态。
-         *
-         * 对每一种声音类别：
-         * - 上一轮听得到；
-         * - 这一轮完全听不到；
-         *
-         * 才产生 INTERRUPTED。
-         *
-         * 同一种声音即使有多个声源同时消失，也只派发一次中断事件。
-         * 不同声音类别之间互不影响。
-         */
-        Set<ResourceLocation> previousTypes = collectSoundTypes(previous);
-        Set<ResourceLocation> currentTypes = collectSoundTypes(current);
-
-        for (ResourceLocation soundType : previousTypes) {
-            if (currentTypes.contains(soundType)) {
-                continue;
-            }
-
-            SoundSource interruptionSource =
-                    findSourceByType(previous, soundType);
-
-            if (interruptionSource == null) {
-                continue;
-            }
-
-            dispatch(
-                    interruptionSource,
-                    GhostSoundEvent.Type.INTERRUPTED,
-                    player
-            );
-        }
-
-        /*
-         * 用本轮快照替换旧状态。
-         *
-         * 即使声源 key 没变，也会更新保存的 SoundSource 配置，
-         * 不会因为每 tick 注册同一个声源而重复触发 ENTERED。
-         */
-        previous.clear();
-        previous.putAll(current);
-
-        if (previous.isEmpty()) {
-            HEARD_SOURCES.remove(playerId);
-        }
+    /** 模块的播放意图、媒介和能力权限统一决定声源是否实际生效。 */
+    private static boolean sourceEnabled(SoundSource source) {
+        if (source.moduleId() == null) return true;
+        var host = source.host();
+        var module = GhostModuleRegistry.get(source.moduleId());
+        var entry = host.getModules().stream().filter(e -> e.id().equals(source.moduleId())).findFirst().orElse(null);
+        return module != null && entry != null && host.carriesModule(entry.id())
+                && host.moduleEnvironment(entry.id()).exposed()
+                && host.suppression(entry.id()).canUseAbility(host.controlsIntrinsicModules())
+                && module.soundEnabled(entry, host.allowsAutomaticAbilities());
     }
 
     // =========================================================
@@ -710,12 +595,12 @@ public final class GhostSoundManager {
     // =========================================================
 
     /**
-     * 判断玩家是否能听到指定声音源。
+     * 判断生物是否能听到指定声音源。
      *
      * 传播规则：
      * 1. 声音必须处于最大传播距离内。
-     * 2. 声源与玩家必须属于同一个灵异隔绝 Region。
-     * 3. 玩家没有手持点燃且有效的白色鬼烛模块。
+     * 2. 声源与听众必须属于同一个灵异隔绝 Region。
+     * 3. 听众没有有效的白色鬼烛屏蔽，且不属于无听力标签。
      *
      * Region 查询只使用 GhostIsolationSystem.getRegionId()，
      * 不主动触发新的空间检测。
@@ -723,9 +608,9 @@ public final class GhostSoundManager {
 
     private static boolean canHear(
             SoundSource source,
-            ServerPlayer player
+            LivingEntity player
     ) {
-        // 白烛只改变本轮传播结果，不能清空 HEARD_SOURCES 或提前跳过 updatePlayer。
+        // 白烛只改变本轮传播结果，不能清空 HEARD_SOURCES 或提前跳过传播差异处理。
         // 上轮已听见、本轮被屏蔽时，正常执行停止播放、LEFT 和按声音类别聚合的 INTERRUPTED；
         // 一开始就被屏蔽则没有中断，持续屏蔽也不会重复触发。熄灭后重新进入听觉范围。
         if (player.getType().is(ModTags.NO_HEARING) || GhostAvoidanceSystem.hasWhiteGhostCandle(player)) {
@@ -739,17 +624,9 @@ public final class GhostSoundManager {
      * 仅判断声音本来能否传播到听众，不考虑白烛。
      * 屏蔽消耗也必须满足距离、维度和空间隔绝条件，不能对本来听不到的声音收费。
      */
-    private static boolean canReachListener(SoundSource source, ServerPlayer player) {
-        if (source.level() != player.serverLevel()) return false;
-        if (source.moduleId() != null) {
-            var host = source.host();
-            var module = GhostModuleRegistry.get(source.moduleId());
-            var entry = host.getModules().stream().filter(e -> e.id().equals(source.moduleId())).findFirst().orElse(null);
-            if (module == null || entry == null || !host.carriesModule(entry.id())
-                    || !host.moduleEnvironment(entry.id()).exposed()
-                    || !host.suppression(entry.id()).canUseAbility(host.controlsIntrinsicModules())
-                    || !module.soundEnabled(entry, host.allowsAutomaticAbilities())) return false;
-        }
+    private static boolean canReachListener(SoundSource source, LivingEntity player) {
+        if (!player.isAlive() || player.isRemoved() || source.level() != player.level()) return false;
+        if (!sourceEnabled(source)) return false;
         Vec3 start = source.position();
         Vec3 end = player.getEyePosition();
 
@@ -795,7 +672,7 @@ public final class GhostSoundManager {
      * 旧版未指定模块 ID 的声源以宿主最高有效模块强度兼容。
      * 此查询不修改听觉快照，不派发事件。
      */
-    public static double getBlockedSoundIntensity(ServerPlayer player) {
+    public static double getBlockedSoundIntensity(LivingEntity player) {
         if (player.getType().is(ModTags.NO_HEARING) || !GhostAvoidanceSystem.hasWhiteGhostCandle(player)) return 0;
         double strongest = 0;
         for (SoundSource source : SOURCES.values()) {
@@ -814,22 +691,7 @@ public final class GhostSoundManager {
     // =========================================================
 
     /**
-     * 获取玩家当前听到的所有不同声音类别。
-     */
-    private static Set<ResourceLocation> collectSoundTypes(
-            Map<SourceKey, SoundSource> sources
-    ) {
-        Set<ResourceLocation> result = new HashSet<>();
-
-        for (SoundSource source : sources.values()) {
-            result.add(source.soundType());
-        }
-
-        return result;
-    }
-
-    /**
-     * 判断玩家是否仍在听某一类别的声音。
+     * 判断听众是否仍在听某一类别的声音。
      */
     private static boolean hasHeardSoundType(
             Map<SourceKey, SoundSource> sources,
@@ -874,7 +736,7 @@ public final class GhostSoundManager {
     private static void dispatch(
             SoundSource source,
             GhostSoundEvent.Type type,
-            ServerPlayer listener
+            LivingEntity listener
     ) {
         GhostModuleRuntime.dispatch(
                 source.host(),
@@ -893,9 +755,9 @@ public final class GhostSoundManager {
      */
     private static void safeStart(
             SoundSource source,
-            ServerPlayer player
+            LivingEntity player
     ) {
-        source.playback().start(player);
+        if (player instanceof ServerPlayer serverPlayer) source.playback().start(serverPlayer);
     }
 
     /**
@@ -903,9 +765,9 @@ public final class GhostSoundManager {
      */
     private static void safeStop(
             SoundSource source,
-            ServerPlayer player
+            LivingEntity player
     ) {
-        source.playback().stop(player);
+        if (player instanceof ServerPlayer serverPlayer) source.playback().stop(serverPlayer);
     }
 
     // =========================================================
@@ -920,24 +782,24 @@ public final class GhostSoundManager {
      * 玩家已经退出，不再派发 INTERRUPTED：
      * 离开服务器不是灵异声音传播中断造成的效果。
      */
-    public static void removePlayer(ServerPlayer player) {
-        if (player == null) {
-            return;
-        }
+    public static void removePlayer(ServerPlayer player) { if (player != null) removeListener(player); }
 
-        Map<SourceKey, SoundSource> heard =
-                HEARD_SOURCES.remove(player.getUUID());
+    /** 离线或卸载不是听觉中断，不发动袭击；清除传播快照及目标关系。 */
+    private static void removeListener(LivingEntity listener) {
+        var heard = HEARD_SOURCES.remove(listener.getUUID());
+        LISTENERS.remove(listener.getUUID());
+        GhostSoundSuppression.removeTarget(listener.getUUID());
+        if (heard != null) for (var source : heard.values()) safeStop(source, listener);
+    }
 
-        if (heard == null) {
-            return;
-        }
+    /** 生物卸载时及时释放引用和关系，重载后由附近声源自然重建。 */
+    @SubscribeEvent public static void entityLeft(EntityLeaveLevelEvent event) {
+        if (!event.getLevel().isClientSide() && event.getEntity() instanceof LivingEntity living) removeListener(living);
+    }
 
-        /*
-         * 清理玩家对应的所有客户端播放状态。
-         */
-        for (SoundSource source : heard.values()) {
-            safeStop(source, player);
-        }
+    /** 同进程重新进入存档不能继承上一服务器的声音状态。 */
+    @SubscribeEvent public static void serverStopped(ServerStoppedEvent event) {
+        SOURCES.clear(); HEARD_SOURCES.clear(); LISTENERS.clear(); GhostSoundSuppression.clear();
     }
 
     // =========================================================

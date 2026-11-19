@@ -34,12 +34,10 @@ public final class GhostEnvironmentalEffects {
      */
     public static boolean on(LivingEntity entity, GhostEnvironmentalEffect effect) {
         if (entity instanceof GhostModuleHost host && active(host, effect)) return true;
-        if (entity instanceof Player player) {
-            return active(new PlayerGhostModuleHost(player), effect)
-                    || active(new GhostItemModuleHost(player.getMainHandItem(), player), effect)
-                    || active(new GhostItemModuleHost(player.getOffhandItem(), player), effect);
-        }
-        return false;
+        if (entity instanceof Player player && active(new PlayerGhostModuleHost(player), effect)) return true;
+        // 普通生物也是听众，其真实手持物品与玩家采用相同的暴露媒介。
+        return active(new GhostItemModuleHost(entity.getMainHandItem(), entity), effect)
+                || active(new GhostItemModuleHost(entity.getOffhandItem(), entity), effect);
     }
 
     /** 仅用于物品外观兼容查询，不代表已经满足暴露媒介。 */

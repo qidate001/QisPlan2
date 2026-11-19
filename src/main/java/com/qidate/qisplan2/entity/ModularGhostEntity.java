@@ -1,5 +1,6 @@
 package com.qidate.qisplan2.entity;
 
+import com.qidate.qisplan2.ghost.module.host.GhostSoundSuppression;
 import com.qidate.qisplan2.ghost.module.host.attachment.GhostAttachments;
 import com.qidate.qisplan2.ghost.module.suppression.GhostSuppressionState;
 import com.qidate.qisplan2.ghost.bearing.HostComposition;
@@ -408,7 +409,8 @@ public class ModularGhostEntity extends PathfinderMob
 
     /** 返回本模块受到的外来关系，不在实体内维护钉住布尔量。 */
     @Override public GhostSuppressionState suppression(ResourceLocation module) {
-        return GhostAttachments.suppression(this, module);
+        return GhostAttachments.suppression(this, module).merge(
+                GhostSoundSuppression.state(this, module));
     }
 
     /**

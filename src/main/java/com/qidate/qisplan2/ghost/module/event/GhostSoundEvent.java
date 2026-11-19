@@ -1,7 +1,7 @@
 package com.qidate.qisplan2.ghost.module.event;
 
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.entity.LivingEntity;
 
 import java.util.Objects;
 
@@ -17,7 +17,7 @@ import java.util.Objects;
 public record GhostSoundEvent(
         Type type,
         ResourceLocation soundType,
-        ServerPlayer listener
+        LivingEntity listener
 ) implements GhostEvent {
 
     public GhostSoundEvent {

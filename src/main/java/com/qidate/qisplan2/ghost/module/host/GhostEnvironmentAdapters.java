@@ -102,8 +102,8 @@ public final class GhostEnvironmentAdapters {
              * 没有可计入的声音压力时返回零。
              */
             public double blockedSoundIntensity() {
-                return exposed() && bearer(host) instanceof ServerPlayer player
-                        ? GhostSoundManager.getBlockedSoundIntensity(player) : 0;
+                var listener = bearer(host);
+                return exposed() && listener != null ? GhostSoundManager.getBlockedSoundIntensity(listener) : 0;
             }
 
             /**
