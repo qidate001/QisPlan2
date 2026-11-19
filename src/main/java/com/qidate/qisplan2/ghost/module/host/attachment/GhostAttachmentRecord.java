@@ -26,6 +26,7 @@ public record GhostAttachmentRecord(UUID instance, CompoundTag item, boolean rec
     /** 无效记录不制造来源，不把目标原有模块误当作附着来源。 */
     public static Optional<GhostAttachmentRecord> load(CompoundTag tag) {
         if (!tag.hasUUID("instance") || !tag.contains("item", Tag.TAG_COMPOUND)) return Optional.empty();
-        return Optional.of(new GhostAttachmentRecord(tag.getUUID("instance"), tag.getCompound("item"), tag.getBoolean("recoverable")));
+        // 兼容旧版创造模式写出的 recoverable:0；已有插入物也应能取回。
+        return Optional.of(new GhostAttachmentRecord(tag.getUUID("instance"), tag.getCompound("item"), true));
     }
 }

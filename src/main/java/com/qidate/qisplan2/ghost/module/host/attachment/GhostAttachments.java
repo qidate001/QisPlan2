@@ -67,9 +67,9 @@ public final class GhostAttachments {
             @Override public boolean embed(LivingEntity target) {
                 if (!canEmbed(target) || target.level().isClientSide()) return false;
                 var item = (GhostItemModuleHost) source;
-                boolean recoverable = !(item.carrier() instanceof Player player && player.isCreative());
-                attach(target, item.stack().copyWithCount(1), recoverable);
-                if (recoverable) item.stack().shrink(1);
+                // 插入是原物品的转移，创造模式也一样；拔出时无条件返还保存的原物品。
+                attach(target, item.stack().copyWithCount(1), true);
+                item.stack().shrink(1);
                 return true;
             }
         };
@@ -78,7 +78,7 @@ public final class GhostAttachments {
     private static void attach(LivingEntity target, ItemStack stack, boolean recoverable) {
         var list = target.getPersistentData().getList(KEY, Tag.TAG_COMPOUND).copy();
         var entry = new GhostAttachmentRecord(UUID.randomUUID(),
-                (CompoundTag) stack.save(target.registryAccess()), recoverable);
+                GhostAttachedItemSnapshot.save(stack, target.registryAccess()), recoverable);
         list.add(entry.save());
         target.getPersistentData().put(KEY, list);
         changed(target);
@@ -99,7 +99,7 @@ public final class GhostAttachments {
         for (int i = 0; i < list.size(); i++) {
             var record = GhostAttachmentRecord.load(list.getCompound(i));
             if (record.isEmpty()) continue;
-            var stack = ItemStack.parseOptional(target.registryAccess(), record.get().item());
+            var stack = GhostAttachedItemSnapshot.restore(record.get().item(), target.registryAccess());
             if (!stack.isEmpty()) result.add(stack);
         }
         return result;
@@ -109,18 +109,20 @@ public final class GhostAttachments {
         if (!hasAttachments(target)) return List.of();
         var result = new ArrayList<ItemStack>();
         var list = target.getPersistentData().getList(KEY, Tag.TAG_COMPOUND);
+        var unreadable = new ListTag();
         for (int i = 0; i < list.size(); i++) {
             var record = GhostAttachmentRecord.load(list.getCompound(i));
-            if (record.isPresent() && record.get().recoverable()) {
-                var stack = ItemStack.parseOptional(target.registryAccess(), record.get().item());
-                if (!stack.isEmpty()) result.add(stack);
-            }
+            var stack = record.isPresent()
+                    ? GhostAttachedItemSnapshot.restore(record.get().item(), target.registryAccess()) : ItemStack.EMPTY;
+            if (!stack.isEmpty()) result.add(stack);
+            else unreadable.add(list.getCompound(i).copy()); // 不能因为解析失败而删除原物品数据。
         }
-        target.getPersistentData().remove(KEY);
+        if (unreadable.isEmpty()) target.getPersistentData().remove(KEY);
+        else target.getPersistentData().put(KEY, unreadable);
         changed(target);
         return result;
     }
-    /** 将拔出的原物品交给操作者；背包满时落地，创造模式建立的来源不凭空返还。 */
+    /** 将拔出的原物品交给操作者；背包满时落地，物品种类和组件均来自快照。 */
     public static void recover(LivingEntity target, Player player) {
         for (var stack : detachAll(target)) if (!player.getInventory().add(stack)) player.drop(stack, false);
     }
@@ -172,6 +174,22 @@ public final class GhostAttachments {
     /** 旧存档布尔量迁移一次；原模块状态完全不动，新记录随后按正常物品持久化。 */
     public static void loaded(LivingEntity target) {
         CACHE.remove(target);
+        if (!target.level().isClientSide()) {
+            var list = target.getPersistentData().getList(KEY, Tag.TAG_COMPOUND);
+            boolean updated = false;
+            for (int i = 0; i < list.size(); i++) {
+                var record = GhostAttachmentRecord.load(list.getCompound(i));
+                if (record.isEmpty()) continue;
+                var old = record.get();
+                if (GhostAttachedItemSnapshot.isComplete(old.item()) && list.getCompound(i).getBoolean("recoverable")) continue;
+                var stack = GhostAttachedItemSnapshot.restore(old.item(), target.registryAccess());
+                if (stack.isEmpty()) continue;
+                list.set(i, new GhostAttachmentRecord(old.instance(),
+                        GhostAttachedItemSnapshot.save(stack, target.registryAccess()), true).save());
+                updated = true;
+            }
+            if (updated) target.getPersistentData().put(KEY, list);
+        }
         if (!target.level().isClientSide() && target.getPersistentData().getBoolean("QisPlan2CoffinNailed")) {
             target.getPersistentData().remove("QisPlan2CoffinNailed");
             if (!hasAttachments(target)) attach(target, new ItemStack(ModItems.COFFIN_NAIL.get()), true);

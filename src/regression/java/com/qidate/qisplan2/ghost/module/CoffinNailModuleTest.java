@@ -147,8 +147,8 @@ public final class CoffinNailModuleTest {
         restored.item().putString("id", "minecraft:air");
         check(restored.item().getString("id").equals("qisplan2:coffin_nail"), "外部不可修改记录");
         check(GhostAttachmentRecord.load(new CompoundTag()).isEmpty(), "损坏记录不得制造压制来源");
-        check(!GhostAttachmentRecord.load(new GhostAttachmentRecord(id, record.item(), false).save()).orElseThrow().recoverable(),
-                "创造来源不得凭空产生可回收物品");
+        check(GhostAttachmentRecord.load(new GhostAttachmentRecord(id, record.item(), false).save()).orElseThrow().recoverable(),
+                "旧版创造模式附着记录也必须允许取回原物品");
     }
     /** 运行完整棺材钉与压制接口回归。 */
     public static void run() {

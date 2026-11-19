@@ -234,3 +234,13 @@ tasks.register('verifyModuleIsolation') {
     }
 }
 tasks.named('check') { dependsOn tasks.named('verifyModuleIsolation') }
+
+// 使用真实物品注册表验证默认组件、白板剑模块及完整附着快照的序列化往返。
+tasks.register('attachmentItemSnapshotTest', JavaExec) {
+    dependsOn tasks.named('regressionClasses')
+    classpath = sourceSets.regression.runtimeClasspath
+    mainClass = 'com.qidate.qisplan2.ghost.module.AttachmentItemSnapshotTest'
+    workingDir = layout.buildDirectory.dir('attachment-regression-run').get().asFile
+    doFirst { workingDir.mkdirs() }
+}
+tasks.named('check') { dependsOn tasks.named('attachmentItemSnapshotTest') }
