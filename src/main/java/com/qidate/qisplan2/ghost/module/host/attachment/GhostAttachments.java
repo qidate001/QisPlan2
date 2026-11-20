@@ -19,6 +19,7 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.WeakHashMap;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.chat.Component;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.resources.ResourceLocation;
@@ -35,7 +36,10 @@ public final class GhostAttachments {
     public static final String KEY = "QisPlan2Attachments";
     private static final Map<LivingEntity, Snapshot> CACHE = Collections.synchronizedMap(new WeakHashMap<>());
     private record Cached(double strength, GhostSuppressionState state) {}
+    /** 与真实附着声明同步建立的诊断元数据，不保留实体引用。 */
+    public record SuppressionSource(UUID instance, Component item, ResourceLocation module, GhostSuppression suppression) {}
     private static final class Snapshot {
+        final List<SuppressionSource> sources = new ArrayList<>();
         List<ItemStack> items = List.of();
         final List<GhostSuppression> relations = new ArrayList<>();
         final Map<ResourceLocation, Cached> states = new HashMap<>();
@@ -92,18 +96,6 @@ public final class GhostAttachments {
     public static List<ItemStack> visualItems(LivingEntity target) {
         return CACHE.computeIfAbsent(target, GhostAttachments::build).items;
     }
-    /** 只在关系缓存失效时解码一次，返回的渲染快照仅供读取。 */
-    private static List<ItemStack> decodeItems(LivingEntity target) {
-        var result = new ArrayList<ItemStack>();
-        var list = target.getPersistentData().getList(KEY, Tag.TAG_COMPOUND);
-        for (int i = 0; i < list.size(); i++) {
-            var record = GhostAttachmentRecord.load(list.getCompound(i));
-            if (record.isEmpty()) continue;
-            var stack = GhostAttachedItemSnapshot.restore(record.get().item(), target.registryAccess());
-            if (!stack.isEmpty()) result.add(stack);
-        }
-        return result;
-    }
     /** 拔出只移除附着关系，不清除沉睡、死机、其他来源状态，也不制造全新的物品。 */
     public static List<ItemStack> detachAll(LivingEntity target) {
         if (!hasAttachments(target)) return List.of();
@@ -141,18 +133,33 @@ public final class GhostAttachments {
         snapshot.states.put(module, new Cached(strength, state));
         return state;
     }
+    /** 读取缓存中的来源声明，不因 info 再次运行模块声明或产生世界操作。 */
+    public static List<SuppressionSource> suppressionSources(LivingEntity target) {
+        return List.copyOf(CACHE.computeIfAbsent(target, GhostAttachments::build).sources);
+    }
     /** 附着媒介已成立，重建持续声明，不重复释放能力或扣除代价。 */
     private static Snapshot build(LivingEntity target) {
         var snapshot = new Snapshot();
-        snapshot.items = List.copyOf(decodeItems(target));
-        for (var stack : snapshot.items) {
+        var items = new ArrayList<ItemStack>();
+        var records = target.getPersistentData().getList(KEY, Tag.TAG_COMPOUND);
+        for (int i = 0; i < records.size(); i++) {
+            var record = GhostAttachmentRecord.load(records.getCompound(i));
+            if (record.isEmpty()) continue;
+            var stack = GhostAttachedItemSnapshot.restore(record.get().item(), target.registryAccess());
+            if (stack.isEmpty()) continue;
+            items.add(stack);
             var host = new AttachedGhostHost(stack);
             for (var entry : host.getModules()) {
                 var definition = GhostModuleRegistry.get(entry.id());
-                if (definition != null && host.carriesModule(entry.id()))
-                    snapshot.relations.addAll(definition.getSuppressions(new GhostModuleContext(host, entry.id())));
+                if (definition != null && host.carriesModule(entry.id())) {
+                    for (var relation : definition.getSuppressions(new GhostModuleContext(host, entry.id()))) {
+                        snapshot.relations.add(relation);
+                        snapshot.sources.add(new SuppressionSource(record.get().instance(), stack.getHoverName(), entry.id(), relation));
+                    }
+                }
             }
         }
+        snapshot.items = List.copyOf(items);
         snapshot.absolute = snapshot.relations.stream().anyMatch(r -> r.kind() == GhostSuppression.Kind.ABSOLUTE);
         return snapshot;
     }

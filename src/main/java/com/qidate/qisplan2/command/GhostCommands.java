@@ -14,6 +14,8 @@ import com.qidate.qisplan2.ghost.curse.CurseManager;
 import com.qidate.qisplan2.ghost.curse.CurseRegistry;
 import com.qidate.qisplan2.ghost.module.GhostModule;
 import com.qidate.qisplan2.ghost.module.GhostModuleHost;
+import com.qidate.qisplan2.ghost.module.host.GhostConflictDiagnostics;
+import com.qidate.qisplan2.ghost.module.suppression.GhostSuppression;
 import com.qidate.qisplan2.ghost.module.GhostModuleCombatState;
 import com.qidate.qisplan2.ghost.bearing.GhostModuleForm;
 import com.qidate.qisplan2.ghost.module.host.player.PlayerGhostModuleHost;
@@ -1689,7 +1691,43 @@ public final class GhostCommands {
                     .withStyle(style -> style.withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT,
                             Component.literal(entry.customData().toString())))), false);
         }
+        printConflictInfo(source, host);
         return Math.max(1, entries.size());
+    }
+
+    /** 来源关系与最终权限分别输出；同一来源对不同强度模块可能形成不同等级。 */
+    private static void printConflictInfo(CommandSourceStack source, GhostModuleHost host) {
+        var relations = GhostConflictDiagnostics.snapshot(host);
+        source.sendSuccess(() -> moduleText("conflict.header", relations.size()), false);
+        if (relations.isEmpty()) source.sendSuccess(() -> moduleText("conflict.empty"), false);
+        int number = 0;
+        for (var relation : relations) {
+            int index = ++number;
+            Component fromModule = relation.sourceModule() == null ? moduleText("conflict.unknown") : moduleName(relation.sourceModule());
+            Component strength = relation.suppression().kind() == GhostSuppression.Kind.ABSOLUTE
+                    ? moduleText("conflict.absolute") : Component.literal(Double.toString(relation.suppression().strength()));
+            Component duration = relation.remainingTicks() < 0 ? moduleText("conflict.maintained")
+                    : moduleText("conflict.remaining", relation.remainingTicks(), String.format(Locale.ROOT,"%.2f",relation.remainingTicks()/20.0));
+            source.sendSuccess(() -> moduleText("conflict.relation", index,
+                    moduleText("conflict." + (relation.outgoing() ? "outgoing" : "incoming")),
+                    moduleText("conflict." + relation.kind()), relation.source(), fromModule,
+                    relation.target(), moduleName(relation.targetModule()))
+                    .withStyle(style -> style.withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT,
+                            moduleText("conflict.identity", relation.sourceId(),
+                                    relation.sourceModule() == null ? "-" : relation.sourceModule(), relation.targetModule())))), false);
+            source.sendSuccess(() -> moduleText("conflict.detail", strength, relation.targetStrength(),
+                    moduleText("conflict.level." + relation.level().name().toLowerCase(Locale.ROOT)),
+                    moduleText("conflict." + (relation.internal() ? "internal" : "external")), duration), false);
+        }
+        for (var entry : host.getModules()) {
+            var state = host.suppression(entry.id());
+            source.sendSuccess(() -> moduleText("conflict.effective", moduleName(entry.id()),
+                    moduleText("conflict.level." + state.external().name().toLowerCase(Locale.ROOT)),
+                    moduleText("conflict.level." + state.internal().name().toLowerCase(Locale.ROOT)),
+                    moduleBoolean(state.canAct()), moduleBoolean(state.canRunRules()),
+                    moduleBoolean(state.canUseAbility(host.controlsIntrinsicModules()))), false);
+        }
+        source.sendSuccess(() -> moduleText("conflict.note"), false);
     }
 
     /*

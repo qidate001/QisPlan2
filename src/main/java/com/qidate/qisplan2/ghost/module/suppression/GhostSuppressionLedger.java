@@ -42,6 +42,8 @@ public final class GhostSuppressionLedger {
         cache.put(module, new Cached(strength, result));
         return result;
     }
+    /** 返回不可修改的已成立关系快照；诊断不会更新来源、失效缓存或重算媒介。 */
+    public Map<UUID, Relation> snapshot() { return Map.copyOf(relations); }
     /** 无关系时可由索引移除整个账本。 */
     public boolean isEmpty() { return relations.isEmpty(); }
     /** 用于验证稳定关系不会反复更新，不代表游戏时间。 */

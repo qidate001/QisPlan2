@@ -20,6 +20,9 @@ import net.minecraft.world.phys.AABB;
 import java.lang.ref.WeakReference;
 import java.util.LinkedHashMap;
 import com.qidate.qisplan2.ghost.module.host.GhostSoundSuppression;
+import com.qidate.qisplan2.ghost.module.host.GhostConflictDiagnostics;
+import com.qidate.qisplan2.ghost.module.host.player.PlayerGhostModuleHost;
+import net.minecraft.world.entity.player.Player;
 import net.neoforged.neoforge.event.entity.EntityLeaveLevelEvent;
 import net.neoforged.neoforge.event.server.ServerStoppedEvent;
 import net.minecraft.world.level.block.state.BlockState;
@@ -83,6 +86,38 @@ public final class GhostSoundManager {
     /** 仅跟踪当前或上一轮听众，不保留已卸载实体的强引用。 */
     private static final Map<UUID, WeakReference<LivingEntity>> LISTENERS = new HashMap<>();
 
+
+    /**
+     * 按命令请求读取关系快照。仅遍历现存听众关系，不查询世界实体、不派发声音事件。
+     * 同一宿主体内的关系只显示一次；排除发声模块本身，但保留强度不足的已成立关系。
+     */
+    public static List<GhostConflictDiagnostics.Relation> conflictRelations(GhostModuleHost inspected) {
+        var result = new ArrayList<GhostConflictDiagnostics.Relation>();
+        var body = GhostConflictDiagnostics.body(inspected);
+        for (var heard : HEARD_SOURCES.entrySet()) {
+            var reference = LISTENERS.get(heard.getKey());
+            var listener = reference == null ? null : reference.get();
+            if (listener == null || !listener.isAlive() || listener.isRemoved()) continue;
+            GhostModuleHost target = listener instanceof Player player ? new PlayerGhostModuleHost(player)
+                    : listener instanceof GhostModuleHost host ? host : null;
+            if (target == null) continue;
+            boolean incoming = listener == body;
+            var active = GhostSoundSuppression.relations(listener.getUUID());
+            for (var source : heard.getValue().values()) {
+                if (!incoming && !GhostConflictDiagnostics.sameHost(inspected, source.host())) continue;
+                var id = createNetworkSourceId(source.key());
+                var relation = active.get(id);
+                if (relation == null) continue;
+                for (var entry : target.getModules()) {
+                    if (entry.id().equals(relation.excludedModule())) continue;
+                    result.add(new GhostConflictDiagnostics.Relation(!incoming, "sound", id.toString(),
+                            GhostConflictDiagnostics.describe(source.host()), source.moduleId(), GhostConflictDiagnostics.describe(target),
+                            entry.id(), relation.suppression(), entry.intensity(), relation.internal(), -1));
+                }
+            }
+        }
+        return List.copyOf(result);
+    }
 
     private GhostSoundManager() {
     }

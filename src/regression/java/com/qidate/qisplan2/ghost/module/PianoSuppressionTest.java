@@ -44,7 +44,13 @@ public final class PianoSuppressionTest {
         ledger.put(first, new GhostSuppressionLedger.Relation(offer(200), false, null));
         check(ledger.state(TARGET, 20).external() == GhostSuppression.Level.COMPLETE, "仍在范围内也必须更新改变的强度");
         check(ledger.state(TARGET, 100).external() == GhostSuppression.Level.NONE, "目标变强必须重算");
-        ledger.remove(first); check(ledger.isEmpty(), "离开/隔音/停止撤销最后关系");
+        var snapshot = ledger.snapshot();
+        long beforeRead = ledger.revision();
+        check(snapshot.get(first).suppression().strength() == 60 && ledger.revision() == beforeRead, "诊断读取实际关系且不改变版本");
+        try { snapshot.clear(); throw new AssertionError("诊断快照必须只读"); }
+        catch (UnsupportedOperationException expected) {}
+        ledger.remove(first); check(snapshot.size() == 1, "旧快照不能被后续关系撤销修改");
+        check(ledger.isEmpty(), "离开/隔音/停止撤销最后关系");
         ledger.put(first, new GhostSuppressionLedger.Relation(offer(200), true, PIANO));
         check(ledger.state(PIANO, 1).canAct(), "不能压制发声模块自身");
         check(ledger.state(TARGET, 1).canUseAbility(true) && !ledger.state(TARGET, 1).canRunRules(), "体内压制保留主动调用豁免");

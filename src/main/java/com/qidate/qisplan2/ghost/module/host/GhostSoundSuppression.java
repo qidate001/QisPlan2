@@ -42,6 +42,11 @@ public final class GhostSoundSuppression {
         ledger.remove(source);
         if (ledger.isEmpty()) TARGETS.remove(target);
     }
+    /** 只读指定听众已成立的声音关系，不重新检测声音或触发语义事件。 */
+    public static Map<UUID, GhostSuppressionLedger.Relation> relations(UUID target) {
+        var ledger = TARGETS.get(target);
+        return ledger == null ? Map.of() : ledger.snapshot();
+    }
     /** 目标的持有模块可以变化，因此只在查询时读取当前模块本质强度。 */
     public static GhostSuppressionState state(LivingEntity target, ResourceLocation module) {
         if (target.level().isClientSide()) return GhostSuppressionState.NONE;

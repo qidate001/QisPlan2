@@ -1,6 +1,7 @@
 package com.qidate.qisplan2.ghost.module;
 
 import com.qidate.qisplan2.ghost.module.data.GhostModuleContainer;
+import com.qidate.qisplan2.ghost.module.host.GhostConflictDiagnostics;
 import com.qidate.qisplan2.ghost.module.data.GhostModuleData;
 import com.qidate.qisplan2.ghost.module.environment.GhostWorldAccess;
 import com.qidate.qisplan2.ghost.module.event.GhostEvent;
@@ -85,7 +86,14 @@ public final class SuppressionSleepTest {
         var attack = new Host(); GhostModuleCombatState.attacked(attack,300); attack.advance(10);
         GhostModuleCombatState.attacked(attack,300); attack.time=29;
         check(!attack.suppression(ID).canUseAbility(false), "第二次袭击刷新至命中后一秒");
-        attack.time=30; check(attack.suppression(ID).canAct(), "到期立即解除，不累加第二段一秒");
+        var dataBeforeInfo = attack.getModuleCustomData(ID);
+        var diagnostic = GhostConflictDiagnostics.snapshot(attack);
+        check(diagnostic.size() == 1 && diagnostic.getFirst().remainingTicks() == 1
+                && diagnostic.getFirst().suppression().strength() == 300
+                && diagnostic.getFirst().level() == GhostSuppression.Level.COMPLETE, "info 必须显示真实短时关系和剩余时间");
+        check(dataBeforeInfo.equals(attack.getModuleCustomData(ID)), "info 不得推进计时或修改状态");
+        attack.time=30; check(GhostConflictDiagnostics.snapshot(attack).isEmpty(), "到期但尚未清理NBT的关系不能继续显示");
+        check(attack.suppression(ID).canAct(), "到期立即解除，不累加第二段一秒");
         check(new GhostSuppression(GhostSuppression.Kind.NORMAL,0).level(0)==GhostSuppression.Level.NONE, "零对零不能形成完全压制");
         var weak = new Host(); GhostModuleCombatState.attacked(weak,50);
         check(weak.suppression(ID).canAct(), "弱袭击不能绕过强度阈值强制停滞");
