@@ -1,6 +1,7 @@
 package com.qidate.qisplan2.core;
 
 import com.qidate.qisplan2.entity.ModularGhostEntity;
+import com.qidate.qisplan2.entity.CallingGhostEntity;
 import com.qidate.qisplan2.entity.TestGeckoEntity;
 import com.qidate.qisplan2.entity.painting.GhostPaintingEntity;
 import net.minecraft.resources.ResourceLocation;
@@ -50,6 +51,13 @@ public class ModEntities {
                                             .toString()
                             )
             );
+
+    /** 独特外观类型只决定模型与默认模块，不替代通用 modular_ghost 宿主。 */
+    public static final DeferredHolder<EntityType<?>,EntityType<CallingGhostEntity>> CALLING_GHOST =
+            ENTITY_TYPES.register("calling_ghost", () -> EntityType.Builder.<CallingGhostEntity>of(
+                    CallingGhostEntity::new,MobCategory.MONSTER)
+                    .sized(0.6F,1.95F).clientTrackingRange(8).updateInterval(3)
+                    .build(ResourceLocation.fromNamespaceAndPath(MODID,"calling_ghost").toString()));
 
     // 鬼画
     public static final DeferredHolder<

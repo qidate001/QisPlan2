@@ -317,6 +317,11 @@ public class ModItems {
                     )
             );
 
+    /** 独特外观刷怪蛋使用真实实体类型；默认模块由实体构造声明，不覆写 ENTITY_DATA。 */
+    public static final DeferredItem<SpawnEggItem> CALLING_GHOST_SPAWN_EGG =
+            ITEMS.register("calling_ghost_spawn_egg", () -> new SpawnEggItem(
+                    CALLING_GHOST.get(),0x666354,0x25231F,new Item.Properties()));
+
     // 通用模块化厉鬼刷怪蛋
     public static final DeferredItem<SpawnEggItem> MODULAR_GHOST_SPAWN_EGG =
             ITEMS.register(

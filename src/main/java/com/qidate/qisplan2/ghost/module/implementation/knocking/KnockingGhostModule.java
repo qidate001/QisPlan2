@@ -26,12 +26,6 @@ import static com.qidate.qisplan2.QisPlan2.MODID;
  * 听声规则提交延迟袭击裁决，能力负责敲门、鬼门传播和获准后的灵异袭击。
  */
 public final class KnockingGhostModule implements GhostModule {
-
-    /**
-     * 声明需要的自主行动类型。
-     * 具体 Goal 的创建、资源竞争和停止清理由行动适配层负责。
-     */
-    @Override public GhostBehavior behavior() { return GhostBehavior.KNOCK_DOORS; }
     public static final ResourceLocation ID = ResourceLocation.fromNamespaceAndPath(MODID, "knocking_ghost");
     public static final double INITIAL_INTENSITY = 5.0D;
     public static final ResourceLocation KNOCK = ResourceLocation.fromNamespaceAndPath(MODID, "knocking_ghost/knock");
@@ -50,6 +44,12 @@ public final class KnockingGhostModule implements GhostModule {
      * 仅用于初始化；已存在实例以保存的模块数据为准。
      */
     @Override public GhostModuleInitialData getInitialData() { return new GhostModuleInitialData(INITIAL_INTENSITY, 0); }
+
+    /**
+     * 声明需要的自主行动类型。
+     * 具体 Goal 的创建、资源竞争和停止清理由行动适配层负责。
+     */
+    @Override public GhostBehavior behavior() { return GhostBehavior.KNOCK_DOORS; }
 
 
     /** 玩家敲门产生的后续袭击属于主动能力链，不重新经过自动听声规则。 */

@@ -445,6 +445,4 @@ public final class GhostDivinationSlipModule implements GhostModule {
             GhostDivinationNetwork.sendResult(player, result);
         }
     }
-
-
 }

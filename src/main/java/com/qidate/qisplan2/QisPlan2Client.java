@@ -1,5 +1,7 @@
 package com.qidate.qisplan2;
 
+import com.qidate.qisplan2.client.renderer.AnimatedModularGhostRenderer;
+
 import com.qidate.qisplan2.ghost.domain.client.renderer.GhostDomainClientEffects;
 import com.qidate.qisplan2.ghost.domain.client.renderer.StandardDomainShaderAdapter;
 import com.qidate.qisplan2.ghost.module.domain.GhostDomainShaderEffect;
@@ -239,6 +241,9 @@ public class QisPlan2Client {
     private static void registerEntityRenderers(
             EntityRenderersEvent.RegisterRenderers event
     ) {
+        // 独特外观宿主复用模块实体渲染基类。
+        event.registerEntityRenderer(ModEntities.CALLING_GHOST.get(),AnimatedModularGhostRenderer::new);
+
         // 通用模块化厉鬼
         event.registerEntityRenderer(
                 ModEntities.MODULAR_GHOST.get(),

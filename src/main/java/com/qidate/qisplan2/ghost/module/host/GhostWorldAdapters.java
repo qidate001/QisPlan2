@@ -28,6 +28,7 @@ import com.qidate.qisplan2.core.ModGameRules;
 import com.qidate.qisplan2.ghost.module.environment.BlockSpreadSpec;
 import com.qidate.qisplan2.ghost.module.implementation.GhostCarpetModule;
 import com.qidate.qisplan2.entity.ModularGhostEntity;
+import com.qidate.qisplan2.entity.AnimatedModularGhostEntity;
 import com.qidate.qisplan2.ghost.GhostAvoidanceSystem;
 import com.qidate.qisplan2.ghost.domain.*;
 import com.qidate.qisplan2.ghost.module.host.player.PlayerGhostModuleHost;
@@ -440,6 +441,7 @@ public final class GhostWorldAdapters {
                         || (level() != null && !sameWorld(target.level()))) return false;
                 var damage = new DamageSource(target.level().registryAccess().registryOrThrow(Registries.DAMAGE_TYPE)
                         .getHolderOrThrow(type), source());
+                if(source() instanceof AnimatedModularGhostEntity animated) animated.playVisualAction("attack");
                 return SupernaturalDeathHandler.tryKill(target, damage, intensity);
             }
 
@@ -472,6 +474,8 @@ public final class GhostWorldAdapters {
              */
             public void playCall(LivingEntity target) {
                 if (!canHearCall(target)) return;
+                // 动作只作为声音的外观反馈，模块无需知道来源是否具有独特模型。
+                if(source() instanceof AnimatedModularGhostEntity animated) animated.playVisualAction("call");
                 var sound = target instanceof ServerPlayer player ? CallingGhostSounds.getSound(player) : null;
                 if (sound == null) sound = SoundEvents.ENDERMAN_STARE;
                 level().playSound(null, target.getX(), target.getY(), target.getZ(), sound, SoundSource.HOSTILE, 1, 1);
