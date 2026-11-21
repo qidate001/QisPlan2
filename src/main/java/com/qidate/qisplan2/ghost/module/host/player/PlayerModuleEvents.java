@@ -4,6 +4,7 @@ import com.qidate.qisplan2.ghost.module.host.player.binding.GhostPlayerBindings;
 import com.qidate.qisplan2.QisPlan2;
 import com.qidate.qisplan2.ghost.module.*;
 import com.qidate.qisplan2.ghost.module.event.TouchEvent;
+import com.qidate.qisplan2.ghost.module.host.GhostContactEvents;
 import com.qidate.qisplan2.ghost.possession.manager.GhostPossessionManager;
 import com.qidate.qisplan2.ghost.possession.manager.PossessionHandler;
 import com.qidate.qisplan2.ghost.possession.target.BlockGhostPossessionTarget;
@@ -32,7 +33,7 @@ public final class PlayerModuleEvents {
         for (var target : player.serverLevel().getEntitiesOfClass(LivingEntity.class,
                 player.getBoundingBox().inflate(0.05), e -> e != player && e.isAlive())) {
             current.add(target.getUUID());
-            GhostModuleRuntime.dispatch(host, TouchEvent.sample(player, target, !old.contains(target.getUUID())));
+            GhostContactEvents.sample(host, player, target);
             if (!player.isAlive()) break;
         }
         TOUCHING.put(player, current);

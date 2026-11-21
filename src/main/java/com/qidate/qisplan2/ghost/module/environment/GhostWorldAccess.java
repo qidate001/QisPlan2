@@ -22,6 +22,11 @@ import net.minecraft.world.phys.Vec3;
  * 目标实体是世界中的作用对象，与模块自己的载体不是同一个概念。
  */
 public interface GhostWorldAccess {
+    /** 造成原版数值伤害；与灵异袭击 attack 的裁决语义明确分离。 */
+    default boolean hurt(LivingEntity target, ResourceKey<DamageType> type, float amount) { return false; }
+    /** 对承担动作的身体施加停步效果，具体身体由适配层解释。 */
+    default void immobilizeSource() {}
+
     /** 独立附着来源的建立与媒介查询接口。 */
     default GhostAttachmentAccess attachments() { return GhostAttachmentAccess.NONE; }
 
@@ -203,19 +208,19 @@ public interface GhostWorldAccess {
 
     /**
      * 判断当前适配器是否提供鬼域开关出口。
-     * 当前实现要求有效的服务端玩家模块载体。
+     * 要求已声明鬼域、能够持久化并暴露于服务端世界。
      */
     boolean canToggleDomain();
 
     /**
-     * 通过已有鬼眼控制器切换鬼域开关。
+     * 切换当前模块 customData 中的鬼域开关。
      * 不具备出口时返回 false；开启后返回实际开启状态，关闭成功返回 true。
      */
     boolean toggleDomain();
 
     /**
-     * 维护鬼雾运行时鬼域。
-     * 实体来源创建或保持对应鬼域，玩家来源沿用持久开关状态驱动控制器。
+     * 按当前模块声明维护运行时鬼域。
+     * 各类宿主共用生命周期，不需要单独的厉鬼控制器。
      */
     void maintainDomain();
 
@@ -224,12 +229,6 @@ public interface GhostWorldAccess {
      * 同时验证目标资格和鬼域 ID，避免旧曝光事实作用于已更换的鬼域。
      */
     boolean containsInDomain(UUID domainId, LivingEntity target);
-
-    /**
-     * 在当前鬼域存在时委托控制器结算鬼雾成长。
-     * 调用方应仅在袭击实际成功后调用。
-     */
-    void growDomain();
 
     /**
      * 检查适配器是否提供题字能力出口。

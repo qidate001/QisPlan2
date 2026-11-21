@@ -394,5 +394,7 @@
   "ability.qisplan2.ghost_stove.workstation": "Open Ghost Stove",
   "ability.qisplan2.ghost_book.read": "Read Ghost Book",
   "ability.qisplan2.death_curse_sword.curse": "Inflict Death Curse",
-  "ability.qisplan2.coffin_nail.embed": "Embed"
+  "ability.qisplan2.coffin_nail.embed": "Embed",
+  "module.qisplan2.ghost_umbrella": "Ghost Umbrella",
+  "ability.qisplan2.ghost_umbrella.domain": "Toggle Umbrella Domain"
 }

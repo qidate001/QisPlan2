@@ -392,5 +392,7 @@
   "ability.qisplan2.ghost_stove.workstation": "打开鬼灶台",
   "ability.qisplan2.ghost_book.read": "阅读鬼书",
   "ability.qisplan2.death_curse_sword.curse": "施加必死诅咒",
-  "ability.qisplan2.coffin_nail.embed": "钉入"
+  "ability.qisplan2.coffin_nail.embed": "钉入",
+  "module.qisplan2.ghost_umbrella": "鬼雨伞",
+  "ability.qisplan2.ghost_umbrella.domain": "开关鬼雨伞鬼域"
 }

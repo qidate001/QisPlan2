@@ -1,5 +1,7 @@
 package com.qidate.qisplan2;
 
+import com.qidate.qisplan2.ghost.domain.client.renderer.ModuleGhostDomainRenderEffect;
+
 import com.qidate.qisplan2.client.BlackRainParticle;
 import com.qidate.qisplan2.client.GhostUmbrellaClient;
 import com.qidate.qisplan2.client.curse.CurseClientBootstrap;
@@ -9,14 +11,11 @@ import com.qidate.qisplan2.ghost.domain.client.ClientGhostDomainEvents;
 import com.qidate.qisplan2.ghost.domain.client.ClientGhostDomainManager;
 import com.qidate.qisplan2.client.key.ClientKeyHandler;
 import com.qidate.qisplan2.client.screen.GhostStoveScreen;
-import com.qidate.qisplan2.client.GhostUmbrellaDomainClient;
+import com.qidate.qisplan2.client.GhostDomainWeatherClient;
 import com.qidate.qisplan2.client.renderer.*;
 import com.qidate.qisplan2.core.*;
 import com.qidate.qisplan2.client.hud.DeathCurseHudOverlay;
 
-import com.qidate.qisplan2.ghost.domain.client.renderer.effect.GhostEyeRenderEffect;
-import com.qidate.qisplan2.ghost.domain.client.renderer.effect.GhostMistRenderEffect;
-import com.qidate.qisplan2.ghost.domain.client.renderer.effect.GhostUmbrellaRenderEffect;
 import com.qidate.qisplan2.ghost.isolation.client.ClientGhostIsolationChunkHandler;
 import com.qidate.qisplan2.ghost.tombstone.client.GhostTombstoneBlockEntityRenderer;
 import net.minecraft.client.model.HumanoidModel;
@@ -92,7 +91,7 @@ public class QisPlan2Client {
 
         // 鬼雨领域客户端逻辑
         NeoForge.EVENT_BUS.register(
-                GhostUmbrellaDomainClient.class
+                GhostDomainWeatherClient.class
         );
 
         // 注册按键
@@ -124,9 +123,9 @@ public class QisPlan2Client {
         CurseClientBootstrap.register();
 
         // 鬼域效果注册
-        GhostEyeRenderEffect.register();
-        GhostUmbrellaRenderEffect.register();
-        GhostMistRenderEffect.register();
+        ModuleGhostDomainRenderEffect.registerModules();
+
+
     }
 
     private static void registerParticleProviders(

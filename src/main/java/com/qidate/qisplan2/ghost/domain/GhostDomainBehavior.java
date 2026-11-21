@@ -1,5 +1,7 @@
 package com.qidate.qisplan2.ghost.domain;
 
+import net.minecraft.world.phys.Vec3;
+
 import com.qidate.qisplan2.ghost.isolation.GhostIsolationSystem;
 import com.qidate.qisplan2.ghost.layer.GhostLayerHandler;
 import com.qidate.qisplan2.ghost.layer.GhostResistanceHandler;
@@ -10,6 +12,20 @@ import net.minecraft.world.entity.Entity;
 import java.util.Set;
 
 public interface GhostDomainBehavior {
+    /** 框架层数变动的持久化通知；实体层数传播仍由追踪器处理。 */
+    default void onDomainLayerChanged(ServerLevel level,GhostDomain domain) {}
+
+    /** 框架默认实体来源；模块适配器可解释静态方块或物品来源。 */
+    default boolean sourcePresent(ServerLevel level, GhostDomain domain) {
+        var source = level.getEntity(domain.getSourceUUID());
+        return source != null && !source.isRemoved();
+    }
+    /** 返回物理来源的位置，位置跟随与空间隔绝共用此事实。 */
+    default Vec3 sourcePosition(ServerLevel level, GhostDomain domain) {
+        var source = level.getEntity(domain.getSourceUUID());
+        return source == null ? new Vec3(domain.getX(),domain.getY(),domain.getZ()) : source.position();
+    }
+
 
     /**
      * 当鬼域创建时调用。

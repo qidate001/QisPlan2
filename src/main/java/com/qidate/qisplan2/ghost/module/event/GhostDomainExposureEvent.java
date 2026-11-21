@@ -12,7 +12,6 @@ public record GhostDomainExposureEvent(UUID domainId, LivingEntity source,
         LivingEntity target, double domainStrength) implements GhostEvent {
     public GhostDomainExposureEvent {
         Objects.requireNonNull(domainId, "domainId");
-        Objects.requireNonNull(source, "source");
         Objects.requireNonNull(target, "target");
     }
 }

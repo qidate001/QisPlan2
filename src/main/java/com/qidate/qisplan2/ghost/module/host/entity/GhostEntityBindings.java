@@ -3,7 +3,8 @@ package com.qidate.qisplan2.ghost.module.host.entity;
 import com.qidate.qisplan2.entity.ModularGhostEntity;
 import com.qidate.qisplan2.ghost.module.GhostModule;
 import java.util.List;
-import com.qidate.qisplan2.ghost.module.implementation.mist.GhostMistModule;
+import com.qidate.qisplan2.ghost.module.host.ModuleGhostDomains;
+import com.qidate.qisplan2.entity.ai.GhostWanderGoal;
 import net.minecraft.world.entity.ai.goal.Goal;
 
 /** Goal 的实例、控制标记与物理生命周期只由实体适配层管理。 */
@@ -22,18 +23,17 @@ public final class GhostEntityBindings {
             case NIGHT_HUNT -> new NightWandererEntityBinding().createEntityGoals(host);
             case KNOCK_DOORS -> new KnockingGhostEntityBinding().createEntityGoals(host);
             case FOLLOW_CALL -> new CallingGhostEntityBinding().createEntityGoals(host);
-            case WANDER -> new GhostMistEntityBinding().createEntityGoals(host);
+            case WANDER -> List.of(new GhostWanderGoal(host, 0.7D));
             default -> List.of();
         };
     }
 
     /**
      * 驱动已注册的实体生命周期适配。
-     * 当前为鬼雾维护鬼域；这类资源维护不占用 Goal 的移动控制。
+     * 鬼域已经由统一模块运行时维护；此入口只保留其他实体扩展。
      */
     public static void tick(GhostModule module, ModularGhostEntity host) {
-        if (module.getId().equals(GhostMistModule.ID))
-            new GhostMistEntityBinding().onEntityTick(host);
+        // 鬼域由统一模块运行时维护。
     }
 
     /**
@@ -41,7 +41,6 @@ public final class GhostEntityBindings {
      * 模块卸载或实体离开世界时调用，不删除模块的持久成长数据。
      */
     public static void detach(GhostModule module, ModularGhostEntity host) {
-        if (module.getId().equals(GhostMistModule.ID))
-            new GhostMistEntityBinding().onEntityDetached(host);
+        ModuleGhostDomains.closeRuntime(host,module.getId());
     }
 }

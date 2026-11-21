@@ -9,9 +9,7 @@ public final class GhostPlayerBindings {
     private GhostPlayerBindings() {}
     private static final GhostPlayerBinding NONE = new GhostPlayerBinding() {};
     private static final Map<ResourceLocation, GhostPlayerBinding> BINDINGS = Map.of(
-            ResourceLocation.fromNamespaceAndPath("qisplan2", "night_wanderer"), new NightWandererPlayerBinding(),
-            ResourceLocation.fromNamespaceAndPath("qisplan2", "ghost_eye"), new GhostEyePlayerBinding(),
-            ResourceLocation.fromNamespaceAndPath("qisplan2", "ghost_mist"), new GhostMistPlayerBinding());
+            ResourceLocation.fromNamespaceAndPath("qisplan2", "night_wanderer"), new NightWandererPlayerBinding());
 
     /**
      * 按模块标识选择玩家载体适配器；没有注册专用适配时返回默认空实现。

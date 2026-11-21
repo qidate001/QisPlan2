@@ -223,8 +223,7 @@ public class ModDamageTypes {
     /**
      * 鬼雾灵异攻击
      */
-    public static final ResourceKey<DamageType>
-            GHOST_MIST =
+    public static final ResourceKey<DamageType> GHOST_MIST =
             ResourceKey.create(
                     Registries.DAMAGE_TYPE,
                     ResourceLocation.fromNamespaceAndPath(

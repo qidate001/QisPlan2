@@ -1,5 +1,7 @@
 package com.qidate.qisplan2.ghost.module;
 
+import com.qidate.qisplan2.ghost.module.domain.GhostDomainDefinition;
+
 import com.qidate.qisplan2.ghost.module.influence.GhostAttackResponse;
 import com.qidate.qisplan2.ghost.module.event.GhostEvent;
 import com.qidate.qisplan2.ghost.module.data.GhostModuleData;
@@ -36,6 +38,11 @@ import net.minecraft.resources.ResourceLocation;
  * 不属于模块实例的当前状态。
  */
 public interface GhostModule {
+    /** 声明鬼域身体；未声明的模块没有鬼域，不需要额外注册控制器或行为类型。 */
+    default Optional<GhostDomainDefinition> domainDefinition() {
+        return Optional.empty();
+    }
+
     /** 声音到达目标时声明持续压制；默认没有，声音框架不得硬编码具体厉鬼。 */
     default GhostSuppression soundSuppression(GhostModuleContext context, ResourceLocation soundType) { return null; }
 
@@ -234,7 +241,7 @@ public interface GhostModule {
      * </p>
      */
     default Optional<PossessedGhostDomainData> initialDomainData() {
-        return Optional.empty();
+        return domainDefinition().map(d -> new PossessedGhostDomainData(false,getInitialData().intensity(),d.radius(),d.initialLayer()));
     }
 
     /**

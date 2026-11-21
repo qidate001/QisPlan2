@@ -90,6 +90,7 @@ public final class GhostModuleRegistry {
         register(new CallingGhostModule());
         register(new GhostMistModule());
         register(new GhostEyeModule());
+        register(new GhostUmbrellaModule());
         register(new RedGhostCandleModule());
         register(new WhiteGhostCandleModule());
         register(new GhostStoneBricksModule());

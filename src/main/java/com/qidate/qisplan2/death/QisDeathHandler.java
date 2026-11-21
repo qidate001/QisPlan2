@@ -1,6 +1,7 @@
 package com.qidate.qisplan2.death;
 
-import com.qidate.qisplan2.ghost.domain.type.eye.GhostEyeDomainController;
+import com.qidate.qisplan2.ghost.module.host.player.PlayerGhostModuleHost;
+import com.qidate.qisplan2.ghost.module.host.ModuleGhostDomains;
 import com.qidate.qisplan2.ghost.possession.manager.GhostSuppressionAllocationHandler;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.LivingEntity;
@@ -58,9 +59,19 @@ public final class QisDeathHandler {
         if (entity instanceof ServerPlayer player) {
 
             /*
-             * 玩家死亡时关闭鬼眼。
+             * 玩家死亡时关闭所有模块鬼域。
              */
-            GhostEyeDomainController.close(player);
+            var host = new PlayerGhostModuleHost(player);
+            for(var entry : host.getModules()) {
+                var custom = host.getModuleCustomData(entry.id());
+
+                if (custom.contains("domainOpen")) {
+                    custom.putBoolean("domainOpen", false);
+                    host.setModuleCustomData(entry.id(), custom);
+                }
+
+                ModuleGhostDomains.closeRuntime(host, entry.id());
+            }
 
             /*
              * 玩家死亡时，

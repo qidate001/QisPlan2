@@ -1,6 +1,7 @@
 package com.qidate.qisplan2.ghost.module.host;
 
 import com.qidate.qisplan2.ghost.module.environment.GhostDomainAccess;
+import com.qidate.qisplan2.ghost.module.GhostModuleHost;
 import com.qidate.qisplan2.ghost.domain.GhostDomain;
 import com.qidate.qisplan2.ghost.domain.GhostDomainEntityTracker;
 import com.qidate.qisplan2.ghost.domain.GhostDomainManager;
@@ -19,8 +20,10 @@ public final class GhostDomainAdapters {
     /** 工具类无需实例化。 */
     private GhostDomainAdapters() {}
     /** 将物理作用来源和模块范围封闭在接口内部。 */
-    public static GhostDomainAccess bind(LivingEntity source, ResourceLocation moduleId) {
-        if (source == null || !(source.level() instanceof ServerLevel level)) return GhostDomainAccess.NONE;
+    public static GhostDomainAccess bind(GhostModuleHost host, ResourceLocation moduleId) {
+        var source = GhostEnvironmentAdapters.bearer(host);
+        var level = ModuleGhostDomains.level(host);
+        if (level == null) return GhostDomainAccess.NONE;
         return new GhostDomainAccess() {
             /** 有效覆盖集合考虑其他鬼域的竞争关系。 */
             public boolean contains(LivingEntity target) {
@@ -31,9 +34,9 @@ public final class GhostDomainAdapters {
             /** 返回实际鬼域强度。 */
             public double intensity() { var domain = current(); return domain == null ? 0 : domain.getStrength(); }
             /** 每次重新取得运行时鬼域，避免保留已经移除的对象。 */
-            private GhostDomain current() { return GhostDomainManager.get(level).getBySourceAndType(source.getUUID(), moduleId); }
+            private GhostDomain current() { return ModuleGhostDomains.current(host,moduleId); }
             /** 仅查询当前模块的鬼域。 */
-            public boolean exists() { return source.isAlive() && current() != null; }
+            public boolean exists() { return current() != null; }
             /** 返回当前总层数。 */
             public int layer() { var domain = current(); return domain == null ? 0 : domain.getLayer(); }
             /** 写入鬼域层数；接口不规定某个技能的增减步长。 */
@@ -41,15 +44,15 @@ public final class GhostDomainAdapters {
                 var domain = current();
                 if (domain == null || value < 1 || value > 10 || domain.getLayer() == value) return false;
                 GhostDomainManager.get(level).updateLayer(domain.getId(), value);
-                GhostLayerHandler.setLayer(source, value);
+                if(source != null) GhostLayerHandler.setLayer(source, value);
                 return true;
             }
             /** 读取作用来源当前层数。 */
-            public int occupiedLayer() { return GhostLayerHandler.getLayer(source); }
+            public int occupiedLayer() { return source == null ? 0 : GhostLayerHandler.getLayer(source); }
             /** 设置来源所在层数。 */
             public boolean setOccupiedLayer(int value) {
-                if (!exists() || value < 1 || value > layer() || value == occupiedLayer()) return false;
-                GhostLayerHandler.setLayer(source, value); return true;
+                if (source == null || !exists() || value < 1 || value > layer() || value == occupiedLayer()) return false;
+                if(source != null) GhostLayerHandler.setLayer(source, value); return true;
             }
             /** 视线移动由具备输入的世界对象实现。 */
             public boolean teleportToAim() { return source instanceof ServerPlayer player && GhostDomainTeleportHandler.teleport(player, current()); }

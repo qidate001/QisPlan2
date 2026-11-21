@@ -13,7 +13,7 @@ public interface GhostDomainAccess {
     default boolean exists() { return false; }
     /** 获取鬼域层数，缺少鬼域时为零。 */
     default int layer() { return 0; }
-    /** 设置鬼域总层数；合法范围由声明技能的模块决定。 */
+    /** 设置鬼域总层数；框架统一限制在 1～10，技能只决定调整方式。 */
     default boolean setLayer(int value) { return false; }
     /** 读取可移动作用对象所在层数。 */
     default int occupiedLayer() { return 0; }

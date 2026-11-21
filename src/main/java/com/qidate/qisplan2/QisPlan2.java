@@ -175,79 +175,14 @@ public class QisPlan2 {
                     )
             );
 
-            /*
-             * ========================================================
-             * 鬼眼 Shader
-             * ========================================================
-             */
-
-            ResourceLocation ghostEyeId =
-                    ResourceLocation.fromNamespaceAndPath(
-                            MODID,
-                            "ghost_eye"
-                    );
-
-            event.registerShader(
-                    new ShaderInstance(
-                            event.getResourceProvider(),
-                            ghostEyeId,
-                            DefaultVertexFormat.POSITION
-                    ),
-                    shader -> GhostDomainShaderRegistry.register(
-                            ghostEyeId,
-                            shader
-                    )
-            );
-
-
-            /*
-             * ========================================================
-             * 鬼伞 Shader
-             * ========================================================
-             */
-
-            ResourceLocation ghostUmbrellaId =
-                    ResourceLocation.fromNamespaceAndPath(
-                            MODID,
-                            "ghost_umbrella"
-                    );
-
-            event.registerShader(
-                    new ShaderInstance(
-                            event.getResourceProvider(),
-                            ghostUmbrellaId,
-                            DefaultVertexFormat.POSITION
-                    ),
-                    shader -> GhostDomainShaderRegistry.register(
-                            ghostUmbrellaId,
-                            shader
-                    )
-            );
-
-
-            /*
-             * ========================================================
-             * 鬼雾 Shader
-             * ========================================================
-             */
-
-            ResourceLocation ghostMistId =
-                    ResourceLocation.fromNamespaceAndPath(
-                            MODID,
-                            "ghost_mist"
-                    );
-
-            event.registerShader(
-                    new ShaderInstance(
-                            event.getResourceProvider(),
-                            ghostMistId,
-                            DefaultVertexFormat.POSITION
-                    ),
-                    shader -> GhostDomainShaderRegistry.register(
-                            ghostMistId,
-                            shader
-                    )
-            );
+            // 每个模块自行声明是否拥有可视鬼域；基础隔绝纹理仍属于框架资源。
+            for (var module : GhostModuleRegistry.getAll()) {
+                var definition = module.domainDefinition().orElse(null);
+                if (definition == null || definition.visualPrefix().isEmpty()) continue;
+                var shaderId = module.getId();
+                event.registerShader(new ShaderInstance(event.getResourceProvider(), shaderId, DefaultVertexFormat.POSITION),
+                        shader -> GhostDomainShaderRegistry.register(shaderId,shader));
+            }
 
         } catch (IOException e) {
 

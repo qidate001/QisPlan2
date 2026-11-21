@@ -713,8 +713,46 @@ boolean success = GhostAbilityExecutor.tryExecuteWithResult(invocation);
 - **自主行为**：`behavior()` 当前仍返回 `GhostBehavior`，已有 `NONE / NIGHT_HUNT / KNOCK_DOORS / FOLLOW_CALL / WANDER`。这是现有 Goal 适配入口，不能误称能力预设枚举已经删除，所以所有其他系统也都自动开放。全新行为需要补齐对应适配与调度。
 - **语义规则**：自主移动如何发现目标由行为/采集层处理；发现后的语义事实交给规则。行为内部资源维护不要都列成技能。
 - **声音**：`getSounds()` 声明 `GhostSoundDefinition`，真实传播和听声变化由声音系统处理；白烛造成的中断应沿用真实语义链，不手工广播一个假的“已听见”。
-- **鬼域**：`initialDomainData()` 是初始状态声明，`domain()` 是运行时操作接口，两者不能混淆。创建、维护、清理还需要对应宿主生命周期适配。可以参考 `GhostMistModule` 和 `GhostEyeModule`。
+- **鬼域**：通过 `domainDefinition()` 声明鬼域身体，`world().domain()` 是当前模块的运行时操作接口。统一适配器负责所有宿主的创建、维护和清理；不再添加独立的鬼域控制器、类型注册或客户端效果注册。`initialDomainData()` 仅为旧驭鬼界面派生初始视图，不再作为另一份声明。
 - **蔓延**：使用 `world.spreadBlocks(anchor, spec)`。`BlockSpreadSpec.Shape.HORIZONTAL_2D` 是水平四邻域，`VOLUME_3D` 是三维六邻域；`CHAIN` 和 `FRONTIER` 决定扩展方式。数量是成功新增方块数，空间不足允许少于要求，不能无限搜索。
+
+### 9.4 在模块中声明鬼域
+
+鬼域属于模块身体，不是另一只独立注册的厉鬼。普通模块默认 `Optional.empty()`；具有鬼域的模块覆盖下面的方法：
+
+```java
+/** 声明球形鬼域身体，以及覆盖区域具备的感知语义。 */
+@Override
+public Optional<GhostDomainDefinition> domainDefinition() {
+    return Optional.of(new GhostDomainDefinition(
+            80,                     // 默认半径
+            1,                      // 初始层数；框架合法范围为 1～10
+            true,                   // 未受控且可自主运行时默认展开
+            SphereDomainShape::new, // 每次创建独立几何实例
+            true,                   // 覆盖意味着身体接触
+            true,                   // 覆盖还意味着来源看见目标，例如鬼眼
+            20,                     // 周期曝光间隔；0 表示不需要周期曝光
+            true,                   // 启用框架实体视觉
+            true,                   // 允许框架化虹
+            "ExampleGhost",         // 标准着色器参数前缀；空串表示没有后处理
+            false                   // 是否具有鬼雨天气表现
+    ));
+}
+```
+
+**声明与能力分工：** `domainDefinition()` 提供几何和感知契约；开关、侵蚀、鬼雨等具体效果仍由本模块的 `getIntrinsicAbilities()` 定义，通过 `world().toggleDomain()`、`world().hurt(...)`、`world().attack(...)` 等接口实施。框架不会按模块 ID 硬编码技能。分层、层数竞争、隔绝关系、有效覆盖集合及传送实现继续属于框架；模块只编排通用操作，不复制这些算法。
+
+**状态和宿主：** 开关、强度、范围、层数使用模块 `customData` 中的 `domainOpen / domainStrength / domainRadius / domainLayer`，沿用旧数据字段。没有显式开关时，框架结合声明中的 `automatic` 和宿主提供的自主运行许可决定是否展开。玩家默认需要主动开启；暴露在世界中的实体、物品、方块共用同一套适配入口。物品按实际物品栈身份区分，不能借用携带者的同名模块。模块移除、载体失效、离开世界、收起物品或外部完全压制会收回运行时域；持久字段保留供恢复和转移。已主动开启的能力不因规则死机而失效。
+
+**覆盖事实：** 只采集 `GhostDomainEntityTracker` 最终确认的有效覆盖集合，已经被其他鬼域或隔绝规则排除的目标不会收到这些事件。
+
+- `TouchEvent`：鬼域和本体共用宿主接触采样，同一目标每 tick 最多累计一次。身体与鬼域交界处不会重复触发进入，离开后再进入才重新产生 `BEGIN`。
+- `TargetSeenEvent(target)`：当前来源看见目标。它与 `SourceSeenEvent(observer)` 的方向相反，不能用“看见别人”触发“别人看见自己”的规则。存在实体观察者时，中间层还向目标宿主派发已有 `EntityPerceivedEvent(observer, target)`。
+- `GhostDomainExposureEvent`：周期采样确认目标正在受某个鬼域影响。事件携带运行时域 ID、来源、目标和域强度；静态来源的实体字段可以为空。能力使用 `world.containsInDomain(event.domainId(), event.target())` 验证归属，不能仅凭事件类型实施效果。
+
+**普通伤害与灵异袭击必须分开：** `world.hurt(target, damageType, amount)` 调用原版数值伤害；`world.attack(target, damageType, intensity)` 才进入灵异袭击裁决。当前鬼雾每 20 tick 对有效覆盖中的其他生物调用 `hurt(target, ModDamageTypes.GHOST_MIST, 0.1F)`，不会借此提交袭击影响、触发灵异反击或积累袭击压制。原版护甲、无敌、其他伤害事件仍按普通伤害流程处理。鬼雾的公开侵蚀技能也复用这个普通伤害能力。
+
+**渲染：** `rain` 声明由统一天气适配器消费，鬼伞不再独立注册天气驱动。当前鬼雨渲染器支持圆柱形雨幕。模块只需提供与模块 ID 同名的 `shaders/core/<模块路径>.json` 及其着色器资源，不需要修改 `QisPlan2Client` 或总渲染管线。标准效果按前缀绑定 `RegionIdentity` sampler，并提供 `ProjMat / ModelViewMat / CameraPos / DomainCenter / DomainRadius / DomainActive / DomainLayer / DomainStrength / Time / SourceRegion` 参数；着色器可省略不使用的 uniform。声明和模块不引用任何客户端类，专属资源由客户端适配器加载。这个标准约定不表示任意新着色器布局会自动被理解；超出标准输入时应扩展表现接口，不能在总管线中加入厉鬼名字分支。
 
 ## 10. 灵异裁决与复苏代价
 

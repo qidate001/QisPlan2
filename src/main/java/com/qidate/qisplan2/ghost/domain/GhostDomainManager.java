@@ -1,5 +1,7 @@
 package com.qidate.qisplan2.ghost.domain;
 
+import net.minecraft.core.BlockPos;
+
 import com.qidate.qisplan2.QisPlan2;
 import com.qidate.qisplan2.ghost.isolation.GhostIsolationSystem;
 import com.qidate.qisplan2.network.QisNetwork;
@@ -414,6 +416,7 @@ public final class GhostDomainManager {
         }
 
         domain.setLayer(layer);
+        domain.getBehavior().onDomainLayerChanged(level,domain);
 
         GhostDomainEntityTracker
                 .get(level)
@@ -573,11 +576,6 @@ public final class GhostDomainManager {
             GhostDomain domain
     ) {
 
-        Entity source =
-                level.getEntity(
-                        domain.getSourceUUID()
-                );
-
         /*
          * ========================================================
          * Source 不存在。
@@ -585,14 +583,14 @@ public final class GhostDomainManager {
          * 当前不主动改变缓存。
          * ========================================================
          */
-        if (source == null) {
+        if (!domain.getBehavior().sourcePresent(level, domain)) {
             return;
         }
 
         UUID currentRegionId =
                 GhostIsolationSystem.getRegionId(
                         level,
-                        source.blockPosition()
+                        BlockPos.containing(domain.getBehavior().sourcePosition(level, domain))
                 );
 
         UUID previousRegionId =
@@ -671,13 +669,7 @@ public final class GhostDomainManager {
              * 检查 Source 是否仍然存在
              * ========================================================
              */
-            Entity source =
-                    level.getEntity(
-                            domain.getSourceUUID()
-                    );
-
-            if (source == null
-                    || source.isRemoved()) {
+            if (!domain.getBehavior().sourcePresent(level, domain)) {
 
                 /*
                  * Source 已经不存在。
@@ -702,9 +694,9 @@ public final class GhostDomainManager {
 
                 updatePosition(
                         domain.getId(),
-                        source.getX(),
-                        source.getY(),
-                        source.getZ()
+                        domain.getBehavior().sourcePosition(level, domain).x,
+                        domain.getBehavior().sourcePosition(level, domain).y,
+                        domain.getBehavior().sourcePosition(level, domain).z
                 );
             }
 

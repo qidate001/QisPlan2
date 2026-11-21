@@ -1,5 +1,4 @@
 package com.qidate.qisplan2.ghost.module.implementation.mist;
-import com.qidate.qisplan2.ghost.module.ability.GhostAbilityInfluence;
 import com.qidate.qisplan2.ghost.module.ability.DefinedGhostAbility;
 import com.qidate.qisplan2.ghost.module.ability.GhostDomainShortcut;
 import com.qidate.qisplan2.ghost.module.ability.GhostAbility;
@@ -11,15 +10,21 @@ import com.qidate.qisplan2.ghost.module.*;
 import com.qidate.qisplan2.ghost.module.ability.*;
 import com.qidate.qisplan2.ghost.module.data.GhostModuleInitialData;
 import com.qidate.qisplan2.ghost.module.event.*;
-import com.qidate.qisplan2.ghost.module.influence.GhostInfluenceType;
-import com.qidate.qisplan2.ghost.possession.data.PossessedGhostDomainData;
 import java.util.List;
+import com.qidate.qisplan2.ghost.module.domain.GhostDomainDefinition;
+import com.qidate.qisplan2.ghost.domain.SphereDomainShape;
 import java.util.Optional;
 import net.minecraft.resources.ResourceLocation;
 import static com.qidate.qisplan2.QisPlan2.MODID;
 
-/** 完整鬼雾模块：独立维护鬼域生命周期，游荡参与行为调度，鬼域袭击经过统一裁决。 */
+/** 完整鬼雾模块：声明鬼域身体，游荡参与行为调度；雾气每秒造成原版数值伤害。 */
 public final class GhostMistModule implements GhostModule {
+    /** 鬼域属于本模块的身体；覆盖产生接触，额外感知由声明决定。 */
+    @Override public Optional<GhostDomainDefinition> domainDefinition() {
+        return Optional.of(new GhostDomainDefinition(80, 1, true, SphereDomainShape::new,
+                true, false, 20, true, true, "GhostMist", false));
+    }
+
 
     /**
      * 声明需要的自主行动类型。
@@ -68,7 +73,7 @@ public final class GhostMistModule implements GhostModule {
                 if (c.abilityId().equals(DOMAIN)) return world.canToggleDomain();
                 if (!c.abilityId().equals(ATTACK)) return world.canToggleDomain();
                 if (c.event() == null) return world.domain().contains(world.aimedTarget(64));
-                return c.event() instanceof GhostDomainExposureEvent e && world.isOrigin(e.source())
+                return c.event() instanceof GhostDomainExposureEvent e && world.validTarget(e.target())
                         && world.containsInDomain(e.domainId(), e.target());
             }
         });
@@ -78,6 +83,13 @@ public final class GhostMistModule implements GhostModule {
      * 声明本厉鬼响应的语义事件及对应规则。
      * 规则负责决定何时发起能力或提交影响，不绕过执行器直接完成袭击。
      */
+    /** 已经主动展开的鬼域持续执行雾气能力；未受控的复苏状态由规则入口驱动。 */
+    @Override public void onAbilityEvent(GhostModuleContext context, GhostEvent event) {
+        if (event instanceof GhostDomainExposureEvent e && context.getCustomData().getBoolean("domainOpen")
+                && context.world().validTarget(e.target()) && context.world().containsInDomain(e.domainId(),e.target()))
+            context.continueAbility(ATTACK,e);
+    }
+
     @Override public List<GhostRule> getRules() {
         return List.of(new GhostRule() {
             /**
@@ -97,7 +109,10 @@ public final class GhostMistModule implements GhostModule {
              * 返回 false 时跳过本规则，不提交能力或灵异影响。
              */
             @Override public boolean canTrigger(GhostRuleContext c, GhostEvent e) {
-                return c.getModuleContext().world().present();
+                return e instanceof GhostDomainExposureEvent exposure
+                        && c.getModuleContext().world().validTarget(exposure.target())
+                        && !c.getModuleContext().getCustomData().getBoolean("domainOpen")
+                        && c.getModuleContext().world().containsInDomain(exposure.domainId(), exposure.target());
             }
 
             /**
@@ -106,8 +121,7 @@ public final class GhostMistModule implements GhostModule {
              */
             @Override public void onTrigger(GhostRuleContext c, GhostEvent event) {
                 var e = (GhostDomainExposureEvent)event;
-                c.submitAbilityInfluence(ATTACK, e, e.target().getUUID(),
-                        GhostInfluenceType.ATTACK, e.domainStrength() / 5.0D);
+                c.getModuleContext().reactAbility(ATTACK, e);
             }
         });
     }
@@ -151,10 +165,6 @@ public final class GhostMistModule implements GhostModule {
              * 注册、能力查找和规则分发使用此标识，不代表某个运行时实例。
              */
             @Override public ResourceLocation getId() { return ATTACK; }
-            /** 主动渠道与规则使用相同的袭击/保护语义，获准前不执行世界效果。 */
-            @Override public GhostAbilityInfluence activeInfluence(GhostAbilityContext context) {
-                return GhostAbilityInfluence.of(context.getModuleContext().world().aimedTarget(64), GhostInfluenceType.ATTACK, context.getModuleContext().world().domain().intensity() / 5.0D);
-            }
 
 
             /**
@@ -176,10 +186,7 @@ public final class GhostMistModule implements GhostModule {
             @Override public boolean executeWithResult(GhostAbilityContext c) {
                 var world = c.getModuleContext().world();
                 var target = c.event() instanceof GhostDomainExposureEvent e ? e.target() : world.aimedTarget(64);
-                double strength = c.event() instanceof GhostDomainExposureEvent e ? e.domainStrength() : world.domain().intensity();
-                boolean killed = world.attack(target, ModDamageTypes.GHOST_MIST, strength / 5.0D);
-                if (killed) world.growDomain();
-                return killed;
+                return world.hurt(target, ModDamageTypes.GHOST_MIST, 0.1F);
             }
         },
         new DefinedGhostAbility(ResourceLocation.fromNamespaceAndPath(ID.getNamespace(), ID.getPath() + "/teleport"),
@@ -208,15 +215,7 @@ public final class GhostMistModule implements GhostModule {
     /**
      * 鬼域。
      */
-    @Override
-    public Optional<PossessedGhostDomainData> initialDomainData() {
-        return Optional.of(
-                PossessedGhostDomainData.create(
-                        getInitialData().intensity(),
-                        80.0D
-                )
-        );
-    }
+
 
 
 }

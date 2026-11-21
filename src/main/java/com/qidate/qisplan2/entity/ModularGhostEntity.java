@@ -1,5 +1,7 @@
 package com.qidate.qisplan2.entity;
 
+import com.qidate.qisplan2.ghost.module.host.GhostContactEvents;
+
 import com.qidate.qisplan2.ghost.module.GhostModuleCombatState;
 import com.qidate.qisplan2.ghost.module.host.GhostSoundSuppression;
 import com.qidate.qisplan2.ghost.module.host.attachment.GhostAttachments;
@@ -690,7 +692,7 @@ public class ModularGhostEntity extends PathfinderMob
 
             // 每 tick 报告真实接触时长；事件阶段保留进入语义，避免不可触规则重复袭击。
             boolean beginning = touchingEntities.add(targetId);
-            GhostModuleRuntime.dispatch(this, TouchEvent.sample(this, target, beginning));
+            GhostContactEvents.sample(this, this, target);
         }
 
         // 目标离开碰撞范围后，允许下一次接触重新触发

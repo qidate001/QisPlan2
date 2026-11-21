@@ -10,6 +10,7 @@ import com.qidate.qisplan2.ghost.module.event.GhostEvent;
 import com.qidate.qisplan2.ghost.module.influence.GhostInfluenceSession;
 
 import java.util.List;
+import com.qidate.qisplan2.ghost.module.host.ModuleGhostDomains;
 
 /**
  * 灵异模块运行时。
@@ -84,6 +85,7 @@ public final class GhostModuleRuntime {
                 if (event instanceof ModuleTickEvent) GhostModuleCombatState.tick(host);
                 if (event instanceof ModuleTickEvent)
                     GhostModuleSoundManager.syncCarriedHost(host);
+                if (event instanceof ModuleTickEvent) ModuleGhostDomains.sync(host);
                 List<GhostModuleData.Entry> entries = List.copyOf(host.getModules());
                 for (GhostModuleData.Entry entry : entries) {
                     if (!host.hasModule(entry.id())) continue;

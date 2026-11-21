@@ -3,7 +3,8 @@ package com.qidate.qisplan2.client;
 import com.qidate.qisplan2.ghost.domain.client.ClientGhostDomain;
 import com.qidate.qisplan2.ghost.domain.client.ClientGhostDomainManager;
 import com.qidate.qisplan2.client.renderer.GhostRainRenderer;
-import com.qidate.qisplan2.QisPlan2;
+import com.qidate.qisplan2.ghost.module.GhostModuleRegistry;
+import com.qidate.qisplan2.ghost.domain.CylinderDomainShape;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.resources.ResourceLocation;
@@ -16,13 +17,13 @@ import net.neoforged.neoforge.client.event.RenderLevelStageEvent;
 import java.util.ArrayList;
 import java.util.List;
 
-public final class GhostUmbrellaDomainClient {
+public final class GhostDomainWeatherClient {
 
-    private static final ResourceLocation DOMAIN_TYPE =
-            ResourceLocation.fromNamespaceAndPath(
-                    QisPlan2.MODID,
-                    "ghost_umbrella"
-            );
+    /** 天气表现由模块的鬼域声明选择，不认识具体厉鬼名称。 */
+    private static boolean hasRain(ClientGhostDomain domain) {
+        var module = GhostModuleRegistry.get(domain.getDomainType());
+        return module != null && module.domainDefinition().map(definition -> definition.rain()).orElse(false);
+    }
 
     private static final List<GhostRainSource> RAIN_SOURCES =
             new ArrayList<>();
@@ -31,7 +32,7 @@ public final class GhostUmbrellaDomainClient {
 
     private static int rainSoundTime = 0;
 
-    private GhostUmbrellaDomainClient() {
+    private GhostDomainWeatherClient() {
     }
 
     public static boolean isInsideDomain() {
@@ -55,9 +56,7 @@ public final class GhostUmbrellaDomainClient {
             return false;
         }
 
-        return DOMAIN_TYPE.equals(
-                effectiveDomain.getDomainType()
-        );
+        return hasRain(effectiveDomain);
     }
 
     /**
@@ -157,15 +156,14 @@ public final class GhostUmbrellaDomainClient {
 
         /*
          * 从客户端鬼域管理器读取
-         * 当前维度的所有鬼雨伞鬼域。
+         * 当前维度声明了降雨表现的所有模块鬼域。
          */
         RAIN_SOURCES.clear();
 
         for (ClientGhostDomain domain :
                 ClientGhostDomainManager.getDomains()) {
 
-            if (!DOMAIN_TYPE.equals(
-                    domain.getDomainType())) {
+            if (!hasRain(domain)) {
                 continue;
             }
 
@@ -175,7 +173,7 @@ public final class GhostUmbrellaDomainClient {
             }
 
             if (domain.getShape()
-                    instanceof com.qidate.qisplan2.ghost.domain.CylinderDomainShape cylinder) {
+                    instanceof CylinderDomainShape cylinder) {
 
                 RAIN_SOURCES.add(
                         new GhostRainSource(
@@ -251,8 +249,7 @@ public final class GhostUmbrellaDomainClient {
         for (ClientGhostDomain domain :
                 ClientGhostDomainManager.getDomains()) {
 
-            if (!DOMAIN_TYPE.equals(
-                    domain.getDomainType())) {
+            if (!hasRain(domain)) {
                 continue;
             }
 

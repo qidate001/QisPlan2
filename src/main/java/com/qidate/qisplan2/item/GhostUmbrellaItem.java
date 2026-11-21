@@ -2,196 +2,43 @@ package com.qidate.qisplan2.item;
 
 import com.qidate.qisplan2.core.ModDataComponents;
 import com.qidate.qisplan2.core.ModItems;
-import com.qidate.qisplan2.ghost.domain.type.umbrella.GhostUmbrellaDomainController;
-import net.minecraft.network.chat.Component;
-import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.world.InteractionHand;
-import net.minecraft.world.InteractionResultHolder;
-import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.item.Item;
+import com.qidate.qisplan2.ghost.module.data.GhostModuleData;
+import com.qidate.qisplan2.ghost.module.host.item.GhostModuleItem;
+import com.qidate.qisplan2.ghost.module.host.item.GhostItemModuleHost;
+import com.qidate.qisplan2.ghost.module.implementation.GhostUmbrellaModule;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
+import java.util.List;
 
-public class GhostUmbrellaItem extends Item {
-    private static final long MIN_OPEN_TICKS = 10L * 20L;
-
-    public GhostUmbrellaItem(
-            Properties properties
-    ) {
-        super(properties);
+/** 自带鬼雨伞模块的物品。只负责默认组件与模型状态，不创建鬼域或实施袭击。 */
+public class GhostUmbrellaItem extends GhostModuleItem {
+    /** 默认安装完整模块，随物品保存和转移。 */
+    public GhostUmbrellaItem(Properties properties) {
+        super(properties.component(ModDataComponents.GHOST_MODULES.get(),List.of(new GhostModuleData.Entry(GhostUmbrellaModule.ID,100,0))));
     }
-
-    public static boolean isOpen(
-            ItemStack stack
-    ) {
-        Boolean value =
-                stack.get(
-                        ModItems.GHOST_UMBRELLA_OPEN
-                );
-
-        return Boolean.TRUE.equals(value);
-    }
-
-    public static void setOpen(
-            ItemStack stack,
-            boolean open
-    ) {
-        stack.set(
-                ModItems.GHOST_UMBRELLA_OPEN,
-                open
-        );
-    }
-
-    @Override
-    public InteractionResultHolder<ItemStack> use(
-            Level level,
-            Player player,
-            InteractionHand hand
-    ) {
-        ItemStack stack =
-                player.getItemInHand(hand);
-
-        boolean open =
-                isOpen(stack);
-
-        /*
-         * ========================================================
-         * 当前已经打开 → 尝试关闭
-         * ========================================================
-         */
-        if (open) {
-
-            Long openedAt =
-                    stack.get(
-                            ModDataComponents.GHOST_UMBRELLA_OPENED_AT
-                    );
-
-            /*
-             * 没有记录开始时间时，
-             * 保险起见允许关闭。
-             */
-            if (openedAt != null) {
-
-                long elapsed =
-                        level.getGameTime()
-                                - openedAt;
-
-                /*
-                 * ================================================
-                 * 还没达到 10 秒
-                 * ================================================
-                 */
-                if (elapsed < MIN_OPEN_TICKS) {
-
-                    /*
-                     * 只提示服务器上的玩家。
-                     */
-                    if (!level.isClientSide()) {
-
-                        long remaining =
-                                MIN_OPEN_TICKS
-                                        - elapsed;
-
-                        int seconds =
-                                (int) Math.ceil(
-                                        remaining / 20.0D
-                                );
-
-                        player.displayClientMessage(
-                                Component.literal(
-                                        "鬼雨伞至少需要撑开 "
-                                                + seconds
-                                                + " 秒"
-                                ),
-                                true
-                        );
-                    }
-
-                    /*
-                     * ★关键：
-                     *
-                     * 不执行 setOpen(false)
-                     * 不删除 openedAt
-                     *
-                     * 所以客户端模型也不会关闭。
-                     */
-                    return InteractionResultHolder.fail(
-                            stack
-                    );
+    /** 客户端模型继续读取原有组件。 */
+    public static boolean isOpen(ItemStack stack) { return Boolean.TRUE.equals(stack.get(ModItems.GHOST_UMBRELLA_OPEN)); }
+    /** 外观适配不参与模块规则。 */
+    public static void setOpen(ItemStack stack,boolean open) { if(isOpen(stack)!=open)stack.set(ModItems.GHOST_UMBRELLA_OPEN,open); }
+    /** 首次读入旧物品时迁移开关，此后由模块状态驱动外观。 */
+    @Override public void inventoryTick(ItemStack stack,Level level,Entity entity,int slot,boolean selected) {
+        if(!level.isClientSide && entity instanceof LivingEntity living) {
+            var host=new GhostItemModuleHost(stack,living);
+            if(host.hasModule(GhostUmbrellaModule.ID)) {
+                var data=host.getModuleCustomData(GhostUmbrellaModule.ID);
+                if(!data.contains("domainOpen")) {
+                    data.putBoolean("domainOpen",isOpen(stack));
+                    data.putLong("domainOpenedAt",stack.getOrDefault(ModDataComponents.GHOST_UMBRELLA_OPENED_AT,0L));
+                    host.setModuleCustomData(GhostUmbrellaModule.ID,data);
                 }
             }
-
-            /*
-             * ====================================================
-             * 已达到 10 秒 → 正常关伞
-             * ====================================================
-             */
-            setOpen(
-                    stack,
-                    false
-            );
-
-            stack.remove(
-                    ModDataComponents.GHOST_UMBRELLA_OPENED_AT
-            );
-
-
-            /*
-             * ============================================================
-             * 删除鬼伞鬼域
-             * ============================================================
-             */
-
-            if (!level.isClientSide()
-                    && player instanceof ServerPlayer serverPlayer) {
-
-                GhostUmbrellaDomainController.remove(
-                        serverPlayer
-                );
-            }
-
-
-            return InteractionResultHolder.sidedSuccess(
-                    stack,
-                    level.isClientSide()
-            );
         }
-
-
-        /*
-         * ========================================================
-         * 当前关闭 → 开伞
-         * ========================================================
-         */
-
-        setOpen(
-                stack,
-                true
-        );
-
-
-        /*
-         * ============================================================
-         * 服务器创建鬼伞鬼域
-         * ============================================================
-         */
-
-        if (!level.isClientSide()
-                && player instanceof ServerPlayer serverPlayer) {
-
-            stack.set(
-                    ModDataComponents.GHOST_UMBRELLA_OPENED_AT,
-                    level.getGameTime()
-            );
-
-            GhostUmbrellaDomainController.ensure(
-                    serverPlayer
-            );
+        super.inventoryTick(stack,level,entity,slot,selected);
+        if(!level.isClientSide) {
+            var host=new GhostItemModuleHost(stack);
+            setOpen(stack,host.hasModule(GhostUmbrellaModule.ID) && host.getModuleCustomData(GhostUmbrellaModule.ID).getBoolean("domainOpen"));
         }
-
-        return InteractionResultHolder.sidedSuccess(
-                stack,
-                level.isClientSide()
-        );
     }
 }
