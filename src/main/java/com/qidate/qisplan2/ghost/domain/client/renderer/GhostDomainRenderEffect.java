@@ -65,6 +65,25 @@ public interface GhostDomainRenderEffect {
     }
 
     /**
+     * 绑定当前效果专属的 Shader 采样纹理。
+     *
+     * 公共颜色和深度输入已由管线准备；本方法随后执行，早于 setupUniforms 和绘制。
+     * 效果负责使 sampler 名称与自己的 Shader 声明一致，不通过其他 uniform 推测纹理需求。
+     * 每个 Domain 绘制前重新取得并绑定纹理，避免窗口变化后沿用失效的纹理 ID。
+     * 不需要额外纹理的效果直接使用默认空实现。
+     *
+     * @param shader 当前效果的 Shader
+     * @param minecraft 当前 Minecraft 实例
+     * @param domain 当前正在渲染的 GhostDomain
+     */
+    default void setupSamplers(
+            ShaderInstance shader,
+            Minecraft minecraft,
+            ClientGhostDomain domain
+    ) {
+    }
+
+    /**
      * 设置指定 GhostDomain 对应的 Shader Uniform。
      *
      * @param shader 当前 Shader

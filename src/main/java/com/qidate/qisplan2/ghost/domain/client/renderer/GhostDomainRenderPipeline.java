@@ -7,7 +7,6 @@ import com.mojang.blaze3d.vertex.DefaultVertexFormat;
 import com.mojang.blaze3d.vertex.Tesselator;
 import com.mojang.blaze3d.vertex.VertexFormat;
 import com.qidate.qisplan2.QisPlan2;
-import com.qidate.qisplan2.ghost.isolation.client.GhostIsolationRegionTarget;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.ShaderInstance;
 
@@ -134,6 +133,15 @@ public final class GhostDomainRenderPipeline {
 
             setupShader(
                     shader
+            );
+
+            /*
+             * 专属纹理由效果自行绑定，管线不识别具体效果或 sampler 名称。
+             */
+            effect.setupSamplers(
+                    shader,
+                    minecraft,
+                    domain
             );
 
             /*
@@ -363,38 +371,5 @@ public final class GhostDomainRenderPipeline {
                 GhostDomainDepthTarget.get()
                         .getDepthTextureId()
         );
-
-        /*
-         * Region Identity Texture。
-         *
-         * 只有声明了 GhostEyeRegionIdentity sampler 的 Shader
-         * 才绑定这张纹理。
-         */
-        if (shader.getUniform("GhostEyeSourceRegion") != null) {
-
-            shader.setSampler(
-                    "GhostEyeRegionIdentity",
-                    GhostIsolationRegionTarget.get()
-                            .getColorTextureId()
-            );
-        }
-
-        if (shader.getUniform("GhostUmbrellaSourceRegion") != null) {
-
-            shader.setSampler(
-                    "GhostUmbrellaRegionIdentity",
-                    GhostIsolationRegionTarget.get()
-                            .getColorTextureId()
-            );
-        }
-
-        if (shader.getUniform("GhostMistSourceRegion") != null) {
-
-            shader.setSampler(
-                    "GhostMistRegionIdentity",
-                    GhostIsolationRegionTarget.get()
-                            .getColorTextureId()
-            );
-        }
     }
 }

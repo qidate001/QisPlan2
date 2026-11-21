@@ -8,6 +8,7 @@ import com.qidate.qisplan2.ghost.domain.client.renderer.GhostDomainRenderEffect;
 import com.qidate.qisplan2.ghost.domain.client.renderer.GhostDomainRenderEffectRegistry;
 import com.qidate.qisplan2.ghost.domain.type.umbrella.GhostUmbrellaDomainController;
 import com.qidate.qisplan2.ghost.isolation.client.ClientGhostIsolationManager;
+import com.qidate.qisplan2.ghost.isolation.client.GhostIsolationRegionTarget;
 import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.ShaderInstance;
@@ -53,6 +54,21 @@ public final class GhostUmbrellaRenderEffect
         return !getDomains(
                 minecraft
         ).isEmpty();
+    }
+
+    /**
+     * 为本效果绑定空间身份纹理；专属 sampler 名称只由效果自身维护。
+     */
+    @Override
+    public void setupSamplers(
+            ShaderInstance shader,
+            Minecraft minecraft,
+            ClientGhostDomain domain
+    ) {
+        shader.setSampler(
+                "GhostUmbrellaRegionIdentity",
+                GhostIsolationRegionTarget.get().getColorTextureId()
+        );
     }
 
     @Override

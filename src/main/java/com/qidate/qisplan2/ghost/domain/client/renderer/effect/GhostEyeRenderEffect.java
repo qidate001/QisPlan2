@@ -7,6 +7,7 @@ import com.qidate.qisplan2.ghost.domain.client.renderer.GhostDomainMatrices;
 import com.qidate.qisplan2.ghost.domain.client.renderer.GhostDomainRenderEffect;
 import com.qidate.qisplan2.ghost.domain.client.renderer.GhostDomainRenderEffectRegistry;
 import com.qidate.qisplan2.ghost.isolation.client.ClientGhostIsolationManager;
+import com.qidate.qisplan2.ghost.isolation.client.GhostIsolationRegionTarget;
 import com.qidate.qisplan2.ghost.module.implementation.eye.GhostEyeModule;
 import java.util.Collection;
 import java.util.Collections;
@@ -98,6 +99,21 @@ public final class GhostEyeRenderEffect
     @Override
     public boolean useIsolationStencil() {
         return false;
+    }
+
+    /**
+     * 为本效果绑定空间身份纹理；专属 sampler 名称只由效果自身维护。
+     */
+    @Override
+    public void setupSamplers(
+            ShaderInstance shader,
+            Minecraft minecraft,
+            ClientGhostDomain domain
+    ) {
+        shader.setSampler(
+                "GhostEyeRegionIdentity",
+                GhostIsolationRegionTarget.get().getColorTextureId()
+        );
     }
 
     @Override
