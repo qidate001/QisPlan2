@@ -331,7 +331,8 @@ public final class GhostDomainRenderPipeline {
      * 准备指定 Shader 的后处理输入。
      *
      * <p>
-     * DiffuseSampler 使用 MainRenderTarget 当前颜色纹理。
+     * DiffuseSampler 使用本次绘制前复制的独立颜色纹理。
+     * 每个 Domain 都重新捕获颜色，使后续叠加读取上一遍结果而不读写同一附件。
      * MainDepthSampler 使用独立复制出来的鬼域深度纹理。
      * </p>
      */
@@ -353,11 +354,11 @@ public final class GhostDomainRenderPipeline {
         );
 
         /*
-         * Minecraft 当前帧的颜色结果。
+         * 本次绘制的只读颜色快照；不可直接采样正在写入的主颜色附件。
          */
         shader.setSampler(
                 "DiffuseSampler",
-                mainTarget.getColorTextureId()
+                GhostDomainColorTarget.capture(mainTarget)
         );
 
         /*

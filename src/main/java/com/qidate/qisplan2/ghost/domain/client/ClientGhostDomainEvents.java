@@ -1,6 +1,7 @@
 package com.qidate.qisplan2.ghost.domain.client;
 
 import net.neoforged.bus.api.SubscribeEvent;
+import com.qidate.qisplan2.ghost.domain.client.renderer.GhostDomainColorTarget;
 import net.neoforged.neoforge.client.event.ClientPlayerNetworkEvent;
 
 public final class ClientGhostDomainEvents {
@@ -13,5 +14,6 @@ public final class ClientGhostDomainEvents {
             ClientPlayerNetworkEvent.LoggingOut event
     ) {
         ClientGhostDomainManager.clear();
+        GhostDomainColorTarget.destroy();
     }
 }
