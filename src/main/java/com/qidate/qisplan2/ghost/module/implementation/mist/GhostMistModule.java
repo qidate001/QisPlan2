@@ -3,38 +3,41 @@ import com.qidate.qisplan2.ghost.module.ability.DefinedGhostAbility;
 import com.qidate.qisplan2.ghost.module.ability.GhostDomainShortcut;
 import com.qidate.qisplan2.ghost.module.ability.GhostAbility;
 import com.qidate.qisplan2.ghost.module.environment.GhostBehavior;
-
-import com.qidate.qisplan2.death.ModDamageTypes;
 import com.qidate.qisplan2.ghost.domain.*;
 import com.qidate.qisplan2.ghost.module.*;
 import com.qidate.qisplan2.ghost.module.ability.*;
 import com.qidate.qisplan2.ghost.module.data.GhostModuleInitialData;
 import com.qidate.qisplan2.ghost.module.event.*;
-import java.util.List;
 import com.qidate.qisplan2.ghost.module.domain.GhostDomainDefinition;
+import com.qidate.qisplan2.ghost.module.domain.GhostDomainShaderEffect;
 import com.qidate.qisplan2.ghost.domain.SphereDomainShape;
+import com.qidate.qisplan2.death.ModDamageTypes;
+
 import java.util.Optional;
+import java.util.List;
+
 import net.minecraft.resources.ResourceLocation;
 import static com.qidate.qisplan2.QisPlan2.MODID;
 
+
 /** 完整鬼雾模块：声明鬼域身体，游荡参与行为调度；雾气每秒造成原版数值伤害。 */
 public final class GhostMistModule implements GhostModule {
+    public static final ResourceLocation ID = id("ghost_mist");
+    public static final double INITIAL_INTENSITY = 5;
+    public static final ResourceLocation DOMAIN = id("ghost_mist/domain");
+    public static final ResourceLocation ATTACK = id("ghost_mist/attack");
+
     /** 鬼域属于本模块的身体；覆盖产生接触，额外感知由声明决定。 */
     @Override public Optional<GhostDomainDefinition> domainDefinition() {
         return Optional.of(new GhostDomainDefinition(80, 1, true, SphereDomainShape::new,
-                true, false, 20, true, true, "GhostMist", false));
+                true, false, 20, true, true, List.of(new GhostDomainShaderEffect(ID, "GhostMist"))));
     }
-
 
     /**
      * 声明需要的自主行动类型。
      * 具体 Goal 的创建、资源竞争和停止清理由行动适配层负责。
      */
     @Override public GhostBehavior behavior() { return GhostBehavior.WANDER; }
-    public static final ResourceLocation ID = id("ghost_mist");
-    public static final double INITIAL_INTENSITY = 5;
-    public static final ResourceLocation DOMAIN = id("ghost_mist/domain");
-    public static final ResourceLocation ATTACK = id("ghost_mist/attack");
 
     /**
      * 构造或返回本定义使用的资源标识，保持注册与调用入口一致。

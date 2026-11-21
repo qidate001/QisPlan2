@@ -4,18 +4,21 @@ import com.mojang.blaze3d.systems.RenderSystem;
 import com.qidate.qisplan2.ghost.domain.client.ClientGhostDomain;
 import com.qidate.qisplan2.ghost.isolation.client.ClientGhostIsolationManager;
 import com.qidate.qisplan2.ghost.isolation.client.GhostIsolationRegionTarget;
-import com.qidate.qisplan2.ghost.module.GhostModuleRegistry;
+import com.qidate.qisplan2.ghost.domain.client.ClientGhostDomainManager;
+import java.util.Collection;
+import java.util.List;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.ShaderInstance;
 import net.minecraft.resources.ResourceLocation;
 
 /** 模块鬼域的标准渲染适配器。管线只认识效果接口，不认识任何具体厉鬼。 */
-public record ModuleGhostDomainRenderEffect(ResourceLocation shaderId, String prefix) implements GhostDomainRenderEffect {
-    /** 从已注册模块派生效果，不再为每只厉鬼手工注册。 */
-    public static void registerModules() {
-        for(var module:GhostModuleRegistry.getAll()) module.domainDefinition().ifPresent(d -> {
-            if(!d.visualPrefix().isEmpty()) GhostDomainRenderEffectRegistry.register(new ModuleGhostDomainRenderEffect(module.getId(), d.visualPrefix()));
-        });
+public record ModuleGhostDomainRenderEffect(ResourceLocation domainType, ResourceLocation shaderId, String prefix) implements GhostDomainRenderEffect {
+    /** 以模块的鬼域类型筛选实例，不能用可复用的着色器 ID 代替模块身份。 */
+    @Override public Collection<ClientGhostDomain> getDomains(Minecraft minecraft) {
+        if(minecraft.level==null) return List.of();
+        return ClientGhostDomainManager.getDomains().stream()
+                .filter(domain -> domain.getDimension().equals(minecraft.level.dimension().location()))
+                .filter(domain -> domain.getDomainType().equals(domainType)).toList();
     }
 
     /** 只在本模块的鬼域位于当前维度时绘制。 */

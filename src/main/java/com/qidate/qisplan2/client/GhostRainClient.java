@@ -4,6 +4,8 @@ import com.qidate.qisplan2.ghost.domain.client.ClientGhostDomain;
 import com.qidate.qisplan2.ghost.domain.client.ClientGhostDomainManager;
 import com.qidate.qisplan2.client.renderer.GhostRainRenderer;
 import com.qidate.qisplan2.ghost.module.GhostModuleRegistry;
+import com.qidate.qisplan2.ghost.module.implementation.umbrella.GhostRainEffect;
+import net.neoforged.neoforge.common.NeoForge;
 import com.qidate.qisplan2.ghost.domain.CylinderDomainShape;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
@@ -17,12 +19,21 @@ import net.neoforged.neoforge.client.event.RenderLevelStageEvent;
 import java.util.ArrayList;
 import java.util.List;
 
-public final class GhostDomainWeatherClient {
+/** 鬼雨专属客户端适配器。雨柱与雨声细节属于本效果，不属于通用鬼域框架。 */
+public final class GhostRainClient {
+    private static boolean installed;
+    /** 仅在模块声明鬼雨时安装事件；多个模块共享实现，不重复注册监听器。 */
+    public static void install(ResourceLocation moduleId, GhostRainEffect definition) {
+        if(installed) return;
+        installed=true;
+        NeoForge.EVENT_BUS.register(GhostRainClient.class);
+    }
+
 
     /** 天气表现由模块的鬼域声明选择，不认识具体厉鬼名称。 */
     private static boolean hasRain(ClientGhostDomain domain) {
         var module = GhostModuleRegistry.get(domain.getDomainType());
-        return module != null && module.domainDefinition().map(definition -> definition.rain()).orElse(false);
+        return module != null && module.domainDefinition().map(definition -> definition.effects().contains(GhostRainEffect.INSTANCE)).orElse(false);
     }
 
     private static final List<GhostRainSource> RAIN_SOURCES =
@@ -32,7 +43,7 @@ public final class GhostDomainWeatherClient {
 
     private static int rainSoundTime = 0;
 
-    private GhostDomainWeatherClient() {
+    private GhostRainClient() {
     }
 
     public static boolean isInsideDomain() {

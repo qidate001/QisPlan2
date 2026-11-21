@@ -1,6 +1,9 @@
 package com.qidate.qisplan2;
 
-import com.qidate.qisplan2.ghost.domain.client.renderer.ModuleGhostDomainRenderEffect;
+import com.qidate.qisplan2.ghost.domain.client.renderer.GhostDomainClientEffects;
+import com.qidate.qisplan2.ghost.domain.client.renderer.StandardDomainShaderAdapter;
+import com.qidate.qisplan2.ghost.module.domain.GhostDomainShaderEffect;
+import com.qidate.qisplan2.ghost.module.implementation.umbrella.GhostRainEffect;
 
 import com.qidate.qisplan2.client.BlackRainParticle;
 import com.qidate.qisplan2.client.GhostUmbrellaClient;
@@ -11,7 +14,7 @@ import com.qidate.qisplan2.ghost.domain.client.ClientGhostDomainEvents;
 import com.qidate.qisplan2.ghost.domain.client.ClientGhostDomainManager;
 import com.qidate.qisplan2.client.key.ClientKeyHandler;
 import com.qidate.qisplan2.client.screen.GhostStoveScreen;
-import com.qidate.qisplan2.client.GhostDomainWeatherClient;
+import com.qidate.qisplan2.client.GhostRainClient;
 import com.qidate.qisplan2.client.renderer.*;
 import com.qidate.qisplan2.core.*;
 import com.qidate.qisplan2.client.hud.DeathCurseHudOverlay;
@@ -89,10 +92,9 @@ public class QisPlan2Client {
                 QisPlan2Client::registerParticleProviders
         );
 
-        // 鬼雨领域客户端逻辑
-        NeoForge.EVENT_BUS.register(
-                GhostDomainWeatherClient.class
-        );
+        // 注册客户端效果实现，不注册具体鬼域；模块通过效果列表选择这些实现。
+        GhostDomainClientEffects.register(GhostDomainShaderEffect.class, new StandardDomainShaderAdapter());
+        GhostDomainClientEffects.register(GhostRainEffect.class, GhostRainClient::install);
 
         // 注册按键
         modEventBus.addListener(
@@ -123,7 +125,7 @@ public class QisPlan2Client {
         CurseClientBootstrap.register();
 
         // 鬼域效果注册
-        ModuleGhostDomainRenderEffect.registerModules();
+        GhostDomainClientEffects.installModules();
 
 
     }

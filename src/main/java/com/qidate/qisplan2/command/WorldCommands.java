@@ -1,13 +1,11 @@
 package com.qidate.qisplan2.command;
 
 import com.mojang.brigadier.arguments.DoubleArgumentType;
-import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
 
 import com.qidate.qisplan2.QisPlan2;
 import com.qidate.qisplan2.death.SupernaturalEntity;
-import com.qidate.qisplan2.ghost.domain.type.debug.DebugDomainController;
 import com.qidate.qisplan2.ghost.isolation.GhostIsolationDetector;
 import com.qidate.qisplan2.ghost.isolation.GhostIsolationSystem;
 import com.qidate.qisplan2.structure.GhostLakeGenerationManager;
@@ -62,60 +60,6 @@ public final class WorldCommands {
                                         )
                                         .executes(
                                                 WorldCommands::killWithRadius
-                                        )
-                        )
-        );
-
-        /*
-         * ========================================================
-         * /qisplan2 debug_domain
-         * ========================================================
-         */
-
-        root.then(
-                Commands.literal("debug_domain")
-                        .then(
-                                Commands.literal("create")
-                                        .then(
-                                                Commands.argument(
-                                                                "radius",
-                                                                DoubleArgumentType.doubleArg(
-                                                                        1.0D,
-                                                                        512.0D
-                                                                )
-                                                        )
-                                                        .executes(
-                                                                WorldCommands::createDebugDomain
-                                                        )
-                                                        .then(
-                                                                Commands.argument(
-                                                                                "layer",
-                                                                                IntegerArgumentType.integer(
-                                                                                        1,
-                                                                                        10
-                                                                                )
-                                                                        )
-                                                                        .executes(
-                                                                                WorldCommands::createDebugDomain
-                                                                        )
-                                                                        .then(
-                                                                                Commands.argument(
-                                                                                                "strength",
-                                                                                                DoubleArgumentType.doubleArg(
-                                                                                                        0.0D
-                                                                                                )
-                                                                                        )
-                                                                                        .executes(
-                                                                                                WorldCommands::createDebugDomain
-                                                                                        )
-                                                                        )
-                                                        )
-                                        )
-                        )
-                        .then(
-                                Commands.literal("remove")
-                                        .executes(
-                                                WorldCommands::removeDebugDomain
                                         )
                         )
         );
@@ -447,128 +391,6 @@ public final class WorldCommands {
         return 1;
     }
 
-
-    /*
-     * ============================================================
-     * 创建 Debug 鬼域
-     * ============================================================
-     */
-
-    private static int createDebugDomain(
-            CommandContext<CommandSourceStack> context
-    ) {
-
-        CommandSourceStack source =
-                context.getSource();
-
-        if (!(source.getEntity()
-                instanceof ServerPlayer player)) {
-
-            source.sendFailure(
-                    Component.translatable(
-                            "command.qisplan2.player_only"
-                    )
-            );
-
-            return 0;
-        }
-
-        double radius =
-                DoubleArgumentType.getDouble(
-                        context,
-                        "radius"
-                );
-
-        int layer = 1;
-
-        try {
-
-            layer =
-                    IntegerArgumentType.getInteger(
-                            context,
-                            "layer"
-                    );
-
-        } catch (IllegalArgumentException ignored) {
-            // 未提供层数，使用默认值 1
-        }
-
-        double strength = 1.0D;
-
-        try {
-
-            strength =
-                    DoubleArgumentType.getDouble(
-                            context,
-                            "strength"
-                    );
-
-        } catch (IllegalArgumentException ignored) {
-            // 未提供强度，使用默认值 1
-        }
-
-        DebugDomainController.create(
-                player,
-                radius,
-                layer,
-                strength
-        );
-
-        final int finalLayer = layer;
-        final double finalStrength = strength;
-
-        source.sendSuccess(
-                () -> Component.translatable(
-                        "command.qisplan2.debug_domain.create.success",
-                        radius,
-                        finalLayer,
-                        finalStrength
-                ),
-                true
-        );
-
-        return 1;
-    }
-
-
-    /*
-     * ============================================================
-     * 删除 Debug 鬼域
-     * ============================================================
-     */
-
-    private static int removeDebugDomain(
-            CommandContext<CommandSourceStack> context
-    ) {
-
-        CommandSourceStack source =
-                context.getSource();
-
-        if (!(source.getEntity()
-                instanceof ServerPlayer player)) {
-
-            source.sendFailure(
-                    Component.translatable(
-                            "command.qisplan2.player_only"
-                    )
-            );
-
-            return 0;
-        }
-
-        DebugDomainController.remove(
-                player
-        );
-
-        source.sendSuccess(
-                () -> Component.translatable(
-                        "command.qisplan2.debug_domain.remove.success"
-                ),
-                true
-        );
-
-        return 1;
-    }
 
     /*
      * ============================================================

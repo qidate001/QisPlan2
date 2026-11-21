@@ -1,5 +1,7 @@
 package com.qidate.qisplan2;
 
+import com.qidate.qisplan2.ghost.domain.client.renderer.GhostDomainClientEffects;
+
 import com.mojang.blaze3d.vertex.DefaultVertexFormat;
 import com.mojang.logging.LogUtils;
 import com.qidate.qisplan2.core.ModEntityAttributes;
@@ -175,14 +177,8 @@ public class QisPlan2 {
                     )
             );
 
-            // 每个模块自行声明是否拥有可视鬼域；基础隔绝纹理仍属于框架资源。
-            for (var module : GhostModuleRegistry.getAll()) {
-                var definition = module.domainDefinition().orElse(null);
-                if (definition == null || definition.visualPrefix().isEmpty()) continue;
-                var shaderId = module.getId();
-                event.registerShader(new ShaderInstance(event.getResourceProvider(), shaderId, DefaultVertexFormat.POSITION),
-                        shader -> GhostDomainShaderRegistry.register(shaderId,shader));
-            }
+            // 各效果适配器负责自己的资源；基础隔绝纹理仍属于框架。
+            GhostDomainClientEffects.registerShaders(event);
 
         } catch (IOException e) {
 

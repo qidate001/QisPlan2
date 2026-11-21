@@ -11,6 +11,7 @@ import com.qidate.qisplan2.ghost.possession.classification.GhostTag;
 import java.util.Optional;
 import java.util.List;
 import com.qidate.qisplan2.ghost.module.domain.GhostDomainDefinition;
+import com.qidate.qisplan2.ghost.module.domain.GhostDomainShaderEffect;
 import com.qidate.qisplan2.ghost.domain.SphereDomainShape;
 import com.qidate.qisplan2.ghost.module.GhostMedium;
 import com.qidate.qisplan2.ghost.module.ability.GhostAbility;
@@ -190,8 +191,9 @@ public final class GhostEyeModule implements GhostModule {
     }
 
     /** 鬼域属于本模块的身体；覆盖产生接触，额外感知由声明决定。 */
-    @Override public Optional<GhostDomainDefinition> domainDefinition() {
+    @Override
+    public Optional<GhostDomainDefinition> domainDefinition() {
         return Optional.of(new GhostDomainDefinition(80, 1, true, SphereDomainShape::new,
-                true, true, 20, true, true, "GhostEye", false));
+                true, true, 20, true, true, List.of(new GhostDomainShaderEffect(ID, "GhostEye"))));
     }
 }

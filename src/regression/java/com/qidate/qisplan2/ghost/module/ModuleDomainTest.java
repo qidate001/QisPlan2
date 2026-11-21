@@ -8,6 +8,7 @@ import com.qidate.qisplan2.ghost.module.event.TouchEvent;
 import com.qidate.qisplan2.ghost.module.host.GhostContactEvents;
 import com.qidate.qisplan2.ghost.module.host.ModuleGhostDomains;
 import com.qidate.qisplan2.ghost.module.implementation.GhostUmbrellaModule;
+import com.qidate.qisplan2.ghost.module.implementation.umbrella.GhostRainEffect;
 import com.qidate.qisplan2.ghost.module.implementation.eye.GhostEyeModule;
 import com.qidate.qisplan2.ghost.module.implementation.mist.GhostMistModule;
 import com.qidate.qisplan2.ghost.module.suppression.GhostSuppressionState;
@@ -26,7 +27,7 @@ public final class ModuleDomainTest {
         check(eye.domainDefinition().orElseThrow().sight() && !mist.domainDefinition().orElseThrow().sight(),"只有声明了看见的鬼域产生看见事实");
         check(mist.domainDefinition().orElseThrow().exposureInterval()==20,"鬼雾每20 tick产生一次周期曝光");
         check(mist.initialDomainData().orElseThrow().radius()==80 && umbrella.initialDomainData().orElseThrow().layer()==3,"旧UI视图由模块鬼域声明派生");
-        check(umbrella.domainDefinition().orElseThrow().rain() && !mist.domainDefinition().orElseThrow().rain(),"天气表现从模块声明选择，不写死鬼伞类型");
+        check(umbrella.domainDefinition().orElseThrow().effects().contains(GhostRainEffect.INSTANCE) && !mist.domainDefinition().orElseThrow().effects().contains(GhostRainEffect.INSTANCE),"天气表现从模块声明选择，不写死鬼伞类型");
         var samples=new GhostContactEvents.Samples();var target=UUID.randomUUID();
         check(samples.sample(target,1)==TouchEvent.Phase.BEGIN,"首次覆盖是开始接触");
         check(samples.sample(target,1)==null,"多个鬼域或本体同tick不能重复计时");

@@ -6,6 +6,8 @@ import com.qidate.qisplan2.ghost.module.*;
 import com.qidate.qisplan2.ghost.module.ability.*;
 import com.qidate.qisplan2.ghost.module.data.GhostModuleInitialData;
 import com.qidate.qisplan2.ghost.module.domain.GhostDomainDefinition;
+import com.qidate.qisplan2.ghost.module.domain.GhostDomainShaderEffect;
+import com.qidate.qisplan2.ghost.module.implementation.umbrella.GhostRainEffect;
 import com.qidate.qisplan2.ghost.module.event.*;
 import com.qidate.qisplan2.ghost.module.influence.GhostInfluenceType;
 import net.minecraft.resources.ResourceLocation;
@@ -27,7 +29,17 @@ public final class GhostUmbrellaModule implements GhostModule {
 
     /** 雨幕使用圆柱几何，三层起始；不开启框架透视和化虹。 */
     @Override public Optional<GhostDomainDefinition> domainDefinition(){
-        return Optional.of(new GhostDomainDefinition(50,3,false,CylinderDomainShape::new,true,false,20,false,false,"GhostUmbrella", true));
+        return Optional.of( new GhostDomainDefinition(
+                50,
+                3,
+                false,
+                CylinderDomainShape::new,
+                true,false,
+                20,
+                false,
+                false,
+                List.of(new GhostDomainShaderEffect(ID, "GhostUmbrella"), GhostRainEffect.INSTANCE))
+        );
     }
 
     /** 所有能力都要求真实暴露，雨幕袭击额外验证本模块鬼域的有效覆盖。 */

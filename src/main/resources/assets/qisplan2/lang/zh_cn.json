@@ -165,8 +165,6 @@
   "command.qisplan2.generate_ghost_lake.busy": "§c现在已经有一个鬼湖正在生成。",
   "command.qisplan2.generate_ghost_lake.success": "§a已开始生成鬼湖。",
 
-  "command.qisplan2.debug_domain.create.success": "已创建 Debug 鬼域（半径 §e%s§r，层数 §e%s§r，强度 §e%s§r）。",
-  "command.qisplan2.debug_domain.remove.success": "§a已删除 Debug 鬼域。",
 
   "command.qisplan2.debug_isolation.isolated": "当前位置已被灵异隔绝",
   "command.qisplan2.debug_isolation.open": "当前位置未被灵异隔绝",

@@ -167,8 +167,6 @@
   "command.qisplan2.generate_ghost_lake.busy": "§cA ghost lake is already being generated.",
   "command.qisplan2.generate_ghost_lake.success": "§aStarted generating the ghost lake.",
 
-  "command.qisplan2.debug_domain.create.success": "Created Debug Ghost Domain (radius §e%s§r, layers §e%s§r, strength §e%s§r).",
-  "command.qisplan2.debug_domain.remove.success": "§aRemoved Debug Ghost Domain.",
 
   "command.qisplan2.debug_isolation.isolated": "Your current position is isolated from supernatural forces.",
   "command.qisplan2.debug_isolation.open": "Your current position is not isolated from supernatural forces.",

@@ -716,43 +716,169 @@ boolean success = GhostAbilityExecutor.tryExecuteWithResult(invocation);
 - **鬼域**：通过 `domainDefinition()` 声明鬼域身体，`world().domain()` 是当前模块的运行时操作接口。统一适配器负责所有宿主的创建、维护和清理；不再添加独立的鬼域控制器、类型注册或客户端效果注册。`initialDomainData()` 仅为旧驭鬼界面派生初始视图，不再作为另一份声明。
 - **蔓延**：使用 `world.spreadBlocks(anchor, spec)`。`BlockSpreadSpec.Shape.HORIZONTAL_2D` 是水平四邻域，`VOLUME_3D` 是三维六邻域；`CHAIN` 和 `FRONTIER` 决定扩展方式。数量是成功新增方块数，空间不足允许少于要求，不能无限搜索。
 
-### 9.4 在模块中声明鬼域
+### 9.4 鬼域：模块声明、世界能力与客户端表现
 
-鬼域属于模块身体，不是另一只独立注册的厉鬼。普通模块默认 `Optional.empty()`；具有鬼域的模块覆盖下面的方法：
+鬼域是模块身体的一部分。分层、覆盖竞争、隔绝、追踪和生命周期属于框架；伤害、袭击等世界效果属于模块能力；雨柱、后处理、雨声属于客户端表现。三者不能混在一个控制器中。
+
+`domainDefinition()` 返回 `Optional.empty()` 表示没有鬼域；返回 `GhostDomainDefinition` 则由统一宿主适配器维护。模块无需注册另一种鬼域，也不需要自己创建 `GhostDomain`。
+
+#### 9.4.1 完整的最小模块
+
+下面是可以放入 `ghost/module/implementation/ExampleMistModule.java` 的完整示例。它使用现成的雾气后处理，只公开一个开关能力，不自动造成伤害：
 
 ```java
-/** 声明球形鬼域身体，以及覆盖区域具备的感知语义。 */
-@Override
-public Optional<GhostDomainDefinition> domainDefinition() {
-    return Optional.of(new GhostDomainDefinition(
-            80,                     // 默认半径
-            1,                      // 初始层数；框架合法范围为 1～10
-            true,                   // 未受控且可自主运行时默认展开
-            SphereDomainShape::new, // 每次创建独立几何实例
-            true,                   // 覆盖意味着身体接触
-            true,                   // 覆盖还意味着来源看见目标，例如鬼眼
-            20,                     // 周期曝光间隔；0 表示不需要周期曝光
-            true,                   // 启用框架实体视觉
-            true,                   // 允许框架化虹
-            "ExampleGhost",         // 标准着色器参数前缀；空串表示没有后处理
-            false                   // 是否具有鬼雨天气表现
-    ));
+package com.qidate.qisplan2.ghost.module.implementation;
+
+import com.qidate.qisplan2.ghost.domain.SphereDomainShape;
+import com.qidate.qisplan2.ghost.module.GhostModule;
+import com.qidate.qisplan2.ghost.module.ability.DefinedGhostAbility;
+import com.qidate.qisplan2.ghost.module.ability.GhostAbility;
+import com.qidate.qisplan2.ghost.module.data.GhostModuleInitialData;
+import com.qidate.qisplan2.ghost.module.domain.GhostDomainDefinition;
+import com.qidate.qisplan2.ghost.module.domain.GhostDomainShaderEffect;
+import java.util.List;
+import java.util.Optional;
+import net.minecraft.resources.ResourceLocation;
+
+/** 示例厉鬼：声明鬼域身体与开关能力，不认识自己的宿主。 */
+public final class ExampleMistModule implements GhostModule {
+    public static final ResourceLocation ID = ResourceLocation.parse("qisplan2:example_mist");
+    private static final ResourceLocation TOGGLE = ResourceLocation.parse("qisplan2:example_mist/toggle");
+
+    /** 模块身份与着色器资源身份可以不同。 */
+    @Override public ResourceLocation getId() { return ID; }
+
+    /** 新实例的初始强度和复苏。 */
+    @Override public GhostModuleInitialData getInitialData() {
+        return new GhostModuleInitialData(30, 0);
+    }
+
+    /** 使用框架球形几何和接触语义，组合一个标准后处理效果。 */
+    @Override public Optional<GhostDomainDefinition> domainDefinition() {
+        return Optional.of(new GhostDomainDefinition(
+                32, 1, false, SphereDomainShape::new,
+                true, false, 0, true, true,
+                List.of(new GhostDomainShaderEffect(
+                        ResourceLocation.parse("qisplan2:ghost_mist"), "GhostMist"))
+        ));
+    }
+
+    /** 同一能力可以由轮盘、快捷键或其他可信输入渠道调用。 */
+    @Override public List<GhostAbility> getIntrinsicAbilities() {
+        return List.of(new DefinedGhostAbility(
+                TOGGLE,
+                ResourceLocation.parse("minecraft:textures/item/ender_pearl.png"),
+                context -> context.getModuleContext().world().canToggleDomain(),
+                context -> context.getModuleContext().world().toggleDomain()
+        ));
+    }
 }
 ```
 
-**声明与能力分工：** `domainDefinition()` 提供几何和感知契约；开关、侵蚀、鬼雨等具体效果仍由本模块的 `getIntrinsicAbilities()` 定义，通过 `world().toggleDomain()`、`world().hurt(...)`、`world().attack(...)` 等接口实施。框架不会按模块 ID 硬编码技能。分层、层数竞争、隔绝关系、有效覆盖集合及传送实现继续属于框架；模块只编排通用操作，不复制这些算法。
+完成集成还需要以下步骤：
 
-**状态和宿主：** 开关、强度、范围、层数使用模块 `customData` 中的 `domainOpen / domainStrength / domainRadius / domainLayer`，沿用旧数据字段。没有显式开关时，框架结合声明中的 `automatic` 和宿主提供的自主运行许可决定是否展开。玩家默认需要主动开启；暴露在世界中的实体、物品、方块共用同一套适配入口。物品按实际物品栈身份区分，不能借用携带者的同名模块。模块移除、载体失效、离开世界、收起物品或外部完全压制会收回运行时域；持久字段保留供恢复和转移。已主动开启的能力不因规则死机而失效。
+1. 在 `GhostModuleRegistry.bootstrap()` 中添加 `register(new ExampleMistModule())`，并按需要导入类。仅注册模块，不再注册鬼域类型。
+2. 在 `zh_cn.json` 和 `en_us.json` 中分别添加 `module.qisplan2.example_mist` 与 `ability.qisplan2.example_mist.toggle` 的译文。
+3. 通过现有模块命令或宿主的默认模块组件安装该模块。玩家驾驭后，公开开关能力会进入能力目录；物品如果需要右键开关，应另声明响应 `GhostUseEvent` 的规则，参照 `GhostUmbrellaModule`，不能假设定义公开技能就自动绑定物品右键。
+4. 本例直接复用 `ghost_mist.json/.vsh/.fsh`，所以无需新增资源或客户端注册。它只复用视觉，不继承鬼雾伤害能力。运行 `gradlew.bat check --offline`，然后在游戏中验证开关、跨维度、移除模块、隔绝与压制后的清理。
 
-**覆盖事实：** 只采集 `GhostDomainEntityTracker` 最终确认的有效覆盖集合，已经被其他鬼域或隔绝规则排除的目标不会收到这些事件。
+`GhostDomainDefinition` 的参数按顺序为：
 
-- `TouchEvent`：鬼域和本体共用宿主接触采样，同一目标每 tick 最多累计一次。身体与鬼域交界处不会重复触发进入，离开后再进入才重新产生 `BEGIN`。
-- `TargetSeenEvent(target)`：当前来源看见目标。它与 `SourceSeenEvent(observer)` 的方向相反，不能用“看见别人”触发“别人看见自己”的规则。存在实体观察者时，中间层还向目标宿主派发已有 `EntityPerceivedEvent(observer, target)`。
-- `GhostDomainExposureEvent`：周期采样确认目标正在受某个鬼域影响。事件携带运行时域 ID、来源、目标和域强度；静态来源的实体字段可以为空。能力使用 `world.containsInDomain(event.domainId(), event.target())` 验证归属，不能仅凭事件类型实施效果。
+| 参数 | 含义与实现责任 |
+| --- | --- |
+| `radius` | 新实例默认范围；运行时范围保存在模块数据 |
+| `initialLayer` | 初始层数；框架统一限制在 1～10 |
+| `automatic` | 未显式设置开关时，是否允许自主展开；仍受宿主自主许可和模块状态约束 |
+| `shape` | 独立几何实例工厂，例如 `SphereDomainShape::new`，不要共享可变形状 |
+| `touch` | 有效覆盖是否构成身体接触 |
+| `sight` | 有效覆盖是否构成来源看见目标 |
+| `exposureInterval` | 周期曝光间隔，以 tick 计；0 表示不产生周期曝光 |
+| `entityVision` | 是否使用框架实体视觉 |
+| `teleport` | 是否允许框架化虹 |
+| `effects` | 不可变的独立效果声明列表；可以为空，也可组合多个不同效果 |
 
-**普通伤害与灵异袭击必须分开：** `world.hurt(target, damageType, amount)` 调用原版数值伤害；`world.attack(target, damageType, intensity)` 才进入灵异袭击裁决。当前鬼雾每 20 tick 对有效覆盖中的其他生物调用 `hurt(target, ModDamageTypes.GHOST_MIST, 0.1F)`，不会借此提交袭击影响、触发灵异反击或积累袭击压制。原版护甲、无敌、其他伤害事件仍按普通伤害流程处理。鬼雾的公开侵蚀技能也复用这个普通伤害能力。
+分层和传送的实现继续使用 `world().domain()`。模块可以声明调层能力，但不要复制框架的覆盖优先级或实体追踪算法。
 
-**渲染：** `rain` 声明由统一天气适配器消费，鬼伞不再独立注册天气驱动。当前鬼雨渲染器支持圆柱形雨幕。模块只需提供与模块 ID 同名的 `shaders/core/<模块路径>.json` 及其着色器资源，不需要修改 `QisPlan2Client` 或总渲染管线。标准效果按前缀绑定 `RegionIdentity` sampler，并提供 `ProjMat / ModelViewMat / CameraPos / DomainCenter / DomainRadius / DomainActive / DomainLayer / DomainStrength / Time / SourceRegion` 参数；着色器可省略不使用的 uniform。声明和模块不引用任何客户端类，专属资源由客户端适配器加载。这个标准约定不表示任意新着色器布局会自动被理解；超出标准输入时应扩展表现接口，不能在总管线中加入厉鬼名字分支。
+#### 9.4.2 独有效果怎样扩展
+
+`GhostDomainEffect` 是开放接口，**不是框架枚举，也不是一组雨、雪、雾开关**。效果声明必须是服务端安全的数据，不得引用 `Minecraft`、`ShaderInstance` 等客户端类。
+
+当前鬼伞的声明组合为：
+
+```java
+List.of(
+        new GhostDomainShaderEffect(ID, "GhostUmbrella"),
+        GhostRainEffect.INSTANCE
+)
+```
+
+两项声明有各自的实现：
+
+| 声明 | 客户端适配器 | 负责内容 |
+| --- | --- | --- |
+| `GhostDomainShaderEffect` | `StandardDomainShaderAdapter` → `ModuleGhostDomainRenderEffect` | 加载 Shader、筛选所属模块的域、绑定标准纹理与参数、交给总管线绘制 |
+| `GhostRainEffect` | `GhostRainClient` → `GhostRainRenderer` | 鬼雨专属雨柱、雨声、事件监听和清理；当前雨柱实现使用圆柱几何 |
+
+新增一个独有效果的完整路径为：
+
+1. 在该效果所属模块的包中创建实现 `GhostDomainEffect` 的 record 或类，声明它自己的参数；无参数效果可像 `GhostRainEffect` 一样用单例 enum。
+2. 在客户端包实现 `GhostDomainClientEffect<你的声明类型>`。`install(moduleId, definition)` 负责安装该效果；需要 Shader 时覆盖 `registerShaders(event, definition, loaded)`，需要世界渲染、声音或粒子时在自己的适配器中安装相应事件。多模块共享同一监听器时必须防止重复注册，退出世界时清理表现状态，参照 `GhostRainClient`。
+3. 在 `QisPlan2Client` 的客户端效果绑定区添加一次 `GhostDomainClientEffects.register(声明类型.class, 适配器)`，位置在 `installModules()` 之前。这里注册的是一种声明的客户端实现，不是再注册厉鬼或鬼域。其他模块复用此效果不必再次注册适配器。
+4. 模块在 `domainDefinition().effects()` 中提出该效果。`GhostDomainClientEffects.installModules()` 自动读取所有模块的效果列表；未绑定客户端实现会明确报错，不会静默忽略。匹配采用声明的精确运行时类型。
+
+新增第十种独有效果时，仍只增加该效果的声明、实现和一次客户端绑定，不修改 `GhostDomainDefinition`、`ModuleGhostDomains` 或总渲染管线。影响服务端世界的效果应继续声明为模块能力，通过语义事实或持续能力入口调用，不能藏进客户端效果。
+
+#### 9.4.3 标准着色器前缀到底由谁实现
+
+前缀现在只属于可选效果 `GhostDomainShaderEffect(shaderId, uniformPrefix)`，不再是 `GhostDomainDefinition` 的字段，也不是所有效果必须遵守的约定。
+
+调用链与代码位置是：
+
+1. **模块提出声明**：例如 `new GhostDomainShaderEffect(ID, "GhostEye")`。
+2. **客户端绑定声明类型**：`QisPlan2Client` 将 `GhostDomainShaderEffect.class` 绑定到 `StandardDomainShaderAdapter`。
+3. **加载资源**：`QisPlan2` 的 Shader 注册事件调用 `GhostDomainClientEffects.registerShaders(event)`，后者委托 `StandardDomainShaderAdapter.registerShaders` 加载声明中的资源 ID。共享的 Shader ID 每次资源重载只加载一次。
+4. **安装表现**：`StandardDomainShaderAdapter.install` 创建 `ModuleGhostDomainRenderEffect(moduleId, shaderId, prefix)`；模块 ID 用于筛选鬼域，Shader ID 用于查资源，两者不能混用。
+5. **设置参数并绘制**：`GhostDomainRenderPipeline` 准备公共输入，随后调用效果的 `setupSamplers` 和 `setupUniforms`；真正拼接前缀、写参数的是 `ModuleGhostDomainRenderEffect`。管线不识别鬼眼、鬼雾或鬼雨。
+
+以上实现位于 `ghost/domain/client/renderer/`；公共声明位于 `ghost/module/domain/`。标准适配器遵守以下资源契约，其中 `P` 为声明的前缀：
+
+| 输入名称 | 数据来源 | 负责实现 |
+| --- | --- | --- |
+| `DiffuseSampler` | 场景颜色 | 总渲染管线 |
+| `MainDepthSampler` | 复制的主场景深度 | 总渲染管线 |
+| `P + RegionIdentity` | 灵异隔绝空间身份纹理 | `ModuleGhostDomainRenderEffect.setupSamplers` |
+| `P + ProjMat` / `P + ModelViewMat` | 当前投影矩阵 / 已捕获的世界模型视图矩阵 | `setupUniforms` |
+| `P + CameraPos` | 相机世界位置 | `setupUniforms` |
+| `P + DomainCenter` / `DomainRadius` | 鬼域中心 / 客户端平滑后的范围 | `setupUniforms` |
+| `P + DomainActive` / `DomainLayer` / `DomainStrength` | 启用值 1 / 层数 / 鬼域强度 | `setupUniforms` |
+| `P + Time` | 世界时间秒数，按一天循环 | `setupUniforms` |
+| `P + SourceRegion` | 来源空间身份；开放空间为 0，否则编码为 `(regionIndex + 1) / 256` | `setupUniforms` |
+
+标准适配器要求 Shader 声明 `P + RegionIdentity` sampler；其他未使用的 uniform 可省略。矩阵、向量与标量的类型和数量必须与代码一致，参照 `ghost_mist.json`。不要通过其他 uniform 是否存在来猜测 sampler。新的专属 sampler 或参数布局应由自己的 `GhostDomainClientEffect` 和 `GhostDomainRenderEffect` 实现，在各自的 `setupSamplers/setupUniforms` 中绑定，不向总管线加入模块名称分支。
+
+#### 9.4.4 从现有 Shader 构建自己的资源
+
+要让上面的示例使用自己的雾气资源，可按以下步骤完成，不需要修改通用 Java 渲染代码：
+
+1. 将 `src/main/resources/assets/qisplan2/shaders/core/ghost_mist.json`、`ghost_mist.vsh`、`ghost_mist.fsh` 复制为同目录下的 `example_mist.json`、`example_mist.vsh`、`example_mist.fsh`。
+2. 将 JSON 中 `vertex` 与 `fragment` 的资源 ID 改为 `qisplan2:example_mist`。
+3. 在这三个新文件内将 `GhostMist` 参数前缀统一替换为 `ExampleMist`。不要改公共输入 `DiffuseSampler`、`MainDepthSampler` 或顶点属性 `Position`。JSON 的 sampler/uniform 名称必须和 GLSL 完全一致。
+4. 将模块声明改为 `new GhostDomainShaderEffect(ID, "ExampleMist")`，然后修改新 `.fsh` 中颜色、噪声等视觉计算。保留已有深度、鬼域边界和空间身份判定，可避免效果穿透隔绝边界或影响全屏。
+5. 在资源重载或重新启动客户端后验证。模块、Shader 与语言资源都已接通，不需要额外调用旧的逐鬼域 `register()`。
+
+这种方式复用的是标准输入绑定。若自己的效果完全不使用此参数约定，声明自定义 `GhostDomainEffect` 并实现独立适配器即可，不能为了省事给标准前缀适配器不断增加专属判断。
+
+#### 9.4.5 状态、语义和伤害
+
+开关、强度、范围、层数使用模块 `customData` 中的 `domainOpen / domainStrength / domainRadius / domainLayer`，沿用旧字段。无显式开关时，框架结合 `automatic` 和宿主自主运行许可决定是否展开。玩家默认主动开启；实体、物品和方块共用适配入口。物品按实际物品栈身份区分，不能借用携带者的同名模块。模块移除、载体失效、收起物品或外部完全压制会收回运行时域，持久字段保留；主动开启的能力不因规则死机而失效。
+
+只对追踪器确认的最终有效覆盖集合采集事实，已经被其他鬼域或隔绝规则排除的目标不会收到事件：
+
+- `TouchEvent`：本体与鬼域共用接触采样，一个宿主对一个目标每 tick 最多累计一次。离开后再次进入重新产生 `BEGIN`，不补算离开的时间。
+- `TargetSeenEvent(target)`：来源看见目标，与 `SourceSeenEvent(observer)` 方向相反。有实体观察者时，中间层还向目标宿主派发 `EntityPerceivedEvent(observer, target)`。
+- `GhostDomainExposureEvent`：周期曝光事实，携带域 ID、来源、目标和域强度。静态来源的实体字段可为空，使用 `world.containsInDomain(event.domainId(), event.target())` 校验归属，不要仅凭事件类型实施效果。
+
+鬼雾声明每 20 tick 采样，并由自己的能力调用 `world.hurt(target, ModDamageTypes.GHOST_MIST, 0.1F)`。`hurt` 是原版数值伤害，不提交灵异袭击影响；`world.attack` 才进入灵异袭击裁决。普通伤害仍受原版伤害和死亡事件处理。当前公开的鬼雾侵蚀技能复用相同的普通伤害能力。
 
 ## 10. 灵异裁决与复苏代价
 

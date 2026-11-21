@@ -9,7 +9,7 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.Tesselator;
 import com.mojang.blaze3d.vertex.VertexFormat;
 import com.qidate.qisplan2.client.GhostRainSource;
-import com.qidate.qisplan2.client.GhostDomainWeatherClient;
+import com.qidate.qisplan2.client.GhostRainClient;
 import net.minecraft.client.Camera;
 import net.minecraft.client.DeltaTracker;
 import net.minecraft.client.renderer.GameRenderer;
@@ -388,7 +388,7 @@ public final class GhostRainRenderer {
                  * 如果这里被更高优先级鬼域覆盖，
                  * 也不能继续渲染鬼雨。
                  */
-                if (!GhostDomainWeatherClient.isPositionInsideDomain(
+                if (!GhostRainClient.isPositionInsideDomain(
                         worldX + 0.5D,
                         cameraY,
                         worldZ + 0.5D
