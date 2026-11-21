@@ -91,7 +91,7 @@
 |   喊人鬼   |  ✅  |   鬼灶台   |  ✅  |    鬼墓碑    |  ✅  |
 |   鬼钢琴   |  ✅  |   鬼石砖   |  ✅  |    鬼地毯    |  ✅  |
 |   鬼草丛   |  ✅  |   鬼寿衣   |  ✅  |     鬼书     |  🔧  |
-| 不可视之鬼 |  ✅  | 不可触之鬼 |  ✅  |     鬼伞     |  🚧  |
+| 不可视之鬼 |  ✅  | 不可触之鬼 |  ✅  |     鬼伞     |  ✅  |
 |   鬼皮箱   |  🚧  |    鬼画    |  🚧  |    鬼湖水    |  🚧  |
 |    鬼血    |  🚧  |   棺材钉   |  ✅  | 必死诅咒之剑 |  🔧  |
 
@@ -107,8 +107,8 @@
 
 ### 🌫️ 已实装鬼域
 
-| 鬼眼鬼域 | 鬼伞鬼域 | 鬼雾鬼域 | _DEBUG 鬼域_ |
-| :---: | :---: | :---: | :---: |
+| 鬼眼鬼域 | 鬼伞鬼域 | 鬼雾鬼域 |
+| :---: | :---: | :---: |
 
 ---
 
@@ -153,13 +153,19 @@
 | 类别 | 致谢 |
 | :--- | :--- |
 | 🎨 **美术** | [一只屑System32](https://github.com/uzjhf-836/) —— 绘制的“必死诅咒之剑”纹理 |
+| 🎨 **美术** | [文森/亿森](https://www.qidate001.com/) —— 绘制的“喊人鬼”模型与纹理 |
 | 🏯 **建筑** | [何喻逸林](https://space.bilibili.com/275630606/) —— 鬼寺庙 [建筑原型](https://www.bilibili.com/video/BV1uH4y157X4/) |
 | 🏯 **建筑** | [Pixel轩](https://space.bilibili.com/275630606/) —— 鬼灶台木屋 [建筑原型](https://www.bilibili.com/video/BV1F8Nu6GECy/) |
 | 🏯 **建筑** | [天涯共磁石](https://space.bilibili.com/525276096) —— 鬼庄园 [建筑原型](https://www.bilibili.com/video/BV1F8Nu6GECy/) |
+| 🏯 **建筑** | [mysticat](https://www.youtube.com/@mysticat) —— 鬼坟场 [墙壁建筑原型](https://www.youtube.com/watch?v=3ILX78Bc00E) |
 | 🛠️ **贡献** | [一只屑System32](https://github.com/uzjhf-836/) —— 必死诅咒之剑 HUD 与材质 |
 | 🧪 **测试** | [一只屑System32](https://github.com/uzjhf-836/) —— 模组测试与反馈 |
 | 💡 **灵感** | [卯未](https://www.douyin.com/user/MS4wLjABAAAAMEa0gKD6lwmdbVtaNam39gfozSKVdglng_46zjLmOcg) —— 鬼雨伞副作用建议 |
-| 💡 **灵感** | [执掌83个圈子之人](https://space.bilibili.com/3690999347939733) —— 模组实现方案的众多建议 |
+| 💡 **灵感** | [执掌83个圈子之人](https://space.bilibili.com/3690999347939733) —— 模组实现方案的众多建议与陪伴~ |
+| 💡 **灵感** | [小迪之](https://space.bilibili.com/3546981603478187) —— 参与模组开发探讨与提出的众多建议与陪伴~ |
+| 💡 **灵感** | [文森/亿森](https://www.qidate001.com/) —— 参与模组开发探讨与提出的众多建议与陪伴~ |
+| 💡 **灵感** | [牢大/红尘仙](https://www.qidate001.com/) —— 参与模组开发探讨与提出的众多建议与陪伴~ |
+| 💡 **灵感** | [我叫小鸟awa](https://space.bilibili.com/3546846593026382) —— 参与模组开发探讨与陪伴~ |
 | 📖 **灵感** | [《神秘复苏》](https://www.qidian.com/book/1012584111/) 作者 佛前献花 —— 为本模组的灵异世界观提供了深厚的土壤 |
 | ❤️ **陪伴** | 所有陪我慢慢完成这个模组的朋友，没有你们的支持，不会有今天的 Qis Plan 2 ~ |
 
