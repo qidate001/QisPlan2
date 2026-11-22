@@ -153,7 +153,7 @@
 | 类别 | 致谢 |
 | :--- | :--- |
 | 🎨 **美术** | [一只屑System32](https://github.com/uzjhf-836/) —— 绘制的“必死诅咒之剑”纹理 |
-| 🎨 **美术** | [文森/亿森](https://www.qidate001.com/) —— 绘制的“喊人鬼”模型与纹理 |
+| 🎨 **美术** | [文森/亿森](https://www.qidate001.com/) —— 绘制的“喊人鬼”与“敲门鬼”模型与纹理 |
 | 🏯 **建筑** | [何喻逸林](https://space.bilibili.com/275630606/) —— 鬼寺庙 [建筑原型](https://www.bilibili.com/video/BV1uH4y157X4/) |
 | 🏯 **建筑** | [Pixel轩](https://space.bilibili.com/275630606/) —— 鬼灶台木屋 [建筑原型](https://www.bilibili.com/video/BV1F8Nu6GECy/) |
 | 🏯 **建筑** | [天涯共磁石](https://space.bilibili.com/525276096) —— 鬼庄园 [建筑原型](https://www.bilibili.com/video/BV1F8Nu6GECy/) |
