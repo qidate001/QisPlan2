@@ -22,6 +22,11 @@ import net.minecraft.world.phys.Vec3;
  * 目标实体是世界中的作用对象，与模块自己的载体不是同一个概念。
  */
 public interface GhostWorldAccess {
+    /** 面向世界坐标。物品忽略；方块仅在具有朝向属性时调整，返回是否应用。 */
+    default boolean facePosition(Vec3 target) { return false; }
+    /** 面向世界方向向量；零向量和非有限数值无效，不包含位置移动。 */
+    default boolean faceDirection(Vec3 direction) { return false; }
+
     /** 造成原版数值伤害；与灵异袭击 attack 的裁决语义明确分离。 */
     default boolean hurt(LivingEntity target, ResourceKey<DamageType> type, float amount) { return false; }
     /** 对承担动作的身体施加停步效果，具体身体由适配层解释。 */

@@ -118,6 +118,7 @@ public class ModCreativeTabs {
                     .displayItems((parameters, output) -> {
                         // 独特外观实体排在最前；通用宿主及全部模块预设仍然保留。
                         output.accept(CALLING_GHOST_SPAWN_EGG);
+                        output.accept(KNOCKING_GHOST_SPAWN_EGG);
 
                         // 通用模块化厉鬼刷怪蛋：不预设模块。
                         output.accept(MODULAR_GHOST_SPAWN_EGG);

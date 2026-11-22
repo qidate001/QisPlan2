@@ -322,6 +322,10 @@ public class ModItems {
             ITEMS.register("calling_ghost_spawn_egg", () -> new SpawnEggItem(
                     CALLING_GHOST.get(),0x666354,0x25231F,new Item.Properties()));
 
+    public static final DeferredItem<SpawnEggItem> KNOCKING_GHOST_SPAWN_EGG =
+            ITEMS.register("knocking_ghost_spawn_egg", () -> new SpawnEggItem(
+                    KNOCKING_GHOST.get(),0x666354,0x25231F,new Item.Properties()));
+
     // 通用模块化厉鬼刷怪蛋
     public static final DeferredItem<SpawnEggItem> MODULAR_GHOST_SPAWN_EGG =
             ITEMS.register(

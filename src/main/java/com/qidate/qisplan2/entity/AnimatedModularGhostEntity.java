@@ -35,10 +35,13 @@ public abstract class AnimatedModularGhostEntity extends ModularGhostEntity impl
         controllers.add(new AnimationController<>(this,"movement",4,
                 state -> state.setAndContinue(state.isMoving()?MOVE:IDLE)),
                 new AnimationController<>(this,"action",2,state -> {
-                    if(hurtTime>0) return state.setAndContinue(HURT);
+                    if(hurtTime > 0) return state.setAndContinue(HURT);
                     if(swinging) return state.setAndContinue(ATTACK);
                     return PlayState.STOP;
-                }).triggerableAnim("call",CALL).triggerableAnim("attack",ATTACK));
+                }).triggerableAnim("call", CALL)
+                        .triggerableAnim("attack", ATTACK)
+                        .triggerableAnim("knock", RawAnimation.begin()
+                                .thenPlay("animation.ghost.knock")));
     }
 
     /** 世界适配器报告动作表现；服务端通过 GeckoLib 同步，不以动画驱动能力。 */

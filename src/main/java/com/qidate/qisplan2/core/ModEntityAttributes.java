@@ -20,6 +20,7 @@ public final class ModEntityAttributes {
 
         // 独特外观沿用通用宿主属性，强度与规则仍由模块决定。
         event.put(ModEntities.CALLING_GHOST.get(),ModularGhostEntity.createAttributes().build());
+        event.put(ModEntities.KNOCKING_GHOST.get(),ModularGhostEntity.createAttributes().build());
 
         // GeckoLib 测试实体
         event.put(

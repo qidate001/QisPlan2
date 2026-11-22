@@ -395,5 +395,6 @@
   "ability.qisplan2.coffin_nail.embed": "Embed",
   "module.qisplan2.ghost_umbrella": "Ghost Umbrella",
   "ability.qisplan2.ghost_umbrella.domain": "Toggle Umbrella Domain",
-  "entity.qisplan2.calling_ghost": "Calling Ghost"
+  "entity.qisplan2.calling_ghost": "Calling Ghost",
+  "entity.qisplan2.knocking_ghost": "Knocking Ghost"
 }

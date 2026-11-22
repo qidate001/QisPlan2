@@ -243,6 +243,7 @@ public class QisPlan2Client {
     ) {
         // 独特外观宿主复用模块实体渲染基类。
         event.registerEntityRenderer(ModEntities.CALLING_GHOST.get(),AnimatedModularGhostRenderer::new);
+        event.registerEntityRenderer(ModEntities.KNOCKING_GHOST.get(),AnimatedModularGhostRenderer::new);
 
         // 通用模块化厉鬼
         event.registerEntityRenderer(

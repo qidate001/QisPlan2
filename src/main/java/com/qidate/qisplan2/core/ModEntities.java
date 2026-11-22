@@ -2,6 +2,7 @@ package com.qidate.qisplan2.core;
 
 import com.qidate.qisplan2.entity.ModularGhostEntity;
 import com.qidate.qisplan2.entity.CallingGhostEntity;
+import com.qidate.qisplan2.entity.KnockingGhostEntity;
 import com.qidate.qisplan2.entity.TestGeckoEntity;
 import com.qidate.qisplan2.entity.painting.GhostPaintingEntity;
 import net.minecraft.resources.ResourceLocation;
@@ -58,6 +59,12 @@ public class ModEntities {
                     CallingGhostEntity::new,MobCategory.MONSTER)
                     .sized(0.6F,1.95F).clientTrackingRange(8).updateInterval(3)
                     .build(ResourceLocation.fromNamespaceAndPath(MODID,"calling_ghost").toString()));
+
+    public static final DeferredHolder<EntityType<?>,EntityType<KnockingGhostEntity>> KNOCKING_GHOST =
+            ENTITY_TYPES.register("knocking_ghost", () -> EntityType.Builder.<KnockingGhostEntity>of(
+                    KnockingGhostEntity::new,MobCategory.MONSTER)
+                    .sized(0.6F,1.95F).clientTrackingRange(8).updateInterval(3)
+                    .build(ResourceLocation.fromNamespaceAndPath(MODID,"knocking_ghost").toString()));
 
     // 鬼画
     public static final DeferredHolder<

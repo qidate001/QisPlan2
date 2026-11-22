@@ -42,6 +42,8 @@ import com.qidate.qisplan2.ghost.module.implementation.knocking.KnockingGhostDoo
 import com.qidate.qisplan2.ghost.module.implementation.nightwanderer.NightWandererBehavior;
 import java.util.UUID;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import com.qidate.qisplan2.ghost.module.host.item.GhostItemModuleHost;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
@@ -76,6 +78,39 @@ public final class GhostWorldAdapters {
      */
     public static GhostWorldAccess bind(GhostModuleHost host, ResourceLocation id) {
         return new GhostWorldAccess() {
+            /** 坐标转换留在边界，实体以眼睛为旋转原点，静态宿主以位置为原点。 */
+            public boolean facePosition(Vec3 target) {
+                if(target==null) return false;
+                return faceDirection(target.subtract(source()==null ? position() : source().getEyePosition()));
+            }
+            /** 统一朝向操作；物品不能借用携带者的身体强制转头。 */
+            public boolean faceDirection(Vec3 direction) {
+                if(host instanceof GhostItemModuleHost || !present() || direction==null
+                        || !Double.isFinite(direction.x) || !Double.isFinite(direction.y) || !Double.isFinite(direction.z)
+                        || direction.lengthSqr()<1.0E-12) return false;
+                if(host instanceof BlockEntity block) {
+                    var state=block.getBlockState();
+                    var facing=Direction.getNearest(direction.x,direction.y,direction.z);
+                    if(state.hasProperty(BlockStateProperties.FACING))
+                        state=state.setValue(BlockStateProperties.FACING,facing);
+                    else if(state.hasProperty(BlockStateProperties.HORIZONTAL_FACING)) {
+                        if(direction.horizontalDistanceSqr()<1.0E-12) return false;
+                        state=state.setValue(BlockStateProperties.HORIZONTAL_FACING,Direction.getNearest(direction.x,0,direction.z));
+                    } else return false;
+                    return block.getLevel().setBlock(block.getBlockPos(),state,3);
+                }
+                var entity=source();
+                if(entity==null) return false;
+                float yaw=direction.horizontalDistanceSqr()<1.0E-12 ? entity.getYRot()
+                        : (float)(Math.toDegrees(Math.atan2(direction.z,direction.x))-90);
+                float pitch=(float)-Math.toDegrees(Math.atan2(direction.y,direction.horizontalDistance()));
+                if(entity instanceof ServerPlayer player)
+                    player.connection.teleport(player.getX(),player.getY(),player.getZ(),yaw,pitch);
+                entity.setYRot(yaw);entity.setXRot(pitch);entity.setYHeadRot(yaw);entity.setYBodyRot(yaw);
+                if(entity instanceof Mob mob) mob.getLookControl().setLookAt(entity.getEyePosition().add(direction));
+                return true;
+            }
+
             /** 插入来源由专用适配器解释，模块只得到附着能力。 */
             @Override public GhostAttachmentAccess attachments() {
                 return GhostAttachments.bind(host);
@@ -454,7 +489,11 @@ public final class GhostWorldAdapters {
              * 发起敲门的世界操作，声音传播与后续听声处理由敲门系统负责。
              */
             public void knock(BlockPos pos, double intensity) {
-                if (present() && source() != null) KnockingGhostDoorSystem.knock((ServerLevel)level(),source(),pos,intensity);
+                if (present() && source() != null && pos != null) {
+                    facePosition(Vec3.atCenterOf(pos).add(0,0.5,0));
+                    if(source() instanceof AnimatedModularGhostEntity animated) animated.playVisualAction("knock");
+                    KnockingGhostDoorSystem.knock((ServerLevel)level(),source(),pos,intensity);
+                }
             }
 
             /**
@@ -474,6 +513,7 @@ public final class GhostWorldAdapters {
              */
             public void playCall(LivingEntity target) {
                 if (!canHearCall(target)) return;
+                facePosition(target.getEyePosition());
                 // 动作只作为声音的外观反馈，模块无需知道来源是否具有独特模型。
                 if(source() instanceof AnimatedModularGhostEntity animated) animated.playVisualAction("call");
                 var sound = target instanceof ServerPlayer player ? CallingGhostSounds.getSound(player) : null;

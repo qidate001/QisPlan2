@@ -393,5 +393,6 @@
   "ability.qisplan2.coffin_nail.embed": "钉入",
   "module.qisplan2.ghost_umbrella": "鬼雨伞",
   "ability.qisplan2.ghost_umbrella.domain": "开关鬼雨伞鬼域",
-  "entity.qisplan2.calling_ghost": "喊人鬼"
+  "entity.qisplan2.calling_ghost": "喊人鬼",
+  "entity.qisplan2.knocking_ghost": "敲门鬼"
 }

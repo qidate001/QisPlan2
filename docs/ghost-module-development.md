@@ -892,7 +892,13 @@ List.of(
 - `textures/entity/calling_ghost.png`
 - `animations/entity/calling_ghost.animation.json`
 
-动画资源实现 `animation.ghost.idle / move / attack / hurt / call` 五个约定动作名。基类根据移动、挥手与受击状态选择动作；世界适配器在实际喊名和袭击时请求 `call / attack` 表现，并由 GeckoLib 从服务端同步。动画不会反过来驱动规则或判定能力成功。新外观可以通过资源定义自己的动作幅度，不必改实体 Java 逻辑。附着物由 `GhostGeoAttachmentLayer` 读取现有快照，在实体局部躯干锚点渲染。
+动画资源实现 `animation.ghost.idle / move / attack / hurt / call / knock` 六个约定动作名。基类根据移动、挥手与受击状态选择动作；世界适配器在实际喊名和袭击时请求 `call / attack` 表现，并由 GeckoLib 从服务端同步。动画不会反过来驱动规则或判定能力成功。新外观可以通过资源定义自己的动作幅度，不必改实体 Java 逻辑。附着物由 `GhostGeoAttachmentLayer` 读取现有快照，在实体局部躯干锚点渲染。
+
+### 9.6 宿主朝向接口
+
+模块通过 `world().facePosition(Vec3)` 面向世界坐标，或通过 `world().faceDirection(Vec3)` 面向世界方向向量，不自行判断宿主类型。零向量、非有限数值或缺少有效世界时返回 false。
+
+适配层解释具体操作：实体设置身体、头部和俯仰朝向，玩家同时同步视角；物品忽略操作，不转动携带者；方块有 `FACING` 时支持六方向，有 `HORIZONTAL_FACING` 时只使用水平分量，否则不操作。该接口只转向，不移动位置。喊名与敲门的世界操作已经在适配层调用它，其他能力可按需要直接调用。
 
 ## 10. 灵异裁决与复苏代价
 
