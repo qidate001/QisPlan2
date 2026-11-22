@@ -713,14 +713,18 @@ boolean success = GhostAbilityExecutor.tryExecuteWithResult(invocation);
 - **自主行为**：`behavior()` 当前仍返回 `GhostBehavior`，已有 `NONE / NIGHT_HUNT / KNOCK_DOORS / FOLLOW_CALL / WANDER`。这是现有 Goal 适配入口，不能误称能力预设枚举已经删除，所以所有其他系统也都自动开放。全新行为需要补齐对应适配与调度。
 - **语义规则**：自主移动如何发现目标由行为/采集层处理；发现后的语义事实交给规则。行为内部资源维护不要都列成技能。
 - **声音**：`getSounds()` 声明 `GhostSoundDefinition`，真实传播和听声变化由声音系统处理；白烛造成的中断应沿用真实语义链，不手工广播一个假的“已听见”。
-- **鬼域**：通过 `domainDefinition()` 声明鬼域身体，`world().domain()` 是当前模块的运行时操作接口。统一适配器负责所有宿主的创建、维护和清理；不再添加独立的鬼域控制器、类型注册或客户端效果注册。`initialDomainData()` 仅为旧驭鬼界面派生初始视图，不再作为另一份声明。
+- **鬼域**：通过 `domainDefinition()` 声明鬼域身体，`world().domain()` 是当前模块的运行时操作接口。统一适配器负责所有宿主的创建、维护和清理；不再添加独立的鬼域控制器、类型注册或客户端效果注册。旧驭鬼界面的兼容视图由 `PlayerGhostData` 根据声明与实例数据派生；模块接口不再提供 `initialDomainData()` 或依赖驭鬼专用数据对象。
 - **蔓延**：使用 `world.spreadBlocks(anchor, spec)`。`BlockSpreadSpec.Shape.HORIZONTAL_2D` 是水平四邻域，`VOLUME_3D` 是三维六邻域；`CHAIN` 和 `FRONTIER` 决定扩展方式。数量是成功新增方块数，空间不足允许少于要求，不能无限搜索。
 
 ### 9.4 鬼域：模块声明、世界能力与客户端表现
 
 鬼域是模块身体的一部分。分层、覆盖竞争、隔绝、追踪和生命周期属于框架；伤害、袭击等世界效果属于模块能力；雨柱、后处理、雨声属于客户端表现。三者不能混在一个控制器中。
 
-`domainDefinition()` 返回 `Optional.empty()` 表示没有鬼域；返回 `GhostDomainDefinition` 则由统一宿主适配器维护。模块无需注册另一种鬼域，也不需要自己创建 `GhostDomain`。
+`domainDefinition()` 返回 `Optional.empty()` 表示没有鬼域；返回 `GhostDomainDefinition` 则由统一宿主适配器维护。模块无需注册另一种鬼域，也不需要自己创建 `GhostDomain`。生命周期由 `GhostModuleRuntime` 与宿主适配器负责，模块无需调用手动维护接口。
+
+运行时定位使用“实际宿主＋模块 ID”。物品按物品栈身份区分，不能用携带者 UUID 代替宿主身份；关闭玩家的鬼域不能关闭其手中物品上的同名鬼域。`domainOpen / domainStrength / domainRadius / domainLayer` 保存在模块 `customData`，运行时 `GhostDomain` 由这些数据重建。旧驭鬼数据类型仅保留兼容视图与旧存档迁移用途。
+
+当前适配范围：暴露在世界中的实体、玩家、物品和方块都可展开鬼域；化虹、指向目标升降层与持续重启的输入实现目前仍面向玩家。其他宿主调用这些出口会返回失败，模块不能为此判断宿主类型；扩展支持时应修改适配器与底层操作。
 
 #### 9.4.1 完整的最小模块
 

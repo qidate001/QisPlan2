@@ -252,26 +252,7 @@ public final class GhostDomainManager {
         }
     }
 
-    public void removeBySourceAndType(
-            UUID sourceUUID,
-            ResourceLocation type
-    ) {
 
-        List<UUID> remove = new ArrayList<>();
-
-        for (GhostDomain domain : domains.values()) {
-
-            if (sourceUUID.equals(domain.getSourceUUID())
-                    && type.equals(domain.getType())) {
-
-                remove.add(domain.getId());
-            }
-        }
-
-        for (UUID id : remove) {
-            remove(id);
-        }
-    }
 
     public void updatePosition(
             UUID domainId,
@@ -460,38 +441,9 @@ public final class GhostDomainManager {
         return domains.get(id);
     }
 
-    public GhostDomain getBySource(
-            UUID sourceUUID
-    ) {
 
-        for (GhostDomain domain : domains.values()) {
 
-            if (sourceUUID.equals(
-                    domain.getSourceUUID()
-            )) {
-                return domain;
-            }
-        }
 
-        return null;
-    }
-
-    public GhostDomain getBySourceAndType(
-            UUID sourceUUID,
-            ResourceLocation type
-    ) {
-
-        for (GhostDomain domain : domains.values()) {
-
-            if (sourceUUID.equals(domain.getSourceUUID())
-                    && type.equals(domain.getType())) {
-
-                return domain;
-            }
-        }
-
-        return null;
-    }
 
     public GhostDomain getEffectiveDomain(
             double x,
@@ -1173,41 +1125,5 @@ public final class GhostDomainManager {
     }
 
 
-    public GhostDomain getOwnEffectiveDomain(
-            ServerPlayer player
-    ) {
 
-        GhostDomain effectiveDomain = null;
-
-        for (GhostDomain domain : domains.values()) {
-
-            if (!player.getUUID().equals(
-                    domain.getSourceUUID()
-            )) {
-                continue;
-            }
-
-            if (!domain.contains(
-                    player.getX(),
-                    player.getY(),
-                    player.getZ()
-            )) {
-                continue;
-            }
-
-            if (effectiveDomain == null) {
-                effectiveDomain = domain;
-                continue;
-            }
-
-            if (GhostDomainPriority.canOverride(
-                    domain,
-                    effectiveDomain
-            )) {
-                effectiveDomain = domain;
-            }
-        }
-
-        return effectiveDomain;
-    }
 }

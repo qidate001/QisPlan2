@@ -52,7 +52,7 @@ public final class GhostDomainAdapters {
             /** 设置来源所在层数。 */
             public boolean setOccupiedLayer(int value) {
                 if (source == null || !exists() || value < 1 || value > layer() || value == occupiedLayer()) return false;
-                if(source != null) GhostLayerHandler.setLayer(source, value); return true;
+                GhostLayerHandler.setLayer(source, value); return true;
             }
             /** 视线移动由具备输入的世界对象实现。 */
             public boolean teleportToAim() { return source instanceof ServerPlayer player && GhostDomainTeleportHandler.teleport(player, current()); }

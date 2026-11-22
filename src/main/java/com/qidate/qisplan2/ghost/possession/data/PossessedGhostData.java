@@ -9,25 +9,9 @@ import net.minecraft.network.codec.StreamCodec;
 import java.util.Optional;
 
 /**
- * ========================================
- * 单只被驾驭厉鬼的完整持久数据
- * ========================================
- *
- * <p>
- * PossessedGhostData 表示玩家所驾驭的一只厉鬼
- * 的完整持久记录。
- * </p>
- *
- * <p>
- * state：
- *     所有厉鬼共有的通用状态。
- *
- * domain：
- *     鬼域专属持久数据。
- *
- * 并不是所有厉鬼都拥有鬼域，
- * 因此 domain 使用 Optional 表示。
- * </p>
+ * 驭鬼界面的兼容数据视图，同时保留旧存档解码能力。
+ * 当前唯一持久状态为宿主的模块数据；此对象由 PlayerGhostData 投影，
+ * 不能作为独立的鬼域声明或第二份运行时状态。
  */
 public record PossessedGhostData(
         PossessedGhostState state,

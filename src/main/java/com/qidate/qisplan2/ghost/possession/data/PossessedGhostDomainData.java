@@ -7,31 +7,9 @@ import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
 
 /**
- * ========================================
- * 驾驭厉鬼的鬼域持久数据
- * ========================================
- *
- * <p>
- * 描述一只被玩家驾驭的厉鬼自身所拥有的鬼域状态。
- * </p>
- *
- * <p>
- * 注意：
- *
- * 这不是 GhostDomain。
- *
- * PossessedGhostDomainData：
- *     持久化数据
- *
- * GhostDomain：
- *     世界运行时对象
- * </p>
- *
- * <p>
- * 并不是所有厉鬼都拥有鬼域。
- * 是否存在这个数据对象，
- * 由 PossessedGhostData 中的 Optional 决定。
- * </p>
+ * 驭鬼界面的兼容数据视图，同时保留旧存档解码能力。
+ * 当前唯一持久状态为宿主的模块数据；此对象由 PlayerGhostData 投影，
+ * 不能作为独立的鬼域声明或第二份运行时状态。
  */
 public record PossessedGhostDomainData(
         boolean open,

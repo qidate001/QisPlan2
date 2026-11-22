@@ -521,8 +521,6 @@ public final class GhostWorldAdapters {
                 level().playSound(null, target.getX(), target.getY(), target.getZ(), sound, SoundSource.HOSTILE, 1, 1);
             }
 
-            /** 鬼域出口由模块声明决定，宿主差异统一留在适配器。 */
-            public boolean canMaintainDomain() { return canToggleDomain(); }
             /** 所有暴露在服务端世界的可变宿主都可展开已声明的鬼域。 */
             public boolean canToggleDomain() {
                 var module = GhostModuleRegistry.get(id);
@@ -530,8 +528,6 @@ public final class GhostWorldAdapters {
             }
             /** 修改当前模块的持久开关，再由统一生命周期更新世界。 */
             public boolean toggleDomain() { return canToggleDomain() && ModuleGhostDomains.toggle(host,id); }
-            /** 按当前模块声明维护鬼域。 */
-            public void maintainDomain() { ModuleGhostDomains.sync(host,id); }
             /** 精确匹配来源宿主，避免物品借用携带者的同名鬼域。 */
             private GhostDomain currentDomain() { return ModuleGhostDomains.current(host,id); }
             /** 覆盖事实以追踪器的最终有效集合为准，不把其他鬼域的曝光误认为自己的。 */

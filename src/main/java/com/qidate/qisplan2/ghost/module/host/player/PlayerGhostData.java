@@ -64,7 +64,9 @@ public final class PlayerGhostData {
                     Math.clamp(custom.getInt("domainLayer"), 1, 10)));
         } else {
             var module = GhostModuleRegistry.get(entry.id());
-            if (module != null) domain = module.initialDomainData();
+            if (module != null) domain = module.domainDefinition().map(definition ->
+                    new PossessedGhostDomainData(false, entry.intensity(),
+                            definition.radius(), definition.initialLayer()));
         }
         return new PossessedGhostData(state, domain);
     }

@@ -19,7 +19,6 @@ import com.qidate.qisplan2.ghost.module.sound.GhostSoundDefinition;
 import com.qidate.qisplan2.ghost.module.suppression.GhostSuppression;
 import com.qidate.qisplan2.ghost.possession.classification.GhostClassification;
 import com.qidate.qisplan2.ghost.possession.classification.GhostTag;
-import com.qidate.qisplan2.ghost.possession.data.PossessedGhostDomainData;
 import java.util.List;
 import java.util.Optional;
 import net.minecraft.network.chat.Component;
@@ -38,20 +37,6 @@ import net.minecraft.resources.ResourceLocation;
  * 不属于模块实例的当前状态。
  */
 public interface GhostModule {
-    /** 声明鬼域身体；未声明的模块没有鬼域，不需要额外注册控制器或行为类型。 */
-    default Optional<GhostDomainDefinition> domainDefinition() {
-        return Optional.empty();
-    }
-
-    /** 声音到达目标时声明持续压制；默认没有，声音框架不得硬编码具体厉鬼。 */
-    default GhostSuppression soundSuppression(GhostModuleContext context, ResourceLocation soundType) { return null; }
-
-    /** 是否接收手持来源对实体的交互事实，输入桥不硬编码具体厉鬼。 */
-    default boolean supportsEntityUse() { return false; }
-    /** 附着时的独立模型资源，null 表示不额外显示。 */
-    default ResourceLocation attachmentModel() { return null; }
-
-
 
     /**
      * 获取模块的唯一标识。
@@ -133,6 +118,20 @@ public interface GhostModule {
     default List<GhostSuppression> getSuppressions(GhostModuleContext context) {
         return List.of();
     }
+
+    /** 声明鬼域身体；未声明的模块没有鬼域，不需要额外注册控制器或行为类型。 */
+    default Optional<GhostDomainDefinition> domainDefinition() {
+        return Optional.empty();
+    }
+
+    /** 声音到达目标时声明持续压制；默认没有，声音框架不得硬编码具体厉鬼。 */
+    default GhostSuppression soundSuppression(GhostModuleContext context, ResourceLocation soundType) { return null; }
+
+    /** 是否接收手持来源对实体的交互事实，输入桥不硬编码具体厉鬼。 */
+    default boolean supportsEntityUse() { return false; }
+
+    /** 附着时的独立模型资源，null 表示不额外显示。 */
+    default ResourceLocation attachmentModel() { return null; }
 
     /**
      * 获取该厉鬼模块的复苏刺激结算策略。
@@ -216,32 +215,6 @@ public interface GhostModule {
     default double minimumStrengthRatio() {
 
         return 1.0D / 3.0D;
-    }
-
-    /**
-     * 新获得这只鬼时的初始鬼域数据。
-     *
-     * <p>
-     * 并不是所有厉鬼都拥有鬼域。
-     * </p>
-     *
-     * <p>
-     * 返回 Optional.empty() 表示：
-     *
-     *     这只鬼没有鬼域。
-     *
-     * 返回具体数据则表示：
-     *
-     *     这只鬼拥有鬼域，
-     *     并使用返回的数据作为初始鬼域状态。
-     * </p>
-     *
-     * <p>
-     * 鬼域强度与厉鬼本体强度是两个独立的数据。
-     * </p>
-     */
-    default Optional<PossessedGhostDomainData> initialDomainData() {
-        return domainDefinition().map(d -> new PossessedGhostDomainData(false,getInitialData().intensity(),d.radius(),d.initialLayer()));
     }
 
     /**

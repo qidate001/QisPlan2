@@ -208,9 +208,6 @@ public interface GhostWorldAccess {
      */
     boolean hasCall(LivingEntity target);
 
-    /** 是否有可持久化并可定位的鬼域出口。 */
-    boolean canMaintainDomain();
-
     /**
      * 判断当前适配器是否提供鬼域开关出口。
      * 要求已声明鬼域、能够持久化并暴露于服务端世界。
@@ -222,12 +219,6 @@ public interface GhostWorldAccess {
      * 不具备出口时返回 false；开启后返回实际开启状态，关闭成功返回 true。
      */
     boolean toggleDomain();
-
-    /**
-     * 按当前模块声明维护运行时鬼域。
-     * 各类宿主共用生命周期，不需要单独的厉鬼控制器。
-     */
-    void maintainDomain();
 
     /**
      * 检查目标是否仍属于指定鬼域的有效覆盖集合。
