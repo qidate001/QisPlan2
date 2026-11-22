@@ -892,7 +892,7 @@ List.of(
 - `textures/entity/calling_ghost.png`
 - `animations/entity/calling_ghost.animation.json`
 
-动画资源实现 `animation.ghost.idle / move / attack / hurt / call / knock` 六个约定动作名。基类根据移动、挥手与受击状态选择动作；世界适配器在实际喊名和袭击时请求 `call / attack` 表现，并由 GeckoLib 从服务端同步。动画不会反过来驱动规则或判定能力成功。新外观可以通过资源定义自己的动作幅度，不必改实体 Java 逻辑。附着物由 `GhostGeoAttachmentLayer` 读取现有快照，在实体局部躯干锚点渲染。
+具体外观实体自行覆盖 `registerControllers`，注册自己的待机、行走与动作控制器，并通过 `getVisualActions()` 声明支持的动作映射；同一映射用于注册 `action` 控制器的可触发动画。公共基类只提供缓存和 `playVisualAction` 同步入口，不规定动画集合或资源名。世界适配器报告动作时，当前外观未声明的动作直接忽略。例如喊人鬼外观搭载敲门模块时仍正常行走和敲门，但不会播放敲门动画，也不需要补充占位资源。现有资源使用 `animation.ghost.*` 名称，例如敲门使用 `animation.ghost.knock`。动画不会反过来驱动规则或判定能力成功。附着物由 `GhostGeoAttachmentLayer` 读取现有快照，在实体局部躯干锚点渲染。
 
 ### 9.6 宿主朝向接口
 

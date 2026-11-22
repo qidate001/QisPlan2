@@ -56,13 +56,13 @@ public class ModEntities {
     /** 独特外观类型只决定模型与默认模块，不替代通用 modular_ghost 宿主。 */
     public static final DeferredHolder<EntityType<?>,EntityType<CallingGhostEntity>> CALLING_GHOST =
             ENTITY_TYPES.register("calling_ghost", () -> EntityType.Builder.<CallingGhostEntity>of(
-                    CallingGhostEntity::new,MobCategory.MONSTER)
+                    CallingGhostEntity::new, MobCategory.MONSTER)
                     .sized(0.6F,1.95F).clientTrackingRange(8).updateInterval(3)
                     .build(ResourceLocation.fromNamespaceAndPath(MODID,"calling_ghost").toString()));
 
     public static final DeferredHolder<EntityType<?>,EntityType<KnockingGhostEntity>> KNOCKING_GHOST =
             ENTITY_TYPES.register("knocking_ghost", () -> EntityType.Builder.<KnockingGhostEntity>of(
-                    KnockingGhostEntity::new,MobCategory.MONSTER)
+                    KnockingGhostEntity::new, MobCategory.MONSTER)
                     .sized(0.6F,1.95F).clientTrackingRange(8).updateInterval(3)
                     .build(ResourceLocation.fromNamespaceAndPath(MODID,"knocking_ghost").toString()));
 

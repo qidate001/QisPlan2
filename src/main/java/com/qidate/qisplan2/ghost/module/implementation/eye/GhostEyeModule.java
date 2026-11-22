@@ -38,13 +38,15 @@ public final class GhostEyeModule implements GhostModule {
      * 获取当前定义的唯一标识。
      * 注册、能力查找和规则分发使用此标识，不代表某个运行时实例。
      */
-    @Override public ResourceLocation getId() { return ID; }
+    @Override
+    public ResourceLocation getId() { return ID; }
 
     /**
      * 提供新建模块实例的初始强度和复苏值。
      * 仅用于初始化；已存在实例以保存的模块数据为准。
      */
-    @Override public GhostModuleInitialData getInitialData() { return new GhostModuleInitialData(100, 0); }
+    @Override
+    public GhostModuleInitialData getInitialData() { return new GhostModuleInitialData(100, 0); }
 
     /**
      * 返回复苏值为零时可发挥的本质强度比例，供有效强度计算使用。

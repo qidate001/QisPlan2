@@ -6,22 +6,18 @@ import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.level.Level;
 import software.bernie.geckolib.animatable.GeoEntity;
 import software.bernie.geckolib.animatable.instance.AnimatableInstanceCache;
-import software.bernie.geckolib.animation.*;
+import software.bernie.geckolib.animation.RawAnimation;
 import software.bernie.geckolib.util.GeckoLibUtil;
 import java.util.List;
+import java.util.Map;
 
 /**
  * 有独立模型的模块宿主公共基类。只增加动画表现，不增加任何厉鬼规则或能力。
- * 实体子类仅声明默认模块和身体组成；移除模块后仍保留外观，空模块存档也不会被补回。
- * 各实体动画资源沿用 animation.ghost.* 通用动作名，由资源文件定义实际姿势。
+ * 实体子类声明默认模块、身体组成和自身支持的动画；移除模块后仍保留外观，空模块存档也不会被补回。
+ * 公共基类不规定动作集合或动画资源名；控制器与动作映射均由具体外观实体注册。
  */
 public abstract class AnimatedModularGhostEntity extends ModularGhostEntity implements GeoEntity {
-    private final AnimatableInstanceCache animationCache=GeckoLibUtil.createInstanceCache(this);
-    private static final RawAnimation IDLE = RawAnimation.begin().thenLoop("animation.ghost.idle");
-    private static final RawAnimation MOVE = RawAnimation.begin().thenLoop("animation.ghost.move");
-    private static final RawAnimation ATTACK = RawAnimation.begin().thenPlay("animation.ghost.attack");
-    private static final RawAnimation HURT = RawAnimation.begin().thenPlay("animation.ghost.hurt");
-    private static final RawAnimation CALL = RawAnimation.begin().thenPlay("animation.ghost.call");
+    private final AnimatableInstanceCache animationCache = GeckoLibUtil.createInstanceCache(this);
 
     /** 复用完整模块存储、承载和行为框架，构造阶段不复制任何厉鬼逻辑。 */
     protected AnimatedModularGhostEntity(EntityType<? extends AnimatedModularGhostEntity> type,Level level,
@@ -29,24 +25,22 @@ public abstract class AnimatedModularGhostEntity extends ModularGhostEntity impl
         super(type,level,composition,defaults);
     }
 
-    /** 基础姿势平滑切换；一次性动作与移动分层，避免移动截断喊名动作。 */
-    @Override
-    public void registerControllers(AnimatableManager.ControllerRegistrar controllers) {
-        controllers.add(new AnimationController<>(this,"movement",4,
-                state -> state.setAndContinue(state.isMoving()?MOVE:IDLE)),
-                new AnimationController<>(this,"action",2,state -> {
-                    if(hurtTime > 0) return state.setAndContinue(HURT);
-                    if(swinging) return state.setAndContinue(ATTACK);
-                    return PlayState.STOP;
-                }).triggerableAnim("call", CALL)
-                        .triggerableAnim("attack", ATTACK)
-                        .triggerableAnim("knock", RawAnimation.begin()
-                                .thenPlay("animation.ghost.knock")));
+    /**
+     * 声明此种外观支持的动作及其动画。子类使用同一映射注册 action 控制器，
+     * 避免播放入口与控制器声明不一致；不支持任何一次性动作时可保留空映射。
+     */
+    protected Map<String, RawAnimation> getVisualActions() {
+        return Map.of();
     }
 
-    /** 世界适配器报告动作表现；服务端通过 GeckoLib 同步，不以动画驱动能力。 */
+    /**
+     * 接收世界适配器的表现请求，仅同步该外观明确支持的动作。
+     * 不支持的动作直接忽略，既不播放替代动画，也不影响模块能力本身的执行。
+     */
     public void playVisualAction(String action) {
-        if(!level().isClientSide) triggerAnim("action",action);
+        if (!level().isClientSide && getVisualActions().containsKey(action)) {
+            triggerAnim("action", action);
+        }
     }
 
     /** 每个实体独立缓存动画状态，不让同种实体共享播放进度。 */
