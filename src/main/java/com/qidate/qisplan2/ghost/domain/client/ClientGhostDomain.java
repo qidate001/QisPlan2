@@ -1,8 +1,8 @@
 package com.qidate.qisplan2.ghost.domain.client;
 
-import com.qidate.qisplan2.ghost.domain.CylinderDomainShape;
+import com.qidate.qisplan2.ghost.domain.shape.CylinderDomainShape;
 import com.qidate.qisplan2.ghost.domain.GhostDomainShape;
-import com.qidate.qisplan2.ghost.domain.SphereDomainShape;
+import com.qidate.qisplan2.ghost.domain.shape.SphereDomainShape;
 import net.minecraft.resources.ResourceLocation;
 
 import java.util.UUID;

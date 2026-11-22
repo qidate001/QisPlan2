@@ -6,7 +6,7 @@ import com.qidate.qisplan2.client.renderer.GhostRainRenderer;
 import com.qidate.qisplan2.ghost.module.GhostModuleRegistry;
 import com.qidate.qisplan2.ghost.module.implementation.umbrella.GhostRainEffect;
 import net.neoforged.neoforge.common.NeoForge;
-import com.qidate.qisplan2.ghost.domain.CylinderDomainShape;
+import com.qidate.qisplan2.ghost.domain.shape.CylinderDomainShape;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.resources.ResourceLocation;

@@ -12,7 +12,7 @@ import java.util.Optional;
 import java.util.List;
 import com.qidate.qisplan2.ghost.module.domain.GhostDomainDefinition;
 import com.qidate.qisplan2.ghost.module.domain.GhostDomainShaderEffect;
-import com.qidate.qisplan2.ghost.domain.SphereDomainShape;
+import com.qidate.qisplan2.ghost.domain.shape.SphereDomainShape;
 import com.qidate.qisplan2.ghost.module.GhostMedium;
 import com.qidate.qisplan2.ghost.module.ability.GhostAbility;
 import com.qidate.qisplan2.ghost.module.ability.GhostAbilityContext;

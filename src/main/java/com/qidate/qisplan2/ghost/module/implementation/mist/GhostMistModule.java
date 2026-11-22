@@ -3,14 +3,13 @@ import com.qidate.qisplan2.ghost.module.ability.DefinedGhostAbility;
 import com.qidate.qisplan2.ghost.module.ability.GhostDomainShortcut;
 import com.qidate.qisplan2.ghost.module.ability.GhostAbility;
 import com.qidate.qisplan2.ghost.module.environment.GhostBehavior;
-import com.qidate.qisplan2.ghost.domain.*;
 import com.qidate.qisplan2.ghost.module.*;
 import com.qidate.qisplan2.ghost.module.ability.*;
 import com.qidate.qisplan2.ghost.module.data.GhostModuleInitialData;
 import com.qidate.qisplan2.ghost.module.event.*;
 import com.qidate.qisplan2.ghost.module.domain.GhostDomainDefinition;
 import com.qidate.qisplan2.ghost.module.domain.GhostDomainShaderEffect;
-import com.qidate.qisplan2.ghost.domain.SphereDomainShape;
+import com.qidate.qisplan2.ghost.domain.shape.SphereDomainShape;
 import com.qidate.qisplan2.death.ModDamageTypes;
 
 import java.util.Optional;

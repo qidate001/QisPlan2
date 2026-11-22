@@ -1,7 +1,7 @@
 package com.qidate.qisplan2.ghost.module.implementation;
 
 import com.qidate.qisplan2.death.ModDamageTypes;
-import com.qidate.qisplan2.ghost.domain.CylinderDomainShape;
+import com.qidate.qisplan2.ghost.domain.shape.CylinderDomainShape;
 import com.qidate.qisplan2.ghost.module.*;
 import com.qidate.qisplan2.ghost.module.ability.*;
 import com.qidate.qisplan2.ghost.module.data.GhostModuleInitialData;

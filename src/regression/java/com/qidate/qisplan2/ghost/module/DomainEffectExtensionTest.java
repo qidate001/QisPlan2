@@ -1,7 +1,7 @@
 package com.qidate.qisplan2.ghost.module;
 
 import com.qidate.qisplan2.command.WorldCommands;
-import com.qidate.qisplan2.ghost.domain.SphereDomainShape;
+import com.qidate.qisplan2.ghost.domain.shape.SphereDomainShape;
 import com.qidate.qisplan2.ghost.domain.client.renderer.GhostDomainClientEffects;
 import com.qidate.qisplan2.ghost.domain.client.renderer.ModuleGhostDomainRenderEffect;
 import com.qidate.qisplan2.ghost.module.domain.*;

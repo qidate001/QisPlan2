@@ -729,7 +729,7 @@ boolean success = GhostAbilityExecutor.tryExecuteWithResult(invocation);
 ```java
 package com.qidate.qisplan2.ghost.module.implementation;
 
-import com.qidate.qisplan2.ghost.domain.SphereDomainShape;
+import com.qidate.qisplan2.ghost.domain.shape.SphereDomainShape;
 import com.qidate.qisplan2.ghost.module.GhostModule;
 import com.qidate.qisplan2.ghost.module.ability.DefinedGhostAbility;
 import com.qidate.qisplan2.ghost.module.ability.GhostAbility;

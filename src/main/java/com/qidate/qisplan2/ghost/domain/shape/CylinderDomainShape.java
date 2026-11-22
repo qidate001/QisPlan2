@@ -1,13 +1,16 @@
-package com.qidate.qisplan2.ghost.domain;
+package com.qidate.qisplan2.ghost.domain.shape;
 
-public final class SphereDomainShape
+import com.qidate.qisplan2.ghost.domain.GhostDomainShape;
+
+public final class CylinderDomainShape
         implements GhostDomainShape {
 
     private double radius;
 
-    public SphereDomainShape(
+    public CylinderDomainShape(
             double radius
     ) {
+
         this.radius = radius;
     }
 
@@ -20,13 +23,11 @@ public final class SphereDomainShape
             double y,
             double z
     ) {
+
         double dx = x - centerX;
-        double dy = y - centerY;
         double dz = z - centerZ;
 
-        return dx * dx
-                + dy * dy
-                + dz * dz
+        return dx * dx + dz * dz
                 <= radius * radius;
     }
 
