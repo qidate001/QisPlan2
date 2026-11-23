@@ -12,6 +12,9 @@ import com.qidate.qisplan2.ghost.module.event.*;
 import com.qidate.qisplan2.ghost.module.influence.GhostInfluenceType;
 import net.minecraft.resources.ResourceLocation;
 import java.util.List;
+import java.util.ArrayList;
+import com.qidate.qisplan2.ghost.module.domain.GhostDomainPanel;
+import com.qidate.qisplan2.ghost.module.domain.GhostDomainPresets;
 import java.util.Optional;
 
 /** 鬼雨伞的完整定义：撑开鬼域，鬼雨袭击与反噬均属于模块能力。 */
@@ -75,7 +78,7 @@ public final class GhostUmbrellaModule implements GhostModule {
     }
 
     /** 开关公开，雨幕和停步是内部持续能力。 */
-    @Override public List<GhostAbility> getIntrinsicAbilities(){return List.of(new GhostAbility(){
+    @Override public List<GhostAbility> getIntrinsicAbilities(){List<GhostAbility> abilities = new ArrayList<>(List.of(new GhostAbility(){
         /** 返回当前媒介、规则或能力的稳定标识。 */
         public ResourceLocation getId(){return TOGGLE;}
         /** 公开技能使用现有鬼伞纹理。 */
@@ -119,5 +122,11 @@ public final class GhostUmbrellaModule implements GhostModule {
         public boolean canExecute(GhostAbilityContext c){return c.getModuleContext().world().domain().exists();}
         /** 执行已通过状态和媒介检查的能力。 */
         public void execute(GhostAbilityContext c){c.getModuleContext().world().immobilizeSource();}
-    });}
+    }));
+        abilities.addAll(GhostDomainPresets.commonAbilities(ID));
+        return List.copyOf(abilities);
+    }
+
+    /** 鬼域页面从本模块声明生成，不要求界面认识具体厉鬼。 */
+    @Override public GhostDomainPanel domainPanel() { return new GhostDomainPanel(List.of(),List.of(),List.of(),GhostDomainPresets.common(ID,TOGGLE)); }
 }

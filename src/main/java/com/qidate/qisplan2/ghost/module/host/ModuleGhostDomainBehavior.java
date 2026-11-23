@@ -3,8 +3,13 @@ package com.qidate.qisplan2.ghost.module.host;
 import com.qidate.qisplan2.ghost.domain.*;
 import com.qidate.qisplan2.ghost.module.*;
 import com.qidate.qisplan2.ghost.module.domain.GhostDomainDefinition;
+import com.qidate.qisplan2.ghost.module.domain.GhostDomainSettings;
+import com.qidate.qisplan2.ghost.module.ability.GhostAbilityContext;
+import com.qidate.qisplan2.ghost.module.ability.GhostAbilityExecutor;
+import com.qidate.qisplan2.ghost.module.ability.GhostTargetParameters;
 import com.qidate.qisplan2.ghost.module.event.*;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
@@ -20,6 +25,40 @@ public final class ModuleGhostDomainBehavior implements GhostDomainBehavior {
     private final ResourceLocation module;
     private final GhostDomainDefinition definition;
     private int elapsed;
+    private int automationTicks;
+    private GhostDomainSettings settings=GhostDomainSettings.DEFAULT;
+    private CompoundTag settingsTag;
+    /** 配置只在变化时重新解码，边界检查不会为每个实体反复解析完整配置。 */
+    private GhostDomainSettings settings() {
+        var next=((GhostModuleCustomDataModifier)host).getModuleCustomData(module).getCompound(GhostDomainSettings.KEY);
+        if(!next.equals(settingsTag)){settingsTag=next.copy();settings=GhostDomainSettings.read(((GhostModuleCustomDataModifier)host).getModuleCustomData(module));}
+        return settings;
+    }
+    /** 来源自身不受自己鬼域的进出限制，其余实体由配置分类判断。 */
+    @Override public boolean permitsCrossing(ServerLevel level,GhostDomain domain,Entity target,boolean entering) {
+        if(target==GhostEnvironmentAdapters.bearer(host))return true;
+        var facts=GhostDomainTargetFacts.of(target);var access=entering?settings().enter():settings().leave();
+        return access.allows(facts.group(),facts.name(),facts.type());
+    }
+    /** 每秒执行一次自动化；按列表顺序第一条匹配规则生效，避免多个分层规则反复争抢目标。 */
+    private void automate(Set<Entity> entities) {
+        if(++automationTicks<20)return;automationTicks=0;
+        var rules=settings().rules();if(rules.isEmpty())return;
+        var definition=GhostModuleRegistry.get(module);if(definition==null)return;
+        var allowed=definition.domainPanel().automations();
+        for(Entity entity:entities){
+            if(!(entity instanceof LivingEntity target) || !target.isAlive() || target==GhostEnvironmentAdapters.bearer(host))continue;
+            var facts=GhostDomainTargetFacts.of(target);
+            for(var rule:rules){
+                if(!rule.enabled() || allowed.stream().noneMatch(a->a.ability().equals(rule.ability()))
+                        || !GhostDomainSettings.matches(rule.targets(),facts.group(),facts.name(),facts.type(),true))continue;
+                if(!host.hasModule(module))return;
+                GhostAbilityExecutor.tryExecuteWithResult(new GhostAbilityContext(host,module,rule.ability(),
+                        GhostAbilityContext.Source.CONTINUATION,null,()->{},new GhostTargetParameters(target)));
+                break;
+            }
+        }
+    }
     /** 每个鬼域拥有独立曝光周期；接触时间由宿主共享采样器统一维护。 */
     public ModuleGhostDomainBehavior(GhostModuleHost host, ResourceLocation module, GhostDomainDefinition definition) {
         this.host=host;this.module=module;this.definition=definition;
@@ -37,6 +76,8 @@ public final class ModuleGhostDomainBehavior implements GhostDomainBehavior {
     /** 对有效覆盖集合发出接触、看见及周期曝光，能力仍经过模块执行器。 */
     @Override public void onTick(ServerLevel level,GhostDomain domain,Set<Entity> entities) {
         if (!sourcePresent(level,domain)) return;
+        automate(entities);
+        if(!sourcePresent(level,domain))return;
         var source=GhostEnvironmentAdapters.bearer(host);
         boolean exposure=definition.exposureInterval()>0 && ++elapsed>=definition.exposureInterval();
         if(exposure) elapsed=0;

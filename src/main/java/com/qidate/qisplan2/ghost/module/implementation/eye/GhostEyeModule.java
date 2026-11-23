@@ -10,6 +10,9 @@ import com.qidate.qisplan2.ghost.possession.classification.GhostClassification;
 import com.qidate.qisplan2.ghost.possession.classification.GhostTag;
 import java.util.Optional;
 import java.util.List;
+import java.util.ArrayList;
+import com.qidate.qisplan2.ghost.module.domain.GhostDomainPanel;
+import com.qidate.qisplan2.ghost.module.domain.GhostDomainPresets;
 import com.qidate.qisplan2.ghost.module.domain.GhostDomainDefinition;
 import com.qidate.qisplan2.ghost.module.domain.GhostDomainShaderEffect;
 import com.qidate.qisplan2.ghost.domain.shape.SphereDomainShape;
@@ -129,7 +132,7 @@ public final class GhostEyeModule implements GhostModule {
      * 世界效果由这些能力执行，输入桥和行为适配器只负责发起调用。
      */
     @Override public List<GhostAbility> getIntrinsicAbilities() {
-        return List.of(new GhostAbility() {
+        List<GhostAbility> abilities = new ArrayList<>(List.of(new GhostAbility() {
             /** 技能图标由所属模块直接声明。 */
             @Override public ResourceLocation iconTexture() { return ResourceLocation.parse("minecraft:textures/item/ender_eye.png"); }
 
@@ -161,7 +164,7 @@ public final class GhostEyeModule implements GhostModule {
         new DefinedGhostAbility(ResourceLocation.fromNamespaceAndPath(ID.getNamespace(), ID.getPath() + "/domain_up"),
                 ResourceLocation.parse("minecraft:textures/item/glowstone_dust.png"),
                 c -> c.getModuleContext().world().domain().exists(),
-                c -> c.getModuleContext().world().domain().setLayer(Math.min(6, c.getModuleContext().world().domain().layer() + 1)), GhostDomainShortcut.DOMAIN_UP),
+                c -> c.getModuleContext().world().domain().setLayer(Math.min(10, c.getModuleContext().world().domain().layer() + 1)), GhostDomainShortcut.DOMAIN_UP),
         new DefinedGhostAbility(ResourceLocation.fromNamespaceAndPath(ID.getNamespace(), ID.getPath() + "/domain_down"),
                 ResourceLocation.parse("minecraft:textures/item/redstone.png"),
                 c -> c.getModuleContext().world().domain().exists(),
@@ -189,7 +192,11 @@ public final class GhostEyeModule implements GhostModule {
         new DefinedGhostAbility(ResourceLocation.fromNamespaceAndPath(ID.getNamespace(), ID.getPath() + "/lower_target"),
                 ResourceLocation.parse("minecraft:textures/item/flint.png"),
                 c -> c.getModuleContext().world().domain().exists(),
-                c -> c.getModuleContext().world().domain().shiftTargetLayer(-1), GhostDomainShortcut.LOWER_TARGET));
+                c -> c.getModuleContext().world().domain().shiftTargetLayer(-1), GhostDomainShortcut.LOWER_TARGET)));
+
+        abilities.add(GhostEyeDomainControls.ability());
+        abilities.addAll(GhostDomainPresets.layerAbilities(ID,10));
+        return List.copyOf(abilities);
     }
 
     /** 鬼域属于本模块的身体；覆盖产生接触，额外感知由声明决定。 */
@@ -198,4 +205,7 @@ public final class GhostEyeModule implements GhostModule {
         return Optional.of(new GhostDomainDefinition(80, 1, true, SphereDomainShape::new,
                 true, true, 20, true, true, List.of(new GhostDomainShaderEffect(ID, "GhostEye"))));
     }
+
+    /** 鬼域页面从本模块声明生成，不要求界面认识具体厉鬼。 */
+    @Override public GhostDomainPanel domainPanel() { return GhostEyeDomainControls.panel(); }
 }

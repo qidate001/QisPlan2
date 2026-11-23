@@ -14,6 +14,9 @@ import com.qidate.qisplan2.death.ModDamageTypes;
 
 import java.util.Optional;
 import java.util.List;
+import java.util.ArrayList;
+import com.qidate.qisplan2.ghost.module.domain.GhostDomainPanel;
+import com.qidate.qisplan2.ghost.module.domain.GhostDomainPresets;
 
 import net.minecraft.resources.ResourceLocation;
 import static com.qidate.qisplan2.QisPlan2.MODID;
@@ -133,7 +136,7 @@ public final class GhostMistModule implements GhostModule {
      * 世界效果由这些能力执行，输入桥和行为适配器只负责发起调用。
      */
     @Override public List<GhostAbility> getIntrinsicAbilities() {
-        return List.of(new GhostAbility() {
+        List<GhostAbility> abilities = new ArrayList<>(List.of(new GhostAbility() {
             /** 技能图标由所属模块直接声明。 */
             @Override public ResourceLocation iconTexture() { return ResourceLocation.parse("minecraft:textures/item/ender_pearl.png"); }
 
@@ -202,7 +205,10 @@ public final class GhostMistModule implements GhostModule {
         new DefinedGhostAbility(ResourceLocation.fromNamespaceAndPath(ID.getNamespace(), ID.getPath() + "/lower_target"),
                 ResourceLocation.parse("minecraft:textures/item/flint.png"),
                 c -> c.getModuleContext().world().domain().exists(),
-                c -> c.getModuleContext().world().domain().shiftTargetLayer(-1), GhostDomainShortcut.LOWER_TARGET));
+                c -> c.getModuleContext().world().domain().shiftTargetLayer(-1), GhostDomainShortcut.LOWER_TARGET)));
+
+        abilities.addAll(GhostDomainPresets.commonAbilities(ID));
+        return List.copyOf(abilities);
     }
 
     /**
@@ -220,4 +226,7 @@ public final class GhostMistModule implements GhostModule {
 
 
 
+
+    /** 鬼域页面从本模块声明生成，不要求界面认识具体厉鬼。 */
+    @Override public GhostDomainPanel domainPanel() { return new GhostDomainPanel(List.of(),List.of(ResourceLocation.parse("qisplan2:ghost_mist/teleport")),List.of(),GhostDomainPresets.common(ID,DOMAIN)); }
 }

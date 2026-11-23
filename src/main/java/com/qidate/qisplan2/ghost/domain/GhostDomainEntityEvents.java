@@ -4,10 +4,24 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.Entity;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.neoforge.event.entity.EntityEvent;
+import net.neoforged.neoforge.event.entity.EntityTravelToDimensionEvent;
 
 public final class GhostDomainEntityEvents {
 
     private GhostDomainEntityEvents() {
+    }
+
+    /** 跨维度传送同样属于离开；必须在原维度解除关系之前校验。 */
+    @SubscribeEvent
+    public static void onTravel(EntityTravelToDimensionEvent event) {
+        Entity entity=event.getEntity();
+        if(!(entity.level() instanceof ServerLevel level)||entity.isSpectator()||!GhostDomainEntityPolicy.shouldTrack(entity)
+                || event.getDimension().equals(level.dimension()))return;
+        for(var domain:GhostDomainEntityTracker.get(level).movementCandidates(entity.position(),entity.position())) {
+            if(entity.getUUID().equals(domain.getSourceUUID())||!domain.contains(entity.getX(),entity.getY(),entity.getZ())
+                    ||!domain.getBehavior().sourcePresent(level,domain))continue;
+            if(!domain.getBehavior().permitsCrossing(level,domain,entity,false)){event.setCanceled(true);return;}
+        }
     }
 
     /**

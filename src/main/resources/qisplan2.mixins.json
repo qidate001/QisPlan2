@@ -9,12 +9,14 @@
     "EntityRenderDispatcherMixin",
     "MinecraftMixin"
   ],
-
   "mixins": [
     "DoorBlockMixin",
     "EntityCollisionMixin",
     "EntityPushMixin",
     "LevelMixin",
-    "ItemStackDestructionAttemptMixin"
+    "ItemStackDestructionAttemptMixin",
+    "GhostDomainBoundaryMixin",
+    "GhostDomainPlayerTeleportMixin",
+    "GhostDomainDimensionMixin"
   ]
 }

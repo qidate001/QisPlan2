@@ -5,6 +5,10 @@ import net.minecraft.world.entity.LivingEntity;
 /** 当前模块的鬼域操作接口，仅暴露世界事实与基础操作，不定义技能 ID 或技能列表。 */
 public interface GhostDomainAccess {
     GhostDomainAccess NONE = new GhostDomainAccess() {};
+    /** 设置开关；明确目标状态，不依赖客户端猜测当前是否展开。 */
+    default boolean setOpen(boolean open) { return false; }
+    /** 为有效覆盖中的目标设置绝对层数；非法层数或目标返回失败。 */
+    default boolean setTargetLayer(LivingEntity target, int layer) { return false; }
     /** 查询当前鬼域是否覆盖指定世界目标。 */
     default boolean contains(LivingEntity target) { return false; }
     /** 当前鬼域的灵异强度。 */

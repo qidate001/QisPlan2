@@ -12,6 +12,9 @@ import net.minecraft.world.entity.Entity;
 import java.util.Set;
 
 public interface GhostDomainBehavior {
+    /** 普通跨界权限；未来强行入侵可在边界执行层增加独立的授权路径。 */
+    default boolean permitsCrossing(ServerLevel level,GhostDomain domain,Entity target,boolean entering) { return false; }
+
     /** 框架层数变动的持久化通知；实体层数传播仍由追踪器处理。 */
     default void onDomainLayerChanged(ServerLevel level,GhostDomain domain) {}
 

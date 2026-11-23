@@ -1,6 +1,7 @@
 package com.qidate.qisplan2.ghost.module;
 
 import com.qidate.qisplan2.ghost.module.domain.GhostDomainDefinition;
+import com.qidate.qisplan2.ghost.module.domain.GhostDomainPanel;
 
 import com.qidate.qisplan2.ghost.module.influence.GhostAttackResponse;
 import com.qidate.qisplan2.ghost.module.event.GhostEvent;
@@ -37,6 +38,11 @@ import net.minecraft.resources.ResourceLocation;
  * 不属于模块实例的当前状态。
  */
 public interface GhostModule {
+    /** 声明鬼域控制区、快捷能力和自动化目录；默认没有专属控件。 */
+    default GhostDomainPanel domainPanel() {
+        return GhostDomainPanel.EMPTY;
+    }
+
 
     /**
      * 获取模块的唯一标识。

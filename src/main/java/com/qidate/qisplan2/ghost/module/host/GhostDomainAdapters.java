@@ -25,6 +25,18 @@ public final class GhostDomainAdapters {
         var level = ModuleGhostDomains.level(host);
         if (level == null) return GhostDomainAccess.NONE;
         return new GhostDomainAccess() {
+            /** 仅变更当前模块的开关，实际生命周期仍由统一管理器负责。 */
+            public boolean setOpen(boolean open) {
+                if(!host.hasModule(moduleId))return false;
+                if(ModuleGhostDomains.enabled(host,moduleId)==open)return true;
+                return ModuleGhostDomains.toggle(host,moduleId);
+            }
+            /** 自动化与其他调用共用绝对分层出口，不允许作用于其他鬼域的目标。 */
+            public boolean setTargetLayer(LivingEntity target,int value) {
+                if(value<1 || value>layer() || !contains(target))return false;
+                if(GhostLayerHandler.getLayer(target)!=value)GhostLayerHandler.setLayer(target,value);
+                return true;
+            }
             /** 有效覆盖集合考虑其他鬼域的竞争关系。 */
             public boolean contains(LivingEntity target) {
                 var domain = current();
@@ -42,7 +54,9 @@ public final class GhostDomainAdapters {
             /** 写入鬼域层数；接口不规定某个技能的增减步长。 */
             public boolean setLayer(int value) {
                 var domain = current();
-                if (domain == null || value < 1 || value > 10 || domain.getLayer() == value) return false;
+                if(value<1 || value>10)return false;
+                if(domain==null) { ModuleGhostDomains.saveLayer(host,moduleId,value);return true; }
+                if(domain.getLayer()==value)return true;
                 GhostDomainManager.get(level).updateLayer(domain.getId(), value);
                 if(source != null) GhostLayerHandler.setLayer(source, value);
                 return true;

@@ -8,6 +8,8 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntitySelector;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.Vec3;
+import net.minecraft.util.Mth;
 
 import java.util.*;
 
@@ -100,6 +102,18 @@ public final class GhostDomainEntityTracker {
             ServerLevel level
     ) {
         this.level = level;
+    }
+
+    /** 只收集移动路径包围盒经过区块中的候选域；远距离传送退回域集合而不遍历海量区块。 */
+    public Collection<GhostDomain> movementCandidates(Vec3 from,Vec3 to) {
+        if(domainsByChunk.isEmpty())return List.of();
+        int minX=Mth.floor(Math.min(from.x,to.x))>>4,maxX=Mth.floor(Math.max(from.x,to.x))>>4;
+        int minZ=Mth.floor(Math.min(from.z,to.z))>>4,maxZ=Mth.floor(Math.max(from.z,to.z))>>4;
+        var manager=GhostDomainManager.get(level);
+        if((long)(maxX-minX+1)*(maxZ-minZ+1)>4096)return manager.getDomains();
+        Set<UUID> ids=new HashSet<>();
+        for(int x=minX;x<=maxX;x++)for(int z=minZ;z<=maxZ;z++){var values=domainsByChunk.get(ChunkPos.asLong(x,z));if(values!=null)ids.addAll(values);}
+        List<GhostDomain> result=new ArrayList<>();for(UUID id:ids){var domain=manager.get(id);if(domain!=null)result.add(domain);}return result;
     }
 
     /**

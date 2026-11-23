@@ -42,6 +42,7 @@ public final class QisNetwork {
          */
 
         GhostDomainNetwork.register(event);
+        GhostDomainPanelNetwork.register(event);
 
         /*
          * ========================================================
