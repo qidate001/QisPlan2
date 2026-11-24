@@ -1,7 +1,8 @@
 package com.qidate.qisplan2.event;
 
+import com.qidate.qisplan2.ghost.module.host.player.PlayerGhostModuleHost;
+
 import com.qidate.qisplan2.QisPlan2;
-import com.qidate.qisplan2.ghost.possession.manager.PossessionHandler;
 import net.minecraft.server.level.ServerPlayer;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
@@ -20,6 +21,6 @@ public class PossessionTickHandler {
             return;
         }
 
-        PossessionHandler.tick(player);
+        new PlayerGhostModuleHost(player).tick();
     }
 }

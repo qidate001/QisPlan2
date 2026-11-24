@@ -1,4 +1,4 @@
-package com.qidate.qisplan2.ghost.module.implementation;
+package com.qidate.qisplan2.ghost.module.implementation.door;
 
 import com.qidate.qisplan2.ghost.module.*;
 import com.qidate.qisplan2.ghost.module.ability.*;

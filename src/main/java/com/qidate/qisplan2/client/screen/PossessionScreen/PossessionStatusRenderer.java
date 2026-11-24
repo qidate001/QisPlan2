@@ -1,5 +1,7 @@
 package com.qidate.qisplan2.client.screen.PossessionScreen;
 
+import com.qidate.qisplan2.ghost.module.GhostHostProperties;
+import com.qidate.qisplan2.ghost.module.host.player.PlayerGhostModuleHost;
 import com.qidate.qisplan2.QisPlan2;
 import com.qidate.qisplan2.client.curse.ClientCurseState;
 import com.qidate.qisplan2.client.curse.CurseClientRegistry;
@@ -11,7 +13,6 @@ import com.qidate.qisplan2.ghost.module.GhostModuleRegistry;
 import com.qidate.qisplan2.ghost.module.host.player.PlayerGhostData;
 import com.qidate.qisplan2.ghost.possession.data.PossessedGhostData;
 import com.qidate.qisplan2.ghost.possession.data.PossessedGhostState;
-import com.qidate.qisplan2.ghost.possession.manager.PossessionHandler;
 import com.qidate.qisplan2.ghost.possession.suppression.GhostSuppressionSystem;
 import java.util.Map;
 import net.minecraft.client.Minecraft;
@@ -512,34 +513,11 @@ public class PossessionStatusRenderer {
         // =====================================================
 
         double bodyCorrosion =
-                PossessionHandler.getEffectiveBodyCorrosion(
-                        player
+                GhostHostProperties.bodyCorrosion(new PlayerGhostModuleHost(player)
                 );
 
-        double damageReduction =
-                1.0D
-                        - Math.pow(
-                        0.5D,
-                        bodyCorrosion / 20.0D
-                );
-
-        damageReduction =
-                Math.clamp(
-                        damageReduction,
-                        0.0D,
-                        0.90D
-                );
-
-        double maxHealthBonus =
-                40.0D
-                        * (
-                        1.0D
-                                - Math.pow(
-                                0.5D,
-                                bodyCorrosion / 20.0D
-                        )
-                );
-
+        double damageReduction = GhostHostProperties.damageReduction(new PlayerGhostModuleHost(player));
+        double maxHealthBonus = GhostHostProperties.maxHealthBonus(new PlayerGhostModuleHost(player));
 
         // =====================================================
         // 左侧：基础状态
@@ -651,8 +629,7 @@ public class PossessionStatusRenderer {
         int bodyY = 26;
 
         CorrosionMatrix matrix =
-                PossessionHandler.getCorrosionMatrix(
-                        player
+                GhostHostProperties.corrosion(new PlayerGhostModuleHost(player)
                 );
 
         /*

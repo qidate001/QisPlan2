@@ -1,6 +1,7 @@
 package com.qidate.qisplan2.item;
 
-import com.qidate.qisplan2.ghost.possession.manager.PossessionHandler;
+import com.qidate.qisplan2.ghost.module.GhostModuleOperations;
+import com.qidate.qisplan2.ghost.module.host.player.PlayerGhostModuleHost;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
@@ -74,8 +75,7 @@ public class GhostWhitePorridgeItem extends Item {
              * +10 浅死机值
              */
             int count =
-                    PossessionHandler.addShallowStunToAll(
-                            player,
+                    GhostModuleOperations.addRevivalReserve(new PlayerGhostModuleHost(player),
                             SHALLOW_STUN_AMOUNT
                     );
 

@@ -10,7 +10,6 @@ import com.qidate.qisplan2.core.QisConfig;
 import com.qidate.qisplan2.event.GhostBlockInteractionHandler;
 import com.qidate.qisplan2.event.GhostBreakoutHandler;
 import com.qidate.qisplan2.event.GhostLayerCombatHandler;
-import com.qidate.qisplan2.event.PossessionDamageHandler;
 import com.qidate.qisplan2.ghost.curse.CurseRegistry;
 import com.qidate.qisplan2.ghost.domain.GhostDomainEntityEvents;
 import com.qidate.qisplan2.ghost.domain.GhostDomainPlayerLogout;
@@ -85,9 +84,7 @@ public class QisPlan2 {
         );
 
         // 灵异伤害类型注册
-        NeoForge.EVENT_BUS.register(
-                PossessionDamageHandler.class
-        );
+
 
         // 普通伤害处理
         NeoForge.EVENT_BUS.register(

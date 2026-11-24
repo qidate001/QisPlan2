@@ -7,7 +7,7 @@ import com.qidate.qisplan2.ghost.module.host.GhostSoundSuppression;
 import com.qidate.qisplan2.ghost.module.host.attachment.GhostAttachments;
 import com.qidate.qisplan2.ghost.module.suppression.GhostSuppressionState;
 import com.qidate.qisplan2.ghost.bearing.HostComposition;
-import com.qidate.qisplan2.ghost.module.host.entity.GhostEntityBindings;
+import com.qidate.qisplan2.ghost.module.host.entity.GhostModuleGoals;
 
 import com.qidate.qisplan2.death.SupernaturalCombatHandler;
 import com.qidate.qisplan2.entity.ai.GhostCandleAttractionGoal;
@@ -18,7 +18,6 @@ import com.qidate.qisplan2.ghost.module.*;
 import com.qidate.qisplan2.ghost.module.data.GhostModuleContainer;
 import com.qidate.qisplan2.ghost.module.data.GhostModuleData;
 import com.qidate.qisplan2.ghost.module.event.ModuleTickEvent;
-import com.qidate.qisplan2.ghost.module.event.TouchEvent;
 import com.qidate.qisplan2.ghost.module.sound.GhostModuleSoundManager;
 import com.qidate.qisplan2.ghost.possession.GhostPossessionInteractionSystem;
 import java.util.*;
@@ -190,7 +189,7 @@ public class ModularGhostEntity extends PathfinderMob
             var entry = iterator.next();
             if (!carriesModule(entry.getKey())) {
                 GhostModule removedModule = GhostModuleRegistry.get(entry.getKey());
-                if (removedModule != null) GhostEntityBindings.detach(removedModule, this);
+                if (removedModule != null) GhostModuleGoals.detach(removedModule, this);
                 entry.getValue().forEach(goalSelector::removeGoal);
                 iterator.remove();
             }
@@ -199,7 +198,7 @@ public class ModularGhostEntity extends PathfinderMob
             if (!carriesModule(entry.id())) continue;
             GhostModule module = GhostModuleRegistry.get(entry.id());
             if (module == null || moduleGoals.containsKey(entry.id())) continue;
-            var definitions = GhostEntityBindings.goals(module, this);
+            var definitions = GhostModuleGoals.goals(module, this);
             List<Goal> goals = new ArrayList<>();
             for (int i = 0; i < definitions.size(); i++) {
                 var scheduled = new ModuleScheduledGoal(
@@ -346,7 +345,7 @@ public class ModularGhostEntity extends PathfinderMob
             GhostModuleSoundManager.unregisterEntityHost(this);
             for (var entry : List.copyOf(getModules())) {
                 GhostModule module = GhostModuleRegistry.get(entry.id());
-                if (module != null) GhostEntityBindings.detach(module, this);
+                if (module != null) GhostModuleGoals.detach(module, this);
             }
         }
 
@@ -648,18 +647,6 @@ public class ModularGhostEntity extends PathfinderMob
         if (!level().isClientSide) {
             refreshModuleBindings();
             syncModuleSounds();
-        }
-    }
-
-    /** 模块资源维护独立于规则和移动 AI，确保死机时也能撤销鬼域。 */
-    @Override
-    public void tick() {
-        super.tick();
-        if (!level().isClientSide) {
-            for (var entry : List.copyOf(getModules())) {
-                GhostModule module = GhostModuleRegistry.get(entry.id());
-                if (module != null && hasGhostModule(entry.id())) GhostEntityBindings.tick(module, this);
-            }
         }
     }
 

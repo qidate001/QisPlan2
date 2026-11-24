@@ -222,7 +222,7 @@ tasks.named('check') {
 // 模块只能依赖语义事件、模块数据和环境端口，不能绕过端口取回载体。
 tasks.register('verifyModuleIsolation') {
     def definitions = fileTree('src/main/java/com/qidate/qisplan2/ghost/module/implementation') {
-        include '**/*Module.java'
+        include '**/*.java'
     }
     inputs.files(definitions)
     doLast {

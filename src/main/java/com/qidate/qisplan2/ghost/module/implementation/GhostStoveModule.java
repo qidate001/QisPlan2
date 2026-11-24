@@ -1,5 +1,6 @@
 package com.qidate.qisplan2.ghost.module.implementation;
 
+import com.qidate.qisplan2.ghost.module.environment.GhostWorkstationAccess;
 import com.qidate.qisplan2.ghost.module.*;
 import com.qidate.qisplan2.ghost.module.ability.*;
 import com.qidate.qisplan2.ghost.module.event.*;
@@ -22,7 +23,7 @@ public final class GhostStoveModule implements GhostModule {
     /** 沿用旧默认灵异强度 1。 */
     public ResourceLocation getId() { return ID; }
     /** 工作台制作属于能力维护；死机禁止自动袭击，但不禁止已经投入的炼制。 */
-    public void tickAbilities(GhostModuleContext context) { context.world().workstations().tick(ID); }
+    public void tickAbilities(GhostModuleContext context) { context.world().workstations().tick(GhostWorkstationAccess.FIVE_SLOT_COOKING); }
     /** 物品等交互适配器发布使用事实时，直接调用工作台能力，死机不禁止手动使用。 */
     public void onAbilityEvent(GhostModuleContext context, GhostEvent event) {
         if (event instanceof GhostUseEvent) context.continueAbility(WORKSTATION,event);
@@ -94,10 +95,10 @@ public final class GhostStoveModule implements GhostModule {
         /** 使用已有物品图标。 */
         public ResourceLocation iconTexture() { return ResourceLocation.parse("minecraft:textures/item/blaze_powder.png"); }
         /** 工作台出口判断交互者、距离和实际承载状态。 */
-        public boolean canExecute(GhostAbilityContext c) { return c.getModuleContext().world().workstations().canOpen(ID,user(c)); }
+        public boolean canExecute(GhostAbilityContext c) { return c.getModuleContext().world().workstations().canOpen(GhostWorkstationAccess.FIVE_SLOT_COOKING,user(c)); }
         /** 兼容无结果调用。 */
         public void execute(GhostAbilityContext c) { executeWithResult(c); }
         /** 玩家、实体或方块形态均通过同一工作台端口打开菜单。 */
-        public boolean executeWithResult(GhostAbilityContext c) { return c.getModuleContext().world().workstations().open(ID,user(c)); }
+        public boolean executeWithResult(GhostAbilityContext c) { return c.getModuleContext().world().workstations().open(GhostWorkstationAccess.FIVE_SLOT_COOKING,user(c)); }
     }); }
 }

@@ -2,7 +2,6 @@ package com.qidate.qisplan2.ghost.module.host;
 
 import com.qidate.qisplan2.ghost.module.GhostModuleHost;
 import com.qidate.qisplan2.ghost.module.environment.GhostWorkstationAccess;
-import com.qidate.qisplan2.ghost.module.implementation.GhostStoveModule;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.MenuProvider;
@@ -21,7 +20,7 @@ public final class GhostWorkstationAdapters {
         void tick();
     }
     private static final Map<ResourceLocation, BiFunction<GhostModuleHost, ResourceLocation, Session>> TYPES = new HashMap<>();
-    static { register(GhostStoveModule.ID, GhostStoveWorkstation::obtain); }
+    static { register(GhostWorkstationAccess.FIVE_SLOT_COOKING, FiveSlotCookingWorkstation::obtain); }
     /** 工具类无需实例化。 */
     private GhostWorkstationAdapters() {}
     /** 注册工作台服务，拒绝重复覆盖既有类型。 */

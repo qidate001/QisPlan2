@@ -2,7 +2,7 @@ package com.qidate.qisplan2.entity;
 
 import com.qidate.qisplan2.ghost.bearing.HostComposition;
 import com.qidate.qisplan2.ghost.module.data.GhostModuleData;
-import com.qidate.qisplan2.ghost.module.implementation.knocking.KnockingGhostModule;
+import com.qidate.qisplan2.ghost.module.implementation.door.knock.KnockingGhostModule;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.entity.ai.attributes.Attributes;

@@ -1,24 +1,16 @@
-package com.qidate.qisplan2.ghost.module.implementation.knocking;
-import com.qidate.qisplan2.ghost.module.host.entity.KnockingGhostEntityBinding;
+package com.qidate.qisplan2.ghost.module.implementation.door.knock;
 
 import com.qidate.qisplan2.block.GhostDoorBlock;
 import com.qidate.qisplan2.core.ModSounds;
 import com.qidate.qisplan2.core.ModTags;
 import com.qidate.qisplan2.ghost.GhostAvoidanceSystem;
-import com.qidate.qisplan2.death.ModDamageTypes;
-import com.qidate.qisplan2.death.SupernaturalDeathHandler;
-import com.qidate.qisplan2.entity.ModularGhostEntity;
-import com.qidate.qisplan2.ghost.module.GhostModuleRuntime;
 import com.qidate.qisplan2.ghost.module.event.DoorKnockHeardEvent;
-import com.qidate.qisplan2.ghost.module.host.player.PlayerGhostModuleHost;
 
 import java.util.*;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.tags.BlockTags;
-import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.DoorBlock;
@@ -107,9 +99,10 @@ public final class KnockingGhostDoorSystem {
      * ============================================================
      */
 
-    private static final List<PendingKnockAttack>
-            PENDING_ATTACKS =
-            new ArrayList<>();
+    /** 传播来源只提供有效性与听声回调，不识别实体、玩家或模块种类。 */
+    public record Source(LivingEntity origin, UUID identity,
+                         java.util.function.BooleanSupplier valid,
+                         java.util.function.Consumer<DoorKnockHeardEvent> heard) { }
 
     /**
      * 保存一次等待执行的敲门袭击所需的来源、目标、倒计时与强度。
@@ -117,7 +110,7 @@ public final class KnockingGhostDoorSystem {
      */
     private record PendingKnockAttack(
             ServerLevel level,
-            LivingEntity source,
+            Source source,
             UUID target,
             int remainingTicks,
             double attackStrength
@@ -140,7 +133,7 @@ public final class KnockingGhostDoorSystem {
      */
     private record PendingDoorKnock(
             ServerLevel level,
-            LivingEntity source,
+            Source source,
             BlockPos doorPos,
             int echoDepth,
             int remainingTicks,
@@ -187,7 +180,7 @@ public final class KnockingGhostDoorSystem {
      */
     public static KnockResult knock(
             ServerLevel level,
-            LivingEntity source,
+            Source source,
             BlockPos doorPos
     ) {
 
@@ -204,7 +197,7 @@ public final class KnockingGhostDoorSystem {
      */
     public static KnockResult knock(
             ServerLevel level,
-            LivingEntity source,
+            Source source,
             BlockPos doorPos,
             double attackStrength
     ) {
@@ -228,19 +221,15 @@ public final class KnockingGhostDoorSystem {
      */
     private static KnockResult knock(
             ServerLevel level,
-            LivingEntity source,
+            Source source,
             BlockPos doorPos,
             int echoDepth,
             Set<BlockPos> visitedDoors,
             double attackStrength
     ) {
 
-        // 延迟鬼门回声同样检查原宿主，避免卸载模块后仍继续传播。
-        if (!source.isAlive() || (source instanceof ModularGhostEntity host
-                && !KnockingGhostEntityBinding.isActive(host))) return KnockResult.failed();
-        if (source instanceof ServerPlayer player
-                && !new PlayerGhostModuleHost(player).hasModule(KnockingGhostModule.ID))
-            return KnockResult.failed();
+        // 回声沿用原调用的有效性检查；模块卸载或失去能力后不能继续传播。
+        if (!source.valid().getAsBoolean()) return KnockResult.failed();
         doorPos =
                 doorPos.immutable();
 
@@ -413,7 +402,7 @@ public final class KnockingGhostDoorSystem {
 
     private static int queueKnockAttacks(
             ServerLevel level,
-            LivingEntity source,
+            Source source,
             BlockPos doorPos,
             double attackStrength
     ) {
@@ -437,7 +426,7 @@ public final class KnockingGhostDoorSystem {
             /*
              * 敲门者自己不受攻击。
              */
-            if (entity == source) {
+            if (entity == source.origin()) {
                 continue;
             }
 
@@ -464,22 +453,7 @@ public final class KnockingGhostDoorSystem {
 
             count++;
 
-            // 听声事实在此刻产生；模块规则自行决定是否安排后续袭击。
-            if (source instanceof ModularGhostEntity host) {
-                GhostModuleRuntime.dispatch(host, new DoorKnockHeardEvent(source, doorPos, entity));
-            } else if (source instanceof ServerPlayer player) {
-                KnockingGhostEntityBinding.attackFromPlayer(player, new DoorKnockHeardEvent(source, doorPos, entity));
-            } else {
-            PENDING_ATTACKS.add(
-                    new PendingKnockAttack(
-                            level,
-                            source,
-                            entity.getUUID(),
-                            KNOCK_ATTACK_DELAY,
-                            attackStrength
-                    )
-            );
-            }
+            source.heard().accept(new DoorKnockHeardEvent(source.origin(), doorPos, entity));
         }
 
         return count;
@@ -494,7 +468,7 @@ public final class KnockingGhostDoorSystem {
 
     private static void scheduleGhostDoorEchoes(
             ServerLevel level,
-            LivingEntity source,
+            Source source,
             BlockPos sourceDoor,
             int echoDepth,
             Set<BlockPos> visitedDoors,
@@ -698,7 +672,6 @@ public final class KnockingGhostDoorSystem {
     public static void tick() {
         tickModuleAttacks();
 
-        tickPendingAttacks();
 
         tickPendingDoorKnocks();
 
@@ -711,74 +684,6 @@ public final class KnockingGhostDoorSystem {
      * 延迟攻击
      * ============================================================
      */
-
-    private static void tickPendingAttacks() {
-
-        for (int i =
-             PENDING_ATTACKS.size() - 1;
-             i >= 0;
-             i--) {
-
-            PendingKnockAttack pending =
-                    PENDING_ATTACKS.get(i);
-
-
-            int remaining =
-                    pending.remainingTicks()
-                            - 1;
-
-
-            if (remaining > 0) {
-
-                PENDING_ATTACKS.set(
-                        i,
-                        new PendingKnockAttack(
-                                pending.level(),
-                                pending.source(),
-                                pending.target(),
-                                remaining,
-                                pending.attackStrength()
-                        )
-                );
-
-                continue;
-            }
-
-
-            ServerLevel level =
-                    pending.level();
-
-
-            Entity entity =
-                    level.getEntity(
-                            pending.target()
-                    );
-
-
-            /*
-             * 目标还在。
-             */
-            if (entity instanceof LivingEntity living
-                    && living.isAlive()) {
-
-                /*
-                 * 敲门者还存在：
-                 *
-                 * 才能构造真正的敲门伤害来源。
-                 */
-                if (pending.source()
-                        .isAlive()) {
-
-                    SupernaturalDeathHandler.tryKill(living,
-                            ModDamageTypes.knockingGhost(pending.source()), pending.attackStrength());
-                }
-            }
-
-
-            PENDING_ATTACKS.remove(i);
-        }
-    }
-
 
     /*
      * ============================================================
@@ -918,13 +823,13 @@ public final class KnockingGhostDoorSystem {
      */
 
     public static boolean wasRecentlyKnocked(
-            LivingEntity source,
+            UUID identity,
             BlockPos pos
     ) {
 
         Map<BlockPos, Integer> doors =
                 RECENTLY_KNOCKED.get(
-                        source.getUUID()
+                        identity
                 );
 
         return doors != null
@@ -938,13 +843,13 @@ public final class KnockingGhostDoorSystem {
      * 记录当前来源最近敲过的门，供寻找新门时暂时避让。
      */
     private static void markRecentlyKnocked(
-            LivingEntity source,
+            Source source,
             BlockPos pos
     ) {
 
         RECENTLY_KNOCKED
                 .computeIfAbsent(
-                        source.getUUID(),
+                        source.identity(),
                         ignored ->
                                 new HashMap<>()
                 )

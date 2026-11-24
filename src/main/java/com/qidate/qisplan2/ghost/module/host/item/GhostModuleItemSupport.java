@@ -1,12 +1,12 @@
 package com.qidate.qisplan2.ghost.module.host.item;
 
+import com.qidate.qisplan2.ghost.module.host.player.PlayerGhostModuleHost;
 import com.qidate.qisplan2.ghost.module.GhostModuleCombatState;
 import com.qidate.qisplan2.ghost.module.host.GhostIgnitionInputs;
 import com.qidate.qisplan2.ghost.module.event.ModuleTickEvent;
 import com.qidate.qisplan2.ghost.module.GhostModuleRuntime;
 import com.qidate.qisplan2.ghost.module.event.GhostUseEvent;
 import com.qidate.qisplan2.ghost.possession.manager.GhostPossessionManager;
-import com.qidate.qisplan2.ghost.possession.manager.PossessionHandler;
 import com.qidate.qisplan2.ghost.possession.target.ItemGhostPossessionTarget;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
@@ -34,7 +34,7 @@ public interface GhostModuleItemSupport {
             if (player.isShiftKeyDown()) {
                 var entry = host.getModules().stream()
                         .filter(e -> !GhostModuleCombatState.available(e))
-                        .filter(e -> !PossessionHandler.hasGhost(serverPlayer, e.id()))
+                        .filter(e -> !new PlayerGhostModuleHost(serverPlayer).hasModule(e.id()))
                         .findFirst().orElse(null);
                 if (entry != null) {
                     boolean started = GhostPossessionManager.start(serverPlayer,

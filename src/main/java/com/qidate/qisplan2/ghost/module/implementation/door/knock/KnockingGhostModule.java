@@ -1,4 +1,4 @@
-package com.qidate.qisplan2.ghost.module.implementation.knocking;
+package com.qidate.qisplan2.ghost.module.implementation.door.knock;
 
 import com.qidate.qisplan2.ghost.module.ability.GhostAbilityInfluence;
 import com.qidate.qisplan2.ghost.module.ability.GhostAbilityStimulation;
@@ -49,7 +49,7 @@ public final class KnockingGhostModule implements GhostModule {
      * 声明需要的自主行动类型。
      * 具体 Goal 的创建、资源竞争和停止清理由行动适配层负责。
      */
-    @Override public GhostBehavior behavior() { return GhostBehavior.KNOCK_DOORS; }
+    @Override public GhostBehavior behavior() { return context -> { var actor=context.world().actor(); return actor==null?List.of():KnockingGhostBehavior.create(actor); }; }
 
 
     /** 玩家敲门产生的后续袭击属于主动能力链，不重新经过自动听声规则。 */
@@ -158,7 +158,13 @@ public final class KnockingGhostModule implements GhostModule {
             @Override public void execute(GhostAbilityContext c) {
                 var world = c.getModuleContext().world();
                 var position = door(c);
-                world.knock(position, c.getModuleContext().effectiveIntensity());
+                world.knock(position, c.getModuleContext().effectiveIntensity(), c::isModuleAvailable, heard -> {
+                    // 延续主动释放的能力链；自动行为仍发布听声事实，由规则决定是否袭击。
+                    if (c.source() == GhostAbilityContext.Source.POSSESSION) {
+                        Runnable attack = c.getModuleContext().prepareContinuation(ATTACK, heard);
+                        if (attack != null) world.scheduleKnockAttack(attack);
+                    } else c.getModuleContext().dispatchEvent(heard);
+                });
                 if (c.source() == GhostAbilityContext.Source.POSSESSION) {
                     var state = c.getModuleContext().getCustomData();
                     state.putLong("lastDirectUse", world.gameTime());

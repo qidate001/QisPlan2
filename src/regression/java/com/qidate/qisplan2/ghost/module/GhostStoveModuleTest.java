@@ -35,7 +35,7 @@ public final class GhostStoveModuleTest {
                 public boolean canOpen(ResourceLocation type, LivingEntity user) { return usable && exposed && !removed; }
                 /** 记录公共能力是否实际打开工作台。 */
                 public boolean open(ResourceLocation type, LivingEntity user) {
-                    check(type.equals(GhostStoveModule.ID), "工作台类型声明错误");
+                    check(type.equals(GhostWorkstationAccess.FIVE_SLOT_COOKING), "工作台类型声明错误");
                     if (!canOpen(type,user)) return false; openings++; return true;
                 }
                 /** 持续能力维护应与自动袭击规则解耦。 */

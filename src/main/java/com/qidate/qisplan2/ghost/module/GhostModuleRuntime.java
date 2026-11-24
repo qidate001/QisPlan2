@@ -82,7 +82,17 @@ public final class GhostModuleRuntime {
         try {
             for (GhostModuleHost host : List.copyOf(hosts)) {
                 if (host == null) continue;
-                if (event instanceof ModuleTickEvent) GhostModuleCombatState.tick(host);
+                if (event instanceof ModuleTickEvent) {
+                    GhostModuleCombatState.tick(host);
+                    if (host.controlsIntrinsicModules()) {
+                        var lost = host.getModules().stream().filter(entry -> {
+                            var definition = GhostModuleRegistry.get(entry.id());
+                            return definition != null && !entry.sleeping() && !entry.deadlocked()
+                                    && host.carriesModule(entry.id()) && entry.revival() >= definition.getMaxRevival();
+                        }).findFirst();
+                        if (lost.isPresent()) { host.onControlLost(lost.get().id()); continue; }
+                    }
+                }
                 if (event instanceof ModuleTickEvent)
                     GhostModuleSoundManager.syncCarriedHost(host);
                 if (event instanceof ModuleTickEvent) ModuleGhostDomains.sync(host);

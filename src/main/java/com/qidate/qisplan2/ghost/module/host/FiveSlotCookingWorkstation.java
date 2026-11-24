@@ -26,10 +26,10 @@ import java.lang.ref.WeakReference;
 import java.util.*;
 
 /** 五输入一输出的配方工作台服务。实际库存和进度以模块 customData 为唯一持久数据源。 */
-public final class GhostStoveWorkstation extends SimpleContainer implements GhostWorkstationAdapters.Session {
+public final class FiveSlotCookingWorkstation extends SimpleContainer implements GhostWorkstationAdapters.Session {
     public static final String DATA = GhostWorkstationData.KEY;
     // 键和值都不强持有载体；打开的菜单强持有会话，关闭后允许回收并从模块数据重建。
-    private static final Map<Object, Map<ResourceLocation, WeakReference<GhostStoveWorkstation>>> CACHE = new WeakHashMap<>();
+    private static final Map<Object, Map<ResourceLocation, WeakReference<FiveSlotCookingWorkstation>>> CACHE = new WeakHashMap<>();
     private final GhostModuleHost host;
     private final ResourceLocation module;
     private final ServerLevel level;
@@ -50,12 +50,12 @@ public final class GhostStoveWorkstation extends SimpleContainer implements Ghos
         public int getCount() { return 2; }
     };
     /** 读取存档初始化会话；创建期间禁止 setChanged 回写空库存。 */
-    private GhostStoveWorkstation(GhostModuleHost host, ResourceLocation module, ServerLevel level) {
+    private FiveSlotCookingWorkstation(GhostModuleHost host, ResourceLocation module, ServerLevel level) {
         super(6); this.host = host; this.module = module; this.level = level;
         this.storage = (GhostModuleCustomDataModifier)host; refresh();
     }
     /** 在适配边界解析世界与会话身份，不依赖特定厉鬼实体。 */
-    public static GhostStoveWorkstation obtain(GhostModuleHost host, ResourceLocation module) {
+    public static FiveSlotCookingWorkstation obtain(GhostModuleHost host, ResourceLocation module) {
         if (!(host instanceof GhostModuleCustomDataModifier)) return null;
         var entity = GhostEnvironmentAdapters.bearer(host);
         var world = entity != null ? entity.level() : host instanceof BlockEntity block ? block.getLevel() : null;
@@ -64,7 +64,7 @@ public final class GhostStoveWorkstation extends SimpleContainer implements Ghos
         var sessions = CACHE.computeIfAbsent(key, ignored -> new HashMap<>());
         var reference = sessions.get(module); var session = reference == null ? null : reference.get();
         if (session == null || session.level != server) {
-            session = new GhostStoveWorkstation(host,module,server); sessions.put(module,new WeakReference<>(session));
+            session = new FiveSlotCookingWorkstation(host,module,server); sessions.put(module,new WeakReference<>(session));
         } else session.refresh();
         return session;
     }

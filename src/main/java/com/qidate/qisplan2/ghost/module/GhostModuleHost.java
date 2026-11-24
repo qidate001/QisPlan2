@@ -25,6 +25,9 @@ import com.qidate.qisplan2.ghost.module.host.GhostWorldAdapters;
  */
 public interface GhostModuleHost {
 
+    /** 受控承载达到复苏上限时的物理释放策略；默认没有独立身体可破体。 */
+    default void onControlLost(ResourceLocation module) {}
+
     /** 查询中间层已建立的持续压制状态；默认没有关系，模块不识别载体类型。 */
     default GhostSuppressionState suppression(ResourceLocation module) { return GhostModuleCombatState.attackSuppression(this, module); }
 

@@ -5,8 +5,12 @@ import com.qidate.qisplan2.ghost.module.implementation.candle.RedGhostCandleModu
 import com.qidate.qisplan2.ghost.module.implementation.candle.WhiteGhostCandleModule;
 import com.qidate.qisplan2.ghost.module.implementation.calling.CallingGhostModule;
 import com.qidate.qisplan2.ghost.module.implementation.divinationslip.GhostDivinationSlipModule;
+import com.qidate.qisplan2.ghost.module.implementation.door.close.ClosingGhostModule;
+import com.qidate.qisplan2.ghost.module.implementation.door.GhostDoorModule;
+import com.qidate.qisplan2.ghost.module.implementation.door.GhostDoorPlateModule;
+import com.qidate.qisplan2.ghost.module.implementation.door.open.OpeningGhostModule;
 import com.qidate.qisplan2.ghost.module.implementation.eye.GhostEyeModule;
-import com.qidate.qisplan2.ghost.module.implementation.knocking.KnockingGhostModule;
+import com.qidate.qisplan2.ghost.module.implementation.door.knock.KnockingGhostModule;
 import com.qidate.qisplan2.ghost.module.implementation.mist.GhostMistModule;
 import com.qidate.qisplan2.ghost.module.implementation.nightwanderer.NightWandererModule;
 import java.util.*;

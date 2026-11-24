@@ -43,6 +43,16 @@ public final class GhostModuleData {
             customData = customData == null
                     ? new CompoundTag()
                     : customData.copy();
+            // 旧玩家缓冲只是历史字段名；迁移到通用模块字段，跨宿主转移不丢失。
+            var legacy = customData.getCompound("qisplan2:player");
+            if (!customData.contains("revivalReserve") && legacy.contains("shallowStun"))
+                customData.putDouble("revivalReserve", Math.clamp(legacy.getDouble("shallowStun"), 0, 100));
+            if (legacy.contains("shallowStun")) {
+                legacy.remove("shallowStun");
+                if (legacy.isEmpty()) customData.remove("qisplan2:player");
+                else customData.put("qisplan2:player", legacy);
+            }
+
         }
 
         /**

@@ -6,7 +6,6 @@ import com.qidate.qisplan2.ghost.module.GhostModuleRegistry;
 import com.qidate.qisplan2.ghost.module.data.GhostModuleData;
 import com.qidate.qisplan2.ghost.module.host.item.GhostItemData;
 import com.qidate.qisplan2.ghost.module.host.item.GhostItemModuleHost;
-import com.qidate.qisplan2.ghost.possession.manager.PossessionHandler;
 import java.util.function.Consumer;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.resources.ResourceLocation;
@@ -55,7 +54,7 @@ public final class ItemGhostPossessionTarget
             var initial = module.getInitialData();
             entry = new GhostModuleData.Entry(abilityId, initial.intensity(), initial.revival(), false, false, new CompoundTag());
         }
-        if (!PossessionHandler.possess(player, entry)) return false;
+        if (!new PlayerGhostModuleHost(player).possess( entry)) return false;
         var remaining = entries.stream().filter(e -> !e.id().equals(abilityId)).toList();
         if (remaining.isEmpty()) stack.shrink(1);
         else {

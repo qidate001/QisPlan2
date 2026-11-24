@@ -1,10 +1,7 @@
 package com.qidate.qisplan2.ghost.module.implementation.nightwanderer;
-import com.qidate.qisplan2.ghost.module.host.entity.NightWandererEntityBinding;
 
-import com.qidate.qisplan2.entity.ModularGhostEntity;
+import com.qidate.qisplan2.ghost.module.environment.GhostActor;
 import com.qidate.qisplan2.ghost.GhostAvoidanceSystem;
-import com.qidate.qisplan2.ghost.module.GhostModuleRuntime;
-import com.qidate.qisplan2.ghost.module.event.EntityNearbyEvent;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
@@ -17,13 +14,13 @@ import java.util.EnumSet;
  * 均由模块 customData 承载；不在行为对象内缓存第二份持久状态。
  */
 public final class NightWandererBehavior extends Goal {
-    private final ModularGhostEntity host;
+    private final GhostActor host;
 
     /**
      * 绑定当前实体，并声明夜游追踪需要移动、视线和目标控制。
      * Goal 只承担行动调度，击杀数与计时从模块 customData 读取。
      */
-    public NightWandererBehavior(ModularGhostEntity host) {
+    public NightWandererBehavior(GhostActor host) {
         this.host = host;
         setFlags(EnumSet.of(Flag.MOVE, Flag.LOOK, Flag.TARGET));
     }
@@ -32,7 +29,7 @@ public final class NightWandererBehavior extends Goal {
      * 判断当前行为是否可以开始执行。
      * 检查行为需要的模块状态、环境或目标条件，交由 Goal 调度器决定是否取得控制。
      */
-    @Override public boolean canUse() { return NightWandererEntityBinding.isActive(host) && !host.level().isDay(); }
+    @Override public boolean canUse() { return host.isActive() && !host.level().isDay(); }
 
     /**
      * 重新检查行为是否仍可继续。
@@ -48,7 +45,7 @@ public final class NightWandererBehavior extends Goal {
     /**
      * 推进当前 tick 的行为或待处理任务；具体执行受本方法的有效性检查约束。
      */
-    @Override public void tick() { NightWandererEntityBinding.activity(host); }
+    @Override public void tick() { if(host.isActive()&&!host.level().isDay())tickActivity(host); }
 
     /**
      * 停止当前行为，释放移动控制并清理该行为持有的临时目标。
@@ -56,15 +53,14 @@ public final class NightWandererBehavior extends Goal {
     @Override public void stop() {
         host.getNavigation().stop();
         host.setTarget(null);
-        NightWandererMovementSystem.clear(host);
     }
 
     /**
      * 检查目标存活、维度、来源排除及环境屏蔽等目标资格。
      * 不合格目标不能继续进入追踪或袭击媒介。
      */
-    public static boolean validTarget(ModularGhostEntity host, LivingEntity target) {
-        return target != null && target != host && target.isAlive() && !target.isRemoved()
+    public static boolean validTarget(GhostActor host, LivingEntity target) {
+        return target != null && !host.isOrigin(target) && target.isAlive() && !target.isRemoved()
                 && target.level() == host.level() && !GhostAvoidanceSystem.hasWhiteGhostCandle(target)
                 && (!(target instanceof Player player) || (!player.isCreative() && !player.isSpectator()
                 && host.canDetectPlayer(player) && host.canAttackPlayer(player)));
@@ -74,7 +70,7 @@ public final class NightWandererBehavior extends Goal {
      * 推进夜游鬼追踪、移动与目标记录。
      * 目标进入袭击距离时发布附近实体事实，袭击仍由模块规则和裁决处理。
      */
-    public static void tickActivity(ModularGhostEntity host) {
+    public static void tickActivity(GhostActor host) {
         NightWandererState.decrement(host, NightWandererState.TELEPORT_COOLDOWN);
 
         // 从模块自己的目标记录恢复目标，避免把共享宿主上其他模块的目标当作本模块状态。
@@ -84,7 +80,7 @@ public final class NightWandererBehavior extends Goal {
             var entity = ((ServerLevel)host.level()).getEntity(data.getUUID(NightWandererState.TARGET));
             if (entity instanceof LivingEntity living && validTarget(host, living)) target = living;
         }
-        var preferred = GhostAvoidanceSystem.preferredTarget(host, 32, p -> validTarget(host, p));
+        var preferred = host.preferredTarget( 32, p -> validTarget(host, p));
         if (preferred != null) target = preferred;
         if (target == null) {
             target = host.level().getEntitiesOfClass(LivingEntity.class, host.getBoundingBox().inflate(32),
@@ -95,7 +91,6 @@ public final class NightWandererBehavior extends Goal {
         }
         host.setTarget(target);
         NightWandererHuntSystem.tick(host);
-        NightWandererMovementSystem.tick(host);
         target = host.getTarget();
 
         // 猎杀能力可能重新选定目标；读取最新 customData，不能覆盖刚更新的猎杀计时。
@@ -113,7 +108,7 @@ public final class NightWandererBehavior extends Goal {
         else {
             host.getNavigation().stop();
             // 此处报告目标已处于附近这一事实，袭击由模块规则和裁决决定。
-            GhostModuleRuntime.dispatch(host, new EntityNearbyEvent(host, target));
+            host.nearby(target);
         }
     }
 }

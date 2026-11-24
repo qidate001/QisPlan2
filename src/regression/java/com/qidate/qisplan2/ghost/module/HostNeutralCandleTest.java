@@ -108,7 +108,7 @@ public final class HostNeutralCandleTest {
         public GhostWorldAccess moduleWorld(ResourceLocation id) {
             return (GhostWorldAccess) Proxy.newProxyInstance(GhostWorldAccess.class.getClassLoader(),
                     new Class<?>[]{GhostWorldAccess.class}, (proxy, method, args) -> {
-                        if (method.getName().equals("present")) return true;
+                        if (method.getName().equals("present") || method.getName().equals("isDay")) return true;
                         throw new AssertionError("冷却推进不应请求其他世界操作: " + method.getName());
                     });
         }

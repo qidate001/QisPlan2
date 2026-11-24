@@ -4,10 +4,11 @@ import com.qidate.qisplan2.ghost.module.ability.GhostAbilityInfluence;
 import com.qidate.qisplan2.ghost.module.ability.GhostAbility;
 import com.qidate.qisplan2.ghost.module.environment.GhostBehavior;
 
-import com.qidate.qisplan2.QisPlan2;
 import com.qidate.qisplan2.death.ModDamageTypes;
 import com.qidate.qisplan2.ghost.bearing.SpiritualPart;
 import com.qidate.qisplan2.ghost.corrosion.GhostCorrosion;
+import com.qidate.qisplan2.ghost.module.environment.GhostBodyEffects;
+import net.minecraft.world.effect.MobEffects;
 import com.qidate.qisplan2.ghost.module.*;
 import com.qidate.qisplan2.ghost.module.ability.*;
 import com.qidate.qisplan2.ghost.module.data.GhostModuleInitialData;
@@ -25,12 +26,11 @@ import static com.qidate.qisplan2.QisPlan2.MODID;
  * 击杀数和各项计时由 NightWandererState 写入模块 customData。
  */
 public final class NightWandererModule implements GhostModule {
-
     /**
      * 声明需要的自主行动类型。
      * 具体 Goal 的创建、资源竞争和停止清理由行动适配层负责。
      */
-    @Override public GhostBehavior behavior() { return GhostBehavior.NIGHT_HUNT; }
+    @Override public GhostBehavior behavior() { return context -> { var actor=context.world().actor(); if(actor==null)return List.of(); NightWandererState.initialize(actor); return List.of(new NightWandererBehavior(actor)); }; }
     public static final ResourceLocation ID = id("night_wanderer");
     public static final double INITIAL_INTENSITY = 5.0D;
     public static final ResourceLocation ATTACK = id("night_wanderer/attack");
@@ -219,6 +219,25 @@ public final class NightWandererModule implements GhostModule {
     @Override
     public GhostCorrosion corrosion() {
         return CORROSION;
+    }
+
+    /** 原玩家专属明暗效果归入完整厉鬼定义，任何具备身体投影的宿主都采用同一声明。 */
+    @Override public GhostBodyEffects bodyEffects(GhostModuleContext context) {
+        var world=context.world();if(!world.present())return GhostBodyEffects.NONE;
+        boolean day=world.isDay();int block=world.blockLight(),sky=world.skyLight();
+        double speed=block<=3&&(!day||sky<=3)?.45:block>=8||(day&&sky>=8)?-.10:0;
+        return new GhostBodyEffects(speed,List.of(day?MobEffects.BLINDNESS:MobEffects.NIGHT_VISION));
+    }
+
+    /** 昼夜复苏调节是模块自身状态，不再保存到玩家专属状态或累积旧浅死机标记。 */
+    @Override public void tickAbilities(GhostModuleContext context) {
+        if(context.getData().deadlocked()||context.getData().sleeping()||!context.world().present())return;
+        var data=context.getCustomData();double reserve=data.getDouble("revivalReserve");
+        if(context.world().isDay()){
+            double next=Math.min(100,reserve+.005);if(next!=reserve){data.putDouble("revivalReserve",next);context.setCustomData(data);}
+        }else{
+            context.addRevival(.005 * getMaxRevival() / 100);
+        }
     }
 
 

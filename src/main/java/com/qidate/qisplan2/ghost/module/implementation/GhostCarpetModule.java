@@ -1,5 +1,6 @@
 package com.qidate.qisplan2.ghost.module.implementation;
 
+import com.qidate.qisplan2.core.ModGameRules;
 import com.qidate.qisplan2.ghost.module.ability.GhostAbilityInfluence;
 import net.minecraft.world.entity.LivingEntity;
 import com.qidate.qisplan2.death.ModDamageTypes;
@@ -74,7 +75,7 @@ public final class GhostCarpetModule implements GhostModule {
                 if (!canTrigger(c, event)) return false;
                 var touch = (TouchEvent) event; var m = c.getModuleContext();
                 var state = m.targetState().read(touch.target());
-                int attempts = accumulate(state, touch.elapsedTicks(), m.world().contactIntervalTicks(touch.target(), CONTACT_TICKS));
+                int attempts = accumulate(state, touch.elapsedTicks(), m.world().integerRule(touch.target(), ModGameRules.GHOST_CARPET_KILL_TIME, CONTACT_TICKS));
                 m.targetState().write(touch.target(), state);
                 return attempts > 0;
             }
@@ -83,7 +84,7 @@ public final class GhostCarpetModule implements GhostModule {
                 var touch = (TouchEvent) event;
                 var context = c.getModuleContext();
                 var state = context.targetState().read(touch.target());
-                int interval = context.world().contactIntervalTicks(touch.target(), CONTACT_TICKS);
+                int interval = context.world().integerRule(touch.target(), ModGameRules.GHOST_CARPET_KILL_TIME, CONTACT_TICKS);
                 int attempts = accumulate(state, touch.elapsedTicks(), interval);
                 context.targetState().write(touch.target(), state);
                 if (attempts > 0)

@@ -1,9 +1,9 @@
 package com.qidate.qisplan2.ghost.possession;
 
+import com.qidate.qisplan2.ghost.module.host.player.PlayerGhostModuleHost;
 import com.qidate.qisplan2.ghost.module.GhostModuleCombatState;
 import com.qidate.qisplan2.entity.ModularGhostEntity;
 import com.qidate.qisplan2.ghost.possession.manager.GhostPossessionManager;
-import com.qidate.qisplan2.ghost.possession.manager.PossessionHandler;
 import com.qidate.qisplan2.ghost.possession.target.EntityGhostPossessionTarget;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
@@ -52,7 +52,7 @@ public final class GhostPossessionInteractionSystem {
                 && player instanceof ServerPlayer serverPlayer) {
 
             var moduleId = ghost.getModules().stream()
-                    .filter(e -> !PossessionHandler.hasGhost(serverPlayer, e.id()))
+                    .filter(e -> !new PlayerGhostModuleHost(serverPlayer).hasModule(e.id()))
                     .filter(e -> !ghost.suppression(e.id()).canRunRules() || !GhostModuleCombatState.available(e))
                     .map(e -> e.id()).findFirst().orElse(null);
             if (moduleId == null) {

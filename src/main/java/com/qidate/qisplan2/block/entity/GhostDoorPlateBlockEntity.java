@@ -4,7 +4,7 @@ import com.qidate.qisplan2.core.ModBlocks;
 import com.qidate.qisplan2.ghost.doorplate.GhostDoorPlateRegistry;
 import com.qidate.qisplan2.ghost.module.GhostModuleRuntime;
 import com.qidate.qisplan2.ghost.module.event.ModuleTickEvent;
-import com.qidate.qisplan2.ghost.module.implementation.GhostDoorPlateModule;
+import com.qidate.qisplan2.ghost.module.implementation.door.GhostDoorPlateModule;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;

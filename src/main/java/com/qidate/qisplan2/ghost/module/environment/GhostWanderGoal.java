@@ -1,9 +1,6 @@
-package com.qidate.qisplan2.entity.ai;
+package com.qidate.qisplan2.ghost.module.environment;
 
-import com.qidate.qisplan2.entity.ModularGhostEntity;
-import com.qidate.qisplan2.ghost.GhostAvoidanceSystem;
 import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.entity.PathfinderMob;
 import net.minecraft.world.entity.ai.goal.Goal;
 import net.minecraft.world.entity.ai.util.LandRandomPos;
 
@@ -21,7 +18,7 @@ import java.util.EnumSet;
  */
 public class GhostWanderGoal extends Goal {
 
-    protected final PathfinderMob mob;
+    protected final GhostActor mob;
 
     private final double speedModifier;
 
@@ -52,7 +49,7 @@ public class GhostWanderGoal extends Goal {
      * 默认配置。
      */
     public GhostWanderGoal(
-            PathfinderMob mob,
+            GhostActor mob,
             double speedModifier
     ) {
         this(
@@ -69,7 +66,7 @@ public class GhostWanderGoal extends Goal {
      * 完整配置。
      */
     public GhostWanderGoal(
-            PathfinderMob mob,
+            GhostActor mob,
             double speedModifier,
             int horizontalDistance,
             int verticalDistance,
@@ -111,12 +108,12 @@ public class GhostWanderGoal extends Goal {
         /*
          * 死机期间不游荡。
          */
-        if (mob instanceof ModularGhostEntity ghost && ghost.isSupernaturallyStunned()) {
+        if (!mob.isActive()) {
 
             return false;
         }
 
-        candleTarget = GhostAvoidanceSystem.preferredTarget(mob, 32, p -> true);
+        candleTarget = mob.preferredTarget( 32, p -> true);
         if (candleTarget != null) return true;
 
         /*
@@ -147,7 +144,7 @@ public class GhostWanderGoal extends Goal {
         /*
          * 死机立即停止。
          */
-        if (mob instanceof ModularGhostEntity ghost && ghost.isSupernaturallyStunned()) {
+        if (!mob.isActive()) {
 
             return false;
         }
@@ -155,7 +152,7 @@ public class GhostWanderGoal extends Goal {
         /*
          * 到达目标以后结束。
          */
-        var preferred = GhostAvoidanceSystem.preferredTarget(mob, 32, p -> true);
+        var preferred = mob.preferredTarget( 32, p -> true);
         if (candleTarget != null && preferred == null) return false;
         candleTarget = preferred;
         return candleTarget != null || !mob.getNavigation().isDone();
@@ -196,7 +193,7 @@ public class GhostWanderGoal extends Goal {
     @Override public void tick() {
         if (candleTarget == null) return;
         if (mob.distanceToSqr(candleTarget) <= 4) mob.getNavigation().stop();
-        else if (mob.tickCount % 10 == 0) mob.getNavigation().moveTo(candleTarget, speedModifier);
+        else if (mob.age() % 10 == 0) mob.getNavigation().moveTo(candleTarget, speedModifier);
     }
 
     /**
@@ -209,8 +206,7 @@ public class GhostWanderGoal extends Goal {
          * PathfinderMob 行走的随机位置。
          */
         net.minecraft.world.phys.Vec3 position =
-                LandRandomPos.getPos(
-                        mob,
+                mob.randomPosition(
                         horizontalDistance,
                         verticalDistance
                 );

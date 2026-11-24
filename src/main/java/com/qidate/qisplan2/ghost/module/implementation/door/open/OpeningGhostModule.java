@@ -1,6 +1,9 @@
-package com.qidate.qisplan2.ghost.module.implementation;
+package com.qidate.qisplan2.ghost.module.implementation.door.open;
 
 
+import com.qidate.qisplan2.ghost.module.ability.GhostTargetParameters;
+import com.qidate.qisplan2.ghost.module.implementation.door.DoorGhostMemory;
+import net.minecraft.world.phys.AABB;
 import com.qidate.qisplan2.ghost.module.ability.GhostAbilityInfluence;
 import com.qidate.qisplan2.ghost.module.ability.GhostAbilityStimulation;
 import com.qidate.qisplan2.death.ModDamageTypes;
@@ -27,21 +30,37 @@ import net.minecraft.world.level.block.state.BlockState;
 import static com.qidate.qisplan2.QisPlan2.MODID;
 
 /**
- * 关门鬼的完整模块定义。
+ * 开门鬼的完整模块定义。
  *
- * 该模块自身代表一只完整的关门鬼：规则识别关门事件，媒介
+ * 该模块自身代表一只完整的开门鬼：规则识别开门事件，媒介
  * 限制袭击必须由有效门事件触发，能力负责瞬移和裁决后的袭击。
  */
-public final class ClosingGhostModule implements GhostModule {
+public final class OpeningGhostModule implements GhostModule {
 
-    public static final ResourceLocation ID = ResourceLocation.fromNamespaceAndPath(MODID, "closing_ghost");
+    /** 门变化统一进入模块：外部触门者记录标记，自身触门则延续范围袭击能力。 */
+    @Override public void onAbilityEvent(GhostModuleContext context, GhostEvent event) {
+        if (!(event instanceof DoorChangedEvent door) || !isOpenEvent(event) || !isValidDoorEvent(door)) return;
+        DoorGhostMemory.observe(context,door,true);
+        var world=context.world();
+        if (!world.present() || !world.isOrigin(door.source())) return;
+        int count=0;
+        for (var target:world.livingEntities(new AABB(-30,-30,-30,30,30,30))) {
+            if (!world.present()) break;
+            if (!world.validTarget(target) || target.position().distanceToSqr(Vec3.atCenterOf(door.doorPos()))>900) continue;
+            count++;
+            context.continueAbility(ABILITY_ID,door,new GhostTargetParameters(target));
+        }
+        if (world.present() && !context.getData().deadlocked()) context.addRevival((10+count*2)*getMaxRevival()/100);
+    }
+
+    public static final ResourceLocation ID = ResourceLocation.fromNamespaceAndPath(MODID, "opening_ghost");
     public static final double INITIAL_INTENSITY = 5.0D;
     private static final double TRIGGER_RADIUS = 100.0D;
-    private static final ResourceLocation MEDIUM_ID = ResourceLocation.fromNamespaceAndPath(MODID, "closing_ghost/door");
-    private static final ResourceLocation RULE_ID = ResourceLocation.fromNamespaceAndPath(MODID, "closing_ghost/close_door_rule");
-    private static final ResourceLocation ABILITY_ID = ResourceLocation.fromNamespaceAndPath(MODID, "closing_ghost/door_attack");
-    private static final List<GhostMedium> MEDIA = List.of(new CloseDoorMedium());
-    private static final List<GhostRule> RULES = List.of(new CloseDoorRule());
+    private static final ResourceLocation MEDIUM_ID = ResourceLocation.fromNamespaceAndPath(MODID, "opening_ghost/door");
+    private static final ResourceLocation RULE_ID = ResourceLocation.fromNamespaceAndPath(MODID, "opening_ghost/open_door_rule");
+    private static final ResourceLocation ABILITY_ID = ResourceLocation.fromNamespaceAndPath(MODID, "opening_ghost/door_attack");
+    private static final List<GhostMedium> MEDIA = List.of(new OpenDoorMedium());
+    private static final List<GhostRule> RULES = List.of(new OpenDoorRule());
     private static final List<GhostAbility> ABILITIES = List.of(new DoorAttackAbility());
 
     /**
@@ -74,9 +93,9 @@ public final class ClosingGhostModule implements GhostModule {
      */
     @Override public List<GhostAbility> getIntrinsicAbilities() { return ABILITIES; }
 
-    /** 只接受门从打开变为关闭的事件，避免其他方块变化触发关门鬼规则。 */
-    private static boolean isCloseEvent(GhostEvent event) {
-        return event instanceof DoorChangedEvent doorEvent && !doorEvent.opening();
+    /** 只接受门从关闭变为打开的事件，避免其他方块变化触发开门鬼规则。 */
+    private static boolean isOpenEvent(GhostEvent event) {
+        return event instanceof DoorChangedEvent doorEvent && doorEvent.opening();
     }
 
     /**
@@ -84,7 +103,8 @@ public final class ClosingGhostModule implements GhostModule {
      * 并确认事件确实对应带朝向属性的门方块，避免无效事件进入裁决流程。
      */
     private static boolean isValidDoorEvent(DoorChangedEvent event) {
-        return event.source().isAlive() && event.source().level() instanceof ServerLevel
+        return event.source().isAlive()
+                && event.source().level() instanceof ServerLevel
                 && event.doorState().getBlock() instanceof DoorBlock
                 && event.doorState().hasProperty(DoorBlock.FACING);
     }
@@ -96,7 +116,7 @@ public final class ClosingGhostModule implements GhostModule {
                 && world.position().distanceToSqr(Vec3.atCenterOf(event.doorPos())) <= TRIGGER_RADIUS * TRIGGER_RADIUS;
     }
 
-    private static final class CloseDoorMedium implements GhostMedium {
+    private static final class OpenDoorMedium implements GhostMedium {
         /**
          * 获取当前定义的唯一标识。
          * 注册、能力查找和规则分发使用此标识，不代表某个运行时实例。
@@ -108,14 +128,16 @@ public final class ClosingGhostModule implements GhostModule {
          * 返回 false 会阻止本次能力执行，主动使用也不能绕过该检查。
          */
         @Override public boolean allows(GhostAbilityContext context) {
-            if (context.event() == null) return context.getModuleContext().world().doorMarkedTarget(false) != null;
-            // 媒介是能力执行前的硬性门槛：只有活着的玩家在服务端关闭有效门，
+            if (context.event() == null) return DoorGhostMemory.nearest(context.getModuleContext()) != null;
+            // 媒介是能力执行前的硬性门槛：只有活着的玩家在服务端打开有效门，
             // 且来源暴露在世界并处于触发范围内时，能力才可执行。
-            return context.event() instanceof DoorChangedEvent event && isCloseEvent(event)
-                    && isValidDoorEvent(event) && isInRange(context.getModuleContext(), event);
+            return context.event() instanceof DoorChangedEvent event
+                    && isOpenEvent(event) && isValidDoorEvent(event)
+                    && isInRange(context.getModuleContext(), event);
         }
     }
-    private static final class CloseDoorRule implements GhostRule {
+
+    private static final class OpenDoorRule implements GhostRule {
         /**
          * 获取当前定义的唯一标识。
          * 注册、能力查找和规则分发使用此标识，不代表某个运行时实例。
@@ -126,14 +148,14 @@ public final class ClosingGhostModule implements GhostModule {
          * 判断当前语义事件是否属于本规则处理的范围。
          * 这里只筛选事件种类或语义，不执行能力和世界操作。
          */
-        @Override public boolean supports(GhostEvent event) { return isCloseEvent(event); }
+        @Override public boolean supports(GhostEvent event) { return isOpenEvent(event); }
 
         /**
          * 检查当前事实和模块上下文是否满足规则触发条件。
          * 返回 false 时跳过本规则，不提交能力或灵异影响。
          */
         @Override public boolean canTrigger(GhostRuleContext context, GhostEvent event) {
-            return event instanceof DoorChangedEvent doorEvent && isCloseEvent(event)
+            return event instanceof DoorChangedEvent doorEvent && !context.getModuleContext().world().isOrigin(doorEvent.source()) && isOpenEvent(event)
                     && isValidDoorEvent(doorEvent) && isInRange(context.getModuleContext(), doorEvent);
         }
 
@@ -149,10 +171,13 @@ public final class ClosingGhostModule implements GhostModule {
                     GhostInfluenceType.ATTACK, context.getModuleContext().intensity());
         }
     }
+
     private static final class DoorAttackAbility implements GhostAbility {
         /** 主动渠道与规则使用相同的袭击/保护语义，获准前不执行世界效果。 */
         @Override public GhostAbilityInfluence activeInfluence(GhostAbilityContext context) {
-            return GhostAbilityInfluence.of(context.getModuleContext().world().doorMarkedTarget(false), GhostInfluenceType.ATTACK, context.getModuleContext().effectiveIntensity());
+            return GhostAbilityInfluence.of(context.parameters() instanceof GhostTargetParameters target
+                    ? target.target() : DoorGhostMemory.nearest(context.getModuleContext()),
+                    GhostInfluenceType.ATTACK, context.getModuleContext().effectiveIntensity());
         }
 
         /** 技能图标由所属模块直接声明。 */
@@ -163,6 +188,7 @@ public final class ClosingGhostModule implements GhostModule {
          * 注册、能力查找和规则分发使用此标识，不代表某个运行时实例。
          */
         @Override public ResourceLocation getId() { return ABILITY_ID; }
+
         /** 主动追袭保留五点复苏代价，规则触发不重复结算。 */
         @Override public GhostAbilityStimulation getStimulation(GhostAbilityContext context) {
             return context.source() == GhostAbilityContext.Source.POSSESSION
@@ -170,14 +196,19 @@ public final class ClosingGhostModule implements GhostModule {
                     : GhostAbilityStimulation.none();
         }
 
-
         /**
          * 检查本次能力调用的事件、参数或环境是否可用于执行。
          * 模块可用性与媒介由统一执行器共同校验。
          */
         @Override public boolean canExecute(GhostAbilityContext context) {
-            if (context.event() == null) return context.getModuleContext().world().doorMarkedTarget(false) != null;
-            return context.event() instanceof DoorChangedEvent event && isCloseEvent(event)
+            if (context.parameters() instanceof GhostTargetParameters target) {
+                var world=context.getModuleContext().world();
+                return context.event() instanceof DoorChangedEvent door && world.isOrigin(door.source())
+                        && world.validTarget(target.target())
+                        && target.target().position().distanceToSqr(Vec3.atCenterOf(door.doorPos()))<=900;
+            }
+            if (context.event() == null) return DoorGhostMemory.nearest(context.getModuleContext()) != null;
+            return context.event() instanceof DoorChangedEvent event && isOpenEvent(event)
                     && isValidDoorEvent(event) && isInRange(context.getModuleContext(), event);
         }
 
@@ -192,13 +223,16 @@ public final class ClosingGhostModule implements GhostModule {
          * 返回值供主动交互及成功后结算使用，不能等同于仅接受了调用。
          */
         @Override public boolean executeWithResult(GhostAbilityContext context) {
+            if (context.parameters() instanceof GhostTargetParameters target)
+                return context.getModuleContext().world().attack(target.target(), ModDamageTypes.OPENING_GHOST,
+                        context.getModuleContext().effectiveIntensity());
             if (context.event() == null) {
                 var module = context.getModuleContext();
                 var world = module.world();
-                var target = world.doorMarkedTarget(false);
+                var target = DoorGhostMemory.nearest(module);
                 if (target == null || !world.approach(target)) return false;
-                boolean result = world.attack(target, ModDamageTypes.CLOSING_GHOST, module.effectiveIntensity());
-                world.clearDoorMarks(target);
+                boolean result = world.attack(target, ModDamageTypes.OPENING_GHOST, module.effectiveIntensity());
+                DoorGhostMemory.clear(module,target);
                 return result;
             }
 
@@ -207,8 +241,8 @@ public final class ClosingGhostModule implements GhostModule {
             // 通过媒介与裁决后才执行世界操作：先移动到触发门附近，再尝试灵异秒杀。
             teleportToDoorSide(context.getModuleContext().world(), event);
             LivingEntity source = event.source();
-            return context.getModuleContext().world().attack(source, ModDamageTypes.CLOSING_GHOST,
-                    context.getModuleContext().intensity());
+            return context.getModuleContext().world()
+                    .attack(source, ModDamageTypes.OPENING_GHOST, context.getModuleContext().intensity());
         }
     }
 

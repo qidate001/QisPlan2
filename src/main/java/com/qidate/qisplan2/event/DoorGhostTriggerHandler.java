@@ -1,11 +1,10 @@
 package com.qidate.qisplan2.event;
 
-import com.qidate.qisplan2.entity.ModularGhostEntity;
-import com.qidate.qisplan2.ghost.possession.ability.ghostdoor.GhostDoorAbilityHandler;
+import com.qidate.qisplan2.ghost.module.host.GhostLivingHosts;
+import com.qidate.qisplan2.ghost.module.GhostModuleHost;
+import java.util.ArrayList;
 import com.qidate.qisplan2.ghost.module.GhostModuleRuntime;
 import com.qidate.qisplan2.ghost.module.event.DoorChangedEvent;
-import com.qidate.qisplan2.ghost.module.implementation.ClosingGhostModule;
-import com.qidate.qisplan2.ghost.module.implementation.OpeningGhostModule;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.LivingEntity;
@@ -70,13 +69,6 @@ public final class DoorGhostTriggerHandler {
             return;
         }
 
-        GhostDoorAbilityHandler.onDoorChanged(
-                level,
-                doorPos,
-                source,
-                opening
-        );
-
         /*
          * 重新读取门的真正下半部分状态。
          */
@@ -120,18 +112,12 @@ public final class DoorGhostTriggerHandler {
                 TRIGGER_RADIUS
                         * TRIGGER_RADIUS;
 
-        List<ModularGhostEntity> ghosts = level.getEntitiesOfClass(
-                ModularGhostEntity.class,
-                searchBox,
-                ghost -> ghost.isAlive() && !ghost.isRemoved()
-                        && (ghost.hasGhostModule(OpeningGhostModule.ID)
-                        || ghost.hasGhostModule(ClosingGhostModule.ID))
-                        && ghost.distanceToSqr(centerX, centerY, centerZ) <= maxDistanceSqr
-        );
-        GhostModuleRuntime.dispatch(
-                ghosts,
-                new DoorChangedEvent(source, doorPos, doorState, opening)
-        );
+        List<GhostModuleHost> hosts = new ArrayList<>();
+        for (var body : level.getEntitiesOfClass(LivingEntity.class, searchBox,
+                entity -> entity.isAlive() && entity.distanceToSqr(centerX, centerY, centerZ) <= maxDistanceSqr)) {
+            hosts.addAll(GhostLivingHosts.collect(body));
+        }
+        GhostModuleRuntime.dispatch(hosts, new DoorChangedEvent(source, doorPos, doorState, opening));
     }
 
     /**

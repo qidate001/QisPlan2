@@ -1,4 +1,12 @@
 package com.qidate.qisplan2.ghost.module.environment;
 
-/** 模块声明需要的自主行为，由具备自主行动能力的环境适配器安排执行。 */
-public enum GhostBehavior { NONE, NIGHT_HUNT, KNOCK_DOORS, FOLLOW_CALL, WANDER }
+import com.qidate.qisplan2.ghost.module.GhostModuleContext;
+import net.minecraft.world.entity.ai.goal.Goal;
+import java.util.List;
+
+/** 每个模块声明自己的行为工厂；公共框架只调度返回的行为，不维护厉鬼行为枚举表。 */
+@FunctionalInterface
+public interface GhostBehavior {
+    GhostBehavior NONE=context->List.of();
+    List<Goal> create(GhostModuleContext context);
+}

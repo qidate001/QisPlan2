@@ -8,7 +8,6 @@ import com.qidate.qisplan2.fluid.GhostFluidConfig;
 import com.qidate.qisplan2.ghost.module.host.player.PlayerGhostData;
 import com.qidate.qisplan2.ghost.possession.data.PossessedGhostData;
 import com.qidate.qisplan2.ghost.possession.data.PossessedGhostState;
-import com.qidate.qisplan2.ghost.possession.manager.PossessionHandler;
 import java.util.Map;
 import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceLocation;
@@ -515,7 +514,7 @@ public final class GhostFluidHandler {
                     );
 
 
-            PossessionHandler.setState(
+            PlayerGhostData.writeState(
                     player,
                     ghost,
                     newState

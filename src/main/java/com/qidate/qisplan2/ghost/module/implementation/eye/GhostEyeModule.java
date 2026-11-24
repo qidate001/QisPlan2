@@ -195,7 +195,7 @@ public final class GhostEyeModule implements GhostModule {
                 c -> c.getModuleContext().world().domain().shiftTargetLayer(-1), GhostDomainShortcut.LOWER_TARGET)));
 
         abilities.add(GhostEyeDomainControls.ability());
-        abilities.addAll(GhostDomainPresets.layerAbilities(ID,10));
+        abilities.addAll(GhostDomainPresets.layerAbilities(ID, 10));
         return List.copyOf(abilities);
     }
 
@@ -207,5 +207,6 @@ public final class GhostEyeModule implements GhostModule {
     }
 
     /** 鬼域页面从本模块声明生成，不要求界面认识具体厉鬼。 */
-    @Override public GhostDomainPanel domainPanel() { return GhostEyeDomainControls.panel(); }
+    @Override
+    public GhostDomainPanel domainPanel() { return GhostEyeDomainControls.panel(); }
 }

@@ -1,5 +1,12 @@
 package com.qidate.qisplan2.ghost.module.environment;
 
+import java.util.function.BooleanSupplier;
+import net.minecraft.world.level.GameRules;
+
+import com.qidate.qisplan2.ghost.module.event.DoorKnockHeardEvent;
+
+import java.util.function.Consumer;
+
 import java.util.UUID;
 import net.minecraft.core.particles.SimpleParticleType;
 import net.minecraft.sounds.SoundEvent;
@@ -22,6 +29,9 @@ import net.minecraft.world.phys.Vec3;
  * 目标实体是世界中的作用对象，与模块自己的载体不是同一个概念。
  */
 public interface GhostWorldAccess {
+    /** 可选自主行动端口；缺少寻路身体时返回 null，不影响其他能力出口。 */
+    default GhostActor actor() { return null; }
+
     /** 面向世界坐标。物品忽略；方块仅在具有朝向属性时调整，返回是否应用。 */
     default boolean facePosition(Vec3 target) { return false; }
     /** 面向世界方向向量；零向量和非有限数值无效，不包含位置移动。 */
@@ -122,6 +132,10 @@ public interface GhostWorldAccess {
      * 查询当前环境是否为白天；当前实现缺少世界时按白天处理。
      */
     boolean isDay();
+    /** 位置处的方块光照，不暴露用于定位的具体宿主。 */
+    default int blockLight() { return 0; }
+    /** 位置处的天空光照。 */
+    default int skyLight() { return 0; }
 
     /**
      * 读取当前环境位置，用于距离和移动计算。
@@ -170,12 +184,6 @@ public interface GhostWorldAccess {
     boolean canTrack(LivingEntity target);
 
     /**
-     * 推进已有夜游鬼猎杀行为的世界操作。
-     * 当前适配器仅在具备模块化实体行动出口时驱动该行为。
-     */
-    void tickHunt();
-
-    /**
      * 使用指定伤害类型和强度尝试灵异击杀。
      * 先检查目标世界，再交给统一死亡处理；返回实际击杀是否成功。
      */
@@ -189,7 +197,7 @@ public interface GhostWorldAccess {
     /**
      * 发起敲门的世界操作，声音传播与后续听声处理由敲门系统负责。
      */
-    void knock(BlockPos position, double intensity);
+    void knock(BlockPos position, double intensity, BooleanSupplier valid, Consumer<DoorKnockHeardEvent> heard);
 
     /**
      * 将已准备好的袭击排入敲门延迟队列。
@@ -238,7 +246,7 @@ public interface GhostWorldAccess {
     void inscribe(LivingEntity user);
 
     /** 读取当前世界对接触袭击间隔的配置；无专用配置时使用模块给定的默认 tick 数。 */
-    default int contactIntervalTicks(LivingEntity target, int fallback) { return fallback; }
+    default int integerRule(LivingEntity target, GameRules.Key<GameRules.IntegerValue> key, int fallback) { return fallback; }
 
     /** 播放接触袭击的世界表现；此接口不计算计时也不触发规则。 */
     void contactAttackFeedback(LivingEntity target);

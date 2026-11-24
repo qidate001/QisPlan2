@@ -1,5 +1,15 @@
 package com.qidate.qisplan2.ghost.module.host;
 
+import java.util.function.BooleanSupplier;
+import java.nio.charset.StandardCharsets;
+
+import net.minecraft.world.level.GameRules;
+
+import com.qidate.qisplan2.ghost.module.event.DoorKnockHeardEvent;
+
+import java.util.function.Consumer;
+import net.minecraft.world.level.LightLayer;
+
 import com.qidate.qisplan2.ghost.module.environment.GhostAttachmentAccess;
 import com.qidate.qisplan2.ghost.module.host.attachment.GhostAttachments;
 import com.qidate.qisplan2.core.ModTags;
@@ -17,29 +27,20 @@ import com.qidate.qisplan2.ghost.module.environment.GhostDoorAccess;
 
 import net.minecraft.world.level.block.state.properties.DoubleBlockHalf;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
-import com.qidate.qisplan2.ghost.module.implementation.mist.GhostMistModule;
 import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.BlockHitResult;
-import com.qidate.qisplan2.ghost.possession.ability.ghostdoor.GhostDoorAbilityHandler;
-import com.qidate.qisplan2.ghost.possession.ability.ghostdoor.GhostDoorMarkManager;
 import com.qidate.qisplan2.ghost.module.environment.GhostDomainAccess;
 import com.qidate.qisplan2.death.SupernaturalDeathHandler;
-import com.qidate.qisplan2.core.ModGameRules;
 import com.qidate.qisplan2.ghost.module.environment.BlockSpreadSpec;
-import com.qidate.qisplan2.ghost.module.implementation.GhostCarpetModule;
-import com.qidate.qisplan2.entity.ModularGhostEntity;
 import com.qidate.qisplan2.entity.AnimatedModularGhostEntity;
 import com.qidate.qisplan2.ghost.GhostAvoidanceSystem;
 import com.qidate.qisplan2.ghost.domain.*;
-import com.qidate.qisplan2.ghost.module.host.player.PlayerGhostModuleHost;
-import com.qidate.qisplan2.ghost.module.host.player.PlayerGhostModuleContext;
-import com.qidate.qisplan2.ghost.possession.manager.PossessionHandler;
 import com.qidate.qisplan2.ghost.module.*;
 import com.qidate.qisplan2.ghost.module.environment.GhostWorldAccess;
 import com.qidate.qisplan2.ghost.module.implementation.calling.CallingGhostSounds;
 import com.qidate.qisplan2.ghost.module.implementation.calling.CallingGhostTargets;
-import com.qidate.qisplan2.ghost.module.implementation.knocking.KnockingGhostDoorSystem;
-import com.qidate.qisplan2.ghost.module.implementation.nightwanderer.NightWandererBehavior;
+import com.qidate.qisplan2.ghost.module.implementation.door.knock.KnockingGhostDoorSystem;
+import com.qidate.qisplan2.ghost.module.environment.GhostActor;
 import java.util.UUID;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -78,6 +79,7 @@ public final class GhostWorldAdapters {
      */
     public static GhostWorldAccess bind(GhostModuleHost host, ResourceLocation id) {
         return new GhostWorldAccess() {
+            public GhostActor actor() { return GhostActorAdapter.bind(host,id); }
             /** 坐标转换留在边界，实体以眼睛为旋转原点，静态宿主以位置为原点。 */
             public boolean facePosition(Vec3 target) {
                 if(target==null) return false;
@@ -271,27 +273,13 @@ public final class GhostWorldAdapters {
                 return false;
             }
 
-            /** 已存在标记的检索是世界事实，技能是否使用它由模块决定。 */
-            public LivingEntity doorMarkedTarget(boolean opening) {
-                if (!(source() instanceof ServerPlayer player)) return null;
-                return GhostDoorMarkManager.findNearestMarkedTarget(player, player.serverLevel(), e -> opening
-                        ? GhostDoorMarkManager.hasOpeningMark(player, e.getUUID())
-                        : GhostDoorMarkManager.hasClosingMark(player, e.getUUID()));
-            }
-
             /** 复用碰撞安全位置搜索，实际移动不包含袭击或技能逻辑。 */
             public boolean approach(LivingEntity target) {
                 if (!canMove() || target == null || !(level() instanceof ServerLevel server)) return false;
-                var position = GhostDoorAbilityHandler.findApproachPosition(server, target);
+                var position = GhostApproachPositions.findApproachPosition(server, target);
                 if (position == null) return false;
                 teleport(position.getX() + 0.5, position.getY(), position.getZ() + 0.5, target);
                 return true;
-            }
-
-            /** 完成本次追袭后清理标记。 */
-            public void clearDoorMarks(LivingEntity target) {
-                if (source() instanceof ServerPlayer player && target != null)
-                    GhostDoorMarkManager.clearMarks(player, target.getUUID());
             }
 
             /**
@@ -324,11 +312,9 @@ public final class GhostWorldAdapters {
                 return true;
             }
 
-            /** 保留旧世界的鬼地毯时间设置；默认 300 tick，异常非正值至少按一 tick 处理。 */
-            public int contactIntervalTicks(LivingEntity target, int fallback) {
-                return id.equals(GhostCarpetModule.ID)
-                        ? Math.max(1, target.level().getGameRules().getInt(ModGameRules.GHOST_CARPET_KILL_TIME))
-                        : fallback;
+            /** 读取模块指定的整数世界规则，不根据模块 ID 选择配置。 */
+            public int integerRule(LivingEntity target, GameRules.Key<GameRules.IntegerValue> key, int fallback) {
+                return target == null ? fallback : Math.max(1, target.level().getGameRules().getInt(key));
             }
 
             /** 接触袭击表现由中间层落实，不向模块暴露来源载体。 */
@@ -376,6 +362,10 @@ public final class GhostWorldAdapters {
              * 查询当前环境是否为白天；当前实现缺少世界时按白天处理。
              */
             public boolean isDay() { return level() == null || level().isDay(); }
+            /** 光照读取使用适配后的统一位置，方块、物品与实体共享实现。 */
+            public int blockLight() { return level()==null?0:level().getBrightness(LightLayer.BLOCK,BlockPos.containing(position())); }
+            /** 天空光为世界事实，不根据宿主类型提供不同规则。 */
+            public int skyLight() { return level()==null?0:level().getBrightness(LightLayer.SKY,BlockPos.containing(position())); }
 
             /**
              * 读取当前环境位置，用于距离和移动计算。
@@ -457,14 +447,6 @@ public final class GhostWorldAdapters {
             }
 
             /**
-             * 推进已有夜游鬼猎杀行为的世界操作。
-             * 当前适配器仅在具备模块化实体行动出口时驱动该行为。
-             */
-            public void tickHunt() {
-                if (source() instanceof ModularGhostEntity ghost) NightWandererBehavior.tickActivity(ghost);
-            }
-
-            /**
              * 使用指定伤害类型和强度尝试灵异击杀。
              * 先检查目标世界，再交给统一死亡处理；返回实际击杀是否成功。
              */
@@ -488,11 +470,13 @@ public final class GhostWorldAdapters {
             /**
              * 发起敲门的世界操作，声音传播与后续听声处理由敲门系统负责。
              */
-            public void knock(BlockPos pos, double intensity) {
-                if (present() && source() != null && pos != null) {
+            public void knock(BlockPos pos, double intensity, BooleanSupplier valid, Consumer<DoorKnockHeardEvent> heard) {
+                if (present() && pos != null) {
                     facePosition(Vec3.atCenterOf(pos).add(0,0.5,0));
                     if(source() instanceof AnimatedModularGhostEntity animated) animated.playVisualAction("knock");
-                    KnockingGhostDoorSystem.knock((ServerLevel)level(),source(),pos,intensity);
+                    KnockingGhostDoorSystem.knock((ServerLevel)level(),
+                            new KnockingGhostDoorSystem.Source(source(), source() != null ? source().getUUID() : UUID.nameUUIDFromBytes((level().dimension().location()+":"+position()).getBytes(StandardCharsets.UTF_8)),
+                                    () -> present() && valid.getAsBoolean(), heard),pos,intensity);
                 }
             }
 

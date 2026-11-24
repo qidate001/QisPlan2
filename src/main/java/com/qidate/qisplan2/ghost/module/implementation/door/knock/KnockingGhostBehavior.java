@@ -1,14 +1,14 @@
-package com.qidate.qisplan2.ghost.module.implementation.knocking;
-import com.qidate.qisplan2.ghost.module.host.entity.KnockingGhostEntityBinding;
+package com.qidate.qisplan2.ghost.module.implementation.door.knock;
 
-import com.qidate.qisplan2.entity.ModularGhostEntity;
-import com.qidate.qisplan2.entity.ai.GhostWanderGoal;
+import com.qidate.qisplan2.ghost.module.environment.GhostActor;
+import com.qidate.qisplan2.ghost.module.environment.GhostWanderGoal;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.ai.goal.Goal;
 import java.util.EnumSet;
 import java.util.List;
+import com.qidate.qisplan2.ghost.module.ability.DoorKnockParameters;
 
 /**
  * 敲门鬼模块的实体行为。每个宿主创建独立的目标门与冷却状态，
@@ -22,14 +22,14 @@ public final class KnockingGhostBehavior {
     /**
      * 为敲门鬼创建独立的找门行为与游荡行为，避免跨实体共享临时目标。
      */
-    public static List<Goal> create(ModularGhostEntity ghost) {
+    public static List<Goal> create(GhostActor ghost) {
         return List.of(new KnockDoorGoal(ghost, 1.0D), new GhostWanderGoal(ghost, 0.7D) {
             /**
              * 判断当前行为是否可以开始执行。
              * 检查行为需要的模块状态、环境或目标条件，交由 Goal 调度器决定是否取得控制。
              */
             @Override public boolean canUse() {
-                return KnockingGhostEntityBinding.isActive(ghost) && super.canUse();
+                return ghost.isActive() && super.canUse();
             }
 
             /**
@@ -37,7 +37,7 @@ public final class KnockingGhostBehavior {
              * 条件不满足时由调度器停止行为，释放占用的控制资源。
              */
             @Override public boolean canContinueToUse() {
-                return KnockingGhostEntityBinding.isActive(ghost) && super.canContinueToUse();
+                return ghost.isActive() && super.canContinueToUse();
             }
         });
     }
@@ -46,7 +46,7 @@ public final class KnockingGhostBehavior {
      * 在搜索范围内寻找最近的可用门，并跳过最近敲过的位置。
      * 无筛选参数时优先鬼门；带筛选参数时只搜索对应类别。
      */
-    private static BlockPos findNearestDoor(ModularGhostEntity ghost) {
+    private static BlockPos findNearestDoor(GhostActor ghost) {
 
         /*
          * ========================================================
@@ -79,7 +79,7 @@ public final class KnockingGhostBehavior {
      * 无筛选参数时优先鬼门；带筛选参数时只搜索对应类别。
      */
     private static BlockPos findNearestDoor(
-            ModularGhostEntity ghost, boolean onlyGhostDoor
+            GhostActor ghost, boolean onlyGhostDoor
     ) {
 
         BlockPos center =
@@ -120,7 +120,7 @@ public final class KnockingGhostBehavior {
                      */
                     if (KnockingGhostDoorSystem
                             .wasRecentlyKnocked(
-                                    ghost,
+                                    ghost.getUUID(),
                                     pos
                             )) {
 
@@ -201,7 +201,7 @@ public final class KnockingGhostBehavior {
     private static class KnockDoorGoal
             extends Goal {
 
-        private final ModularGhostEntity ghost;
+        private final GhostActor ghost;
 
         private final double speedModifier;
 
@@ -214,7 +214,7 @@ public final class KnockingGhostBehavior {
          * 声明移动与视线控制，目标门和短暂行为冷却保存在本 Goal 实例中。
          */
         public KnockDoorGoal(
-                ModularGhostEntity ghost,
+                GhostActor ghost,
                 double speedModifier
         ) {
 
@@ -241,7 +241,7 @@ public final class KnockingGhostBehavior {
             /*
              * 死机时不寻找门。
              */
-            if (!KnockingGhostEntityBinding.isActive(ghost)) {
+            if (!ghost.isActive()) {
                 return false;
             }
 
@@ -272,7 +272,7 @@ public final class KnockingGhostBehavior {
         @Override
         public boolean canContinueToUse() {
 
-            if (!KnockingGhostEntityBinding.isActive(ghost)) {
+            if (!ghost.isActive()) {
                 return false;
             }
 
@@ -431,7 +431,7 @@ public final class KnockingGhostBehavior {
                  * =================================================
                  */
 
-                KnockingGhostEntityBinding.knock(ghost, targetDoor);
+                ghost.execute(KnockingGhostModule.KNOCK,new DoorKnockParameters(targetDoor));
 
                 /*
                  * 当前目标结束。

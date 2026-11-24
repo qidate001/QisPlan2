@@ -23,7 +23,7 @@ public final class CallingGhostModule implements GhostModule {
     /** 标识工具不包含宿主信息。 */
     private static ResourceLocation id(String name) { return ResourceLocation.fromNamespaceAndPath("qisplan2", name); }
     /** 自主实体行为只负责选目标和取得移动控制。 */
-    public GhostBehavior behavior() { return GhostBehavior.FOLLOW_CALL; }
+    public GhostBehavior behavior() { return context -> { var actor=context.world().actor(); if(actor==null)return List.of(); CallingGhostState.initialize(actor); return List.of(new CallingGhostBehavior(actor)); }; }
     /** 返回能力或模块的稳定标识。 */
     public ResourceLocation getId() { return ID; }
     /** 提供新实例的初始强度和复苏。 */

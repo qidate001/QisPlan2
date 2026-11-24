@@ -1,7 +1,6 @@
 package com.qidate.qisplan2.ghost.module.implementation.nightwanderer;
 
-import com.qidate.qisplan2.entity.ModularGhostEntity;
-import com.qidate.qisplan2.ghost.module.GhostModuleContext;
+import com.qidate.qisplan2.ghost.module.environment.GhostActor;
 import net.minecraft.nbt.CompoundTag;
 
 /**
@@ -18,7 +17,7 @@ public final class NightWandererState {
     private NightWandererState() {}
 
     /** 新实例补齐计数字段；已有存档值保留，未知扩展字段也不删除。 */
-    public static void initialize(ModularGhostEntity host) {
+    public static void initialize(GhostActor host) {
         CompoundTag data = host.getModuleCustomData(NightWandererModule.ID);
         for (String key : new String[]{KILLS, ATTACK_COOLDOWN, NO_TARGET, TELEPORT_COOLDOWN}) {
             if (!data.contains(key)) data.putInt(key, 0);
@@ -26,28 +25,27 @@ public final class NightWandererState {
         host.setModuleCustomData(NightWandererModule.ID, data);
     }
 
-    public static int get(ModularGhostEntity host, String key) {
+    public static int get(GhostActor host, String key) {
         return Math.max(0, host.getModuleCustomData(NightWandererModule.ID).getInt(key));
     }
-    public static void set(ModularGhostEntity host, String key, int value) {
+    public static void set(GhostActor host, String key, int value) {
         CompoundTag data = host.getModuleCustomData(NightWandererModule.ID);
         data.putInt(key, Math.max(0, value));
         host.setModuleCustomData(NightWandererModule.ID, data);
     }
-    public static void decrement(ModularGhostEntity host, String key) {
+    public static void decrement(GhostActor host, String key) {
         int value = get(host, key);
         if (value > 0) set(host, key, value - 1);
     }
     /** 击杀数保存到 customData，强度只更新模块通用属性，避免两份强度相互覆盖。 */
-    public static void addKills(ModularGhostEntity host, int amount) {
+    public static void addKills(GhostActor host, int amount) {
         if (amount <= 0 || !host.hasGhostModule(NightWandererModule.ID)) return;
         int old = get(host, KILLS);
         int next = (int)Math.min(Integer.MAX_VALUE, (long)old + amount);
         set(host, KILLS, next);
-        var context = new GhostModuleContext(host, NightWandererModule.ID);
-        host.setIntensity(NightWandererModule.ID, context.intensity() + (next - old) * 0.1D);
+        host.setIntensity(NightWandererModule.ID, host.intensity() + (next - old) * 0.1D);
     }
-    public static void startAttackCooldown(ModularGhostEntity host) {
+    public static void startAttackCooldown(GhostActor host) {
         set(host, ATTACK_COOLDOWN, Math.max(1, 200 - get(host, KILLS) / 5));
     }
 }

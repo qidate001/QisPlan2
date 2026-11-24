@@ -1,12 +1,12 @@
 package com.qidate.qisplan2.event;
 
-import com.qidate.qisplan2.ghost.module.implementation.knocking.KnockingGhostModule;
+import com.qidate.qisplan2.ghost.module.implementation.door.knock.KnockingGhostModule;
 
 import com.qidate.qisplan2.QisPlan2;
 import com.qidate.qisplan2.core.ModEntities;
 import com.qidate.qisplan2.entity.ModularGhostEntity;
-import com.qidate.qisplan2.ghost.module.implementation.ClosingGhostModule;
-import com.qidate.qisplan2.ghost.module.implementation.OpeningGhostModule;
+import com.qidate.qisplan2.ghost.module.implementation.door.close.ClosingGhostModule;
+import com.qidate.qisplan2.ghost.module.implementation.door.open.OpeningGhostModule;
 import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.level.ServerLevel;

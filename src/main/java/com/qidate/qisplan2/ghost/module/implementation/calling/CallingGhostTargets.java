@@ -1,7 +1,6 @@
 package com.qidate.qisplan2.ghost.module.implementation.calling;
 
-import com.qidate.qisplan2.entity.ModularGhostEntity;
-import com.qidate.qisplan2.ghost.GhostAvoidanceSystem;
+import com.qidate.qisplan2.ghost.module.environment.GhostActor;
 import com.qidate.qisplan2.core.ModBlocks;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
@@ -20,7 +19,7 @@ public final class CallingGhostTargets {
     /**
      * 查询当前模块记录的有效运行时对象，不存在时返回 null。
      */
-    public static ServerPlayer current(ModularGhostEntity host) {
+    public static ServerPlayer current(GhostActor host) {
         var data = CallingGhostState.read(host);
         if (!(host.level() instanceof ServerLevel level) || !data.hasUUID("target")) return null;
         var player = level.getPlayerByUUID(data.getUUID("target"));
@@ -30,7 +29,7 @@ public final class CallingGhostTargets {
     /**
      * 检查候选玩家是否存活、同维度且可以被当前厉鬼探测。
      */
-    public static boolean valid(ModularGhostEntity host, ServerPlayer player) {
+    public static boolean valid(GhostActor host, ServerPlayer player) {
         return player.level() == host.level() && player.isAlive() && !player.isCreative()
                 && !player.isSpectator() && host.canDetectPlayer(player);
     }
@@ -39,8 +38,8 @@ public final class CallingGhostTargets {
      * 寻找可追踪目标，优先考虑红烛吸引，再沿用当前目标或筛选其他玩家。
      * 同时考虑阻隔和最近袭击后的目标避让冷却。
      */
-    public static ServerPlayer available(ModularGhostEntity host) {
-        var preferred = GhostAvoidanceSystem.preferredTarget(host, 32,
+    public static ServerPlayer available(GhostActor host) {
+        var preferred = host.preferredTarget( 32,
                 p -> p instanceof ServerPlayer server && valid(host, server) && canTrackPlayer(host, server));
         if (preferred instanceof ServerPlayer serverPlayer) return serverPlayer;
         ServerPlayer current = current(host);
@@ -70,7 +69,7 @@ public final class CallingGhostTargets {
      * 把实体来源的位置转换成通用追踪检测输入，复用阻隔查询。
      */
     public static boolean canTrackPlayer(
-            ModularGhostEntity ghost,
+            GhostActor ghost,
             ServerPlayer player
     ) {
         return canTrack(ghost.level(), ghost.position(), player);

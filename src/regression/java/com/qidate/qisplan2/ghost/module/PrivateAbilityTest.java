@@ -4,7 +4,7 @@ import com.qidate.qisplan2.ghost.module.ability.*;
 import com.qidate.qisplan2.ghost.module.data.GhostModuleData;
 import com.qidate.qisplan2.ghost.module.implementation.*;
 import com.qidate.qisplan2.ghost.module.implementation.calling.CallingGhostModule;
-import com.qidate.qisplan2.ghost.module.implementation.knocking.KnockingGhostModule;
+import com.qidate.qisplan2.ghost.module.implementation.door.knock.KnockingGhostModule;
 import com.qidate.qisplan2.ghost.module.implementation.mist.GhostMistModule;
 import com.qidate.qisplan2.ghost.module.implementation.candle.*;
 import net.minecraft.nbt.CompoundTag;

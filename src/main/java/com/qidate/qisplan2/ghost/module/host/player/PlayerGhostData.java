@@ -42,6 +42,21 @@ public final class PlayerGhostData {
         player.getPersistentData().putBoolean(MIGRATED, true);
         player.setData(ModAttachments.PLAYER_GHOST_MODULES, List.copyOf(entries));
     }
+    /** 旧界面与快照所需的只读状态投影，不另建一套厉鬼状态。 */
+    public static PossessedGhostState state(Player player, ResourceLocation id) {
+        var view=views(player).get(id);return view==null?null:view.state();
+    }
+    /** 旧快照使用的状态映射，实际存档仍是模块列表。 */
+    public static Map<ResourceLocation,PossessedGhostState> states(Player player) {
+        Map<ResourceLocation,PossessedGhostState> result=new LinkedHashMap<>();
+        views(player).forEach((id,data)->result.put(id,data.state()));return result;
+    }
+    /** 旧数据写回边界只合并字段，不处理能力、减伤、复苏或宿主生命周期。 */
+    public static void writeState(Player player,ResourceLocation id,PossessedGhostState state) {
+        var data=new LinkedHashMap<>(views(player));var old=data.get(id);
+        if(old==null||state==null)return;data.put(id,old.withState(state));writeViews(player,data);
+    }
+
     private static double maximum(ResourceLocation id) {
         var module = GhostModuleRegistry.get(id);
         return module == null ? 100 : Math.max(1, module.getMaxRevival());
@@ -55,7 +70,7 @@ public final class PlayerGhostData {
         var custom = entry.customData();
         var player = custom.getCompound(PLAYER_STATE);
         var state = new PossessedGhostState(entry.revival() / maximum(entry.id()), entry.intensity(),
-                player.getDouble("shallowStun"), GhostModuleCombatState.sleepTicks(entry),
+                custom.contains(GhostModuleOperations.REVIVAL_RESERVE) ? custom.getDouble(GhostModuleOperations.REVIVAL_RESERVE) : player.getDouble("shallowStun"), GhostModuleCombatState.sleepTicks(entry),
                 entry.deadlocked(), player.getLong("lastAbilityUseTick"));
         Optional<PossessedGhostDomainData> domain = Optional.empty();
         if (custom.contains("domainStrength")) {
@@ -82,7 +97,8 @@ public final class PlayerGhostData {
         CompoundTag custom = previous == null ? new CompoundTag() : previous.customData().copy();
         var state = value.state();
         CompoundTag player = custom.getCompound(PLAYER_STATE).copy();
-        player.putDouble("shallowStun", state.shallowStun());
+        custom.putDouble(GhostModuleOperations.REVIVAL_RESERVE, state.shallowStun());
+        player.remove("shallowStun");
         player.putLong("lastAbilityUseTick", state.lastAbilityUseTick());
         custom.put(PLAYER_STATE, player);
         if (previous == null) {

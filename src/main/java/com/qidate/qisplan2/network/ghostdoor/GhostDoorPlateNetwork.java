@@ -4,7 +4,7 @@ import com.qidate.qisplan2.block.entity.GhostDoorPlateBlockEntity;
 import com.qidate.qisplan2.ghost.module.ability.GhostAbilityContext;
 import com.qidate.qisplan2.ghost.module.ability.GhostAbilityExecutor;
 import com.qidate.qisplan2.ghost.module.ability.GhostInvocationParameters;
-import com.qidate.qisplan2.ghost.module.implementation.GhostDoorPlateModule;
+import com.qidate.qisplan2.ghost.module.implementation.door.GhostDoorPlateModule;
 import com.qidate.qisplan2.client.screen.GhostDoorPlateScreen;
 import com.qidate.qisplan2.network.payload.OpenGhostDoorPlateScreenPayload;
 import com.qidate.qisplan2.network.payload.SetGhostDoorPlateNumberPayload;

@@ -1,6 +1,6 @@
 package com.qidate.qisplan2.ghost.module.implementation.nightwanderer;
 
-import com.qidate.qisplan2.entity.ModularGhostEntity;
+import com.qidate.qisplan2.ghost.module.environment.GhostActor;
 
 import com.qidate.qisplan2.QisPlan2;
 import net.minecraft.core.BlockPos;
@@ -102,7 +102,7 @@ public final class NightWandererHuntSystem {
      * @param ghost 当前夜游鬼
      */
     public static void tick(
-            ModularGhostEntity ghost
+            GhostActor ghost
     ) {
 
         /*
@@ -299,7 +299,7 @@ public final class NightWandererHuntSystem {
      * 判断夜游鬼是否已经解锁猎杀能力。
      */
     public static boolean hasHuntAbility(
-            ModularGhostEntity ghost
+            GhostActor ghost
     ) {
         return NightWandererState.get(ghost, NightWandererState.KILLS)
                 > HUNT_UNLOCK_KILLS;
@@ -324,7 +324,7 @@ public final class NightWandererHuntSystem {
      * @return 找到的猎杀目标，没有则返回 {@code null}
      */
     private static LivingEntity findHuntTarget(
-            ModularGhostEntity ghost
+            GhostActor ghost
     ) {
 
         AABB searchBox =
@@ -533,7 +533,7 @@ public final class NightWandererHuntSystem {
      * 因此不能只在寻找目标时检查一次。
      */
     private static boolean canContinueHuntingTarget(
-            ModularGhostEntity ghost,
+            GhostActor ghost,
             LivingEntity target
     ) {
         if (target instanceof Player player) {
@@ -551,7 +551,7 @@ public final class NightWandererHuntSystem {
      * @param entity 要检查的实体
      */
     private static boolean isDarkEntity(
-            ModularGhostEntity ghost,
+            GhostActor ghost,
             LivingEntity entity
     ) {
         return isDarkPosition(
@@ -573,7 +573,7 @@ public final class NightWandererHuntSystem {
      * </ul>
      */
     private static boolean isDarkPosition(
-            ModularGhostEntity ghost,
+            GhostActor ghost,
             BlockPos pos
     ) {
 
@@ -626,7 +626,7 @@ public final class NightWandererHuntSystem {
      * @return 合适的传送位置，没有则返回 {@code null}
      */
     private static BlockPos findHuntTeleportPosition(
-            ModularGhostEntity ghost,
+            GhostActor ghost,
             LivingEntity target
     ) {
 
@@ -758,7 +758,7 @@ public final class NightWandererHuntSystem {
      * </ul>
      */
     private static boolean isValidHuntTeleportPosition(
-            ModularGhostEntity ghost,
+            GhostActor ghost,
             BlockPos pos,
             LivingEntity target
     ) {
@@ -868,8 +868,7 @@ public final class NightWandererHuntSystem {
                         position.z - ghost.getZ()
                 );
 
-        return ghost.level().noCollision(
-                ghost,
+        return ghost.noCollision(
                 movedBox
         );
     }

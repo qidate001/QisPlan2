@@ -6,7 +6,6 @@ import com.qidate.qisplan2.ghost.module.GhostModuleHost;
 import com.qidate.qisplan2.ghost.module.environment.GhostDoorAccess;
 import com.qidate.qisplan2.ghost.module.environment.GhostDoorGeometry;
 import com.qidate.qisplan2.ghost.isolation.GhostIsolationBlockRegistry;
-import com.qidate.qisplan2.ghost.module.implementation.GhostDoorPlateModule;
 import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
@@ -140,7 +139,7 @@ public final class GhostDoorWorldAdapter implements GhostDoorAccess {
             // 仅加载已登记门牌所在区块，以确认远处目的门，而不扩大扫描范围。
             world.getChunkAt(location.pos());
             if (!(world.getBlockEntity(location.pos()) instanceof GhostDoorPlateBlockEntity plate)
-                    || !plate.hasModule(GhostDoorPlateModule.ID) || plate.getNumber() != number) {
+                    || !plate.carriesModule(module) || plate.getNumber() != number) {
                 GhostDoorPlateRegistry.unregisterPosition(world, location.pos()); continue;
             }
             var door = plate.getLinkedDoorPos(); if (door == null) continue;

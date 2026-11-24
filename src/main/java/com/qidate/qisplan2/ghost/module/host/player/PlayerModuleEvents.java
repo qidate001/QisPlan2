@@ -1,12 +1,12 @@
 package com.qidate.qisplan2.ghost.module.host.player;
-import com.qidate.qisplan2.ghost.module.host.player.binding.GhostPlayerBindings;
+import com.qidate.qisplan2.ghost.module.host.player.PlayerGhostData;
+import com.qidate.qisplan2.ghost.module.host.player.PlayerGhostModuleHost;
+import com.qidate.qisplan2.ghost.module.host.ModuleGhostDomains;
 
 import com.qidate.qisplan2.QisPlan2;
 import com.qidate.qisplan2.ghost.module.*;
-import com.qidate.qisplan2.ghost.module.event.TouchEvent;
 import com.qidate.qisplan2.ghost.module.host.GhostContactEvents;
 import com.qidate.qisplan2.ghost.possession.manager.GhostPossessionManager;
-import com.qidate.qisplan2.ghost.possession.manager.PossessionHandler;
 import com.qidate.qisplan2.ghost.possession.target.BlockGhostPossessionTarget;
 import java.util.*;
 import net.minecraft.server.level.ServerPlayer;
@@ -42,20 +42,19 @@ public final class PlayerModuleEvents {
     /**
      * 玩家离线时通知各模块的适配器释放运行时资源，并清除接触记录。
      */
-    @SubscribeEvent public static void logout(PlayerEvent.PlayerLoggedOutEvent event) {
+    @SubscribeEvent
+    public static void logout(PlayerEvent.PlayerLoggedOutEvent event) {
         if (!(event.getEntity() instanceof ServerPlayer player)) return;
-        for (var entry : new PlayerGhostModuleHost(player).getModules()) {
-            var module = GhostModuleRegistry.get(entry.id());
-            if (module != null) GhostPlayerBindings.get(module).onPlayerSuspended(new PlayerGhostModuleContext(player, entry.id(),
-                    PossessionHandler.getData(player, entry.id())));
-        }
+        var host=new PlayerGhostModuleHost(player);
+        for(var entry:host.getModules())ModuleGhostDomains.closeRuntime(host,entry.id());
         TOUCHING.remove(player);
     }
 
     /**
      * 玩家重建时复制仍保留的模块数据，避免未能转移的模块丢失。
      */
-    @SubscribeEvent public static void clonePlayer(PlayerEvent.Clone event) {
+    @SubscribeEvent
+    public static void clonePlayer(PlayerEvent.Clone event) {
         // 通常死亡破体后列表已空；若世界拒绝生成破体实体，保留未转移模块，避免丢失。
         if (event.getEntity() instanceof ServerPlayer player)
             PlayerGhostData.setModules(player, PlayerGhostData.getModules(event.getOriginal()));
@@ -65,13 +64,14 @@ public final class PlayerModuleEvents {
      * 处理空主手与方块模块的驾驭交互。
      * 找到尚未驾驭的不可用模块后发起驾驭，成功受理时消费本次交互。
      */
-    @SubscribeEvent public static void blockInteraction(PlayerInteractEvent.RightClickBlock event) {
+    @SubscribeEvent
+    public static void blockInteraction(PlayerInteractEvent.RightClickBlock event) {
         if (event.getHand() != InteractionHand.MAIN_HAND || !event.getItemStack().isEmpty()
                 || !(event.getEntity() instanceof ServerPlayer player) || player.isShiftKeyDown()) return;
         var block = player.serverLevel().getBlockEntity(event.getPos());
         if (!(block instanceof GhostModuleDataModifier host)) return;
         var entry = host.getModules().stream().filter(e -> !GhostModuleCombatState.available(e)
-                && !PossessionHandler.hasGhost(player, e.id())).findFirst().orElse(null);
+                && !new PlayerGhostModuleHost(player).hasModule(e.id())).findFirst().orElse(null);
         if (entry != null && GhostPossessionManager.start(player, new BlockGhostPossessionTarget(block, entry.id()))) {
             event.setCanceled(true);
             event.setCancellationResult(InteractionResult.CONSUME);

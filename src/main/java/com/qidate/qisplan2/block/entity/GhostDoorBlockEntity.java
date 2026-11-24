@@ -3,7 +3,7 @@ package com.qidate.qisplan2.block.entity;
 import com.qidate.qisplan2.core.ModBlocks;
 import com.qidate.qisplan2.ghost.module.GhostModuleRuntime;
 import com.qidate.qisplan2.ghost.module.event.ModuleTickEvent;
-import com.qidate.qisplan2.ghost.module.implementation.GhostDoorModule;
+import com.qidate.qisplan2.ghost.module.implementation.door.GhostDoorModule;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;

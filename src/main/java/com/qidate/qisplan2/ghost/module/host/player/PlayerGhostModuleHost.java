@@ -1,5 +1,13 @@
 package com.qidate.qisplan2.ghost.module.host.player;
 
+import com.qidate.qisplan2.ghost.module.GhostModuleRegistry;
+import com.qidate.qisplan2.ghost.module.GhostModuleRuntime;
+import com.qidate.qisplan2.ghost.module.event.ModuleTickEvent;
+import com.qidate.qisplan2.ghost.module.host.ModuleGhostDomains;
+import com.qidate.qisplan2.ghost.possession.manager.GhostSuppressionAllocationHandler;
+import com.qidate.qisplan2.event.GhostBreakoutHandler;
+import com.qidate.qisplan2.death.QisDeathHandler;
+import net.minecraft.server.level.ServerPlayer;
 import com.qidate.qisplan2.ghost.module.GhostModuleCombatState;
 import com.qidate.qisplan2.ghost.module.host.GhostSoundSuppression;
 import com.qidate.qisplan2.ghost.module.host.attachment.GhostAttachments;
@@ -27,23 +35,57 @@ import net.minecraft.world.entity.player.Player;
  */
 public final class PlayerGhostModuleHost
         implements GhostModuleDataModifier, GhostModuleCustomDataModifier {
+    private final Player player;
+
+    /** 玩家输入只是请求，宿主负责接受完整模块实例及其承载校验。 */
+    public boolean possess(GhostModuleData.Entry entry) {
+        return player.isAlive() && GhostModuleRegistry.get(entry.id())!=null && importModule(entry);
+    }
+
+    /** 从模块声明创建新实例，命令与调试入口也使用同一个安装路径。 */
+    public boolean possess(ResourceLocation id) {
+        var module=GhostModuleRegistry.get(id);if(module==null)return false;
+        var initial=module.getInitialData();return possess(new GhostModuleData.Entry(id,initial.intensity(),initial.revival()));
+    }
+
+    /** 释放承载关系；只关闭此宿主上的运行时资源，不触碰其他宿主的同名模块。 */
+    public boolean release(ResourceLocation id) {
+        if(!hasModule(id))return false;
+        ModuleGhostDomains.closeRuntime(this,id);
+        if(!removeModule(id))return false;
+        if(player instanceof ServerPlayer server)GhostSuppressionAllocationHandler.removeByGhost(server,id);
+        return true;
+    }
+
+    /** 宿主推进自己的输入与生命周期，然后进入所有载体共用的模块运行时。 */
+    public void tick() {
+        if(!(player instanceof ServerPlayer server))return;
+        GhostModuleRuntime.dispatch(this,new ModuleTickEvent());
+        PlayerModuleEvents.tickTouch(server,this);
+    }
+
+    /** 复苏判断由运行时统一完成；此适配器只落实玩家身体的破体与死亡。 */
+    @Override public void onControlLost(ResourceLocation module) {
+        if (player instanceof ServerPlayer server && server.isAlive()) {
+            GhostBreakoutHandler.breakout(server);
+            QisDeathHandler.forceKillAndCleanup(server);
+        }
+    }
+
     /** 已驾驭模块由主动输入决定持续表现，不自动开启音乐。 */
     @Override public boolean allowsAutomaticAbilities() { return false; }
 
-
-    private final Player player;
     /** 驭鬼模块才属于体内来源，插入的物品不会加入本适配器的数据。 */
     @Override public boolean controlsIntrinsicModules() { return true; }
+
     /** 只读附着关系计算出的状态，不从背包或世界扫描压制来源。 */
     @Override public GhostSuppressionState suppression(ResourceLocation module) {
         return GhostAttachments.suppression(player, module).merge(
                 GhostSoundSuppression.state(player, module)).merge(GhostModuleCombatState.attackSuppression(this, module));
     }
 
-
     /** 玩家固定采用二十一个人形承载部位。 */
     @Override public HostComposition composition() { return HostComposition.HUMANOID; }
-
 
     public PlayerGhostModuleHost(Player player) {
         this.player = Objects.requireNonNull(player, "player");

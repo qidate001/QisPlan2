@@ -1,7 +1,6 @@
 package com.qidate.qisplan2.ghost.module.implementation.calling;
-import com.qidate.qisplan2.ghost.module.host.entity.CallingGhostEntityBinding;
 
-import com.qidate.qisplan2.entity.ModularGhostEntity;
+import com.qidate.qisplan2.ghost.module.environment.GhostActor;
 import net.minecraft.world.entity.ai.goal.Goal;
 import net.minecraft.world.phys.Vec3;
 import java.util.EnumSet;
@@ -11,7 +10,7 @@ import java.util.EnumSet;
  * 因此强度调度器探测竞争行为时不会抢先产生世界操作。
  */
 public final class CallingGhostBehavior extends Goal {
-    private final ModularGhostEntity host;
+    private final GhostActor host;
     private boolean previousNoPhysics;
     private boolean previousNoGravity;
 
@@ -19,7 +18,7 @@ public final class CallingGhostBehavior extends Goal {
      * 绑定当前实体并声明移动与视线控制需求。
      * 构造阶段不修改实体物理状态，取得执行权后才在 start 中接管。
      */
-    public CallingGhostBehavior(ModularGhostEntity host) {
+    public CallingGhostBehavior(GhostActor host) {
         this.host = host;
         setFlags(EnumSet.of(Flag.MOVE, Flag.LOOK));
     }
@@ -29,7 +28,7 @@ public final class CallingGhostBehavior extends Goal {
      * 检查行为需要的模块状态、环境或目标条件，交由 Goal 调度器决定是否取得控制。
      */
     @Override public boolean canUse() {
-        return CallingGhostEntityBinding.isActive(host) && CallingGhostTargets.available(host) != null;
+        return host.isActive() && CallingGhostTargets.available(host) != null;
     }
 
     /**
@@ -48,7 +47,7 @@ public final class CallingGhostBehavior extends Goal {
      * 不会把被其他模块抢占期间的朝向变化计入本轮跟随。
      */
     @Override public void start() {
-        previousNoPhysics = host.noPhysics;
+        previousNoPhysics = host.noPhysics();
         previousNoGravity = host.isNoGravity();
         var data = CallingGhostState.read(host);
         data.putBoolean("physicsOwned", true);
@@ -58,7 +57,7 @@ public final class CallingGhostBehavior extends Goal {
         data.putBoolean("hasLastPlayerRotation", false);
         data.putBoolean("callInitialized", false);
         CallingGhostState.write(host, data);
-        host.noPhysics = true;
+        host.setNoPhysics(true);
         host.setNoGravity(true);
         host.getNavigation().stop();
     }
@@ -68,7 +67,7 @@ public final class CallingGhostBehavior extends Goal {
      * 清除物理控制标记和观察基线，避免影响共享实体上的其他模块。
      */
     @Override public void stop() {
-        host.noPhysics = previousNoPhysics;
+        host.setNoPhysics(previousNoPhysics);
         host.setNoGravity(previousNoGravity);
         host.setDeltaMovement(Vec3.ZERO);
         host.getNavigation().stop();
@@ -87,12 +86,12 @@ public final class CallingGhostBehavior extends Goal {
      */
     @Override public void tick() {
         var player = CallingGhostTargets.available(host);
-        if (player == null || !CallingGhostEntityBinding.isActive(host)) return;
+        if (player == null || !host.isActive()) return;
         var data = CallingGhostState.read(host);
         if (!data.hasUUID("target") || !data.getUUID("target").equals(player.getUUID())) {
             CallingGhostState.bind(host, player);
             data = CallingGhostState.read(host);
         }
-        CallingGhostEntityBinding.followAndCall(host);
+        host.execute(CallingGhostModule.FOLLOW,null);
     }
 }

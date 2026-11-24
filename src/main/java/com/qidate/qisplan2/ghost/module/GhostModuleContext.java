@@ -1,5 +1,6 @@
 package com.qidate.qisplan2.ghost.module;
 
+import com.qidate.qisplan2.ghost.module.ability.GhostAbilityParameters;
 import com.qidate.qisplan2.ghost.module.ability.GhostAbilityExecutor;
 import com.qidate.qisplan2.ghost.module.ability.GhostAbilityContext;
 import com.qidate.qisplan2.ghost.module.event.GhostEvent;
@@ -55,6 +56,19 @@ public record GhostModuleContext(
         return GhostAbilityExecutor.tryExecuteWithResult(
                 new GhostAbilityContext(host, moduleId, abilityId,
                         GhostAbilityContext.Source.CONTINUATION, event));
+    }
+
+    /** 延续已有能力并携带可信目标参数，仍经过统一媒介和灵异裁决。 */
+    public boolean continueAbility(ResourceLocation abilityId, GhostEvent event,
+                                   GhostAbilityParameters parameters) {
+        return GhostAbilityExecutor.tryExecuteWithResult(new GhostAbilityContext(host, moduleId, abilityId,
+                GhostAbilityContext.Source.CONTINUATION, event, () -> {}, parameters));
+    }
+
+    /** 准备内部延迟能力；到期仍重新检查媒介、对抗状态与来源有效性。 */
+    public Runnable prepareContinuation(ResourceLocation abilityId, GhostEvent event) {
+        return GhostAbilityExecutor.prepareDeferred(new GhostAbilityContext(host, moduleId, abilityId,
+                GhostAbilityContext.Source.CONTINUATION, event));
     }
 
     /** 获取当前模块的世界操作接口，不返回具体载体。 */
@@ -142,6 +156,17 @@ public record GhostModuleContext(
             );
         }
 
+        // 所有载体共享复苏缓冲；百分比储备按当前模块的复苏上限换算。
+        if (host instanceof GhostModuleCustomDataModifier modifier && maxRevival > 0 && amount > 0) {
+            var custom = modifier.getModuleCustomData(moduleId);
+            double reserve = Math.clamp(custom.getDouble(GhostModuleOperations.REVIVAL_RESERVE), 0, 100);
+            double consumed = Math.min(reserve, amount * 100 / maxRevival);
+            if (consumed > 0) {
+                custom.putDouble(GhostModuleOperations.REVIVAL_RESERVE, reserve - consumed);
+                modifier.setModuleCustomData(moduleId, custom);
+                amount = Math.max(0, amount - consumed * maxRevival / 100);
+            }
+        }
         double currentRevival = revival();
 
         double newRevival = Math.min(

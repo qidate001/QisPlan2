@@ -1,5 +1,7 @@
 package com.qidate.qisplan2.command;
 
+import com.qidate.qisplan2.ghost.module.GhostModuleOperations;
+import com.qidate.qisplan2.ghost.module.GhostHostProperties;
 import com.mojang.brigadier.arguments.DoubleArgumentType;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
@@ -22,12 +24,10 @@ import com.qidate.qisplan2.ghost.module.host.player.PlayerGhostModuleHost;
 import net.minecraft.network.chat.HoverEvent;
 import com.qidate.qisplan2.ghost.module.GhostModuleDataModifier;
 import com.qidate.qisplan2.ghost.module.GhostModuleRegistry;
-import com.qidate.qisplan2.ghost.module.data.GhostModuleData;
 import com.qidate.qisplan2.ghost.module.host.item.GhostItemModuleHost;
 import com.qidate.qisplan2.ghost.module.host.player.PlayerGhostData;
 import com.qidate.qisplan2.ghost.possession.data.PossessedGhostData;
 import com.qidate.qisplan2.ghost.possession.data.PossessedGhostState;
-import com.qidate.qisplan2.ghost.possession.manager.PossessionHandler;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -39,13 +39,10 @@ import net.minecraft.commands.arguments.EntityArgument;
 import net.minecraft.commands.arguments.ResourceLocationArgument;
 import net.minecraft.commands.arguments.UuidArgument;
 import net.minecraft.commands.arguments.coordinates.BlockPosArgument;
-import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.world.entity.Entity;
-import net.minecraft.world.item.ItemStack;
 
 public final class GhostCommands {
 
@@ -623,8 +620,7 @@ public final class GhostCommands {
         /*
          * 成功驾驭
          */
-        if (!PossessionHandler.possess(
-                player,
+        if (!new PlayerGhostModuleHost(player).possess(
                 ghost
         )) {
 
@@ -690,8 +686,7 @@ public final class GhostCommands {
                                 + ghost.getPath()
                 ).getString();
 
-        if (!PossessionHandler.release(
-                player,
+        if (!new PlayerGhostModuleHost(player).release(
                 ghost
         )) {
 
@@ -858,8 +853,7 @@ public final class GhostCommands {
                 );
 
         boolean success =
-                PossessionHandler.testSleep(
-                        player,
+                GhostModuleOperations.sleep(new PlayerGhostModuleHost(player),
                         ghost,
                         seconds * 20L
                 );
@@ -930,10 +924,7 @@ public final class GhostCommands {
                 ).getString();
 
         boolean success =
-                PossessionHandler.testPermanentStun(
-                        player,
-                        ghost
-                );
+                new PlayerGhostModuleHost(player).setDeadlocked(ghost,true);
 
         if (!success) {
 
@@ -986,8 +977,7 @@ public final class GhostCommands {
         }
 
         CorrosionMatrix matrix =
-                PossessionHandler.getCorrosionMatrix(
-                        player
+                GhostHostProperties.corrosion(new PlayerGhostModuleHost(player)
                 );
 
         /*
@@ -1199,18 +1189,15 @@ public final class GhostCommands {
         }
 
         double bodyCorrosion =
-                PossessionHandler.getEffectiveBodyCorrosion(
-                        player
+                GhostHostProperties.bodyCorrosion(new PlayerGhostModuleHost(player)
                 );
 
         double reduction =
-                PossessionHandler.getNonSupernaturalDamageReduction(
-                        player
+                GhostHostProperties.damageReduction(new PlayerGhostModuleHost(player)
                 );
 
         double healthBonus =
-                PossessionHandler.getMaxHealthBonus(
-                        player
+                GhostHostProperties.maxHealthBonus(new PlayerGhostModuleHost(player)
                 );
 
 

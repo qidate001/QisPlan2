@@ -1,7 +1,7 @@
 package com.qidate.qisplan2.ghost.reboot;
 
+import com.qidate.qisplan2.ghost.module.host.player.PlayerGhostData;
 import com.qidate.qisplan2.ghost.possession.data.PossessedGhostState;
-import com.qidate.qisplan2.ghost.possession.manager.PossessionHandler;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.effect.MobEffectInstance;
@@ -88,7 +88,7 @@ public final class GhostRebootSnapshotBuilder {
         }
 
         Map<ResourceLocation, PossessedGhostState> states =
-                PossessionHandler.getAllStates(player);
+                PlayerGhostData.states(player);
 
         snapshot.ghosts.putAll(states);
 

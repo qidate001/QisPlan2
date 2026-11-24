@@ -3,7 +3,6 @@ package com.qidate.qisplan2.ghost.possession.target;
 import com.qidate.qisplan2.ghost.module.host.player.PlayerGhostModuleHost;
 
 import com.qidate.qisplan2.ghost.module.*;
-import com.qidate.qisplan2.ghost.possession.manager.PossessionHandler;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.level.block.entity.BlockEntity;
@@ -30,7 +29,7 @@ public final class BlockGhostPossessionTarget implements GhostPossessionTarget {
                 || !(block instanceof GhostModuleDataModifier host)) return false;
         var entry = host.getModules().stream().filter(e -> e.id().equals(moduleId)).findFirst().orElse(null);
         if (entry == null || GhostModuleCombatState.available(entry)) return false;
-        if (!PossessionHandler.possess(player, entry)) return false;
+        if (!new PlayerGhostModuleHost(player).possess( entry)) return false;
         host.removeModule(moduleId);
         block.setChanged();
         return true;

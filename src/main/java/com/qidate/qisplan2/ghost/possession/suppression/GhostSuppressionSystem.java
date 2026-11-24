@@ -1,12 +1,14 @@
 package com.qidate.qisplan2.ghost.possession.suppression;
 
+import com.qidate.qisplan2.ghost.module.GhostHostProperties;
+import com.qidate.qisplan2.ghost.module.host.player.PlayerGhostData;
+import com.qidate.qisplan2.ghost.module.host.player.PlayerGhostModuleHost;
 import com.qidate.qisplan2.ghost.module.GhostModule;
 import com.qidate.qisplan2.ghost.module.GhostModuleRegistry;
 import com.qidate.qisplan2.ghost.possession.classification.GhostClassification;
 import com.qidate.qisplan2.ghost.possession.classification.GhostTag;
 import com.qidate.qisplan2.ghost.possession.data.PossessedGhostState;
 import com.qidate.qisplan2.ghost.possession.manager.GhostSuppressionAllocationHandler;
-import com.qidate.qisplan2.ghost.possession.manager.PossessionHandler;
 import com.qidate.qisplan2.ghost.possession.manager.SuppressionAllocation;
 import java.util.List;
 import net.minecraft.resources.ResourceLocation;
@@ -131,8 +133,7 @@ public final class GhostSuppressionSystem {
          * ================================================================
          */
         double targetStrength =
-                PossessionHandler.getEffectiveStrength(
-                        player,
+                GhostHostProperties.effectiveStrength(new PlayerGhostModuleHost(player),
                         targetGhost
                 );
 
@@ -331,7 +332,7 @@ public final class GhostSuppressionSystem {
          * ================================================================
          */
         PossessedGhostState targetState =
-                PossessionHandler.getState(
+                PlayerGhostData.state(
                         player,
                         targetGhost
                 );

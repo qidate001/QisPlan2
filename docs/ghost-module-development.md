@@ -1,6 +1,6 @@
 # 厉鬼模块开发指南：从零构建一只完整的厉鬼
 
-适用版本：本文按 2026-11-17 当前仓库实现编写，Minecraft 1.21.1 / NeoForge / Java 21。
+适用版本：本文按 2026-11-24 当前仓库实现编写，Minecraft 1.21.1 / NeoForge / Java 21。
 
 本文同时说明**当前实现**与**新模块应遵循的约定**，不把尚未提供的宿主能力当成已经实现的功能。示例完整源文件见 [ContactEchoModule.java](examples/ContactEchoModule.java)，它属于文档示例，不会自动注册到游戏。
 
@@ -1127,7 +1127,54 @@ double actual = context.resolvedIntensity(target.getUUID(), originalIntensity);
 它当前不是可变专属数据宿主。按第七节选择关系状态或提供持久化能力，不能靠捕获异常吞掉存档失败。
 
 
-## 13. 现阶段边界与发布清单
+## 13. 完整模块与宿主的职责边界
+
+`*Module.java` 是一只厉鬼的唯一声明入口：规则、媒介、公开和私有能力、鬼域、行为工厂、侵蚀和身体效果都从这里声明。复杂逻辑可以拆成同目录的辅助类；不能再到宿主包增加 `CallingGhostEntityBinding` 一类的第二份厉鬼定义，也不能维护按具体厉鬼 ID 分支的行为枚举。
+
+### 自主行为
+
+覆盖 `GhostModule.behavior()`，返回 `GhostBehavior` 工厂。工厂每次为当前模块实例创建新的 Goal；实例状态依旧写入模块 customData。示例：
+
+```java
+@Override
+public GhostBehavior behavior() {
+    return context -> {
+        GhostActor actor = context.world().actor();
+        if (actor == null) return List.of();
+        return List.of(new MyGhostBehavior(actor));
+    };
+}
+```
+
+`MyGhostBehavior` 只持有 `GhostActor` 行动端口，不能接收 `ModularGhostEntity` 或玩家。端口提供寻路、视线、移动、碰撞查询、随机落点、当前模块数据和能力请求，不提供取回宿主的方法。`execute` 仍经过统一能力执行器；`nearby` 发布附近实体事实。没有自主寻路能力时，工厂返回空列表，主动技能和其他世界出口仍可使用。
+
+`GhostModuleGoals` 仅调用模块的工厂，实体保留现有强度竞争和 Goal 控制标记调度。公共宿主不需要知道新厉鬼的名称。
+
+### 身体效果与共享属性
+
+`bodyEffects(context)` 返回 `GhostBodyEffects`，声明移动速度加值和短时药水效果。夜游鬼的明暗速度、失明和夜视已经使用这个入口；不再存在玩家版和厉鬼实体版两套公式。
+
+`GhostHostProperties` 根据宿主实际组成和已承载模块计算侵蚀、普通伤害减免、生命上限加成及有效强度。自主模块完整发挥，受控模块按复苏比例发挥；此差异由通用承载关系声明，不能按玩家身份判断。`GhostHostBodyHandler` 将这些结果应用到生命身体及装备来源；没有生命属性的载体不会被强行添加生命值。界面同样读取这个计算入口。
+
+### 安装、生命周期与数据
+
+玩家是 `PlayerGhostModuleHost`，通过宿主的 `possess(entry)` 接受完整实例，通过 `release(id)` 释放模块。原 `PossessionHandler` 已移除。`PlayerGhostData` 仅负责玩家附件持久化及旧界面/快照 DTO 的转换，不定义厉鬼玩法。
+
+受控关系由 `controlsIntrinsicModules()` 声明，并非检查宿主是不是玩家。复苏达到上限由 `GhostModuleRuntime` 统一判断，再调用 `onControlLost(module)`；宿主落实其物理释放结果。模块不自行决定玩家死亡、实体删除或物品掉落。
+
+`GhostModuleOperations` 提供跨宿主沉睡和复苏缓冲操作。缓冲存于 `customData.revivalReserve`（0..100 百分比），`GhostModuleContext.addRevival` 统一抵扣。旧 `qisplan2:player.shallowStun` 随模块数据读取迁移，不丢失其他独有字段，也不意味着新增一种死机状态。
+
+### 世界服务不是另一份厉鬼定义
+
+适配层可以注册菜单、配方、碰撞等物理服务，但服务类型不能绑定某只厉鬼的身份。例如 `GhostWorkstationAccess.FIVE_SLOT_COOKING` 代表五输入一输出制作服务，鬼灶台在自己的能力中选择这个类型。任何其他模块都能复用此服务。
+
+敲门传播接收有效性检查与听声回调；由敲门模块决定事实如何触发规则、或如何延续主动能力。门鬼标记也保存到模块目标状态，不再有玩家专属的标记/直接击杀旁路。
+
+`verifyModuleIsolation` 现在检查整个 `implementation` 目录，包括辅助类。新增模块无需修改宿主绑定表；若需要新的物理操作，先增加通用端口，再实现宿主适配。
+
+
+
+## 14. 现阶段边界与发布清单
 
 ### 当前边界
 
@@ -1174,4 +1221,3 @@ double actual = context.resolvedIntensity(target.getUUID(), originalIntensity);
 | 技能目录与网络 | `ghost/module/ability/GhostAbilityCatalog.java`、`network/GhostAbilityNetwork.java` |
 | 轮盘 | `client/screen/AbilityWheelScreen.java`、`AbilityWheelLayout.java` |
 | 宿主承载 | `ghost/bearing/`；另见本文关联的承载文档 |
-

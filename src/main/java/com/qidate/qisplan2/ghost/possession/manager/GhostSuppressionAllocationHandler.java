@@ -18,11 +18,7 @@ public final class GhostSuppressionAllocationHandler {
     /**
      * 获取玩家全部压制额度分配。
      */
-    public static Map<
-            ResourceLocation,
-            Map<ResourceLocation, List<SuppressionAllocation>>
-            > getAllocations(Player player) {
-
+    public static Map<ResourceLocation, Map<ResourceLocation, List<SuppressionAllocation>>> getAllocations(Player player) {
         return player.getData(
                 ModAttachments.GHOST_SUPPRESSION_ALLOCATION
         );
@@ -34,30 +30,18 @@ public final class GhostSuppressionAllocationHandler {
      * Attachment 中的默认数据可能是不可变 Map/List，
      * 所以所有修改都必须基于新的可变结构进行。
      */
-    private static Map<
-            ResourceLocation,
-            Map<ResourceLocation, List<SuppressionAllocation>>
-            > deepCopy(
-            Map<
-                    ResourceLocation,
-                    Map<ResourceLocation, List<SuppressionAllocation>>
-                    > source
-    ) {
+    private static Map<ResourceLocation, Map<ResourceLocation, List<SuppressionAllocation>>>
+            deepCopy(Map<ResourceLocation, Map<ResourceLocation, List<SuppressionAllocation>>> source) {
 
-        Map<
-                ResourceLocation,
-                Map<ResourceLocation, List<SuppressionAllocation>>
-                > result =
-                new HashMap<>();
+        Map<ResourceLocation, Map<ResourceLocation, List<SuppressionAllocation>>>
+                result = new HashMap<>();
 
         for (var sourceEntry : source.entrySet()) {
 
             Map<ResourceLocation, List<SuppressionAllocation>>
-                    targets =
-                    new HashMap<>();
+                    targets =  new HashMap<>();
 
-            for (var targetEntry
-                    : sourceEntry.getValue().entrySet()) {
+            for (var targetEntry : sourceEntry.getValue().entrySet()) {
 
                 targets.put(
                         targetEntry.getKey(),
@@ -118,30 +102,20 @@ public final class GhostSuppressionAllocationHandler {
             int slotIndex
     ) {
 
-        Map<
-                ResourceLocation,
-                Map<ResourceLocation, List<SuppressionAllocation>>
-                > allocations =
-                getAllocations(player);
+        Map<ResourceLocation, Map<ResourceLocation, List<SuppressionAllocation>>>
+                allocations = getAllocations(player);
 
         Map<ResourceLocation, List<SuppressionAllocation>>
-                targets =
-                allocations.get(sourceGhost);
+                targets = allocations.get(sourceGhost);
 
         if (targets == null) {
             return false;
         }
 
-        for (List<SuppressionAllocation> list : targets.values()) {
-
-            for (SuppressionAllocation allocation : list) {
-
-                if (allocation.slotIndex() == slotIndex) {
+        for (List<SuppressionAllocation> list : targets.values())
+            for (SuppressionAllocation allocation : list)
+                if (allocation.slotIndex() == slotIndex)
                     return true;
-                }
-            }
-        }
-
         return false;
     }
 
@@ -195,31 +169,18 @@ public final class GhostSuppressionAllocationHandler {
             return false;
         }
 
-        if (
-                isSlotAllocated(
-                        player,
-                        sourceGhost,
-                        slotIndex
-                )
-        ) {
+        if (isSlotAllocated(player, sourceGhost, slotIndex)) {
             return false;
         }
 
-        Map<
-                ResourceLocation,
-                Map<ResourceLocation, List<SuppressionAllocation>>
-                > oldAllocations =
-                getAllocations(player);
+        Map<ResourceLocation, Map<ResourceLocation, List<SuppressionAllocation>>>
+                oldAllocations = getAllocations(player);
 
-        Map<
-                ResourceLocation,
-                Map<ResourceLocation, List<SuppressionAllocation>>
-                > allocations =
-                deepCopy(oldAllocations);
+        Map<ResourceLocation, Map<ResourceLocation, List<SuppressionAllocation>>>
+                allocations = deepCopy(oldAllocations);
 
         Map<ResourceLocation, List<SuppressionAllocation>>
-                targets =
-                allocations.computeIfAbsent(
+                targets = allocations.computeIfAbsent(
                         sourceGhost,
                         ignored -> new HashMap<>()
                 );
@@ -230,13 +191,7 @@ public final class GhostSuppressionAllocationHandler {
                         ignored -> new ArrayList<>()
                 );
 
-        list.add(
-                new SuppressionAllocation(
-                        slotIndex,
-                        x,
-                        y
-                )
-        );
+        list.add(new SuppressionAllocation(slotIndex, x, y));
 
         player.setData(
                 ModAttachments.GHOST_SUPPRESSION_ALLOCATION,
@@ -256,21 +211,14 @@ public final class GhostSuppressionAllocationHandler {
             int slotIndex
     ) {
 
-        Map<
-                ResourceLocation,
-                Map<ResourceLocation, List<SuppressionAllocation>>
-                > oldAllocations =
-                getAllocations(player);
+        Map<ResourceLocation, Map<ResourceLocation, List<SuppressionAllocation>>>
+                oldAllocations = getAllocations(player);
 
-        Map<
-                ResourceLocation,
-                Map<ResourceLocation, List<SuppressionAllocation>>
-                > allocations =
-                deepCopy(oldAllocations);
+        Map<ResourceLocation, Map<ResourceLocation, List<SuppressionAllocation>>>
+                allocations = deepCopy(oldAllocations);
 
         Map<ResourceLocation, List<SuppressionAllocation>>
-                targets =
-                allocations.get(sourceGhost);
+                targets = allocations.get(sourceGhost);
 
         if (targets == null) {
             return false;
@@ -362,11 +310,8 @@ public final class GhostSuppressionAllocationHandler {
             return;
         }
 
-        Map<
-                ResourceLocation,
-                Map<ResourceLocation, List<SuppressionAllocation>>
-                > allocations =
-                deepCopy(oldAllocations);
+        Map<ResourceLocation, Map<ResourceLocation, List<SuppressionAllocation>>>
+                allocations = deepCopy(oldAllocations);
 
         /*
          * ========================================================
@@ -381,12 +326,7 @@ public final class GhostSuppressionAllocationHandler {
          * ========================================================
          */
 
-        for (
-                Map<ResourceLocation, List<SuppressionAllocation>>
-                        targets
-                : allocations.values()
-        ) {
-
+        for (Map<ResourceLocation, List<SuppressionAllocation>> targets : allocations.values()) {
             targets.remove(ghost);
         }
 
@@ -396,9 +336,7 @@ public final class GhostSuppressionAllocationHandler {
          * ========================================================
          */
 
-        allocations.entrySet().removeIf(
-                entry -> entry.getValue().isEmpty()
-        );
+        allocations.entrySet().removeIf(entry -> entry.getValue().isEmpty());
 
         player.setData(
                 ModAttachments.GHOST_SUPPRESSION_ALLOCATION,
@@ -464,21 +402,14 @@ public final class GhostSuppressionAllocationHandler {
             return false;
         }
 
-        Map<
-                ResourceLocation,
-                Map<ResourceLocation, List<SuppressionAllocation>>
-                > oldAllocations =
-                getAllocations(player);
+        Map<ResourceLocation, Map<ResourceLocation, List<SuppressionAllocation>>>
+                oldAllocations = getAllocations(player);
 
-        Map<
-                ResourceLocation,
-                Map<ResourceLocation, List<SuppressionAllocation>>
-                > allocations =
-                deepCopy(oldAllocations);
+        Map<ResourceLocation, Map<ResourceLocation, List<SuppressionAllocation>>>
+                allocations = deepCopy(oldAllocations);
 
         Map<ResourceLocation, List<SuppressionAllocation>>
-                targets =
-                allocations.get(sourceGhost);
+                targets = allocations.get(sourceGhost);
 
         if (targets == null) {
             return false;
@@ -491,12 +422,7 @@ public final class GhostSuppressionAllocationHandler {
             return false;
         }
 
-        boolean removed =
-                oldList.removeIf(
-                        allocation ->
-                                allocation.slotIndex()
-                                        == slotIndex
-                );
+        boolean removed = oldList.removeIf(allocation -> allocation.slotIndex() == slotIndex);
 
         if (!removed) {
             return false;
@@ -520,16 +446,10 @@ public final class GhostSuppressionAllocationHandler {
          * 理论上 slot 不应该已经存在于其他目标。
          * 这里再检查一次，防止非法状态。
          */
-        for (List<SuppressionAllocation> list
-                : targets.values()) {
-
-            for (SuppressionAllocation allocation : list) {
-
-                if (allocation.slotIndex() == slotIndex) {
+        for (List<SuppressionAllocation> list : targets.values())
+            for (SuppressionAllocation allocation : list)
+                if (allocation.slotIndex() == slotIndex)
                     return false;
-                }
-            }
-        }
 
         newList.add(
                 new SuppressionAllocation(

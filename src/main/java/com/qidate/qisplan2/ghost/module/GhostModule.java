@@ -12,6 +12,7 @@ import com.qidate.qisplan2.ghost.bearing.GhostModuleForm;
 import com.qidate.qisplan2.ghost.bearing.SpiritualPart;
 import com.qidate.qisplan2.ghost.module.environment.GhostEnvironmentalEffect;
 import com.qidate.qisplan2.ghost.module.environment.GhostBehavior;
+import com.qidate.qisplan2.ghost.module.environment.GhostBodyEffects;
 import com.qidate.qisplan2.ghost.corrosion.GhostCorrosion;
 import com.qidate.qisplan2.ghost.module.ability.GhostAbility;
 import com.qidate.qisplan2.ghost.module.ability.GhostAbilityContext;
@@ -38,6 +39,9 @@ import net.minecraft.resources.ResourceLocation;
  * 不属于模块实例的当前状态。
  */
 public interface GhostModule {
+    /** 身体效果由完整模块统一声明，各宿主共用；没有对应物理属性的宿主忽略投影。 */
+    default GhostBodyEffects bodyEffects(GhostModuleContext context) { return GhostBodyEffects.NONE; }
+
     /** 声明鬼域控制区、快捷能力和自动化目录；默认没有专属控件。 */
     default GhostDomainPanel domainPanel() {
         return GhostDomainPanel.EMPTY;

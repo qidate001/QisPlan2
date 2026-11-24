@@ -39,7 +39,7 @@ public final class GhostMistModule implements GhostModule {
      * 声明需要的自主行动类型。
      * 具体 Goal 的创建、资源竞争和停止清理由行动适配层负责。
      */
-    @Override public GhostBehavior behavior() { return GhostBehavior.WANDER; }
+    @Override public GhostBehavior behavior() { return context -> { var actor = context.world().actor(); return actor == null ? java.util.List.of() : java.util.List.of(new com.qidate.qisplan2.ghost.module.environment.GhostWanderGoal(actor, 0.7D)); }; }
 
     /**
      * 构造或返回本定义使用的资源标识，保持注册与调用入口一致。

@@ -6,7 +6,6 @@ import com.qidate.qisplan2.death.QisDeathHandler;
 import com.qidate.qisplan2.ghost.module.GhostModuleCombatState;
 import com.qidate.qisplan2.ghost.module.GhostModuleRegistry;
 import com.qidate.qisplan2.ghost.module.host.player.PlayerGhostModuleHost;
-import com.qidate.qisplan2.ghost.possession.manager.PossessionHandler;
 import java.util.List;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.LivingEntity;
@@ -74,7 +73,7 @@ public final class GhostBreakoutHandler {
             ghost.moveTo(player.getX(), player.getY(), player.getZ(), player.getYRot(), player.getXRot());
             if (player.serverLevel().addFreshEntity(ghost)) {
                 // 成功放入世界后才从玩家移除，避免创建失败时丢失模块。
-                PossessionHandler.release(player, entry.id());
+                new PlayerGhostModuleHost(player).release( entry.id());
             }
         }
     }

@@ -1,11 +1,11 @@
 package com.qidate.qisplan2.entity.nightwanderer;
 
+import com.qidate.qisplan2.ghost.module.host.player.PlayerGhostModuleHost;
 import com.qidate.qisplan2.QisPlan2;
 import com.qidate.qisplan2.core.ModEntities;
 import com.qidate.qisplan2.data.NightWandererSpawnData;
 import com.qidate.qisplan2.entity.ModularGhostEntity;
 import com.qidate.qisplan2.ghost.module.implementation.nightwanderer.NightWandererModule;
-import com.qidate.qisplan2.ghost.possession.manager.PossessionHandler;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerLevel;
@@ -106,9 +106,7 @@ public class NightWandererSpawnHandler {
             /*
              * 驭鬼夜游鬼的玩家周围不再生成。
              */
-            if (PossessionHandler.hasGhost(
-                    player,
-                    NightWandererModule.ID
+            if (new PlayerGhostModuleHost(player).hasModule(NightWandererModule.ID
             )) {
                 continue;
             }
