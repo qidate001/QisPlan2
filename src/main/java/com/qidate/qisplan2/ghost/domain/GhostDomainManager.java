@@ -429,6 +429,7 @@ public final class GhostDomainManager {
             return;
         }
 
+        if(layer<domain.getBehavior().minGrade() || layer>domain.getBehavior().maxGrade())return;
         domain.setLayer(layer);
         refreshConflict();
         domain.getBehavior().onDomainLayerChanged(level,domain);

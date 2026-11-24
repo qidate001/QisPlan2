@@ -2,6 +2,7 @@ package com.qidate.qisplan2.ghost.module.host;
 
 import com.qidate.qisplan2.ghost.module.environment.GhostDomainAccess;
 import com.qidate.qisplan2.ghost.module.GhostModuleHost;
+import com.qidate.qisplan2.ghost.module.GhostModuleCustomDataModifier;
 import com.qidate.qisplan2.ghost.domain.GhostDomain;
 import com.qidate.qisplan2.ghost.domain.GhostDomainEntityTracker;
 import com.qidate.qisplan2.ghost.domain.GhostDomainManager;
@@ -28,7 +29,11 @@ public final class GhostDomainAdapters {
             /** 仅变更当前模块的开关，实际生命周期仍由统一管理器负责。 */
             public boolean setOpen(boolean open) {
                 if(!host.hasModule(moduleId))return false;
-                if(ModuleGhostDomains.enabled(host,moduleId)==open)return true;
+                if(!(host instanceof GhostModuleCustomDataModifier modifier))return false;
+                var data=modifier.getModuleCustomData(moduleId);
+                boolean requested=data.contains("domainOpen")?data.getBoolean("domainOpen"):ModuleGhostDomains.enabled(host,moduleId);
+                if(open && maxGrade()<1)return false;
+                if(requested==open){ModuleGhostDomains.sync(host,moduleId);return true;}
                 return ModuleGhostDomains.toggle(host,moduleId);
             }
             /** 自动化与其他调用共用绝对分层出口，不允许作用于其他鬼域的目标。 */
@@ -49,12 +54,14 @@ public final class GhostDomainAdapters {
             private GhostDomain current() { return ModuleGhostDomains.current(host,moduleId); }
             /** 仅查询当前模块的鬼域。 */
             public boolean exists() { return current() != null; }
+            /** 所有技能入口共享模块声明的成长上限。 */
+            public int maxGrade(){return ModuleGhostDomains.maxGrade(host,moduleId);}
             /** 返回当前总层数。 */
             public int layer() { var domain = current(); return domain == null ? 0 : domain.getLayer(); }
             /** 写入鬼域层数；接口不规定某个技能的增减步长。 */
             public boolean setLayer(int value) {
                 var domain = current();
-                if(value<1 || value>10)return false;
+                if(value<ModuleGhostDomains.minGrade(host,moduleId) || value>maxGrade())return false;
                 if(domain==null) { ModuleGhostDomains.saveLayer(host,moduleId,value);return true; }
                 if(domain.getLayer()==value)return true;
                 GhostDomainManager.get(level).updateLayer(domain.getId(), value);

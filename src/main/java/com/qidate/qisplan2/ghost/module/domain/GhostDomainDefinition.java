@@ -12,23 +12,42 @@ import java.util.function.DoubleFunction;
  */
 public record GhostDomainDefinition(double radius, int initialLayer, boolean automatic,
         DoubleFunction<GhostDomainShape> shape, boolean touch, boolean sight,
-        int exposureInterval, boolean entityVision, boolean teleport, List<GhostDomainEffect> effects, boolean layered, GhostDomainSettings defaultSettings) {
+        int exposureInterval, boolean entityVision, boolean teleport, List<GhostDomainEffect> effects, boolean layered, GhostDomainSettings defaultSettings, GhostDomainGrowth growth) {
     /** 未显式声明的鬼域不分层，采用允许进入、禁止离开的通用配置。 */
     public GhostDomainDefinition(double radius, int initialLayer, boolean automatic,
             DoubleFunction<GhostDomainShape> shape, boolean touch, boolean sight,
             int exposureInterval, boolean entityVision, boolean teleport, List<GhostDomainEffect> effects) {
         this(radius, initialLayer, automatic, shape, touch, sight, exposureInterval,
-                entityVision, teleport, effects, false, GhostDomainSettings.DEFAULT);
+                entityVision, teleport, effects, false, GhostDomainSettings.DEFAULT, null);
     }
     /** 在完整模块声明中显式选择分层能力，保留其他默认值。 */
     public GhostDomainDefinition withLayering(boolean value) {
         return new GhostDomainDefinition(radius,initialLayer,automatic,shape,touch,sight,
-                exposureInterval,entityVision,teleport,effects,value,defaultSettings);
+                exposureInterval,entityVision,teleport,effects,value,defaultSettings,growth);
     }
     /** 默认配置只用于尚未保存配置的新实例，不覆盖玩家已经编辑的设置。 */
     public GhostDomainDefinition withDefaults(GhostDomainSettings settings) {
         return new GhostDomainDefinition(radius,initialLayer,automatic,shape,touch,sight,
-                exposureInterval,entityVision,teleport,effects,layered,settings);
+                exposureInterval,entityVision,teleport,effects,layered,settings,growth);
+    }
+    /** 兼容已有完整声明；未选择成长策略的模块继续使用原有等级机制。 */
+    public GhostDomainDefinition(double radius,int initialLayer,boolean automatic,
+            DoubleFunction<GhostDomainShape> shape,boolean touch,boolean sight,
+            int exposureInterval,boolean entityVision,boolean teleport,List<GhostDomainEffect> effects,
+            boolean layered,GhostDomainSettings defaultSettings) {
+        this(radius,initialLayer,automatic,shape,touch,sight,exposureInterval,entityVision,teleport,
+                effects,layered,defaultSettings,null);
+    }
+    /** 模块自行选择成长，不隐式开启分层或影响其他模块。 */
+    public GhostDomainDefinition withGrowth(GhostDomainGrowth value) {
+        return new GhostDomainDefinition(radius,initialLayer,automatic,shape,touch,sight,
+                exposureInterval,entityVision,teleport,effects,layered,defaultSettings,Objects.requireNonNull(value));
+    }
+    /** 成长型鬼域的默认等级是永久下限；特殊鬼域沿用原有调级机制。 */
+    public int minGrade() { return growth==null?1:initialLayer; }
+    /** 公式只解锁默认等级以上的成长，绝不撤销模块天生拥有的等级。 */
+    public int maxGrade(double intensity) {
+        return growth==null?10:Math.clamp(growth.gradeFor(intensity),initialLayer,10);
     }
     /** 拒绝非法声明，避免把不合法的层数或周期带入世界运行时。 */
     public GhostDomainDefinition {

@@ -61,10 +61,24 @@ public final class ModuleGhostDomains {
                 && domain.getBehavior() instanceof ModuleGhostDomainBehavior behavior && behavior.belongsTo(host) ? domain : null;
     }
 
+    /** 默认等级作为成长下限，未声明成长的特殊鬼域维持原行为。 */
+    public static int minGrade(GhostModuleHost host, ResourceLocation id) {
+        var module=GhostModuleRegistry.get(id);
+        return module==null?1:module.domainDefinition().map(GhostDomainDefinition::minGrade).orElse(1);
+    }
+
+    /** 只读取模块基础强度，不能用存档 domainStrength 或局部对抗强度计算成长。 */
+    public static int maxGrade(GhostModuleHost host, ResourceLocation id) {
+        var module=GhostModuleRegistry.get(id);
+        if(module==null||module.domainDefinition().isEmpty())return 0;
+        var entry=host.getModules().stream().filter(e->e.id().equals(id)).findFirst().orElse(null);
+        return entry==null?0:module.domainDefinition().orElseThrow().maxGrade(entry.intensity());
+    }
+
     /** 有效展开必须满足承载、压制、沉睡和物理暴露条件。死机只关闭规则，不关闭已启动能力。 */
     public static boolean enabled(GhostModuleHost host, ResourceLocation id) {
         var module = GhostModuleRegistry.get(id);
-        if (module == null || module.domainDefinition().isEmpty() || !host.carriesModule(id)) return false;
+        if (module == null || module.domainDefinition().isEmpty() || !host.carriesModule(id) || maxGrade(host,id)<1) return false;
         var entry = host.getModules().stream().filter(e -> e.id().equals(id)).findFirst().orElse(null);
         if (entry == null || (entry.sleeping() && !host.controlsIntrinsicModules())
                 || !host.suppression(id).canUseAbility(host.controlsIntrinsicModules())
@@ -82,6 +96,7 @@ public final class ModuleGhostDomains {
         if (!data.contains("domainRadius")) data.putDouble("domainRadius", definition.radius());
         if (!data.contains(GhostDomainSettings.KEY)) data = definition.defaultSettings().write(data);
         if (!data.contains("domainLayer")) data.putInt("domainLayer", definition.initialLayer());
+        data.putInt("domainLayer",Math.clamp(data.getInt("domainLayer"),definition.minGrade(),definition.maxGrade(entry.intensity())));
         return data;
     }
 
@@ -99,7 +114,12 @@ public final class ModuleGhostDomains {
         if (level == null || !(host instanceof GhostModuleCustomDataModifier modifier)) return;
         var existing = current(host,id);
         if (!enabled(host,id)) { closeRuntime(host,id); return; }
-        if (existing != null) return;
+        if (existing != null) {
+            int maximum=maxGrade(host,id);
+            int corrected=Math.clamp(existing.getLayer(),minGrade(host,id),maximum);
+            if(existing.getLayer()!=corrected)GhostDomainManager.get(level).updateLayer(existing.getId(),corrected);
+            return;
+        }
         var definition = GhostModuleRegistry.get(id).domainDefinition().orElseThrow();
         var data = state(host,id,definition);
         modifier.setModuleCustomData(id,data);
@@ -123,7 +143,9 @@ public final class ModuleGhostDomains {
         var module = GhostModuleRegistry.get(id);
         if (module == null || module.domainDefinition().isEmpty() || !host.hasModule(id)) return false;
         var data = state(host,id,module.domainDefinition().orElseThrow());
-        data.putBoolean("domainOpen", !enabled(host,id));
+        boolean open=data.contains("domainOpen")?data.getBoolean("domainOpen"):enabled(host,id);
+        if(!open && maxGrade(host,id)<1)return false;
+        data.putBoolean("domainOpen", !open);
         modifier.setModuleCustomData(id,data);
         sync(host,id);
         return true;
@@ -137,7 +159,7 @@ public final class ModuleGhostDomains {
 
     /** 框架修改层数后同步到模块数据，使换宿主和重载仍保留层数。 */
     public static void saveLayer(GhostModuleHost host, ResourceLocation id, int layer) {
-        if (host instanceof GhostModuleCustomDataModifier modifier && host.hasModule(id)) {
+        if (host instanceof GhostModuleCustomDataModifier modifier && host.hasModule(id) && layer>=minGrade(host,id) && layer<=maxGrade(host,id)) {
             var data = modifier.getModuleCustomData(id);data.putInt("domainLayer",layer);modifier.setModuleCustomData(id,data);
         }
     }

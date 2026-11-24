@@ -28,6 +28,10 @@ public final class ModuleGhostDomainBehavior implements GhostDomainBehavior {
     private int automationTicks;
     private GhostDomainSettings settings=GhostDomainSettings.DEFAULT;
     private CompoundTag settingsTag;
+    /** 管理器同样校验模块成长上限，命令不能绕过能力入口限制。 */
+    @Override public int maxGrade(){return ModuleGhostDomains.maxGrade(host,module);}
+    /** 默认等级不受成长门槛或强度降低影响。 */
+    @Override public int minGrade(){return definition.minGrade();}
     /** 分层是模块声明的能力，等级高并不意味着拥有多个独立层。 */
     @Override public boolean supportsLayering() { return definition.layered(); }
     /** 配置只在变化时重新解码，边界检查不会为每个实体反复解析完整配置。 */

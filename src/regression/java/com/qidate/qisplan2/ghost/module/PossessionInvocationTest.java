@@ -57,6 +57,7 @@ public final class PossessionInvocationTest {
         PianoSuppressionTest.run();
         SuppressionSleepTest.run();
         ModuleDomainTest.run();
+        DomainGrowthTest.run();
         DomainConfigurationTest.run();
         DomainConflictTest.run();
         DomainEffectExtensionTest.run();

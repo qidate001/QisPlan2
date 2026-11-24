@@ -12,7 +12,11 @@ import net.minecraft.world.entity.Entity;
 import java.util.Set;
 
 public interface GhostDomainBehavior {
-    /** 默认鬼域仅有等级，不提供实体分层。 */
+    /** 默认沿用框架等级范围，模块适配器可提供更低的实时成长上限。 */
+    default int maxGrade(){return 10;}
+    /** 成长型模块可声明自身天生的最低等级。 */
+    default int minGrade(){return 1;}
+    /** 是否允许独立空间分层。 */
     default boolean supportsLayering() { return false; }
 
     /** 普通跨界权限；未来强行入侵可在边界执行层增加独立的授权路径。 */

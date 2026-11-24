@@ -158,6 +158,8 @@ public final class GhostDomain {
 
     public void setLayer(int layer) {
 
+        if(layer<behavior.minGrade() || layer>behavior.maxGrade())throw new IllegalArgumentException("Domain grade exceeds module growth limit");
+
         if (layer < 1 || layer > 10) {
             throw new IllegalArgumentException(
                     "GhostDomain layer must be between 1 and 10."

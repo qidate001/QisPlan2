@@ -12,6 +12,7 @@ import com.qidate.qisplan2.ghost.module.domain.GhostDomainShaderEffect;
 import com.qidate.qisplan2.ghost.domain.shape.SphereDomainShape;
 import com.qidate.qisplan2.death.ModDamageTypes;
 
+import com.qidate.qisplan2.ghost.module.domain.GhostDomainGrowth;
 import java.util.Optional;
 import java.util.List;
 import java.util.ArrayList;
@@ -32,7 +33,7 @@ public final class GhostMistModule implements GhostModule {
     /** 鬼域属于本模块的身体；覆盖产生接触，额外感知由声明决定。 */
     @Override public Optional<GhostDomainDefinition> domainDefinition() {
         return Optional.of(new GhostDomainDefinition(80, 1, true, SphereDomainShape::new,
-                true, false, 20, true, true, List.of(new GhostDomainShaderEffect(ID, "GhostMist"))));
+                true, false, 20, true, true, List.of(new GhostDomainShaderEffect(ID, "GhostMist"))).withGrowth(GhostDomainGrowth.STANDARD));
     }
 
     /**
