@@ -28,10 +28,12 @@ public final class ModuleGhostDomainBehavior implements GhostDomainBehavior {
     private int automationTicks;
     private GhostDomainSettings settings=GhostDomainSettings.DEFAULT;
     private CompoundTag settingsTag;
+    /** 分层是模块声明的能力，等级高并不意味着拥有多个独立层。 */
+    @Override public boolean supportsLayering() { return definition.layered(); }
     /** 配置只在变化时重新解码，边界检查不会为每个实体反复解析完整配置。 */
     private GhostDomainSettings settings() {
         var next=((GhostModuleCustomDataModifier)host).getModuleCustomData(module).getCompound(GhostDomainSettings.KEY);
-        if(!next.equals(settingsTag)){settingsTag=next.copy();settings=GhostDomainSettings.read(((GhostModuleCustomDataModifier)host).getModuleCustomData(module));}
+        if(!next.equals(settingsTag)){settingsTag=next.copy();settings=GhostDomainSettings.read(((GhostModuleCustomDataModifier)host).getModuleCustomData(module), definition.defaultSettings());}
         return settings;
     }
     /** 来源自身不受自己鬼域的进出限制，其余实体由配置分类判断。 */
@@ -41,7 +43,7 @@ public final class ModuleGhostDomainBehavior implements GhostDomainBehavior {
         return access.allows(facts.group(),facts.name(),facts.type());
     }
     /** 每秒执行一次自动化；按列表顺序第一条匹配规则生效，避免多个分层规则反复争抢目标。 */
-    private void automate(Set<Entity> entities) {
+    private void automate(ServerLevel level, GhostDomain domain, Set<Entity> entities) {
         if(++automationTicks<20)return;automationTicks=0;
         var rules=settings().rules();if(rules.isEmpty())return;
         var definition=GhostModuleRegistry.get(module);if(definition==null)return;
@@ -53,8 +55,9 @@ public final class ModuleGhostDomainBehavior implements GhostDomainBehavior {
                 if(!rule.enabled() || allowed.stream().noneMatch(a->a.ability().equals(rule.ability()))
                         || !GhostDomainSettings.matches(rule.targets(),facts.group(),facts.name(),facts.type(),true))continue;
                 if(!host.hasModule(module))return;
-                GhostAbilityExecutor.tryExecuteWithResult(new GhostAbilityContext(host,module,rule.ability(),
-                        GhostAbilityContext.Source.CONTINUATION,null,()->{},new GhostTargetParameters(target)));
+                GhostDomainInfluenceScope.run(GhostDomainManager.get(level).influence(domain,target), () ->
+                        GhostAbilityExecutor.tryExecuteWithResult(new GhostAbilityContext(host,module,rule.ability(),
+                        GhostAbilityContext.Source.CONTINUATION,null,()->{},new GhostTargetParameters(target))));
                 break;
             }
         }
@@ -76,7 +79,7 @@ public final class ModuleGhostDomainBehavior implements GhostDomainBehavior {
     /** 对有效覆盖集合发出接触、看见及周期曝光，能力仍经过模块执行器。 */
     @Override public void onTick(ServerLevel level,GhostDomain domain,Set<Entity> entities) {
         if (!sourcePresent(level,domain)) return;
-        automate(entities);
+        automate(level,domain,entities);
         if(!sourcePresent(level,domain))return;
         var source=GhostEnvironmentAdapters.bearer(host);
         boolean exposure=definition.exposureInterval()>0 && ++elapsed>=definition.exposureInterval();
@@ -85,6 +88,10 @@ public final class ModuleGhostDomainBehavior implements GhostDomainBehavior {
             if(!(entity instanceof LivingEntity target) || !target.isAlive()) continue;
             if(!sourcePresent(level,domain)) break;
 
+            double weight=GhostDomainManager.get(level).influence(domain,target);
+            if(weight<=0)continue;
+            final boolean exposeNow=exposure;
+            GhostDomainInfluenceScope.run(weight,()->{
             if(target != source) {
                 if(definition.touch()) GhostContactEvents.sample(host, source, target);
                 if(definition.sight()) {
@@ -97,7 +104,8 @@ public final class ModuleGhostDomainBehavior implements GhostDomainBehavior {
                     }
                 }
             }
-            if(exposure) GhostModuleRuntime.dispatch(host, new GhostDomainExposureEvent(domain.getId(), source, target, domain.getStrength()));
+            if(exposeNow) GhostModuleRuntime.dispatch(host, new GhostDomainExposureEvent(domain.getId(), source, target, domain.getStrength()));
+            });
         }
     }
     /** 世界管理器移除鬼域时同步撤销快速索引。 */

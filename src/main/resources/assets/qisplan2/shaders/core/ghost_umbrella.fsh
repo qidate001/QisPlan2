@@ -1,5 +1,7 @@
 #version 150
 
+#moj_import "qisplan2:domain_conflict.glsl"
+
 uniform sampler2D DiffuseSampler;
 uniform sampler2D MainDepthSampler;
 uniform sampler2D GhostUmbrellaRegionIdentity;
@@ -298,9 +300,7 @@ void main() {
 
             if (visibleExit > tEnter) {
 
-                float domainLength =
-                    visibleExit
-                    - tEnter;
+                float domainLength = qisConflictLength(rayStart, rayDirection, tEnter, visibleExit);
 
 
                 // =================================================

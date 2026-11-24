@@ -1,5 +1,6 @@
 package com.qidate.qisplan2.ghost.module;
 
+import com.qidate.qisplan2.ghost.domain.GhostDomainInfluenceScope;
 import com.qidate.qisplan2.ghost.module.ability.GhostAbilityContext;
 import com.qidate.qisplan2.ghost.module.ability.GhostAbilityExecutor;
 import com.qidate.qisplan2.ghost.module.data.GhostModuleData;
@@ -159,14 +160,14 @@ public record GhostRuleContext(
                 ruleId,
                 targetId,
                 type,
-                intensity,
+                intensity * GhostDomainInfluenceScope.weight(),
                 getInfluenceSourceId(),
                 influenceSession.getBatchId()
         );
 
         influenceSession.submit(
                 influence,
-                acceptedEffect,
+                GhostDomainInfluenceScope.capture(acceptedEffect),
                 deadlockedEffect
         );
     }

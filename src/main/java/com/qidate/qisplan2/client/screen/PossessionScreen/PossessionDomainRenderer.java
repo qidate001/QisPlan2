@@ -50,7 +50,7 @@ public final class PossessionDomainRenderer {
         var module = GhostModuleRegistry.get(id);
         panel = module.domainPanel();
 
-        settings = GhostDomainSettings.read(host.getModuleCustomData(id)); enterGroups=settings.enter().groups();leaveGroups=settings.leave().groups();
+        settings = GhostDomainSettings.forModule(id,host.getModuleCustomData(id)); enterGroups=settings.enter().groups();leaveGroups=settings.leave().groups();
         enterWhite = field(124,119,133,"whitelist"); enterBlack=field(124,137,133,"blacklist");
         leaveWhite = field(124,241,133,"whitelist"); leaveBlack=field(124,259,133,"blacklist");
         targets = field(273,260,207,"targets_hint");
@@ -67,7 +67,7 @@ public final class PossessionDomainRenderer {
                 .filter(m -> m != null && m.domainDefinition().isPresent()).toList();
         if (modules.isEmpty()) { selected = null; fields.clear(); return null; }
         if (selected == null || modules.stream().noneMatch(m -> m.getId().equals(selected))) select(modules.getFirst().getId());
-        settings=GhostDomainSettings.read(host.getModuleCustomData(selected));
+        settings=GhostDomainSettings.forModule(selected,host.getModuleCustomData(selected));
         selectedRule = Math.min(selectedRule,settings.rules().size()-1);
         moduleScroll = Math.clamp(moduleScroll, 0, Math.max(0, modules.size() - 5));
         ruleScroll = Math.clamp(ruleScroll, 0, Math.max(0, settings.rules().size() - 5));
@@ -145,6 +145,7 @@ public final class PossessionDomainRenderer {
         String[] common={"toggle","domain_up","domain_down","self_up","self_down"};
         for(int i=0;i<common.length;i++){
             String key=common[i];if(!panel.common().containsKey(key))continue;
+            if(key.startsWith("self_") && !module.domainDefinition().orElseThrow().layered())continue;
             int x=i==0?15:15+((i-1)%2)*48,y=i==0?77:101+((i-1)/2)*23,w=i==0?94:45;
             button(g,x,y,w,20,text(key),false,()->send("common",key,0,"",""));
         }

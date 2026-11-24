@@ -1,5 +1,6 @@
 package com.qidate.qisplan2.ghost.domain;
 
+import net.minecraft.world.phys.Vec3;
 import net.minecraft.core.BlockPos;
 
 import com.qidate.qisplan2.QisPlan2;
@@ -18,6 +19,32 @@ public final class GhostDomainManager {
 
     private static final Map<ServerLevel, GhostDomainManager>
             MANAGERS = new WeakHashMap<>();
+
+    private GhostDomainConflict.Result conflict=GhostDomainConflict.solve(List.of());
+    private long conflictVersion=Long.MIN_VALUE;
+    private boolean refreshingConflict;
+    /** 缓存一份全域结果；原始参数不变时不运行成对计算或刷新实体索引。 */
+    public GhostDomainConflict.Result conflict() {
+        refreshConflict();
+        return conflict;
+    }
+    private void refreshConflict() {
+        if(refreshingConflict || conflictVersion==GhostDomain.changeVersion())return;
+        refreshingConflict=true;
+        try {
+            conflict=GhostDomainConflict.solve(domains.values().stream().map(GhostDomain::conflictNode).toList());
+            conflictVersion=GhostDomain.changeVersion();
+            for(var domain:domains.values())domain.applyConflictRadius(conflict.radius(domain.getId()));
+            for(var domain:List.copyOf(domains.values()))GhostDomainEntityTracker.get(level).updateDomain(domain);
+        } finally { refreshingConflict=false; }
+    }
+    /** 一个位置可以属于多个同级交界域；单域查询仅用于旧界面代表值。 */
+    public boolean owns(GhostDomain domain,double x,double y,double z) {
+        return conflict().owns(domain.getId(),new Vec3(x,y,z));
+    }
+    public double influence(GhostDomain domain,Entity entity) {
+        return conflict().weight(domain.getId(),entity.position());
+    }
 
     private final ServerLevel level;
 
@@ -109,6 +136,8 @@ public final class GhostDomainManager {
     public void add(GhostDomain domain) {
 
         domains.put(domain.getId(), domain);
+        conflictVersion=Long.MIN_VALUE;
+        refreshConflict();
 
         GhostDomainEntityTracker.get(level)
                 .updateDomain(domain);
@@ -160,6 +189,8 @@ public final class GhostDomainManager {
          * 清理 Source Region 缓存
          * ========================================================
          */
+        conflictVersion=Long.MIN_VALUE;
+        refreshConflict();
         sourceRegionIds.remove(
                 domain.getId()
         );
@@ -272,6 +303,7 @@ public final class GhostDomainManager {
                     createDomainAABB(domain);
 
             domain.setPosition(x, y, z);
+        refreshConflict();
 
             GhostDomainEntityTracker.get(level)
                     .updateDomain(
@@ -298,7 +330,7 @@ public final class GhostDomainManager {
         double threshold =
                 domain.getUpdateDistance();
 
-        if (distanceSquared < threshold * threshold) {
+        if (distanceSquared == 0 || distanceSquared < threshold * threshold) {
             return;
         }
 
@@ -306,6 +338,7 @@ public final class GhostDomainManager {
                 createDomainAABB(domain);
 
         domain.setPosition(x, y, z);
+        refreshConflict();
 
         GhostDomainEntityTracker.get(level)
                 .updateDomain(
@@ -397,6 +430,7 @@ public final class GhostDomainManager {
         }
 
         domain.setLayer(layer);
+        refreshConflict();
         domain.getBehavior().onDomainLayerChanged(level,domain);
 
         GhostDomainEntityTracker
@@ -424,6 +458,7 @@ public final class GhostDomainManager {
     public void syncUpdate(
             GhostDomain domain
     ) {
+        refreshConflict();
         if (!domains.containsKey(domain.getId())) {
             return;
         }
@@ -455,7 +490,7 @@ public final class GhostDomainManager {
 
         for (GhostDomain domain : domains.values()) {
 
-            if (!domain.contains(x, y, z)) {
+            if (!owns(domain,x, y, z)) {
                 continue;
             }
 
@@ -601,6 +636,7 @@ public final class GhostDomainManager {
     }
 
     public void tick() {
+        refreshConflict();
 
         /*
          * ============================================================
@@ -664,7 +700,11 @@ public final class GhostDomainManager {
              * Behavior 周期行为
              * ========================================================
              */
-            tickBehavior(domain);
+        }
+        // 先完成所有来源的位置更新，再统一派发行为，避免遍历顺序影响当帧归属。
+        refreshConflict();
+        for (GhostDomain domain : new ArrayList<>(domains.values())) {
+            if (domain.getRadius() > 0) tickBehavior(domain);
         }
 
         /*

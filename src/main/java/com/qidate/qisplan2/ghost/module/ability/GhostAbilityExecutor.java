@@ -1,5 +1,6 @@
 package com.qidate.qisplan2.ghost.module.ability;
 
+import com.qidate.qisplan2.ghost.domain.GhostDomainInfluenceScope;
 import com.qidate.qisplan2.ghost.module.*;
 import java.util.List;
 import java.util.Objects;
@@ -264,6 +265,6 @@ public final class GhostAbilityExecutor {
         }
 
         // 仅准备任务，不在此处执行能力效果。
-        return () -> tryExecute(context);
+        return GhostDomainInfluenceScope.capture(() -> tryExecute(context));
     }
 }

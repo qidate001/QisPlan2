@@ -102,13 +102,13 @@ public record GhostDomainAddPayload(
                 instanceof SphereDomainShape sphere) {
 
             shapeType = SHAPE_SPHERE;
-            radius = sphere.getRadius();
+            radius = domain.getBaseRadius();
 
         } else if (domain.getShape()
                 instanceof CylinderDomainShape cylinder) {
 
             shapeType = SHAPE_CYLINDER;
-            radius = cylinder.getRadius();
+            radius = domain.getBaseRadius();
         }
 
         return new GhostDomainAddPayload(

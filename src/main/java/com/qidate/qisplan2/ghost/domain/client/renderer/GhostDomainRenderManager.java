@@ -79,6 +79,7 @@ public final class GhostDomainRenderManager {
          * - 判断摄像机到可见表面的射线
          * - 计算灵异隔绝空间
          */
+        GhostDomainConflictTextures.prepare();
         GhostDomainRenderPipeline.prepareDepth();
 
         /*

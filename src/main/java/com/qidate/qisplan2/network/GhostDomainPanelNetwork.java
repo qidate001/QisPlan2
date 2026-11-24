@@ -38,7 +38,7 @@ public final class GhostDomainPanelNetwork {
         else if(p.action().equals("ability")){
             var id=ResourceLocation.tryParse(p.key());if(id!=null&&panel.buttons().stream().limit(5).anyMatch(id::equals))ability=id;
         }else {
-            var custom=host.getModuleCustomData(p.module());var settings=GhostDomainSettings.read(custom);
+            var custom=host.getModuleCustomData(p.module());var settings=GhostDomainSettings.forModule(p.module(),custom);
             var enter=settings.enter();var leave=settings.leave();var rules=new ArrayList<>(settings.rules());
             switch(p.action()){
                 case "enter" -> enter=new GhostDomainSettings.Access(p.value(),p.text(),p.extra());

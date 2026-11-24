@@ -33,7 +33,7 @@ public final class GhostDomainAdapters {
             }
             /** 自动化与其他调用共用绝对分层出口，不允许作用于其他鬼域的目标。 */
             public boolean setTargetLayer(LivingEntity target,int value) {
-                if(value<1 || value>layer() || !contains(target))return false;
+                if(current()==null || !current().getBehavior().supportsLayering() || value<1 || value>layer() || !contains(target))return false;
                 if(GhostLayerHandler.getLayer(target)!=value)GhostLayerHandler.setLayer(target,value);
                 return true;
             }
@@ -58,20 +58,20 @@ public final class GhostDomainAdapters {
                 if(domain==null) { ModuleGhostDomains.saveLayer(host,moduleId,value);return true; }
                 if(domain.getLayer()==value)return true;
                 GhostDomainManager.get(level).updateLayer(domain.getId(), value);
-                if(source != null) GhostLayerHandler.setLayer(source, value);
+                if(source != null && domain.getBehavior().supportsLayering()) GhostLayerHandler.setLayer(source, value);
                 return true;
             }
             /** 读取作用来源当前层数。 */
             public int occupiedLayer() { return source == null ? 0 : GhostLayerHandler.getLayer(source); }
             /** 设置来源所在层数。 */
             public boolean setOccupiedLayer(int value) {
-                if (source == null || !exists() || value < 1 || value > layer() || value == occupiedLayer()) return false;
+                if (source == null || !exists() || !current().getBehavior().supportsLayering() || value < 1 || value > layer() || value == occupiedLayer()) return false;
                 GhostLayerHandler.setLayer(source, value); return true;
             }
             /** 视线移动由具备输入的世界对象实现。 */
             public boolean teleportToAim() { return source instanceof ServerPlayer player && GhostDomainTeleportHandler.teleport(player, current()); }
             /** 调整当前鬼域实际覆盖的指向目标。 */
-            public boolean shiftTargetLayer(int delta) { return source instanceof ServerPlayer player && GhostDomainLayerHandler.changeLayer(player, delta, current()); }
+            public boolean shiftTargetLayer(int delta) { return current()!=null && current().getBehavior().supportsLayering() && source instanceof ServerPlayer player && GhostDomainLayerHandler.changeLayer(player, delta, current()); }
             /** 重启操作仍由统一重启系统实施，层数门槛归模块媒介定义。 */
             public boolean toggleReboot() {
                 if (!(source instanceof ServerPlayer player) || !exists()) return false;

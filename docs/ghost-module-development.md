@@ -1221,3 +1221,21 @@ public GhostBehavior behavior() {
 | 技能目录与网络 | `ghost/module/ability/GhostAbilityCatalog.java`、`network/GhostAbilityNetwork.java` |
 | 轮盘 | `client/screen/AbilityWheelScreen.java`、`AbilityWheelLayout.java` |
 | 宿主承载 | `ghost/bearing/`；另见本文关联的承载文档 |
+
+### 鬼域等级、分层与空间对抗
+
+`GhostDomainDefinition` 的 `initialLayer` / 存档 `domainLayer` 保留兼容名称，含义是鬼域等级（1～10）。等级参与对抗，并不自动提供多个可进入的层。默认 `layered=false`；需要分层时在声明后调用 `.withLayering(true)`，目前只有鬼眼声明此能力。非分层鬼域的占据层上限为 1，目标分层、来源分层和旧热键均检查此声明。
+
+新实例默认所有分类允许进入、禁止离开。模块可用 `.withDefaults(new GhostDomainSettings(enter, leave, rules))` 声明自己的默认权限及自动化；已有实例已保存的设置优先，不被新默认值覆盖。
+
+框架以 `GhostDomainConflict.Node` 的原始范围、来源位置、等级、强度和形状求解。模块不判断玩家、实体或物品宿主，也不参与双方身份区分。`GhostDomainManager.conflict()` 缓存结果，输入变化才重新求解；范围从原始值计算，不把上一帧的受压范围再次当作原始范围。
+
+- 嵌套低等级内域：`floor(原始范围 / 2^等级差 × 内域强度/外域强度)`，不超过原始范围；差三级完全压制。高等级内域保留原始范围。同级嵌套双方按相对强度收缩。
+- 外部同级交界：双方保留范围，交界处各自影响强度为 `自身强度 / 参与同级域强度之和`。
+- 外部不同级、差距小于三级：低等级域严格使用 `(原始范围 - 原始范围/2^等级差 × 自身强度/双方强度之和) × 覆盖面积占比`。无交集时不执行此式。覆盖面积按水平投影圆交集计算；球体三维完全分离时不算交叠。
+- 外部差三级：只扣除低等级域的交界领地；来源一旦进入高三级域，则整个域完全压制。已完全压制的域不再压制第三域。
+- 双方来源互相在原始范围内时，用较小原始范围作为内域；范围相同则较低等级作为内域，同形同级保持对称交界。
+
+`Result.owns` 决定实际领地，`weight` 决定当地有效强度。内域从外域中挖出领地，外域不能在内域中发出接触或曝光。边界检测用真实球体/圆柱交点，内部挖空边缘不当成外域禁出边界。能力效果经影响执行器应用局部倍率，模块持久强度不变；延迟裁决捕获产生事实时的倍率。
+
+客户端使用同一求解器，网络同步原始范围。标准渲染效果共享 `DomainConflictGeometry`、`DomainConflictCuts`、`DomainConflictCount`、`DomainConflictIndex`；`domain_conflict.glsl` 沿视线按球体/圆柱交点分段积分实际归属与强度，外域不会在内域段渲染，内域外的外域段仍可见。专属效果参数前缀继续由模块效果声明负责，公共流水线不列举厉鬼类型。新增自定义后处理应复用该空间契约，不能仅按相机当前所在鬼域做全屏覆盖。

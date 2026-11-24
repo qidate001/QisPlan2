@@ -17,11 +17,15 @@ public final class GhostDomainBoundary {
         Vec3 from=entity.position();
         for(var domain:GhostDomainEntityTracker.get(level).movementCandidates(from,to)) {
             if(entity.getUUID().equals(domain.getSourceUUID()) || !domain.getBehavior().sourcePresent(level,domain))continue;
-            boolean inside=domain.contains(from.x,from.y,from.z),after=domain.contains(to.x,to.y,to.z);
-            boolean through=!inside && !after && domain.getShape().intersectsSegment(domain.getX(),domain.getY(),domain.getZ(),from,to);
-            if(inside==after&&!through)continue;
-            if(denied(inside,after,through,domain.getBehavior().permitsCrossing(level,domain,entity,true),
-                    domain.getBehavior().permitsCrossing(level,domain,entity,false)))return true;
+            var result=GhostDomainManager.get(level).conflict();
+            // 自己成功展开的内域可以携带源头移动，不能重新被外域的离开限制锁住。
+            boolean ownTerritory=GhostDomainManager.get(level).getDomains().stream().anyMatch(own ->
+                    own.getSourceUUID().equals(entity.getUUID()) && result.radius(own.getId())>0
+                            && result.cuts(domain.getId(),own.getId()) && result.owns(own.getId(),from));
+            if(ownTerritory)continue;
+            int crossings=result.crossings(domain.getId(),from,to);
+            if((crossings&1)!=0&&!domain.getBehavior().permitsCrossing(level,domain,entity,true)
+                    ||(crossings&2)!=0&&!domain.getBehavior().permitsCrossing(level,domain,entity,false))return true;
         }
         return false;
     }
@@ -31,7 +35,7 @@ public final class GhostDomainBoundary {
         if(entity.level()==transition.newLevel())return blocked(entity,transition.pos());
         var level=transition.newLevel();var pos=transition.pos();
         for(var domain:GhostDomainEntityTracker.get(level).movementCandidates(pos,pos)) {
-            if(entity.getUUID().equals(domain.getSourceUUID())||!domain.contains(pos.x,pos.y,pos.z)
+            if(entity.getUUID().equals(domain.getSourceUUID())||!GhostDomainManager.get(level).owns(domain,pos.x,pos.y,pos.z)
                     ||!domain.getBehavior().sourcePresent(level,domain))continue;
             if(!domain.getBehavior().permitsCrossing(level,domain,entity,true))return true;
         }

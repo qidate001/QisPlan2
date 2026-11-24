@@ -1,11 +1,14 @@
 package com.qidate.qisplan2.ghost.domain.client;
 
+import com.qidate.qisplan2.ghost.domain.GhostDomainConflict;
 import com.qidate.qisplan2.QisPlan2;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.resources.ResourceLocation;
 import net.neoforged.neoforge.client.event.ClientTickEvent;
 
+import java.util.List;
+import com.qidate.qisplan2.ghost.domain.client.renderer.GhostDomainConflictTextures;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedHashMap;
@@ -17,6 +20,18 @@ public final class ClientGhostDomainManager {
     private static final Map<UUID, ClientGhostDomain> DOMAINS =
             new LinkedHashMap<>();
 
+    private static List<GhostDomainConflict.Node> conflictInputs=List.of();
+    private static GhostDomainConflict.Result conflict=
+            GhostDomainConflict.solve(List.of());
+    /** 同一输入只求解一次；图形效果和空间查询复用结果。 */
+    public static GhostDomainConflict.Result conflict() {
+        var inputs=DOMAINS.values().stream().map(ClientGhostDomain::conflictNode).toList();
+        if(!inputs.equals(conflictInputs)) {
+            conflictInputs=inputs;conflict=GhostDomainConflict.solve(inputs);
+        }
+        for(var domain:DOMAINS.values())domain.applyConflictRadius(conflict.radius(domain.getId()));
+        return conflict;
+    }
     private static ResourceLocation LAST_DIMENSION;
 
     private ClientGhostDomainManager() {
@@ -66,6 +81,7 @@ public final class ClientGhostDomainManager {
             domain.tick();
         }
 
+        conflict();
         DOMAINS.values().removeIf(
                 ClientGhostDomain::isAnimationFinished
         );
@@ -170,6 +186,8 @@ public final class ClientGhostDomainManager {
 
     public static void clear() {
         DOMAINS.clear();
+        conflictInputs=List.of();conflict=GhostDomainConflict.solve(List.of());
+        GhostDomainConflictTextures.clear();
     }
 
     private static ResourceLocation getCurrentDimension() {

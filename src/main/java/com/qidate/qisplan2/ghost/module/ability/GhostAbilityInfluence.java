@@ -1,5 +1,6 @@
 package com.qidate.qisplan2.ghost.module.ability;
 
+import com.qidate.qisplan2.ghost.domain.GhostDomainInfluenceScope;
 import java.util.function.DoublePredicate;
 import com.qidate.qisplan2.ghost.module.influence.GhostInfluence;
 import com.qidate.qisplan2.ghost.module.influence.GhostInfluenceCollector;
@@ -36,7 +37,7 @@ public record GhostAbilityInfluence(UUID target, GhostInfluenceType type, double
     public boolean resolve(GhostInfluenceSession session, GhostAbilityContext context, BooleanSupplier effect) {
         boolean[] result = {false};
         session.submit(new GhostInfluence(context.host(), context.moduleId(), context.abilityId(), target,
-                type, intensity, session.getSourceId(context.host(), context.moduleId()), session.getBatchId()),
+                type, intensity * GhostDomainInfluenceScope.weight(), session.getSourceId(context.host(), context.moduleId()), session.getBatchId()),
                 () -> result[0] = effect.getAsBoolean());
         session.resolveAndApply();
         return result[0];

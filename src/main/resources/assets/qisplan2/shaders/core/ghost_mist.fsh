@@ -1,5 +1,7 @@
 #version 150
 
+#moj_import "qisplan2:domain_conflict.glsl"
+
 uniform sampler2D DiffuseSampler;
 uniform sampler2D MainDepthSampler;
 uniform sampler2D GhostMistRegionIdentity;
@@ -498,9 +500,7 @@ void main() {
                 > fogStart
             ) {
 
-                float fogLength =
-                    visibleExit
-                    - fogStart;
+                float fogLength = qisConflictLength(rayStart, rayDirection, fogStart, visibleExit);
 
 
                 /*

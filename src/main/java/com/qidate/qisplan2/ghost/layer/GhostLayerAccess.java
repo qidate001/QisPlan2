@@ -30,7 +30,7 @@ public final class GhostLayerAccess {
             int layer
     ) {
         return canEnter(entity, domain)
-                && layer <= domain.getLayer();
+                && layer <= domain.maxOccupiedLayer();
     }
 
     /**
@@ -44,6 +44,6 @@ public final class GhostLayerAccess {
             return 0;
         }
 
-        return domain.getLayer();
+        return domain.maxOccupiedLayer();
     }
 }

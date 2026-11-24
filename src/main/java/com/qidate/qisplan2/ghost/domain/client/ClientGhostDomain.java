@@ -1,5 +1,7 @@
 package com.qidate.qisplan2.ghost.domain.client;
 
+import net.minecraft.world.phys.Vec3;
+import com.qidate.qisplan2.ghost.domain.GhostDomainConflict;
 import com.qidate.qisplan2.ghost.domain.shape.CylinderDomainShape;
 import com.qidate.qisplan2.ghost.domain.GhostDomainShape;
 import com.qidate.qisplan2.ghost.domain.shape.SphereDomainShape;
@@ -48,6 +50,18 @@ public final class ClientGhostDomain {
     private double strength;
     private int layer;
     private double radius;
+    private double conflictRadius;
+    /** 原始网络半径与对抗后的范围分别保存，客户端不累乘缩小。 */
+    public double getBaseRadius() { return radius; }
+    public GhostDomainConflict.Node conflictNode() {
+        return new GhostDomainConflict.Node(id,
+                new Vec3(x,y,z),radius,strength,layer,shape instanceof SphereDomainShape ? 1 : 0);
+    }
+    public void applyConflictRadius(double value) {
+        conflictRadius=value;
+        if(shape instanceof SphereDomainShape sphere)sphere.setRadius(value);
+        else if(shape instanceof CylinderDomainShape cylinder)cylinder.setRadius(value);
+    }
 
     /**
      * 鬼域视觉动画状态。
@@ -120,6 +134,7 @@ public final class ClientGhostDomain {
         }
 
         this.radius = radius;
+        this.conflictRadius = radius;
     }
 
     public UUID getId() {
@@ -174,7 +189,7 @@ public final class ClientGhostDomain {
     }
 
     public double getRadius() {
-        return radius;
+        return conflictRadius;
     }
 
     /**
@@ -183,7 +198,7 @@ public final class ClientGhostDomain {
      * <p>不会影响鬼域本身的实际逻辑半径。</p>
      */
     public double getRenderRadius() {
-        return radius * animationProgress;
+        return conflictRadius * animationProgress;
     }
 
     public boolean isAnimationFinished() {
@@ -201,6 +216,7 @@ public final class ClientGhostDomain {
     public void setRadius(double radius) {
 
         this.radius = radius;
+        this.conflictRadius = radius;
 
         if (shape instanceof CylinderDomainShape cylinder) {
             cylinder.setRadius(radius);
@@ -363,7 +379,7 @@ public final class ClientGhostDomain {
             double y,
             double z
     ) {
-        return shape.contains(
+        return conflictRadius>0 && ClientGhostDomainManager.conflict().owns(id,new Vec3(x,y,z)) && shape.contains(
                 this.x,
                 this.y,
                 this.z,

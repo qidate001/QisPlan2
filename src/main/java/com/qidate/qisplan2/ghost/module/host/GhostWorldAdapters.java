@@ -1,5 +1,6 @@
 package com.qidate.qisplan2.ghost.module.host;
 
+import com.qidate.qisplan2.ghost.domain.GhostDomainInfluenceScope;
 import java.util.function.BooleanSupplier;
 import java.nio.charset.StandardCharsets;
 
@@ -459,7 +460,7 @@ public final class GhostWorldAdapters {
                 var damage = new DamageSource(target.level().registryAccess().registryOrThrow(Registries.DAMAGE_TYPE)
                         .getHolderOrThrow(type), source());
                 if(source() instanceof AnimatedModularGhostEntity animated) animated.playVisualAction("attack");
-                return SupernaturalDeathHandler.tryKill(target, damage, intensity);
+                return SupernaturalDeathHandler.tryKill(target, damage, intensity * GhostDomainInfluenceScope.weight());
             }
 
             /**
@@ -526,7 +527,7 @@ public final class GhostWorldAdapters {
                 if (!validTarget(target) || !Float.isFinite(amount) || amount <= 0
                         || !host.suppression(id).canUseAbility(host.controlsIntrinsicModules())) return false;
                 return target.hurt(new DamageSource(level().registryAccess().registryOrThrow(Registries.DAMAGE_TYPE)
-                        .getHolderOrThrow(type), source()), amount);
+                        .getHolderOrThrow(type), source()), (float)(amount * GhostDomainInfluenceScope.weight()));
             }
             /** 对承担物理动作的身体施加停步代价，不向模块泄露载体身份。 */
             public void immobilizeSource() {

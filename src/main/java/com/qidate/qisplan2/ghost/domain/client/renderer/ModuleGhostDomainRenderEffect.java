@@ -32,6 +32,7 @@ public record ModuleGhostDomainRenderEffect(ResourceLocation domainType, Resourc
     /** sampler 名称来自模块声明，不靠其他 uniform 猜测需要哪张纹理。 */
     @Override
     public void setupSamplers(ShaderInstance shader, Minecraft minecraft, ClientGhostDomain domain) {
+        GhostDomainConflictTextures.bind(shader,domain.getId());
         shader.setSampler(prefix + "RegionIdentity", GhostIsolationRegionTarget.get().getColorTextureId());
     }
 

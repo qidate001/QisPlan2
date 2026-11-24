@@ -17,7 +17,7 @@ public final class GhostDomainLayerHandler {
         Entity target =
                 GhostDomainTargetHandler.getLookTarget(player);
 
-        if (target == null) {
+        if (target == null || selectedDomain == null || !selectedDomain.getBehavior().supportsLayering()) {
             return false;
         }
 
@@ -42,7 +42,7 @@ public final class GhostDomainLayerHandler {
                 currentLayer + delta;
 
         int maxLayer =
-                domain.getLayer();
+                domain.maxOccupiedLayer();
 
         if (newLayer < 1) {
             newLayer = 1;

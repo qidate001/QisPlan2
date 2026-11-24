@@ -326,7 +326,7 @@ public final class GhostDomainNetwork {
                         domain.getZ(),
                         domain.getStrength(),
                         domain.getLayer(),
-                        domain.getRadius(),
+                        domain.getBaseRadius(),
                         immediate
                 )
         );

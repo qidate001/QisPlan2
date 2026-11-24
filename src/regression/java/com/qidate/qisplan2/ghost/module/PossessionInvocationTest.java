@@ -58,6 +58,7 @@ public final class PossessionInvocationTest {
         SuppressionSleepTest.run();
         ModuleDomainTest.run();
         DomainConfigurationTest.run();
+        DomainConflictTest.run();
         DomainEffectExtensionTest.run();
         ModuleFrameworkTest.run();
         GhostModuleRegistry.register(new GhostModule() {

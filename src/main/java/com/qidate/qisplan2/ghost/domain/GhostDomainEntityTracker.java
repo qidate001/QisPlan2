@@ -407,7 +407,7 @@ public final class GhostDomainEntityTracker {
                 /*
                  * 位置判断
                  */
-                if (!domain.contains(
+                if (!manager.owns(domain,
                         entity.getX(),
                         entity.getY(),
                         entity.getZ()
@@ -632,6 +632,11 @@ public final class GhostDomainEntityTracker {
          */
         updateDomainSpatialIndex(domain);
 
+        // 收缩或被挖空后，旧成员也必须重新判定，不能只查询缩小后的 AABB。
+        for (UUID id : Set.copyOf(domainEntities.getOrDefault(domain.getId(), Set.of()))) {
+            Entity entity=level.getEntity(id);
+            if(entity!=null)update(entity);
+        }
         double radius =
                 domain.getRadius();
 
@@ -1113,38 +1118,8 @@ public final class GhostDomainEntityTracker {
     }
 
     /**
-     * 获取当前最终生效于指定鬼域的所有实体。
-     *
-     * <p>
-     * 与 {@link #getEntities(GhostDomain)} 不同，
-     * 这里不会返回仅仅与鬼域发生空间重叠、
-     * 但最终被其他更高优先级鬼域覆盖的实体。
-     * </p>
-     *
-     * <p>
-     * 一个实体可能同时处于多个鬼域。
-     * GhostDomainEntityTracker 会根据鬼域优先级，
-     * 在 {@code effectiveDomains} 中维护该实体最终生效的鬼域。
-     * </p>
-     *
-     * <p>
-     * 因此：
-     *
-     * <pre>
-     * getEntities(domain)
-     *     = 所有与该鬼域发生空间重叠的实体
-     *
-     * getEffectiveEntities(domain)
-     *     = 最终由该鬼域生效的实体
-     * </pre>
-     *
-     * <p>
-     * 这个方法只负责读取 Tracker 已经维护好的关系，
-     * 不会重新进行 AABB 搜索、鬼域范围判断或优先级计算。
-     * </p>
-     *
-     * @param domain 目标鬼域
-     * @return 当前最终生效于该鬼域的实体集合
+     * 返回当前真实归属于此域的实体。内域领地排除外域，同级交界可同时属于多个域。
+     * 复用成员索引与缓存空间求解结果，不再用单个代表鬼域过滤所有效果。
      */
     public Set<Entity> getEffectiveEntities(
             GhostDomain domain
@@ -1164,7 +1139,7 @@ public final class GhostDomainEntityTracker {
         Set<Entity> result =
                 new HashSet<>();
 
-        for (UUID entityId : entityIds) {
+        for (UUID entityId : Set.copyOf(entityIds)) {
 
             Entity entity =
                     level.getEntity(entityId);
@@ -1174,25 +1149,8 @@ public final class GhostDomainEntityTracker {
                 continue;
             }
 
-            /*
-             * effectiveDomains 已经由 Tracker
-             * 在实体进入、离开、切换鬼域时维护。
-             *
-             * 这里只读取最终结果，
-             * 不重新计算鬼域优先级。
-             */
-            GhostDomain effectiveDomain =
-                    getEffectiveDomain(entity);
-
-            if (effectiveDomain == null) {
-                continue;
-            }
-
-            if (!effectiveDomain.getId().equals(
-                    domain.getId()
-            )) {
-                continue;
-            }
+            // 参数变化可能使旧缓存尚未刷新；以共享空间结果作为最终校验。
+            if (!GhostDomainManager.get(level).owns(domain,entity.getX(),entity.getY(),entity.getZ())) continue;
 
             result.add(entity);
         }

@@ -244,3 +244,11 @@ tasks.register('attachmentItemSnapshotTest', JavaExec) {
     doFirst { workingDir.mkdirs() }
 }
 tasks.named('check') { dependsOn tasks.named('attachmentItemSnapshotTest') }
+
+// 需要图形驱动的显式验证任务；不强制无显示环境的 check 创建 OpenGL 上下文。
+tasks.register('domainShaderTest', JavaExec) {
+    dependsOn tasks.named('regressionClasses')
+    classpath = sourceSets.regression.runtimeClasspath
+    mainClass = 'com.qidate.qisplan2.ghost.module.DomainShaderTest'
+    args file('src/main/resources/assets/qisplan2/shaders/core').absolutePath
+}

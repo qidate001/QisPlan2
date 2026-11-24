@@ -203,7 +203,7 @@ public final class GhostEyeModule implements GhostModule {
     @Override
     public Optional<GhostDomainDefinition> domainDefinition() {
         return Optional.of(new GhostDomainDefinition(80, 1, true, SphereDomainShape::new,
-                true, true, 20, true, true, List.of(new GhostDomainShaderEffect(ID, "GhostEye"))));
+                true, true, 20, true, true, List.of(new GhostDomainShaderEffect(ID, "GhostEye"))).withLayering(true));
     }
 
     /** 鬼域页面从本模块声明生成，不要求界面认识具体厉鬼。 */

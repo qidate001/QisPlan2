@@ -1,5 +1,6 @@
 package com.qidate.qisplan2.ghost.module.host;
 
+import com.qidate.qisplan2.ghost.module.domain.GhostDomainSettings;
 import com.qidate.qisplan2.ghost.domain.*;
 import com.qidate.qisplan2.ghost.module.*;
 import com.qidate.qisplan2.ghost.module.domain.GhostDomainDefinition;
@@ -79,6 +80,7 @@ public final class ModuleGhostDomains {
         var entry = host.getModules().stream().filter(e -> e.id().equals(id)).findFirst().orElseThrow();
         if (!data.contains("domainStrength")) data.putDouble("domainStrength", entry.intensity());
         if (!data.contains("domainRadius")) data.putDouble("domainRadius", definition.radius());
+        if (!data.contains(GhostDomainSettings.KEY)) data = definition.defaultSettings().write(data);
         if (!data.contains("domainLayer")) data.putInt("domainLayer", definition.initialLayer());
         return data;
     }
@@ -107,7 +109,7 @@ public final class ModuleGhostDomains {
         var domain = new GhostDomain(UUID.randomUUID(), bearer == null ? UUID.randomUUID() : bearer.getUUID(), id,
                 finite(data.getDouble("domainStrength"),0), Math.clamp(data.getInt("domainLayer"),1,10),
                 radius, level.dimension(),position.x,position.y,position.z, definition.shape().apply(radius),
-                GhostDomainUpdateMode.DISTANCE, 3, new ModuleGhostDomainBehavior(host,id,definition));
+                GhostDomainUpdateMode.DISTANCE, 0, new ModuleGhostDomainBehavior(host,id,definition));
         INDEX.computeIfAbsent(key(host),ignored -> new HashMap<>()).put(id,new WeakReference<>(domain));
         GhostDomainManager.get(level).add(domain);
     }

@@ -1,5 +1,6 @@
 package com.qidate.qisplan2.ghost.domain;
 
+import net.minecraft.world.phys.Vec3;
 import com.qidate.qisplan2.ghost.domain.shape.CylinderDomainShape;
 import com.qidate.qisplan2.ghost.domain.shape.SphereDomainShape;
 import net.minecraft.resources.ResourceKey;
@@ -32,6 +33,27 @@ public final class GhostDomain {
      * 鬼域范围
      */
     private double radius;
+    private double conflictRadius;
+    private static long changes;
+    /** 任意原始参数变化时递增；稳定状态不重新求解对抗。 */
+    public static long changeVersion() { return changes; }
+    /** 声明的原始范围，网络与重新求解必须读取此值。 */
+    public double getBaseRadius() { return radius; }
+    /** 等级独立于是否分层；旧 getLayer 保留为等级读取兼容入口。 */
+    public int getGrade() { return layer; }
+    /** 非分层域即使等级很高，也只有一个可占据空间层。 */
+    public int maxOccupiedLayer() { return behavior.supportsLayering() ? layer : 1; }
+    /** 对抗结果只更新有效形状，不污染原始范围或触发下一轮缩小。 */
+    public void applyConflictRadius(double value) {
+        conflictRadius=value;
+        if(shape instanceof CylinderDomainShape cylinder)cylinder.setRadius(value);
+        else if(shape instanceof SphereDomainShape sphere)sphere.setRadius(value);
+    }
+    /** 提供不包含宿主类型的不可变几何快照。 */
+    public GhostDomainConflict.Node conflictNode() {
+        return new GhostDomainConflict.Node(id,new Vec3(x,y,z),radius,strength,layer,
+                shape instanceof SphereDomainShape ? 1 : 0);
+    }
 
     private double x;
     private double y;
@@ -62,7 +84,7 @@ public final class GhostDomain {
             double updateDistance,
             GhostDomainBehavior behavior
     ) {
-        if (strength < 0.0D) {
+        if (!Double.isFinite(strength) || strength < 0.0D) {
             throw new IllegalArgumentException(
                     "GhostDomain strength cannot be negative."
             );
@@ -77,10 +99,15 @@ public final class GhostDomain {
         this.id = id;
         this.sourceUUID = sourceUUID;
         this.type = type;
+        if(this.strength!=strength)changes++;
         this.strength = strength;
+        if(this.layer!=layer)changes++;
         this.layer = layer;
         this.radius = radius;
+        this.conflictRadius = radius;
+        changes++;
         this.dimension = dimension;
+        if(this.x!=x||this.y!=y||this.z!=z)changes++;
         this.x = x;
         this.y = y;
         this.z = z;
@@ -114,17 +141,18 @@ public final class GhostDomain {
     }
 
     public double getRadius() {
-        return radius;
+        return conflictRadius;
     }
 
     public void setStrength(double strength) {
 
-        if (strength < 0.0D) {
+        if (!Double.isFinite(strength) || strength < 0.0D) {
             throw new IllegalArgumentException(
                     "GhostDomain strength cannot be negative."
             );
         }
 
+        if(this.strength!=strength)changes++;
         this.strength = strength;
     }
 
@@ -136,6 +164,7 @@ public final class GhostDomain {
             );
         }
 
+        if(this.layer!=layer)changes++;
         this.layer = layer;
     }
 
@@ -148,6 +177,8 @@ public final class GhostDomain {
         }
 
         this.radius = radius;
+        this.conflictRadius = radius;
+        changes++;
 
         if (shape instanceof CylinderDomainShape cylinder) {
             cylinder.setRadius(radius);
@@ -200,6 +231,7 @@ public final class GhostDomain {
             double z
     ) {
 
+        if(this.x!=x||this.y!=y||this.z!=z)changes++;
         this.x = x;
         this.y = y;
         this.z = z;
@@ -212,7 +244,7 @@ public final class GhostDomain {
             double z
     ) {
 
-        return shape.contains(
+        return conflictRadius>0 && shape.contains(
                 this.x,
                 this.y,
                 this.z,

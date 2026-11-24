@@ -1,5 +1,6 @@
 package com.qidate.qisplan2.ghost.module.domain;
 
+import com.qidate.qisplan2.ghost.module.GhostModuleRegistry;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.Tag;
@@ -12,13 +13,14 @@ import java.util.Locale;
 public record GhostDomainSettings(Access enter, Access leave, List<Rule> rules) {
     public static final String KEY="qisplan2:domain_settings";
     public static final int MAX_RULES=64, MAX_TEXT=512;
-    public static final GhostDomainSettings DEFAULT=new GhostDomainSettings(Access.CLOSED,Access.CLOSED,List.of());
+    public static final GhostDomainSettings DEFAULT=new GhostDomainSettings(Access.OPEN,Access.CLOSED,List.of());
     /** 分类顺序为凡人、厉鬼、驭鬼者、普通实体，存档使用稳定标识，不保存翻译文本。 */
     public static final List<String> GROUPS=List.of("mortal","ghost","possessor","ordinary");
     /** 不可变规则快照使运行时可以安全缓存编译后的选择器。 */
     public GhostDomainSettings { rules=List.copyOf(rules); if(rules.size()>MAX_RULES)throw new IllegalArgumentException("Too many domain rules"); }
     /** 名称和实体资源 ID 以半角逗号分隔；黑名单优先，白名单其次，分类兜底。 */
     public record Access(int groups,String whitelist,String blacklist) {
+        public static final Access OPEN=new Access(15,"","");
         public static final Access CLOSED=new Access(0,"","");
         public Access { if((groups & ~15)!=0)throw new IllegalArgumentException("Invalid groups"); whitelist=bounded(whitelist);blacklist=bounded(blacklist); }
         /** 对预先分类的事实判断权限，禁止此数据对象读取宿主。 */
@@ -43,9 +45,18 @@ public record GhostDomainSettings(Access enter, Access leave, List<Rule> rules) 
         }
         return false;
     }
-    /** 从模块完整 customData 中读取；未配置时所有普通进出默认拒绝。 */
+    /** 页面、网络与运行时在未保存配置时使用同一个模块默认声明。 */
+    public static GhostDomainSettings forModule(ResourceLocation module,CompoundTag custom) {
+        var definition=GhostModuleRegistry.get(module);
+        return read(custom,definition==null?DEFAULT:definition.domainDefinition().map(GhostDomainDefinition::defaultSettings).orElse(DEFAULT));
+    }
+    /** 从模块完整 customData 中读取；未配置时采用声明默认值，已保存的设置保持不变。 */
     public static GhostDomainSettings read(CompoundTag custom) {
-        if(!custom.contains(KEY,Tag.TAG_COMPOUND))return DEFAULT;
+        return read(custom,DEFAULT);
+    }
+    /** 带模块默认值的解码入口，服务端和界面统一使用。 */
+    public static GhostDomainSettings read(CompoundTag custom,GhostDomainSettings defaults) {
+        if(!custom.contains(KEY,Tag.TAG_COMPOUND))return defaults;
         try {
             CompoundTag tag=custom.getCompound(KEY);List<Rule> rules=new ArrayList<>();
             ListTag list=tag.getList("rules",Tag.TAG_COMPOUND);
@@ -54,7 +65,7 @@ public record GhostDomainSettings(Access enter, Access leave, List<Rule> rules) 
                 if(id!=null)rules.add(new Rule(id,row.getString("targets"),row.getBoolean("enabled")));
             }
             return new GhostDomainSettings(readAccess(tag.getCompound("enter")),readAccess(tag.getCompound("leave")),rules);
-        } catch(IllegalArgumentException e) { return DEFAULT; }
+        } catch(IllegalArgumentException e) { return defaults; }
     }
     /** 解码一侧权限。 */
     private static Access readAccess(CompoundTag tag) { return new Access(tag.getInt("groups"),tag.getString("white"),tag.getString("black")); }

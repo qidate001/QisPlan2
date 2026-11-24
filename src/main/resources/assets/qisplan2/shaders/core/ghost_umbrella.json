@@ -13,6 +13,12 @@
     },
     {
       "name": "GhostUmbrellaRegionIdentity"
+    },
+    {
+      "name": "DomainConflictGeometry"
+    },
+    {
+      "name": "DomainConflictCuts"
     }
   ],
   "uniforms": [
@@ -21,10 +27,22 @@
       "type": "matrix4x4",
       "count": 16,
       "values": [
-        1.0, 0.0, 0.0, 0.0,
-        0.0, 1.0, 0.0, 0.0,
-        0.0, 0.0, 1.0, 0.0,
-        0.0, 0.0, 0.0, 1.0
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0
       ]
     },
     {
@@ -32,10 +50,22 @@
       "type": "matrix4x4",
       "count": 16,
       "values": [
-        1.0, 0.0, 0.0, 0.0,
-        0.0, 1.0, 0.0, 0.0,
-        0.0, 0.0, 1.0, 0.0,
-        0.0, 0.0, 0.0, 1.0
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0
       ]
     },
     {
@@ -88,6 +118,22 @@
       "count": 1,
       "values": [
         0.0
+      ]
+    },
+    {
+      "name": "DomainConflictCount",
+      "type": "int",
+      "count": 1,
+      "values": [
+        0
+      ]
+    },
+    {
+      "name": "DomainConflictIndex",
+      "type": "int",
+      "count": 1,
+      "values": [
+        -1
       ]
     }
   ]
