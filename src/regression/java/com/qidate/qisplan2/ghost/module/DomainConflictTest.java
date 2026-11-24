@@ -38,7 +38,12 @@ public final class DomainConflictTest {
         var shared=GhostDomainConflict.solve(List.of(a,b));Vec3 intersection=new Vec3(7.5,0,0);
         check(shared.weight(a.id(),intersection)==.25&&shared.weight(b.id(),intersection)==.75,"同级交界双方按强度分摊");
         check(shared.weight(a.id(),Vec3.ZERO)==1,"非交界强度保持完整");
-        check(GhostDomainConflict.edgeRadius(64,100,1000,1,.01)<.64,"严格原式：小覆盖比例仍整体乘到范围上");
+        double slight=GhostDomainConflict.edgeRadius(64,100,1000,1,.01);
+        double half=GhostDomainConflict.edgeRadius(64,100,1000,1,.5);
+        double almost=GhostDomainConflict.edgeRadius(64,100,1000,1,.99);
+        check(Math.abs(slight-60.48)<1e-9,"1%覆盖时保留99%的计算范围");
+        check(slight>half&&half>almost&&almost>0,"覆盖面积越大压制越高，剩余范围单调减少");
+        check(GhostDomainConflict.edgeRadius(64,100,1000,1,1)==0,"完全覆盖时剩余范围为零");
         var higher=node(2,15,10,300,3);var edge=GhostDomainConflict.solve(List.of(a,higher));
         check(edge.radius(a.id())>0&&edge.radius(a.id())<10,"外部低等级范围缩小");
         var reversed=GhostDomainConflict.solve(List.of(higher,a));
@@ -46,12 +51,12 @@ public final class DomainConflictTest {
         var gap=GhostDomainConflict.solve(List.of(a,node(2,15,10,300,5)));
         check(gap.radius(a.id())==10&&!gap.owns(a.id(),intersection)&&gap.owns(a.id(),Vec3.ZERO),"外部三级差仅覆盖交界");
         var separate=GhostDomainConflict.solve(List.of(a,node(2,30,10,300,3)));
-        check(separate.radius(a.id())==10,"无交集不执行原式");
+        check(separate.radius(a.id())==10,"无交集保留原始范围");
         var top=node(3,80,10,1000,8);var mid=node(2,80,100,300,5);var low=node(1,0,10,100,2);
         check(GhostDomainConflict.solve(List.of(top,mid,low)).radius(low.id())==10,"完全压制的中间域不能压制第三域");
         Runnable[] deferred={null};GhostDomainInfluenceScope.run(.25,()->deferred[0]=GhostDomainInfluenceScope.capture(
             ()->check(GhostDomainInfluenceScope.weight()==.25,"延迟事实保持本次倍率")));
         deferred[0].run();check(GhostDomainInfluenceScope.weight()==1,"作用域退出恢复倍率");
-        System.out.println("Domain conflict geometry, strict formula, defaults, layering and deferred weight checks passed");
+        System.out.println("Domain conflict geometry, overlap reduction, defaults, layering and deferred weight checks passed");
     }
 }

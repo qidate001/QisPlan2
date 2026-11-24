@@ -128,10 +128,10 @@ public final class GhostDomainConflict {
         double ratio=other>0?own/other:1;
         return Math.max(0,Math.min(radius,Math.floor(radius/Math.pow(2,difference)*ratio)));
     }
-    /** 严格采用用户确认的原式：(原始范围－压制量)×覆盖面积占比。无交集时不调用。 */
+    /** 外部交界范围：(原始范围－压制量)×未覆盖面积占比；覆盖越多，剩余范围越小。无交集时不调用。 */
     public static double edgeRadius(double radius,double own,double other,int difference,double covered){
         double share=own+other>0?own/(own+other):.5;
-        return Math.max(0,Math.min(radius,(radius-radius/Math.pow(2,difference)*share)*Math.clamp(covered,0,1)));
+        return Math.max(0,Math.min(radius,(radius-radius/Math.pow(2,difference)*share)*(1-Math.clamp(covered,0,1))));
     }
     /** 水平投影圆的精确交叠面积；球体垂直完全分离时没有交叠。 */
     public static double overlapArea(Node a,Node b){
