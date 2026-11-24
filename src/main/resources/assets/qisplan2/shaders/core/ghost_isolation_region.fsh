@@ -1,5 +1,7 @@
 #version 150
 
+#moj_import "qisplan2:isolation_visibility.glsl"
+
 uniform sampler2D MainDepthSampler;
 
 /*
@@ -407,6 +409,11 @@ void main() {
 
         vec3 cuboidMax = getCuboidMax(i);
 
+
+        // 无可见表面的远处区域不生成遮罩；区域内的相机仍受隔绝保护。
+        if (!isolationHasVisibleSurface(IsolationCameraPos, sceneWorldPos, depth, cuboidMin, cuboidMax)) {
+            continue;
+        }
 
         if (rayPassesThroughCuboid(
                 rayStart,
