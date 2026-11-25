@@ -52,7 +52,7 @@ public final class GhostDomain {
     /** 提供不包含宿主类型的不可变几何快照。 */
     public GhostDomainConflict.Node conflictNode() {
         return new GhostDomainConflict.Node(id,new Vec3(x,y,z),radius,strength,layer,
-                shape instanceof SphereDomainShape ? 1 : 0);
+                shape instanceof SphereDomainShape ? 1 : 0,sourceUUID);
     }
 
     private double x;

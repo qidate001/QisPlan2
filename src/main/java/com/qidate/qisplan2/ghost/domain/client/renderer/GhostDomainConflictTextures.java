@@ -34,9 +34,11 @@ public final class GhostDomainConflictTextures {
         int previous=GL11.glGetInteger(GL11.GL_TEXTURE_BINDING_2D);
         var data=MemoryUtil.memAllocFloat(count*8);var mask=MemoryUtil.memAllocFloat(count*count*4);
         try {
+            // 使用紧凑序号而非 UUID 哈希，避免浮点精度和哈希碰撞误判同源。
+            Map<UUID,Integer> sources=new HashMap<>();
             for(var node:nodes){
                 data.put((float)node.center().x).put((float)node.center().y).put((float)node.center().z).put(domains.get(node.id()).floatValue());
-                data.put((float)node.strength()).put(node.grade()).put(node.shape()).put(0);
+                data.put((float)node.strength()).put(node.grade()).put(node.shape()).put(sources.computeIfAbsent(node.source(),ignored->sources.size()));
             }
             for(var owner:nodes)for(var other:nodes)mask.put(result.cuts(owner.id(),other.id())?1:0).put(0).put(0).put(0);
             data.flip();mask.flip();geometry=upload(geometry,2,count,data);cuts=upload(cuts,count,count,mask);

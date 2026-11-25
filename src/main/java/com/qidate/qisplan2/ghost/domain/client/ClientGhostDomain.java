@@ -55,7 +55,7 @@ public final class ClientGhostDomain {
     public double getBaseRadius() { return radius; }
     public GhostDomainConflict.Node conflictNode() {
         return new GhostDomainConflict.Node(id,
-                new Vec3(x,y,z),radius,strength,layer,shape instanceof SphereDomainShape ? 1 : 0);
+                new Vec3(x,y,z),radius,strength,layer,shape instanceof SphereDomainShape ? 1 : 0,sourceUUID);
     }
     public void applyConflictRadius(double value) {
         conflictRadius=value;

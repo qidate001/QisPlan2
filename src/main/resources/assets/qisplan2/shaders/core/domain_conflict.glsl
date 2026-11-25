@@ -24,7 +24,8 @@ float qisDomainWeight(vec3 point) {
     float total=0.0;int count=0;
     for(int other=0;other<DomainConflictCount;other++) {
         vec4 properties=texelFetch(DomainConflictGeometry,ivec2(1,other),0);
-        if(abs(properties.y-own.y)<0.5 && qisDomainOwns(other,point)){total+=properties.x;count++;}
+        // properties.w 是同帧稳定的来源分组；自身计入分母，同源的其他鬼域不削弱本域。
+        if((other==index || properties.w!=own.w) && abs(properties.y-own.y)<0.5 && qisDomainOwns(other,point)){total+=properties.x;count++;}
     }
     return total>0.0 ? own.x/total : 1.0/float(max(1,count));
 }

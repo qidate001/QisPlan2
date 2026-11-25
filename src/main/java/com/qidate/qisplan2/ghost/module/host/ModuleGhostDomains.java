@@ -19,7 +19,15 @@ import java.lang.ref.WeakReference;
 public final class ModuleGhostDomains {
     // 弱键和弱值都不延长宿主或世界生命周期；实际鬼域仍由世界管理器持有。
     private static final Map<Object, Map<ResourceLocation, WeakReference<GhostDomain>>> INDEX = new WeakHashMap<>();
+    // 没有实体 UUID 的静态宿主也必须共用来源身份，不能为每个模块各造一个来源。
+    private static final Map<Object,UUID> STATIC_SOURCES=new WeakHashMap<>();
     private ModuleGhostDomains() {}
+
+    /** 物理来源已有 UUID 时直接复用；静态来源按实际宿主分配生命周期内稳定的身份。 */
+    private static UUID sourceId(GhostModuleHost host) {
+        var bearer=GhostEnvironmentAdapters.bearer(host);
+        return bearer==null?STATIC_SOURCES.computeIfAbsent(key(host),ignored->UUID.randomUUID()):bearer.getUUID();
+    }
 
     /** 临时玩家适配器共享实际玩家身份，物品则按物品栈身份独立。 */
     private static Object key(GhostModuleHost host) {
@@ -124,9 +132,8 @@ public final class ModuleGhostDomains {
         var data = state(host,id,definition);
         modifier.setModuleCustomData(id,data);
         var position = host.moduleWorld(id).position();
-        var bearer = GhostEnvironmentAdapters.bearer(host);
         var radius = finite(data.getDouble("domainRadius"),definition.radius());
-        var domain = new GhostDomain(UUID.randomUUID(), bearer == null ? UUID.randomUUID() : bearer.getUUID(), id,
+        var domain = new GhostDomain(UUID.randomUUID(), sourceId(host), id,
                 finite(data.getDouble("domainStrength"),0), Math.clamp(data.getInt("domainLayer"),1,10),
                 radius, level.dimension(),position.x,position.y,position.z, definition.shape().apply(radius),
                 GhostDomainUpdateMode.DISTANCE, 0, new ModuleGhostDomainBehavior(host,id,definition));

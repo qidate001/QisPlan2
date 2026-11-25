@@ -4,22 +4,30 @@ import net.minecraft.world.phys.Vec3;
 import java.util.*;
 
 /**
- * 鬼域对抗的纯空间求解器。输入只有来源位置、原始范围、形状、等级和强度，
+ * 鬼域对抗的纯空间求解器。输入只有来源标识与位置、原始范围、形状、等级和强度，
  * 不读取玩家、厉鬼、阵营或模块类型。每次都从原始范围求解，禁止迭代缩小。
  */
 public final class GhostDomainConflict {
     private GhostDomainConflict() {}
     /** 球体为 1，圆柱为 0；与鬼域网络形状协议一致。 */
-    public record Node(UUID id, Vec3 center, double radius, double strength, int grade, int shape) {
+    public record Node(UUID id, Vec3 center, double radius, double strength, int grade, int shape, UUID source) {
+        /** 旧调用未提供来源时按独立来源处理，不能因缺省值互相豁免。 */
+        public Node(UUID id,Vec3 center,double radius,double strength,int grade,int shape) {
+            this(id,center,radius,strength,grade,shape,id);
+        }
+        /** 来源由宿主适配层提供；不读取具体实体类型、模块种类或阵营。 */
+        public boolean sameSource(Node other) { return source.equals(other.source); }
         public Node {
-            if (!Double.isFinite(radius) || radius<0 || !Double.isFinite(strength) || strength<0 || grade<1)
+            Objects.requireNonNull(id);
+            if (source == null) source=id;
+            if (!Double.isFinite(radius) || radius < 0 || !Double.isFinite(strength) || strength < 0 || grade < 1)
                 throw new IllegalArgumentException("Invalid domain conflict input");
         }
         /** 对给定范围执行真实几何包含查询，圆柱沿用框架的无限高度。 */
-        public boolean contains(Vec3 point,double extent) {
-            if(extent<=0)return false;
-            double dx=point.x-center.x,dz=point.z-center.z,dy=shape==1?point.y-center.y:0;
-            return dx*dx+dy*dy+dz*dz<=extent*extent;
+        public boolean contains(Vec3 point, double extent) {
+            if (extent<=0) return false;
+            double dx = point.x - center.x, dz = point.z - center.z, dy = shape == 1 ? point.y - center.y : 0;
+            return dx * dx + dy * dy + dz * dz <= extent * extent;
         }
     }
     /** 不可变结算结果同时供归属、边界、能力和客户端表现使用。 */
@@ -69,27 +77,34 @@ public final class GhostDomainConflict {
             if(!owns(id,point))return 0;
             Node self=nodes.stream().filter(n->n.id().equals(id)).findFirst().orElseThrow();
             double sum=0;int count=0;
-            for(Node node:nodes)if(node.grade()==self.grade()&&owns(node.id(),point)){sum+=node.strength();count++;}
-            return sum>0?self.strength()/sum:1D/Math.max(1,count);
+            for (Node node:nodes)
+                if((node.id().equals(self.id()) || !node.sameSource(self))
+                        && node.grade() == self.grade()
+                        && owns(node.id(),point)) {
+
+                    sum += node.strength();
+                    count++;
+                }
+            return sum > 0 ? self.strength() / sum : 1D / Math.max(1, count);
         }
     }
     /** 成对独立求解并采用最严格的范围限制，结果与注册顺序无关。 */
     public static Result solve(Collection<Node> input) {
         List<Node> nodes=input.stream().sorted(Comparator.comparing(Node::id)).toList();
         Map<UUID,Double> radii=new HashMap<>();Map<UUID,Set<UUID>> cuts=new HashMap<>();
-        nodes.forEach(n->{radii.put(n.id(),n.radius());cuts.put(n.id(),new HashSet<>());});
+        nodes.forEach(n -> { radii.put(n.id(), n.radius()); cuts.put(n.id(), new HashSet<>()); });
         // 高等级先裁定完全压制；已失去领地的来源不再压制第三个域。
         List<Node> byGrade=nodes.stream().sorted(Comparator.comparingInt(Node::grade).reversed()).toList();
         for(Node low:byGrade)for(Node high:byGrade) {
-            if(high.grade()-low.grade()>=3 && radii.get(high.id())>0 && high.contains(low.center(),high.radius())) {
-                radii.put(low.id(),0D);break;
+            if(!low.sameSource(high) && high.grade() - low.grade() >= 3 && radii.get(high.id()) > 0 && high.contains(low.center(),high.radius())) {
+                radii.put(low.id(), 0D);break;
             }
         }
         Set<UUID> suppressed=new HashSet<>();
         radii.forEach((id,radius)->{if(radius<=0)suppressed.add(id);});
         for(int i=0;i<nodes.size();i++)for(int j=i+1;j<nodes.size();j++){
             Node a=nodes.get(i),b=nodes.get(j);
-            if(suppressed.contains(a.id()) || suppressed.contains(b.id()))continue;
+            if(a.sameSource(b) || suppressed.contains(a.id()) || suppressed.contains(b.id()))continue;
             double overlap=overlapArea(a,b);if(overlap<=0)continue;
             boolean aInB=b.contains(a.center(),b.radius()),bInA=a.contains(b.center(),a.radius());
             // 源头进入高三级鬼域时，无论两者几何大小如何都完全压制。

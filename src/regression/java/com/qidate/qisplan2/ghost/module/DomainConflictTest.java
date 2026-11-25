@@ -54,6 +54,26 @@ public final class DomainConflictTest {
         check(separate.radius(a.id())==10,"无交集保留原始范围");
         var top=node(3,80,10,1000,8);var mid=node(2,80,100,300,5);var low=node(1,0,10,100,2);
         check(GhostDomainConflict.solve(List.of(top,mid,low)).radius(low.id())==10,"完全压制的中间域不能压制第三域");
+        // 同一来源的多模块只共享豁免，不合并范围或强度。
+        UUID source=new UUID(1,1);
+        var ownOuter=new GhostDomainConflict.Node(new UUID(0,11),Vec3.ZERO,200,1000,6,1,source);
+        var ownInner=new GhostDomainConflict.Node(new UUID(0,12),new Vec3(80,0,0),64,100,2,1,source);
+        var ownNested=GhostDomainConflict.solve(List.of(ownOuter,ownInner));
+        check(ownNested.radius(ownInner.id())==64&&ownNested.radius(ownOuter.id())==200,"同源嵌套即使相差三级以上也不压制");
+        check(!ownNested.cuts(ownOuter.id(),ownInner.id())&&!ownNested.cuts(ownInner.id(),ownOuter.id()),"同源不互相挖空领地");
+        check(ownNested.owns(ownOuter.id(),ownInner.center())&&ownNested.owns(ownInner.id(),ownInner.center()),"同源覆盖双方同时生效");
+        var ownA=new GhostDomainConflict.Node(a.id(),a.center(),10,100,2,1,source);
+        var ownB=new GhostDomainConflict.Node(b.id(),b.center(),10,300,2,1,source);
+        var ownEdge=GhostDomainConflict.solve(List.of(ownA,ownB));
+        check(ownEdge.weight(ownA.id(),intersection)==1&&ownEdge.weight(ownB.id(),intersection)==1,"同源同级不分摊强度");
+        var ownHigher=new GhostDomainConflict.Node(higher.id(),higher.center(),10,300,3,1,source);
+        var ownUnequal=GhostDomainConflict.solve(List.of(ownA,ownHigher));
+        check(ownUnequal.radius(ownA.id())==10&&!ownUnequal.cuts(ownA.id(),ownHigher.id()),"同源不同级交界不收缩或覆盖");
+        var enemy=new GhostDomainConflict.Node(new UUID(0,3),new Vec3(7.5,0,8),9,100,2,1);
+        var mixed=GhostDomainConflict.solve(List.of(ownA,ownB,enemy));
+        check(mixed.weight(ownA.id(),intersection)==.5&&mixed.weight(ownB.id(),intersection)==.75,"同源仍分别与外来源分摊，不互相削弱");
+        var hostile=node(4,80,200,1000,5);
+        check(GhostDomainConflict.solve(List.of(ownInner,hostile)).radius(ownInner.id())==0,"不同来源继续执行完全压制");
         Runnable[] deferred={null};GhostDomainInfluenceScope.run(.25,()->deferred[0]=GhostDomainInfluenceScope.capture(
             ()->check(GhostDomainInfluenceScope.weight()==.25,"延迟事实保持本次倍率")));
         deferred[0].run();check(GhostDomainInfluenceScope.weight()==1,"作用域退出恢复倍率");
