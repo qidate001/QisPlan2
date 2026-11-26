@@ -1,5 +1,6 @@
 package com.qidate.qisplan2.ghost.module.implementation.door.knock;
 
+import java.util.Set;
 import com.qidate.qisplan2.ghost.module.ability.GhostAbilityInfluence;
 import com.qidate.qisplan2.ghost.module.ability.GhostAbilityStimulation;
 import net.minecraft.core.BlockPos;
@@ -93,7 +94,8 @@ public final class KnockingGhostModule implements GhostModule {
              * 判断当前语义事件是否属于本规则处理的范围。
              * 这里只筛选事件种类或语义，不执行能力和世界操作。
              */
-            @Override public boolean supports(GhostEvent event) { return event instanceof DoorKnockHeardEvent; }
+            @Override public Set<Class<? extends GhostEvent>> eventTypes() { return Set.of(DoorKnockHeardEvent.class); }
+
 
             /**
              * 检查当前事实和模块上下文是否满足规则触发条件。

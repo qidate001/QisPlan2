@@ -12,6 +12,7 @@ import com.qidate.qisplan2.ghost.module.domain.GhostDomainShaderEffect;
 import com.qidate.qisplan2.ghost.domain.shape.SphereDomainShape;
 import com.qidate.qisplan2.death.ModDamageTypes;
 
+import java.util.Set;
 import com.qidate.qisplan2.ghost.module.domain.GhostDomainGrowth;
 import java.util.Optional;
 import java.util.List;
@@ -90,7 +91,10 @@ public final class GhostMistModule implements GhostModule {
      * 规则负责决定何时发起能力或提交影响，不绕过执行器直接完成袭击。
      */
     /** 已经主动展开的鬼域持续执行雾气能力；未受控的复苏状态由规则入口驱动。 */
-    @Override public void onAbilityEvent(GhostModuleContext context, GhostEvent event) {
+    @Override public Set<Class<? extends GhostEvent>> abilityEventTypes() { return Set.of(GhostDomainExposureEvent.class); }
+
+    /** 仅接收已声明订阅的持续能力事实。 */
+    public void onAbilityEvent(GhostModuleContext context, GhostEvent event) {
         if (event instanceof GhostDomainExposureEvent e && context.getCustomData().getBoolean("domainOpen")
                 && context.world().validTarget(e.target()) && context.world().containsInDomain(e.domainId(),e.target()))
             context.continueAbility(ATTACK,e);
@@ -108,7 +112,8 @@ public final class GhostMistModule implements GhostModule {
              * 判断当前语义事件是否属于本规则处理的范围。
              * 这里只筛选事件种类或语义，不执行能力和世界操作。
              */
-            @Override public boolean supports(GhostEvent e) { return e instanceof GhostDomainExposureEvent; }
+            @Override public Set<Class<? extends GhostEvent>> eventTypes() { return Set.of(GhostDomainExposureEvent.class); }
+
 
             /**
              * 检查当前事实和模块上下文是否满足规则触发条件。

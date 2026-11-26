@@ -1,5 +1,6 @@
 package com.qidate.qisplan2.ghost.module.implementation.candle;
 
+import java.util.Set;
 import com.qidate.qisplan2.ghost.module.GhostModuleContext;
 import com.qidate.qisplan2.ghost.module.GhostMedium;
 import com.qidate.qisplan2.ghost.module.GhostModule;
@@ -93,9 +94,8 @@ public abstract class GhostCandleModule implements GhostModule {
              * 判断当前语义事件是否属于本规则处理的范围。
              * 这里只筛选事件种类或语义，不执行能力和世界操作。
              */
-            public boolean supports(GhostEvent event) {
-                return event instanceof IgnitionChangedEvent || event instanceof ModuleTickEvent;
-            }
+            public Set<Class<? extends GhostEvent>> eventTypes() { return Set.of(IgnitionChangedEvent.class,ModuleTickEvent.class); }
+
 
             /**
              * 读取模块 customData 中的 lit 状态。
@@ -159,7 +159,10 @@ public abstract class GhostCandleModule implements GhostModule {
     }
 
     /** 已主动点燃的持续能力独立于自动规则，但仍每 tick 通过暴露媒介。 */
-    @Override public void tickAbilities(GhostModuleContext context) {
+    @Override public boolean ticksAbilities() { return true; }
+
+    /** 维护已启动能力，由注册时声明的 Tick 订阅调度。 */
+    public void tickAbilities(GhostModuleContext context) {
         var data = context.getCustomData();
         if (data.getBoolean("lit") && data.getBoolean("manualBurn"))
             context.continueAbility(effectId(), new ModuleTickEvent());

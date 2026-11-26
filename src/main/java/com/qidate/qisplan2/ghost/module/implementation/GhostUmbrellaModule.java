@@ -1,5 +1,6 @@
 package com.qidate.qisplan2.ghost.module.implementation;
 
+import java.util.Set;
 import com.qidate.qisplan2.death.ModDamageTypes;
 import com.qidate.qisplan2.ghost.domain.shape.CylinderDomainShape;
 import com.qidate.qisplan2.ghost.module.*;
@@ -62,7 +63,8 @@ public final class GhostUmbrellaModule implements GhostModule {
         /** 返回当前媒介、规则或能力的稳定标识。 */
         public ResourceLocation getId(){return ResourceLocation.parse("qisplan2:ghost_umbrella/use");}
         /** 只接受已经发生的使用事实。 */
-        public boolean supports(GhostEvent e){return e instanceof GhostUseEvent;}
+        public Set<Class<? extends GhostEvent>> eventTypes() { return Set.of(GhostUseEvent.class); }
+
         /** 规则只在当前环境具备鬼域出口时触发。 */
         public boolean canTrigger(GhostRuleContext c,GhostEvent e){return c.getModuleContext().world().canToggleDomain();}
         /** 通过统一执行器请求开关能力。 */
@@ -70,10 +72,16 @@ public final class GhostUmbrellaModule implements GhostModule {
     });}
 
     /** 展开的鬼域维持停步代价；能力状态由统一执行器校验。 */
-    @Override public void tickAbilities(GhostModuleContext c){if(c.world().domain().exists())c.continueAbility(STILL,null);}
+    @Override public boolean ticksAbilities() { return true; }
+
+    /** 维护已启动能力，由注册时声明的 Tick 订阅调度。 */
+    public void tickAbilities(GhostModuleContext c){if(c.world().domain().exists())c.continueAbility(STILL,null);}
 
     /** 周期曝光继续已展开的雨幕能力，不让域控制器直接实施袭击。 */
-    @Override public void onAbilityEvent(GhostModuleContext c,GhostEvent event){
+    @Override public Set<Class<? extends GhostEvent>> abilityEventTypes() { return Set.of(GhostDomainExposureEvent.class); }
+
+    /** 仅接收已声明订阅的持续能力事实。 */
+    public void onAbilityEvent(GhostModuleContext c,GhostEvent event){
         if(event instanceof GhostDomainExposureEvent e && c.world().containsInDomain(e.domainId(),e.target()))c.continueAbility(RAIN,e);
     }
 

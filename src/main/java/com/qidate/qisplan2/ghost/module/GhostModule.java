@@ -1,5 +1,6 @@
 package com.qidate.qisplan2.ghost.module;
 
+import java.util.Set;
 import com.qidate.qisplan2.ghost.module.domain.GhostDomainDefinition;
 import com.qidate.qisplan2.ghost.module.domain.GhostDomainPanel;
 
@@ -179,6 +180,12 @@ public interface GhostModule {
     default List<GhostAttackResponse> getAttackResponses() {
         return List.of();
     }
+
+    /** 注册时声明持续能力需要的语义事实；空集合表示完全不接收此类回调。 */
+    default Set<Class<? extends GhostEvent>> abilityEventTypes() { return Set.of(); }
+
+    /** 是否需要维护已启动的持续能力；默认没有 Tick 订阅。 */
+    default boolean ticksAbilities() { return false; }
 
     /** 已启动能力可接收后续事实；此入口不启动自动规则。 */
     default void onAbilityEvent(GhostModuleContext context, GhostEvent event) {}

@@ -14,8 +14,8 @@ import java.util.List;
  *
  * 职责范围：
  * 1. 检查模块是否允许执行规则。
- * 2. 获取模块及其规则列表。
- * 3. 检查规则是否支持当前事件，以及是否满足触发条件。
+ * 2. 查询当前事件已订阅的规则。
+ * 3. 检查事件事实与触发条件。
  * 4. 执行满足条件的规则，并将共享的影响会话传递给规则上下文。
  *
  * 本类不负责完整事件分发，不创建或裁决灵异影响会话，
@@ -49,27 +49,24 @@ public final class GhostRuleRuntime {
             return;
         }
 
+        dispatchSubscribed(host,entry,event,session,GhostEventSubscriptions.rules(entry.id(),event.getClass()));
+    }
+
+    /** 只执行订阅计划中的规则；不再请求模块全部规则或逐条检查事件类型。 */
+    static void dispatchSubscribed(GhostModuleHost host,GhostModuleData.Entry entry,GhostEvent event,
+            GhostInfluenceSession session,List<GhostRule> rules) {
+        if(rules.isEmpty())return;
         boolean observingSleep = entry.sleeping() && !entry.deadlocked() && host.carriesModule(entry.id());
         if (!observingSleep && !canRunRules(host, entry.id())) {
             return;
         }
 
-        GhostModule module =
-                GhostModuleRegistry.get(entry.id());
-
-        if (module == null) {
-            return;
-        }
-
-        List<GhostRule> rules =
-                List.copyOf(module.getRules());
-
         for (GhostRule rule : rules) {
-            if (!observingSleep && !canRunRules(host, entry.id())) {
+            if (!host.hasModule(entry.id()) || !observingSleep && !canRunRules(host, entry.id())) {
                 break;
             }
 
-            if (!rule.supports(event)) {
+            if (!rule.matches(event)) {
                 continue;
             }
 
@@ -88,7 +85,7 @@ public final class GhostRuleRuntime {
             if (!rule.canTrigger(context, event)) continue;
 
             // canTrigger 也可能改变模块状态。
-            if (!observingSleep && !canRunRules(host, entry.id())) {
+            if (!host.hasModule(entry.id()) || !observingSleep && !canRunRules(host, entry.id())) {
                 break;
             }
 

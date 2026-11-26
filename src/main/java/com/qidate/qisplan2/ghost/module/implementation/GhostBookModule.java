@@ -1,5 +1,6 @@
 package com.qidate.qisplan2.ghost.module.implementation;
 
+import java.util.Set;
 import com.qidate.qisplan2.ghost.module.GhostModule;
 import com.qidate.qisplan2.ghost.module.GhostModuleContext;
 import com.qidate.qisplan2.ghost.module.GhostMedium;
@@ -17,6 +18,9 @@ public final class GhostBookModule implements GhostModule {
     /** 返回鬼书身份；不附加旧版不存在的杀人规则。 */
     public ResourceLocation getId() { return ID; }
     /** 手动使用视作能力调用，死机不禁止阅读，仍须满足交互媒介。 */
+    public Set<Class<? extends GhostEvent>> abilityEventTypes() { return Set.of(GhostUseEvent.class); }
+
+    /** 仅接收已声明订阅的持续能力事实。 */
     public void onAbilityEvent(GhostModuleContext c, GhostEvent event) {
         if (event instanceof GhostUseEvent) c.continueAbility(READ,event);
     }

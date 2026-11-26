@@ -1,5 +1,6 @@
 package com.qidate.qisplan2.ghost.module.implementation;
 
+import java.util.Set;
 import com.qidate.qisplan2.ghost.module.ability.GhostAbilityInfluence;
 import com.qidate.qisplan2.QisPlan2;
 import com.qidate.qisplan2.death.ModDamageTypes;
@@ -107,16 +108,15 @@ public final class GhostStoneBricksModule implements GhostModule {
          * 判断当前语义事件是否属于本规则处理的范围。
          * 这里只筛选事件种类或语义，不执行能力和世界操作。
          */
-        @Override public boolean supports(GhostEvent event) {
-            return event instanceof DestructionAttemptEvent;
-        }
+        @Override public Set<Class<? extends GhostEvent>> eventTypes() { return Set.of(DestructionAttemptEvent.class); }
+
 
         /**
          * 检查当前事实和模块上下文是否满足规则触发条件。
          * 返回 false 时跳过本规则，不提交能力或灵异影响。
          */
         @Override public boolean canTrigger(GhostRuleContext context, GhostEvent event) {
-            return supports(event) && !((DestructionAttemptEvent)event).isCanceled()
+            return matches(event) && !((DestructionAttemptEvent)event).isCanceled()
                     && target(event) != null && target(event).isAlive();
         }
 

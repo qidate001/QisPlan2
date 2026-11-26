@@ -1,5 +1,6 @@
 package com.qidate.qisplan2.ghost.module.implementation.door.close;
 
+import java.util.Set;
 
 import com.qidate.qisplan2.ghost.module.ability.GhostTargetParameters;
 import com.qidate.qisplan2.ghost.module.implementation.door.DoorGhostMemory;
@@ -38,7 +39,10 @@ import static com.qidate.qisplan2.QisPlan2.MODID;
 public final class ClosingGhostModule implements GhostModule {
 
     /** 门变化统一进入模块：外部触门者记录标记，自身触门则延续范围袭击能力。 */
-    @Override public void onAbilityEvent(GhostModuleContext context, GhostEvent event) {
+    @Override public Set<Class<? extends GhostEvent>> abilityEventTypes() { return Set.of(DoorChangedEvent.class); }
+
+    /** 仅接收已声明订阅的持续能力事实。 */
+    public void onAbilityEvent(GhostModuleContext context, GhostEvent event) {
         if (!(event instanceof DoorChangedEvent door) || !isCloseEvent(event) || !isValidDoorEvent(door)) return;
         DoorGhostMemory.observe(context,door,false);
         var world=context.world();
@@ -145,7 +149,10 @@ public final class ClosingGhostModule implements GhostModule {
          * 判断当前语义事件是否属于本规则处理的范围。
          * 这里只筛选事件种类或语义，不执行能力和世界操作。
          */
-        @Override public boolean supports(GhostEvent event) { return isCloseEvent(event); }
+        @Override public Set<Class<? extends GhostEvent>> eventTypes() { return Set.of(DoorChangedEvent.class); }
+
+        /** 已由订阅索引定位；此处只判断事件携带的事实。 */
+        public boolean matches(GhostEvent event) { return isCloseEvent(event); }
 
         /**
          * 检查当前事实和模块上下文是否满足规则触发条件。

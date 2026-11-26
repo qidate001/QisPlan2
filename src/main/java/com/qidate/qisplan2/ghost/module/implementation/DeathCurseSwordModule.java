@@ -1,5 +1,6 @@
 package com.qidate.qisplan2.ghost.module.implementation;
 
+import java.util.Set;
 import com.qidate.qisplan2.ghost.module.*;
 import com.qidate.qisplan2.ghost.module.ability.*;
 import com.qidate.qisplan2.ghost.module.data.GhostModuleInitialData;
@@ -22,7 +23,8 @@ public final class DeathCurseSwordModule implements GhostModule {
         /** 返回命中规则标识。 */
         public ResourceLocation getId() { return ResourceLocation.parse("qisplan2:death_curse_sword/hit"); }
         /** 普通接触不会叠层，避免与物品接触桥重复触发。 */
-        public boolean supports(GhostEvent e) { return e instanceof MeleeHitEvent; }
+        public Set<Class<? extends GhostEvent>> eventTypes() { return Set.of(MeleeHitEvent.class); }
+
         /** 媒介由统一执行器验证。 */
         public boolean canTrigger(GhostRuleContext c,GhostEvent e) { return true; }
         /** 调用相同的诅咒能力，规则死机由运行时统一过滤。 */

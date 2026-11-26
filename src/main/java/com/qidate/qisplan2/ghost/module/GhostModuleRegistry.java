@@ -52,6 +52,7 @@ public final class GhostModuleRegistry {
             );
         }
 
+        GhostEventSubscriptions.register(module);
         MODULES.put(id, module);
     }
 

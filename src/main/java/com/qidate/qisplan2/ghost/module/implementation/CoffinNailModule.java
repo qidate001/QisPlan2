@@ -1,5 +1,6 @@
 package com.qidate.qisplan2.ghost.module.implementation;
 
+import java.util.Set;
 import com.qidate.qisplan2.ghost.module.GhostMedium;
 import com.qidate.qisplan2.ghost.module.GhostModule;
 import com.qidate.qisplan2.ghost.module.GhostModuleContext;
@@ -24,7 +25,10 @@ public final class CoffinNailModule implements GhostModule {
     /** 返回模块类型，不表示具体插入来源的身份。 */
     @Override public ResourceLocation getId() { return ID; }
     /** 交互是手动调用，死机不阻止手动使用，但压制及媒介仍由执行器检查。 */
-    @Override public void onAbilityEvent(GhostModuleContext module, GhostEvent event) {
+    @Override public Set<Class<? extends GhostEvent>> abilityEventTypes() { return Set.of(EntityUsedEvent.class); }
+
+    /** 仅接收已声明订阅的持续能力事实。 */
+    public void onAbilityEvent(GhostModuleContext module, GhostEvent event) {
         if (event instanceof EntityUsedEvent) module.continueAbility(EMBED, event);
     }
     /** 附着关系变化时读取一次，不按 tick 重放压制或刷新倒计时。 */

@@ -1,5 +1,6 @@
 package com.qidate.qisplan2.ghost.module.implementation.calling;
 
+import java.util.Set;
 import com.qidate.qisplan2.death.ModDamageTypes;
 import com.qidate.qisplan2.ghost.module.*;
 import com.qidate.qisplan2.ghost.module.ability.*;
@@ -55,26 +56,36 @@ public final class CallingGhostModule implements GhostModule {
     }); }
 
     /** 自主喊名观察到目标看见来源后，在当前规则批次提交袭击。 */
-    public List<GhostRule> getRules() { return List.of(new GhostRule() {
-        /** 返回能力或模块的稳定标识。 */
-        public ResourceLocation getId() { return id("calling_ghost/turn_rule"); }
-        /** 只筛选本规则能处理的语义事件。 */
-        public boolean supports(GhostEvent e) { return e instanceof SourceSeenEvent || e instanceof ModuleTickEvent; }
-        /** 判定本事件是否应触发自动规则。 */
-        public boolean canTrigger(GhostRuleContext c, GhostEvent e) { return e instanceof SourceSeenEvent && !c.getModuleContext().getCustomData().getBoolean("manualCalling"); }
-        /** 沉睡后停止跟随和扭头，但仍观察原目标是否真正看见来源。 */
-        public boolean disturbedWhileSleeping(GhostRuleContext c, GhostEvent e) {
-            var m = c.getModuleContext(); var target = m.world().target();
-            return target != null && m.world().validTarget(target) && m.world().sourceVisibleTo(target);
-        }
-        /** 在当前事件会话中提交能力影响。 */
-        public void onTrigger(GhostRuleContext c, GhostEvent e) {
-            var turn = (SourceSeenEvent)e;
-            c.submitAbilityInfluence(ATTACK, turn, turn.observer().getUUID(), GhostInfluenceType.ATTACK, c.getModuleContext().intensity());
-        }
-    }); }
+    public List<GhostRule> getRules() {
+        return List.of(new GhostRule() {
+            /** 返回能力或模块的稳定标识。 */
+            public ResourceLocation getId() { return id("calling_ghost/turn_rule"); }
+
+            /** 只筛选本规则能处理的语义事件。 */
+            public Set<Class<? extends GhostEvent>> eventTypes() { return Set.of(SourceSeenEvent.class,ModuleTickEvent.class); }
+
+
+            /** 判定本事件是否应触发自动规则。 */
+            public boolean canTrigger(GhostRuleContext c, GhostEvent e) { return e instanceof SourceSeenEvent && !c.getModuleContext().getCustomData().getBoolean("manualCalling"); }
+
+            /** 沉睡后停止跟随和扭头，但仍观察原目标是否真正看见来源。 */
+            public boolean disturbedWhileSleeping(GhostRuleContext c, GhostEvent e) {
+                var m = c.getModuleContext(); var target = m.world().target();
+                return target != null && m.world().validTarget(target) && m.world().sourceVisibleTo(target);
+            }
+
+            /** 在当前事件会话中提交能力影响。 */
+            public void onTrigger(GhostRuleContext c, GhostEvent e) {
+                var turn = (SourceSeenEvent)e;
+                c.submitAbilityInfluence(ATTACK, turn, turn.observer().getUUID(), GhostInfluenceType.ATTACK, c.getModuleContext().intensity());
+            }
+        });
+    }
 
     /** 持续主动喊名不依赖自动规则开关；目标失效或遇到空间阻隔时结束。 */
+    public boolean ticksAbilities() { return true; }
+
+    /** 维护已启动能力，由注册时声明的 Tick 订阅调度。 */
     public void tickAbilities(GhostModuleContext context) {
         var data = context.getCustomData();
         int cooldown = Math.max(0, data.getInt("attackTargetCooldown") - 1);

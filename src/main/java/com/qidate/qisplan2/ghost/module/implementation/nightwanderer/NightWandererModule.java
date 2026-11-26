@@ -1,5 +1,6 @@
 package com.qidate.qisplan2.ghost.module.implementation.nightwanderer;
 
+import java.util.Set;
 import com.qidate.qisplan2.ghost.module.ability.GhostAbilityInfluence;
 import com.qidate.qisplan2.ghost.module.ability.GhostAbility;
 import com.qidate.qisplan2.ghost.module.environment.GhostBehavior;
@@ -93,9 +94,8 @@ public final class NightWandererModule implements GhostModule {
              * 判断当前语义事件是否属于本规则处理的范围。
              * 这里只筛选事件种类或语义，不执行能力和世界操作。
              */
-            @Override public boolean supports(GhostEvent e) {
-                return e instanceof EntityNearbyEvent || e instanceof SleepTimeSkippedEvent || e instanceof ModuleTickEvent;
-            }
+            @Override public Set<Class<? extends GhostEvent>> eventTypes() { return Set.of(EntityNearbyEvent.class,SleepTimeSkippedEvent.class,ModuleTickEvent.class); }
+
 
             /**
              * 检查当前事实和模块上下文是否满足规则触发条件。
@@ -230,7 +230,10 @@ public final class NightWandererModule implements GhostModule {
     }
 
     /** 昼夜复苏调节是模块自身状态，不再保存到玩家专属状态或累积旧浅死机标记。 */
-    @Override public void tickAbilities(GhostModuleContext context) {
+    @Override public boolean ticksAbilities() { return true; }
+
+    /** 维护已启动能力，由注册时声明的 Tick 订阅调度。 */
+    public void tickAbilities(GhostModuleContext context) {
         if(context.getData().deadlocked()||context.getData().sleeping()||!context.world().present())return;
         var data=context.getCustomData();double reserve=data.getDouble("revivalReserve");
         if(context.world().isDay()){

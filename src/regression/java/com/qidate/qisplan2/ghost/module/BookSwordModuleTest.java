@@ -95,7 +95,7 @@ public final class BookSwordModuleTest {
         boundary.allowed=false; boundary.random=0;
         check(!invoke(boundary,DeathCurseSwordModule.CURSE,GhostAbilityContext.Source.POSSESSION)
                 && boundary.reflected.count==0,"媒介失败不能叠层或额外反噬");
-        check(!new DeathCurseSwordModule().getRules().getFirst().supports(new ModuleTickEvent()),"持有采样不能代替近战命中叠层");
+        check(GhostEventSubscriptions.rules(DeathCurseSwordModule.ID,ModuleTickEvent.class).isEmpty(),"持有采样不能代替近战命中叠层");
         var book=new Host(GhostBookModule.ID); book.deadlocked=true; book.sleeping=true;
         check(invoke(book,GhostBookModule.READ,GhostAbilityContext.Source.POSSESSION) && book.screens==1,"死机或沉睡不禁止手动阅读能力");
         book.allowed=false;

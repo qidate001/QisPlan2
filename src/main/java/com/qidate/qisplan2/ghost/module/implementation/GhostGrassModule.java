@@ -1,5 +1,6 @@
 package com.qidate.qisplan2.ghost.module.implementation;
 
+import java.util.Set;
 import com.qidate.qisplan2.ghost.module.ability.GhostAbilityInfluence;
 import net.minecraft.world.entity.LivingEntity;
 import com.qidate.qisplan2.death.ModDamageTypes;
@@ -72,7 +73,8 @@ public final class GhostGrassModule implements GhostModule {
             public ResourceLocation getId() { return id("ghost_grass/touch_rule"); }
 
             /** 复用不可触之鬼与鬼地毯使用的接触事实，不新增能力请求型事件。 */
-            public boolean supports(GhostEvent event) { return event instanceof TouchEvent; }
+            public Set<Class<? extends GhostEvent>> eventTypes() { return Set.of(TouchEvent.class); }
+
 
             /** 检查服务端目标资格；死机、沉睡及模块移除由规则运行时先行拦截。 */
             public boolean canTrigger(GhostRuleContext context, GhostEvent event) {

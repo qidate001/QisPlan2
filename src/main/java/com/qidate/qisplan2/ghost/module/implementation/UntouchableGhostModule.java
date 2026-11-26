@@ -1,5 +1,6 @@
 package com.qidate.qisplan2.ghost.module.implementation;
 
+import java.util.Set;
 import com.qidate.qisplan2.ghost.module.ability.GhostAbilityInfluence;
 import net.minecraft.world.entity.LivingEntity;
 import com.qidate.qisplan2.death.ModDamageTypes;
@@ -107,7 +108,10 @@ public final class UntouchableGhostModule implements GhostModule {
         }
 
         @Override
-        public boolean supports(GhostEvent event) {
+        public Set<Class<? extends GhostEvent>> eventTypes() { return Set.of(TouchEvent.class); }
+
+        /** 已由订阅索引定位；此处只判断事件携带的事实。 */
+        public boolean matches(GhostEvent event) {
             return event instanceof TouchEvent touch && touch.isBeginning();
         }
 

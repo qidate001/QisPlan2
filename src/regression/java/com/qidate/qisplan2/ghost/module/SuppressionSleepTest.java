@@ -1,5 +1,6 @@
 package com.qidate.qisplan2.ghost.module;
 
+import java.util.Set;
 import com.qidate.qisplan2.ghost.module.data.GhostModuleContainer;
 import com.qidate.qisplan2.ghost.module.host.GhostConflictDiagnostics;
 import com.qidate.qisplan2.ghost.module.data.GhostModuleData;
@@ -59,7 +60,10 @@ public final class SuppressionSleepTest {
             public ResourceLocation getId() { return ID; }
             public List<GhostRule> getRules() { return List.of(new GhostRule() {
                 public ResourceLocation getId() { return RULE; }
-                public boolean supports(GhostEvent event) { return event instanceof Violation || event instanceof ModuleTickEvent; }
+                public Set<Class<? extends GhostEvent>> eventTypes() { return Set.of(Violation.class,ModuleTickEvent.class); }
+
+        /** 已由订阅索引定位；此处只判断事件携带的事实。 */
+        public boolean matches(GhostEvent event) { return event instanceof Violation || event instanceof ModuleTickEvent; }
                 public boolean canTrigger(GhostRuleContext c, GhostEvent event) { return true; }
                 public void onTrigger(GhostRuleContext c, GhostEvent event) { effects++; }
             }); }

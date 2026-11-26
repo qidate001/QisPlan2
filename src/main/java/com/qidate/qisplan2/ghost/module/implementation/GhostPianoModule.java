@@ -1,5 +1,6 @@
 package com.qidate.qisplan2.ghost.module.implementation;
 
+import java.util.Set;
 import com.qidate.qisplan2.ghost.module.suppression.GhostSuppression;
 import com.qidate.qisplan2.ghost.module.GhostModuleCombatState;
 import com.qidate.qisplan2.ghost.module.GhostModuleContext;
@@ -135,7 +136,10 @@ public final class GhostPianoModule implements GhostModule {
     }
 
     /** 主动音乐的中断仍是听觉事实，私有袭击只能由该持续流程调用。 */
-    @Override public void onAbilityEvent(GhostModuleContext context, GhostEvent event) {
+    @Override public Set<Class<? extends GhostEvent>> abilityEventTypes() { return Set.of(GhostSoundEvent.class); }
+
+    /** 仅接收已声明订阅的持续能力事实。 */
+    public void onAbilityEvent(GhostModuleContext context, GhostEvent event) {
         if (context.getCustomData().getBoolean("manualMusic") && event instanceof GhostSoundEvent sound
                 && sound.soundType().equals(ID) && sound.type() == GhostSoundEvent.Type.INTERRUPTED)
             context.continueAbility(MUSIC_INTERRUPTION_ABILITY_ID, event);
@@ -207,7 +211,10 @@ public final class GhostPianoModule implements GhostModule {
         }
 
         @Override
-        public boolean supports(GhostEvent event) {
+        public Set<Class<? extends GhostEvent>> eventTypes() { return Set.of(GhostSoundEvent.class); }
+
+        /** 已由订阅索引定位；此处只判断事件携带的事实。 */
+        public boolean matches(GhostEvent event) {
             return event instanceof GhostSoundEvent soundEvent
                     && soundEvent.soundType().equals(ID)
                     && soundEvent.type() == GhostSoundEvent.Type.INTERRUPTED;

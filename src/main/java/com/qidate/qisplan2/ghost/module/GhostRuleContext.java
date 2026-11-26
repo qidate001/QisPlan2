@@ -57,8 +57,7 @@ public record GhostRuleContext(
             );
         }
 
-        boolean ruleExists = module.getRules().stream()
-                .anyMatch(rule -> rule.getId().equals(ruleId));
+        boolean ruleExists = GhostEventSubscriptions.rule(moduleId,ruleId)!=null;
 
         if (!ruleExists) {
             throw new IllegalArgumentException(
@@ -237,18 +236,8 @@ public record GhostRuleContext(
      * 获取当前规则定义。
      */
     public GhostRule getRule() {
-        GhostModule module = Objects.requireNonNull(
-                GhostModuleRegistry.get(moduleId),
-                "Unknown ghost module: " + moduleId
-        );
-
-        return module.getRules().stream()
-                .filter(rule -> rule.getId().equals(ruleId))
-                .findFirst()
-                .orElseThrow(() -> new IllegalStateException(
-                        "Rule definition disappeared: "
-                                + moduleId + "/" + ruleId
-                ));
+        return Objects.requireNonNull(GhostEventSubscriptions.rule(moduleId,ruleId),
+                "Rule definition disappeared: " + moduleId + "/" + ruleId);
     }
 
     /**

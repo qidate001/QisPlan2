@@ -1,5 +1,6 @@
 package com.qidate.qisplan2.ghost.module.implementation;
 
+import java.util.Set;
 import com.qidate.qisplan2.ghost.module.ability.GhostAbilityInfluence;
 import com.qidate.qisplan2.death.ModDamageTypes;
 import com.qidate.qisplan2.death.SupernaturalDeathHandler;
@@ -79,7 +80,10 @@ public final class InvisibleGhostModule implements GhostModule {
         }
 
         @Override
-        public boolean supports(GhostEvent event) {
+        public Set<Class<? extends GhostEvent>> eventTypes() { return Set.of(EntityPerceivedEvent.class); }
+
+        /** 已由订阅索引定位；此处只判断事件携带的事实。 */
+        public boolean matches(GhostEvent event) {
             return event instanceof EntityPerceivedEvent perceivedEvent
                     && perceivedEvent.observer() instanceof Player;
         }
@@ -89,7 +93,7 @@ public final class InvisibleGhostModule implements GhostModule {
                 GhostRuleContext context,
                 GhostEvent event
         ) {
-            return supports(event);
+            return matches(event);
         }
 
         @Override

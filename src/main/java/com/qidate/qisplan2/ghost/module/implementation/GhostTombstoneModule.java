@@ -1,5 +1,6 @@
 package com.qidate.qisplan2.ghost.module.implementation;
 
+import java.util.Set;
 import com.qidate.qisplan2.ghost.module.ability.GhostInvocationParameters;
 import net.minecraft.world.entity.LivingEntity;
 import com.qidate.qisplan2.core.ModTags;
@@ -104,9 +105,8 @@ public final class GhostTombstoneModule implements GhostModule {
          * 这里只筛选事件种类或语义，不执行能力和世界操作。
          */
         @Override
-        public boolean supports(GhostEvent event) {
-            return event instanceof GhostUseEvent;
-        }
+        public Set<Class<? extends GhostEvent>> eventTypes() { return Set.of(GhostUseEvent.class); }
+
 
         /**
          * 检查当前事实和模块上下文是否满足规则触发条件。

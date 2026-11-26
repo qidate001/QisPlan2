@@ -1,5 +1,6 @@
 package com.qidate.qisplan2.ghost.module.implementation.door;
 
+import java.util.Set;
 import com.qidate.qisplan2.ghost.module.*;
 import com.qidate.qisplan2.ghost.module.ability.*;
 import com.qidate.qisplan2.ghost.module.data.GhostModuleInitialData;
@@ -23,6 +24,9 @@ public final class GhostDoorPlateModule implements GhostModule {
     /** 保留旧门牌基础袭击强度。 */
     public GhostModuleInitialData getInitialData() { return new GhostModuleInitialData(20, 0); }
     /** 端点登记是环境维护，不自行传送，也不绕过死机启动规则。 */
+    public boolean ticksAbilities() { return true; }
+
+    /** 维护已启动能力，由注册时声明的 Tick 订阅调度。 */
     public void tickAbilities(GhostModuleContext context) { context.world().doors().maintainLink(number(context)); }
     /** 读取号码时兼容没有初始化专属字段的新模块。 */
     public static int number(GhostModuleContext m) { var d = m.getCustomData(); return d.contains("number") ? d.getInt("number") : DEFAULT_NUMBER; }
@@ -38,7 +42,8 @@ public final class GhostDoorPlateModule implements GhostModule {
             /** 返回规则标识。 */
             public ResourceLocation getId() { return ResourceLocation.parse("qisplan2:ghost_door_plate/entry"); }
             /** 接受周期观察。 */
-            public boolean supports(GhostEvent e) { return e instanceof ModuleTickEvent; }
+            public Set<Class<? extends GhostEvent>> eventTypes() { return Set.of(ModuleTickEvent.class); }
+
             /** 只扫描暴露的世界环境。 */
             public boolean canTrigger(GhostRuleContext c, GhostEvent e) { return c.getModuleContext().world().present(); }
             /** 进入已打开的关联门洞才触犯沉睡规则；不执行传送。 */

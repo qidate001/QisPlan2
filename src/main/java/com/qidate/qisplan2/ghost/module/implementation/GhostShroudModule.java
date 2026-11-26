@@ -1,5 +1,6 @@
 package com.qidate.qisplan2.ghost.module.implementation;
 
+import java.util.Set;
 import com.qidate.qisplan2.ghost.module.influence.GhostAttackResponse;
 import com.qidate.qisplan2.ghost.bearing.GhostModuleForm;
 
@@ -85,7 +86,8 @@ public final class GhostShroudModule implements GhostModule {
             public ResourceLocation getId() { return id("ghost_shroud/erosion"); }
 
             /** 只接收统一模块生命周期事件。 */
-            public boolean supports(GhostEvent event) { return event instanceof ModuleTickEvent || event instanceof SupernaturalAttackEvent; }
+            public Set<Class<? extends GhostEvent>> eventTypes() { return Set.of(ModuleTickEvent.class,SupernaturalAttackEvent.class); }
+
 
             /** 受到覆盖表面的灵异袭击才惊醒；不支付生命代价、不抵挡本次袭击。 */
             public boolean disturbedWhileSleeping(GhostRuleContext c, GhostEvent event) {

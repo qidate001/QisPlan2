@@ -16,6 +16,7 @@ import com.qidate.qisplan2.ghost.module.event.TouchEvent;
 import com.qidate.qisplan2.ghost.module.influence.GhostInfluenceCollector;
 import com.qidate.qisplan2.ghost.module.influence.GhostInfluenceType;
 import java.util.List;
+import java.util.Set;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.LivingEntity;
 
@@ -95,8 +96,8 @@ public final class ContactEchoModule implements GhostModule {
         @Override public ResourceLocation getId() { return RULE; }
 
         /** 只订阅真正的接触语义事实。 */
-        @Override public boolean supports(GhostEvent event) {
-            return event instanceof TouchEvent;
+        @Override public Set<Class<? extends GhostEvent>> eventTypes() {
+            return Set.of(TouchEvent.class);
         }
 
         /** 自动规则要求接触刚发生；这一条件不限制主动技能。 */

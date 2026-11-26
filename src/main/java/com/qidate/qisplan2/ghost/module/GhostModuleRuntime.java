@@ -10,6 +10,10 @@ import com.qidate.qisplan2.ghost.module.event.GhostEvent;
 import com.qidate.qisplan2.ghost.module.influence.GhostInfluenceSession;
 
 import java.util.List;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Comparator;
+import net.minecraft.resources.ResourceLocation;
 import com.qidate.qisplan2.ghost.module.host.ModuleGhostDomains;
 
 /**
@@ -17,7 +21,7 @@ import com.qidate.qisplan2.ghost.module.host.ModuleGhostDomains;
  *
  * 负责完整的模块事件分发流程：
  * 1. 为一次事件创建共享的 GhostInfluenceSession。
- * 2. 遍历宿主当前拥有的模块。
+ * 2. 从事件订阅索引查询实际接收者。
  * 3. 将各模块交给 GhostRuleRuntime 执行规则。
  * 4. 所有模块执行完成后，统一裁决并应用灵异影响。
  *
@@ -32,8 +36,10 @@ public final class GhostModuleRuntime {
     public static void observeSleeping(List<? extends GhostModuleHost> hosts, GhostEvent event) {
         var session = new GhostInfluenceSession();
         try {
-            for (var host : hosts) for (var entry : List.copyOf(host.getModules()))
-                if (entry.sleeping()) GhostRuleRuntime.dispatchModule(host, entry, event, session);
+            for (var host : hosts) for (var recipient : recipients(host,event)) {
+                var entry=recipient.entry();
+                if(entry.sleeping())GhostRuleRuntime.dispatchSubscribed(host,entry,event,session,recipient.delivery().rules());
+            }
         } finally { session.resolveAndApply(); }
     }
 
@@ -96,17 +102,15 @@ public final class GhostModuleRuntime {
                 if (event instanceof ModuleTickEvent)
                     GhostModuleSoundManager.syncCarriedHost(host);
                 if (event instanceof ModuleTickEvent) ModuleGhostDomains.sync(host);
-                List<GhostModuleData.Entry> entries = List.copyOf(host.getModules());
-                for (GhostModuleData.Entry entry : entries) {
+                for (Recipient recipient : recipients(host,event)) {
+                    var entry=recipient.entry();var delivery=recipient.delivery();var module=delivery.module();
                     if (!host.hasModule(entry.id())) continue;
-                    GhostModule module = GhostModuleRegistry.get(entry.id());
-                    if (module == null) continue;
-                    if ((!entry.sleeping() || host.controlsIntrinsicModules()) && host.carriesModule(entry.id()) && host.suppression(entry.id()).canUseAbility(host.controlsIntrinsicModules())) module.onAbilityEvent(new GhostModuleContext(host, entry.id()), event);
-                    if (!host.hasModule(entry.id())) continue;
-                    if (event instanceof ModuleTickEvent && (!entry.sleeping() || host.controlsIntrinsicModules()) && host.carriesModule(entry.id())
-                            && host.suppression(entry.id()).canUseAbility(host.controlsIntrinsicModules()))
-                        module.tickAbilities(new GhostModuleContext(host, entry.id()));
-                    if (host.hasModule(entry.id())) GhostRuleRuntime.dispatchModule(host, entry, event, session);
+                    if(delivery.abilityEvent() && abilitiesAvailable(host,entry))
+                        module.onAbilityEvent(new GhostModuleContext(host,entry.id()),event);
+                    if(!host.hasModule(entry.id()))continue;
+                    if(delivery.abilityTick() && abilitiesAvailable(host,entry))
+                        module.tickAbilities(new GhostModuleContext(host,entry.id()));
+                    if(host.hasModule(entry.id()))GhostRuleRuntime.dispatchSubscribed(host,entry,event,session,delivery.rules());
                 }
             }
         } finally {
@@ -115,4 +119,29 @@ public final class GhostModuleRuntime {
             session.resolveAndApply();
         }
     }
+    /** 宿主数据快照只用于安装关系查询；不向未订阅模块调用任何事件方法。 */
+    private record Recipient(GhostModuleData.Entry entry,GhostEventSubscriptions.Delivery delivery,int order) {}
+
+    /** 先查事件索引，再与宿主安装关系相交；保持原有宿主模块顺序。 */
+    private static List<Recipient> recipients(GhostModuleHost host,GhostEvent event) {
+        var deliveries=GhostEventSubscriptions.subscribers(event.getClass());
+        if(deliveries.isEmpty())return List.of();
+        var entries=List.copyOf(host.getModules());
+        var positions=new HashMap<ResourceLocation,Integer>();
+        for(int i=0;i<entries.size();i++)positions.put(entries.get(i).id(),i);
+        var result=new ArrayList<Recipient>();
+        for(var delivery:deliveries) {
+            var position=positions.get(delivery.module().getId());
+            if(position!=null)result.add(new Recipient(entries.get(position),delivery,position));
+        }
+        result.sort(Comparator.comparingInt(Recipient::order));
+        return result;
+    }
+    /** 持续能力与规则各自检查状态，死机只阻止规则。 */
+    private static boolean abilitiesAvailable(GhostModuleHost host,GhostModuleData.Entry snapshot) {
+        var entry=host.getModules().stream().filter(e->e.id().equals(snapshot.id())).findFirst().orElse(null);
+        return entry!=null && (!entry.sleeping()||host.controlsIntrinsicModules()) && host.carriesModule(entry.id())
+                && host.suppression(entry.id()).canUseAbility(host.controlsIntrinsicModules());
+    }
+
 }

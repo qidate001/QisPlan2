@@ -1,5 +1,6 @@
 package com.qidate.qisplan2.ghost.module.implementation;
 
+import java.util.Set;
 import com.qidate.qisplan2.core.ModGameRules;
 import com.qidate.qisplan2.ghost.module.ability.GhostAbilityInfluence;
 import net.minecraft.world.entity.LivingEntity;
@@ -62,7 +63,10 @@ public final class GhostCarpetModule implements GhostModule {
             /** 返回累计接触规则标识。 */
             public ResourceLocation getId() { return id("ghost_carpet/contact_duration"); }
             /** 复用接触语义，只处理携带真实持续时长的采样。 */
-            public boolean supports(GhostEvent event) {
+            public Set<Class<? extends GhostEvent>> eventTypes() { return Set.of(TouchEvent.class); }
+
+        /** 已由订阅索引定位；此处只判断事件携带的事实。 */
+        public boolean matches(GhostEvent event) {
                 return event instanceof TouchEvent touch && touch.elapsedTicks() > 0;
             }
             /** 只在目标仍存活的服务端推进；死机过滤由规则运行时处理。 */

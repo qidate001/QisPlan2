@@ -202,6 +202,8 @@ idea {
 // 回归检查复用主源码集的 Minecraft / NeoForge 类路径。
 sourceSets {
     regression {
+        // 开发指南完整示例与实际 API 一起编译，防止教程悄悄过期。
+        java.srcDir 'docs/examples'
         compileClasspath += sourceSets.main.output + sourceSets.main.compileClasspath
         runtimeClasspath += sourceSets.main.runtimeClasspath
     }

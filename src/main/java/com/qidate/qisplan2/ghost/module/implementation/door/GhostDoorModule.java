@@ -1,5 +1,6 @@
 package com.qidate.qisplan2.ghost.module.implementation.door;
 
+import java.util.Set;
 import com.qidate.qisplan2.ghost.module.*;
 import com.qidate.qisplan2.ghost.module.ability.*;
 import com.qidate.qisplan2.ghost.module.data.GhostModuleInitialData;
@@ -33,6 +34,9 @@ public final class GhostDoorModule implements GhostModule {
     }
 
     /** 同一扇门明确发生开关变化时清除旧计时，避免同一 tick 手动关开沿用上一轮截止时间。 */
+    public Set<Class<? extends GhostEvent>> abilityEventTypes() { return Set.of(DoorChangedEvent.class); }
+
+    /** 仅接收已声明订阅的持续能力事实。 */
     public void onAbilityEvent(GhostModuleContext context, GhostEvent event) {
         if (!(event instanceof DoorChangedEvent changed)) return;
         var data = context.getCustomData();
@@ -47,7 +51,8 @@ public final class GhostDoorModule implements GhostModule {
             /** 返回计时规则标识。 */
             public ResourceLocation getId() { return ResourceLocation.parse("qisplan2:ghost_door/auto_close"); }
             /** 接受周期语义。 */
-            public boolean supports(GhostEvent e) { return e instanceof ModuleTickEvent; }
+            public Set<Class<? extends GhostEvent>> eventTypes() { return Set.of(ModuleTickEvent.class); }
+
             /** 只在暴露的世界环境中计时。 */
             public boolean canTrigger(GhostRuleContext c, GhostEvent e) { return c.getModuleContext().world().present(); }
             /** 沉睡期间只维护开门计时；到点且射线上有人才惊醒，不关门、不袭击。 */

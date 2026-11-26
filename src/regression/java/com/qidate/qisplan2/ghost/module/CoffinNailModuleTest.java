@@ -1,5 +1,6 @@
 package com.qidate.qisplan2.ghost.module;
 
+import java.util.Set;
 import com.qidate.qisplan2.ghost.module.ability.*;
 import com.qidate.qisplan2.ghost.module.data.GhostModuleData;
 import com.qidate.qisplan2.ghost.module.environment.GhostAttachmentAccess;
@@ -77,11 +78,17 @@ public final class CoffinNailModuleTest {
                 return List.of(new DefinedGhostAbility(ABILITY, ResourceLocation.parse("minecraft:textures/item/stick.png"),
                         c -> true, c -> { effects++; return true; }));
             }
-            public void onAbilityEvent(GhostModuleContext c, GhostEvent event) { lifecycle++; }
+            public Set<Class<? extends GhostEvent>> abilityEventTypes() { return Set.of(GhostEvent.class); }
+
+    /** 仅接收已声明订阅的持续能力事实。 */
+    public void onAbilityEvent(GhostModuleContext c, GhostEvent event) { lifecycle++; }
             public List<GhostAttackResponse> getAttackResponses() { return List.of((module, attack) -> defenses++); }
             public List<GhostRule> getRules() { return List.of(new GhostRule() {
                 public ResourceLocation getId() { return TEST; }
-                public boolean supports(GhostEvent event) { return event instanceof Fact; }
+                public Set<Class<? extends GhostEvent>> eventTypes() { return Set.of(Fact.class); }
+
+        /** 已由订阅索引定位；此处只判断事件携带的事实。 */
+        public boolean matches(GhostEvent event) { return event instanceof Fact; }
                 public boolean canTrigger(GhostRuleContext c, GhostEvent event) { return true; }
                 public void onTrigger(GhostRuleContext c, GhostEvent event) { rules++; }
             }); }

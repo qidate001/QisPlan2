@@ -1,5 +1,6 @@
 package com.qidate.qisplan2.ghost.module.implementation;
 
+import java.util.Set;
 import com.qidate.qisplan2.ghost.module.environment.GhostWorkstationAccess;
 import com.qidate.qisplan2.ghost.module.*;
 import com.qidate.qisplan2.ghost.module.ability.*;
@@ -23,8 +24,14 @@ public final class GhostStoveModule implements GhostModule {
     /** 沿用旧默认灵异强度 1。 */
     public ResourceLocation getId() { return ID; }
     /** 工作台制作属于能力维护；死机禁止自动袭击，但不禁止已经投入的炼制。 */
+    public boolean ticksAbilities() { return true; }
+
+    /** 维护已启动能力，由注册时声明的 Tick 订阅调度。 */
     public void tickAbilities(GhostModuleContext context) { context.world().workstations().tick(GhostWorkstationAccess.FIVE_SLOT_COOKING); }
     /** 物品等交互适配器发布使用事实时，直接调用工作台能力，死机不禁止手动使用。 */
+    public Set<Class<? extends GhostEvent>> abilityEventTypes() { return Set.of(GhostUseEvent.class); }
+
+    /** 仅接收已声明订阅的持续能力事实。 */
     public void onAbilityEvent(GhostModuleContext context, GhostEvent event) {
         if (event instanceof GhostUseEvent) context.continueAbility(WORKSTATION,event);
     }
@@ -47,7 +54,8 @@ public final class GhostStoveModule implements GhostModule {
         /** 返回规则标识。 */
         public ResourceLocation getId() { return ResourceLocation.parse("qisplan2:ghost_stove/nearby_food"); }
         /** 接受世界周期观察。 */
-        public boolean supports(GhostEvent event) { return event instanceof ModuleTickEvent; }
+        public Set<Class<? extends GhostEvent>> eventTypes() { return Set.of(ModuleTickEvent.class); }
+
         /** 没有暴露到世界的模块不产生范围效果。 */
         public boolean canTrigger(GhostRuleContext c, GhostEvent event) { return c.getModuleContext().world().present(); }
         /** 仅附近确有携食实体才算触犯，单纯 Tick 不惊醒。 */
