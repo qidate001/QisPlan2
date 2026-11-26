@@ -1,6 +1,8 @@
 package com.qidate.qisplan2.ghost.curse;
 
 import com.qidate.qisplan2.ghost.module.influence.GhostInfluence;
+import com.qidate.qisplan2.ghost.module.suppression.GhostSuppressionLedger;
+import net.minecraft.network.chat.Component;
 import com.qidate.qisplan2.ghost.module.GhostModuleDataModifier;
 import com.qidate.qisplan2.ghost.module.event.GhostEvent;
 
@@ -71,6 +73,16 @@ public final class CurseManager {
     /** 压制与袭击分别产生语义事实，但使用相同强度对抗上下文和同源死机回调。 */
     public static SupernaturalAttackEvent resolveSuppression(LivingEntity target,double strength,
             GhostInfluence source){
+        return resolveSuppressionDetailed(target,strength,source).event();
+    }
+    /** 记录真正使本次压制失效的诅咒实例，展示时不再猜测原因或重放能力。 */
+    public record SuppressionBlocker(UUID instance,ResourceLocation type,double strength) {}
+    public record SuppressionResult(SupernaturalAttackEvent event,List<SuppressionBlocker> blockers) {
+        public SuppressionResult { blockers=List.copyOf(blockers); }
+    }
+    /** 与真实压制结算共用的带解释结果；没有保护时不会制造抵挡记录。 */
+    public static SuppressionResult resolveSuppressionDetailed(LivingEntity target,double strength,GhostInfluence source){
+        var blockers=new ArrayList<SuppressionBlocker>();
         var incoming=new SupernaturalAttackEvent(target.getUUID(),strength);
         var attack=new GhostAttackContext(incoming,source==null?null:source.moduleId(),()->{
             if(source!=null && source.host() instanceof GhostModuleDataModifier modifier)
@@ -81,8 +93,12 @@ public final class CurseManager {
             var type=CurseRegistry.get(curse.getType());if(type==null)continue;
             var event=new SupernaturalSuppressionEvent(target.getUUID(),strength);
             type.program().dispatch(event,new CurseAbilityContext(curse.getId(),curse.getTarget(),curse.getStrength(),event,attack,()->remove(target.getServer(),curse.getId()),null));
+            if(incoming.isBlocked()){
+                blockers.add(new SuppressionBlocker(curse.getId(),curse.getType(),curse.getStrength()));
+                break;
+            }
         }
-        return incoming;
+        return new SuppressionResult(incoming,blockers);
     }
     /** 直接调用持续诅咒的能力也检查存活、压制状态和能力媒介，不允许旁路沉寂。 */
     public static boolean execute(MinecraftServer server,UUID instance,ResourceLocation ability,GhostEvent event){
@@ -341,7 +357,9 @@ public final class CurseManager {
             if(body!=null){
                 var offer=declaration==null||curse.status(server)!=Curse.Status.RUNNING?null:declaration.suppression().offer(1,curse.getStrength());
                 if(offer==null)GhostPersistentSuppression.remove(body,curse.getId());
-                else GhostPersistentSuppression.put(body,curse.getId(),offer);
+                else GhostPersistentSuppression.put(body,curse.getId(),offer,
+                        new GhostSuppressionLedger.Source("curse",CurseRegistry.owner(curse.getType()),
+                                Component.translatable("curse."+curse.getType().getNamespace()+"."+curse.getType().getPath())));
             }
             var currentStatus=curse.status(server);
             if(LAST_STATUS.put(curse.getId(),currentStatus)!=currentStatus)syncTarget(server,curse.getTarget());

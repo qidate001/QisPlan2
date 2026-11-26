@@ -266,10 +266,10 @@
   "command.qisplan2.module.conflict.internal": "Internal; controlled active abilities exempt",
   "command.qisplan2.module.conflict.external": "External",
   "command.qisplan2.module.conflict.relation": "§7  #%s %s §d[%s]§r %s §7/§r %s §7→§r %s §7/§r %s",
-  "command.qisplan2.module.conflict.detail": "§7    Pressure: §e%s§7; target strength: §e%s§7; level: %s§7; %s§7; %s§r",
+  "command.qisplan2.module.conflict.detail": "§7    Source pressure: §e%s§7; target strength: §e%s§7; level before protection: %s§7; %s§7; %s§r",
   "command.qisplan2.module.conflict.identity": "Source instance: %s\nSource module: %s\nTarget module: %s",
   "command.qisplan2.module.conflict.effective": "§7  %s§7 final suppression permissions: external %s§7 / internal %s§7; act §e%s§7; rules §e%s§7; ability invocation §e%s§r",
-  "command.qisplan2.module.conflict.note": "§8  Current relations and suppression permissions only; sleep, deadlock, bearing and media impose further limits. Instant adjudications have no history. Hover a relation for source IDs.§r",
+  "command.qisplan2.module.conflict.note": "§8  Relations show pressure before protection; final permissions include persistent protection. Sleep, deadlock, bearing and media impose additional restrictions. Hover for source IDs.§r",
   "command.qisplan2.module.conflict.level.none": "§7Below threshold§r",
   "command.qisplan2.module.conflict.level.basic": "§eBasic§r",
   "command.qisplan2.module.conflict.level.high": "§6High§r",
@@ -471,5 +471,8 @@
   "curse.qisplan2.state.dormant": "Dormant",
   "command.qisplan2.curse.missing": "§cCurse not found: %s",
   "command.qisplan2.curse.removed": "§aRemoved curse: %s",
-  "command.qisplan2.module.conflict.persistent": "Persistent suppression (domain / curse)"
+  "command.qisplan2.module.conflict.persistent": "Persistent suppression (domain / curse)",
+  "command.qisplan2.module.conflict.domain": "Domain suppression",
+  "command.qisplan2.module.conflict.curse": "Curse suppression",
+  "command.qisplan2.module.conflict.blocked": "§a  %s: %s (strength %s) blocked suppression of strength %s; final permissions below include this protection.§r"
 }

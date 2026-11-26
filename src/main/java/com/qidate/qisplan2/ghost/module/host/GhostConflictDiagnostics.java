@@ -10,6 +10,9 @@ import com.qidate.qisplan2.ghost.module.suppression.GhostSuppression;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.UUID;
+import com.qidate.qisplan2.ghost.module.suppression.GhostSuppressionLedger;
+import com.qidate.qisplan2.ghost.module.data.GhostModuleData;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.LivingEntity;
@@ -47,6 +50,14 @@ public final class GhostConflictDiagnostics {
                 block.getBlockPos().toShortString(), block.getLevel() == null ? "?" : block.getLevel().dimension().location().toString());
         return Component.translatable("command.qisplan2.module.conflict.unknown");
     }
+    /** 保留来源子系统、完整模块 ID 和实际宿主描述，不能把鬼域当成无主影响。 */
+    public static Relation persistentRelation(UUID id,GhostSuppressionLedger.Relation relation,
+            GhostModuleHost target,GhostModuleData.Entry entry){
+        var source=relation.source();
+        return new Relation(false,source==null?"persistent":source.kind(),id.toString(),
+                source==null?Component.translatable("command.qisplan2.module.conflict.unknown"):source.description(),
+                source==null?null:source.module(),describe(target),entry.id(),relation.suppression(),entry.intensity(),relation.internal(),-1);
+    }
     /** 汇集所有已成立的入向/出向声音关系、外来附着关系和未到期短时袭击。 */
     public static List<Relation> snapshot(GhostModuleHost host) {
         var result = new ArrayList<>(GhostSoundManager.conflictRelations(host));
@@ -56,9 +67,7 @@ public final class GhostConflictDiagnostics {
                     source.item(), source.module(), describe(host), entry.id(), source.suppression(), entry.intensity(), false, -1));
         }
         if(target!=null)for(var source:GhostPersistentSuppression.relations(target).entrySet()){
-            for(var entry:host.getModules())result.add(new Relation(false,"persistent",source.getKey().toString(),
-                    Component.translatable("command.qisplan2.module.conflict.persistent"),null,describe(host),entry.id(),
-                    source.getValue().suppression(),entry.intensity(),source.getValue().internal(),-1));
+            for(var entry:host.getModules())result.add(persistentRelation(source.getKey(),source.getValue(),host,entry));
         }
         for (var entry : host.getModules()) {
             var data = entry.customData().getCompound(GhostModuleCombatState.KEY);

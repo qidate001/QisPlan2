@@ -17,6 +17,7 @@ import com.qidate.qisplan2.ghost.curse.CurseRegistry;
 import com.qidate.qisplan2.ghost.module.GhostModule;
 import com.qidate.qisplan2.ghost.module.GhostModuleHost;
 import com.qidate.qisplan2.ghost.module.host.GhostConflictDiagnostics;
+import com.qidate.qisplan2.ghost.module.host.GhostPersistentSuppression;
 import com.qidate.qisplan2.ghost.module.suppression.GhostSuppression;
 import com.qidate.qisplan2.ghost.module.GhostModuleCombatState;
 import com.qidate.qisplan2.ghost.bearing.GhostModuleForm;
@@ -1670,7 +1671,7 @@ public final class GhostCommands {
             source.sendSuccess(() -> moduleText("bearing", form, required, actual, status), false);
             source.sendSuccess(() -> moduleText("states", moduleBoolean(entry.sleeping()),
                     moduleBoolean(entry.deadlocked()), GhostModuleCombatState.sleepTicks(entry),
-                    moduleBoolean(carried && GhostModuleCombatState.available(entry))), false);
+                    moduleBoolean(carried && GhostModuleCombatState.available(entry) && host.suppression(entry.id()).canRunRules())), false);
             source.sendSuccess(() -> moduleText("custom_data", entry.customData().getAllKeys().size())
                     .withStyle(style -> style.withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT,
                             Component.literal(entry.customData().toString())))), false);
@@ -1705,6 +1706,13 @@ public final class GhostCommands {
         }
         for (var entry : host.getModules()) {
             var state = host.suppression(entry.id());
+            var body=GhostConflictDiagnostics.body(host);
+            var report=body==null?null:GhostPersistentSuppression.protectionReport(body);
+            if(report!=null && report.effective().equals(state))for(var blocker:report.blockers()){
+                var name=Component.translatable("curse."+blocker.type().getNamespace()+"."+blocker.type().getPath());
+                source.sendSuccess(()->moduleText("conflict.blocked",moduleName(entry.id()),name,blocker.strength(),report.raw().pressure())
+                        .withStyle(style->style.withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT,Component.literal(blocker.instance().toString())))),false);
+            }
             source.sendSuccess(() -> moduleText("conflict.effective", moduleName(entry.id()),
                     moduleText("conflict.level." + state.external().name().toLowerCase(Locale.ROOT)),
                     moduleText("conflict.level." + state.internal().name().toLowerCase(Locale.ROOT)),

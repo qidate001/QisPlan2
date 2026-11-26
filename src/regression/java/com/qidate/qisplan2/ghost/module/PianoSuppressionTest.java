@@ -1,6 +1,8 @@
 package com.qidate.qisplan2.ghost.module;
 
 import com.qidate.qisplan2.ghost.module.data.GhostModuleData;
+import com.qidate.qisplan2.ghost.module.host.GhostConflictDiagnostics;
+import net.minecraft.network.chat.Component;
 import com.qidate.qisplan2.ghost.module.implementation.GhostPianoModule;
 import com.qidate.qisplan2.ghost.module.sound.GhostSoundTransition;
 import com.qidate.qisplan2.ghost.module.suppression.GhostSuppression;
@@ -34,6 +36,20 @@ public final class PianoSuppressionTest {
         check(ledger.state(TARGET, 14).external() == GhostSuppression.Level.BASIC, "15对14基础压制");
         check(ledger.state(TARGET, 10).external() == GhostSuppression.Level.COMPLETE, "15对10恰好进入完全压制");
         check(ledger.state(TARGET, 9).external() == GhostSuppression.Level.COMPLETE, "15对9完全压制");
+        var full=ledger.state(TARGET,1);
+        check(full.external()==GhostSuppression.Level.COMPLETE&&!full.canAct()&&!full.canRunRules()&&!full.canUseAbility(true),
+                "15强度外来声音对1强度模块：无抵挡时三项权限必须全部禁止");
+        for(var owner:List.of(ResourceLocation.parse("qisplan2:ghost_eye"),ResourceLocation.parse("qisplan2:ghost_mist"))){
+            var provenance=new GhostSuppressionLedger.Source("domain",owner,Component.literal("实体来源"));
+            var declared=new GhostSuppressionLedger.Relation(offer(50),false,null,provenance);
+            var domainId=UUID.randomUUID();ledger.put(domainId,declared);
+            var entry=new GhostModuleData.Entry(TARGET,1);
+            var diagnostic=GhostConflictDiagnostics.persistentRelation(domainId,ledger.snapshot().get(domainId),()->List.of(entry),entry);
+            check(diagnostic.sourceModule().equals(owner)&&diagnostic.kind().equals("domain")&&diagnostic.sourceId().equals(domainId.toString()),
+                    "鬼域实例与所属模块必须同时保留，不能显示未知来源");
+            check(diagnostic.source().getString().equals("实体来源"),"鬼域来源描述不能丢失");
+            ledger.remove(domainId);
+        }
         long version = ledger.revision(); var state = ledger.state(TARGET, 9);
         for (int i = 0; i < 1000; i++) ledger.put(first, relation);
         check(ledger.revision() == version && ledger.state(TARGET, 9) == state, "稳定听觉关系不得反复重算状态");

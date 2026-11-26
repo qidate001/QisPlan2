@@ -22,6 +22,13 @@ import net.minecraft.world.entity.player.Player;
 public final class GhostPersistentSuppression {
     private static final Map<LivingEntity, GhostSuppressionLedger> TARGETS = new WeakHashMap<>();
     private GhostPersistentSuppression() {}
+    /** 只保留当前权限查询的抵挡解释，不额外重放规则；弱键不延长实体生命周期。 */
+    private static final Map<LivingEntity, ProtectionReport> PROTECTION = new WeakHashMap<>();
+    public record ProtectionReport(GhostSuppressionState raw, GhostSuppressionState effective,
+                                   List<CurseManager.SuppressionBlocker> blockers) {}
+    /** 命令读取最近一次实际查询结果，不再次调用诅咒能力。 */
+    public static ProtectionReport protectionReport(LivingEntity target) { return PROTECTION.get(target); }
+
     /** 接口边界负责识别身体，厉鬼定义只声明效果。 */
     public static GhostModuleHost host(LivingEntity target){return target instanceof Player player?new PlayerGhostModuleHost(player):target instanceof GhostModuleHost host?host:null;}
     /** 判断实际承载的厉鬼，不把玩家类型当作凡人判据。 */
@@ -51,9 +58,9 @@ public final class GhostPersistentSuppression {
         return result;
     }
     /** 更新一条外来关系；普通目标也可有诅咒，不能在此仅过滤实体厉鬼。 */
-    public static void put(LivingEntity target,UUID source,GhostSuppression offer){
+    public static void put(LivingEntity target,UUID source,GhostSuppression offer,GhostSuppressionLedger.Source owner){
         if(!carriesSupernaturalContent(target)){remove(target,source);return;}
-        TARGETS.computeIfAbsent(target,k->new GhostSuppressionLedger()).put(source,new GhostSuppressionLedger.Relation(offer,false,null));}
+        TARGETS.computeIfAbsent(target,k->new GhostSuppressionLedger()).put(source,new GhostSuppressionLedger.Relation(offer,false,null,owner));}
     /** 退出覆盖或媒介消失时仅撤销该来源。 */
     public static void remove(LivingEntity target,UUID source){var ledger=TARGETS.get(target);if(ledger!=null){ledger.remove(source);if(ledger.isEmpty())TARGETS.remove(target);}}
     /** 诊断读取实际账本，不触发能力或重新扫描覆盖。 */
@@ -85,7 +92,18 @@ public final class GhostPersistentSuppression {
         for(var host:GhostLivingHosts.collect(target))GhostModuleCombatState.suppressForOneSecond(host,strength);return true;
     }
     /** 持续压制也必须经过目标身上持续保护的对抗。 */
-    public static GhostSuppressionState protect(LivingEntity target,GhostSuppressionState state){return CurseManager.blocksSuppression(target,state.pressure())?GhostSuppressionState.NONE:state;}
+    public static GhostSuppressionState protect(LivingEntity target,GhostSuppressionState state){
+        if(state.pressure()<=0 || !Double.isFinite(state.pressure()) || target.getServer()==null){
+            PROTECTION.remove(target);return state;
+        }
+        var report=protectionReport(state,CurseManager.resolveSuppressionDetailed(target,state.pressure(),null));
+        PROTECTION.put(target,report);
+        return report.effective();
+    }
+    /** 抵挡改变最终许可，但保留原始压制状态和实际保护来源供诊断解释。 */
+    public static ProtectionReport protectionReport(GhostSuppressionState raw,CurseManager.SuppressionResult result){
+        return new ProtectionReport(raw,result.event().isBlocked()?GhostSuppressionState.NONE:raw,result.blockers());
+    }
     /** 服务端退出后清空临时世界关系。 */
-    public static void clear(){TARGETS.clear();}
+    public static void clear(){TARGETS.clear();PROTECTION.clear();}
 }

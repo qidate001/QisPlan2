@@ -2,6 +2,9 @@ package com.qidate.qisplan2.ghost.module;
 
 import com.qidate.qisplan2.ghost.curse.*;
 import com.qidate.qisplan2.death.GhostAttackMode;
+import com.qidate.qisplan2.ghost.module.host.GhostPersistentSuppression;
+import com.qidate.qisplan2.ghost.module.suppression.GhostSuppression;
+import com.qidate.qisplan2.ghost.module.suppression.GhostSuppressionState;
 import com.qidate.qisplan2.ghost.curse.type.ghostdivination.*;
 import com.qidate.qisplan2.ghost.module.component.*;
 import com.qidate.qisplan2.ghost.module.event.*;
@@ -41,6 +44,13 @@ public final class CurseComponentTest {
             var event=new SupernaturalSuppressionEvent(target,incoming);
             life.program().dispatch(event,new CurseAbilityContext(UUID.randomUUID(),target,50,event,response,()->{},null));
             check(damage.isBlocked()==(incoming<50),"life curse must confront suppression using own strength");
+            var raw=new GhostSuppressionState(GhostSuppression.Level.COMPLETE,GhostSuppression.Level.NONE,incoming);
+            var blockers=damage.isBlocked()?List.of(new CurseManager.SuppressionBlocker(UUID.randomUUID(),life.id(),50)):List.<CurseManager.SuppressionBlocker>of();
+            var report=GhostPersistentSuppression.protectionReport(raw,new CurseManager.SuppressionResult(damage,blockers));
+            check(report.raw().external()==GhostSuppression.Level.COMPLETE,"诊断保留原始完全压制");
+            check(report.effective().canAct()==damage.isBlocked()&&report.effective().canRunRules()==damage.isBlocked()
+                    &&report.effective().canUseAbility(true)==damage.isBlocked(),"最终许可必须反映真实生签抵挡结果");
+            check(report.blockers().size()==(damage.isBlocked()?1:0),"没有抵挡不能伪造保护来源");
         }
         check(GhostAttackMode.AUTO.resolve(true)==GhostAttackMode.SUPPRESSION
                 && GhostAttackMode.AUTO.resolve(false)==GhostAttackMode.ATTACK

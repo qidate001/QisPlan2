@@ -1,6 +1,7 @@
 package com.qidate.qisplan2.ghost.module.host;
 
 import com.qidate.qisplan2.ghost.module.suppression.GhostSuppression;
+import com.qidate.qisplan2.ghost.module.suppression.GhostSuppressionLedger;
 
 import com.qidate.qisplan2.ghost.module.domain.GhostDomainAbilityContext;
 
@@ -137,7 +138,8 @@ public final class ModuleGhostDomainBehavior implements GhostDomainBehavior {
         for(var entity:entities)if(entity instanceof LivingEntity target && target!=source && target.isAlive()){
             double weight=GhostDomainManager.get(level).influence(domain,target);
             var offer=definition.suppression().offer(domain.getLayer(),domain.getStrength()*weight);
-            if(offer!=null){current.add(target);GhostPersistentSuppression.put(target,domain.getId(),offer);}
+            if(offer!=null){current.add(target);GhostPersistentSuppression.put(target,domain.getId(),offer,
+                    new GhostSuppressionLedger.Source("domain",module,GhostConflictDiagnostics.describe(host)));}
         }
         for(var target:suppressed)if(!current.contains(target))GhostPersistentSuppression.remove(target,domain.getId());
         suppressed.clear();suppressed.addAll(current);

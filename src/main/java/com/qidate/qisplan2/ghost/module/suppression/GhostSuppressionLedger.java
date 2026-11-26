@@ -4,11 +4,19 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.network.chat.Component;
 
 /** 单个目标的持续关系账本。相同来源更新相同声明不产生状态变化，也不使缓存失效。 */
 public final class GhostSuppressionLedger {
     /** excludedModule 仅排除来源自身模块；同一身体的其他模块仍可受影响。 */
-    public record Relation(GhostSuppression suppression, boolean internal, ResourceLocation excludedModule) {}
+    /** 持续影响的所属模块和物理来源；鬼域/诅咒实例 ID 不能替代完整模块身份。 */
+    public record Source(String kind, ResourceLocation module, Component description) {}
+    public record Relation(GhostSuppression suppression, boolean internal, ResourceLocation excludedModule, Source source) {
+        /** 兼容没有额外描述的声音及旧调用，压制计算不依赖展示元数据。 */
+        public Relation(GhostSuppression suppression, boolean internal, ResourceLocation excludedModule) {
+            this(suppression, internal, excludedModule, null);
+        }
+    }
     private record Cached(double strength, GhostSuppressionState state) {}
     private final Map<UUID, Relation> relations = new HashMap<>();
     private final Map<ResourceLocation, Cached> cache = new HashMap<>();

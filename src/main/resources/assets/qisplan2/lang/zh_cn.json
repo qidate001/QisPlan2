@@ -264,10 +264,10 @@
   "command.qisplan2.module.conflict.internal": "体内关系；驾驭者主动能力可豁免",
   "command.qisplan2.module.conflict.external": "外来关系",
   "command.qisplan2.module.conflict.relation": "§7  #%s %s §d[%s]§r %s §7/§r %s §7→§r %s §7/§r %s",
-  "command.qisplan2.module.conflict.detail": "§7    压制强度：§e%s§7；目标强度：§e%s§7；等级：%s§7；%s§7；%s§r",
+  "command.qisplan2.module.conflict.detail": "§7    来源压制强度：§e%s§7；目标强度：§e%s§7；抵挡前等级：%s§7；%s§7；%s§r",
   "command.qisplan2.module.conflict.identity": "来源实例：%s\n来源模块：%s\n目标模块：%s",
   "command.qisplan2.module.conflict.effective": "§7  %s§7 最终压制许可：外来 %s§7 / 体内 %s§7；行动 §e%s§7；规则 §e%s§7；当前宿主能力调用 §e%s§r",
-  "command.qisplan2.module.conflict.note": "§8  以上为持续关系及压制许可；沉睡、死机、承载和媒介另行限制。瞬时裁决不保留历史。悬浮关系行查看来源 ID。§r",
+  "command.qisplan2.module.conflict.note": "§8  关系行显示抵挡前的压制；最终许可包含持续保护的抵挡结果。沉睡、死机、承载和媒介另行限制。悬浮查看来源 ID。§r",
   "command.qisplan2.module.conflict.level.none": "§7未达压制阈值§r",
   "command.qisplan2.module.conflict.level.basic": "§e基础压制§r",
   "command.qisplan2.module.conflict.level.high": "§6高度压制§r",
@@ -469,5 +469,8 @@
   "curse.qisplan2.state.dormant": "沉寂",
   "command.qisplan2.curse.missing": "§c诅咒不存在：%s",
   "command.qisplan2.curse.removed": "§a已移除诅咒：%s",
-  "command.qisplan2.module.conflict.persistent": "持续能力压制（鬼域／诅咒）"
+  "command.qisplan2.module.conflict.persistent": "持续能力压制（鬼域／诅咒）",
+  "command.qisplan2.module.conflict.domain": "鬼域压制",
+  "command.qisplan2.module.conflict.curse": "诅咒压制",
+  "command.qisplan2.module.conflict.blocked": "§a  %s§a：%s§a（强度 %s）抵挡了强度 %s 的压制；以下显示抵挡后的最终许可。§r"
 }
