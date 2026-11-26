@@ -26,7 +26,6 @@ import com.qidate.qisplan2.ghost.module.ability.GhostAbility;
 import com.qidate.qisplan2.ghost.module.ability.GhostAbilityExecutor;
 import com.qidate.qisplan2.ghost.module.ability.GhostAbilityContext;
 import com.qidate.qisplan2.ghost.module.data.GhostModuleInitialData;
-import com.qidate.qisplan2.ghost.module.event.DivinationSlipResultEvent;
 import com.qidate.qisplan2.ghost.module.event.GhostEvent;
 import com.qidate.qisplan2.ghost.module.event.GhostUseEvent;
 import com.qidate.qisplan2.ghost.module.influence.GhostInfluenceCollector;
@@ -228,7 +227,7 @@ public final class GhostDivinationSlipModule implements GhostModule {
          * 这里只筛选事件种类或语义，不执行能力和世界操作。
          */
         @Override
-        public Set<Class<? extends GhostEvent>> eventTypes() { return Set.of(GhostUseEvent.class,DivinationSlipResultEvent.class); }
+        public Set<Class<? extends GhostEvent>> eventTypes() { return Set.of(GhostUseEvent.class); }
 
 
         /**
@@ -240,8 +239,7 @@ public final class GhostDivinationSlipModule implements GhostModule {
                 GhostRuleContext context,
                 GhostEvent event
         ) {
-            return (event instanceof GhostUseEvent useEvent && useEvent.user().level() instanceof ServerLevel)
-                    || (event instanceof DivinationSlipResultEvent result && result.user().level() instanceof ServerLevel);
+            return event instanceof GhostUseEvent useEvent && useEvent.user().level() instanceof ServerLevel;
         }
 
         /**
@@ -253,18 +251,14 @@ public final class GhostDivinationSlipModule implements GhostModule {
                 GhostRuleContext context,
                 GhostEvent event
         ) {
-            LivingEntity user = event instanceof GhostUseEvent useEvent ? useEvent.user()
-                    : ((DivinationSlipResultEvent)event).user();
+            LivingEntity user = ((GhostUseEvent) event).user();
 
             if (!(user.level() instanceof ServerLevel serverLevel)) {
                 return;
             }
 
             // 本次事件只随机一次，后续使用固定结果。
-            int result = event instanceof DivinationSlipResultEvent fixed ? fixed.result() : user.getRandom().nextInt(3);
-
-            DivinationSlipResultEvent resultEvent =
-                    new DivinationSlipResultEvent(user, result);
+            int result = user.getRandom().nextInt(3);
 
             switch (result) {
                 case LIFE_RESULT -> {
@@ -276,7 +270,7 @@ public final class GhostDivinationSlipModule implements GhostModule {
 
                     context.submitAbilityInfluence(
                             resultAbility(result),
-                            resultEvent,
+                            event,
                             user.getUUID(),
                             GhostInfluenceType.PROTECTION,
                             context.getModuleContext().intensity()
@@ -292,7 +286,7 @@ public final class GhostDivinationSlipModule implements GhostModule {
 
                     context.submitAbilityInfluence(
                             resultAbility(result),
-                            resultEvent,
+                            event,
                             user.getUUID(),
                             GhostAbilityInfluence.of(user, GhostAttackMode.AUTO, context.getModuleContext().intensity()).type(),
                             context.getModuleContext().intensity()
@@ -304,7 +298,7 @@ public final class GhostDivinationSlipModule implements GhostModule {
                     // 保持原有的无额外效果语义。
                     context.tryExecuteAbility(
                             resultAbility(result),
-                            resultEvent
+                            event
                     );
                 }
 
@@ -335,9 +329,9 @@ public final class GhostDivinationSlipModule implements GhostModule {
         public ResourceLocation getId() { return resultAbility(result); }
         /** 各签文直接声明对应图标。 */
         public ResourceLocation iconTexture() { return ResourceLocation.fromNamespaceAndPath(MODID, "textures/item/" + name + "_sign.png"); }
-        /** 规则提供抽签事实，主动输入提供作用对象，两者不是宿主引用。 */
+        /** 规则提供使用事实，主动输入提供作用对象，两者不是宿主引用。 */
         private LivingEntity recipient(GhostAbilityContext c) {
-            if (c.event() instanceof DivinationSlipResultEvent event) return event.user();
+            if (c.event() instanceof GhostUseEvent event) return event.user();
             return c.parameters() instanceof GhostInvocationParameters input ? input.recipient() : null;
         }
         /** 目标必须处于服务端且存活；主动调用不需要伪造抽签事件。 */

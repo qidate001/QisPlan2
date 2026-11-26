@@ -93,7 +93,7 @@ public final class AttachmentItemSnapshotTest {
         check(!returned.has(DataComponents.ATTRIBUTE_MODIFIERS), "显式删除的默认组件不能复活");
         check(loaded.instance().equals(originId), "重载不更换附着来源身份");
         var host = new AttachedGhostHost(returned);
-        check(definition.supportsEntityUse() && !definition.getSuppressions(new GhostModuleContext(host, CoffinNailModule.ID)).isEmpty(),
+        check(!definition.getSuppressions(new GhostModuleContext(host, CoffinNailModule.ID)).isEmpty(),
                 "白板剑上的棺材钉模块必须通过相同接口形成压制");
         var again = GhostAttachedItemSnapshot.restore(GhostAttachedItemSnapshot.save(returned, registries), registries);
         check(ItemStack.isSameItemSameComponents(returned, again), "多次保存重载不能改变组件");

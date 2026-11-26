@@ -2,7 +2,7 @@ package com.qidate.qisplan2.event;
 
 import com.qidate.qisplan2.ghost.module.GhostModuleHost;
 import com.qidate.qisplan2.ghost.module.GhostModuleRuntime;
-import com.qidate.qisplan2.ghost.module.event.BlockDestructionAttemptEvent;
+import com.qidate.qisplan2.ghost.module.event.DestructionAttemptEvent;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.block.state.BlockState;
 import net.neoforged.bus.api.SubscribeEvent;
@@ -29,12 +29,8 @@ public class GhostBlockInteractionHandler {
                 : state.getBlock() instanceof GhostModuleHost modules ? modules : null;
         if (host == null) return;
 
-        BlockDestructionAttemptEvent destructionEvent =
-                new BlockDestructionAttemptEvent(
-                        player,
-                        event.getPos(),
-                        state
-                );
+        DestructionAttemptEvent destructionEvent =
+                new DestructionAttemptEvent(player);
 
         GhostModuleRuntime.dispatch(host, destructionEvent);
 

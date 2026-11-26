@@ -4,6 +4,7 @@ import com.qidate.qisplan2.ghost.module.event.GhostEvent;
 import com.qidate.qisplan2.ghost.module.event.ModuleTickEvent;
 import net.minecraft.resources.ResourceLocation;
 import java.util.Set;
+import java.util.List;
 
 /**
  * 灵异规则定义。
@@ -36,6 +37,9 @@ public interface GhostRule {
 
     /** 注册时声明订阅类型；支持父事件接口，声明必须稳定且不得读取实例状态。 */
     Set<Class<? extends GhostEvent>> eventTypes();
+
+    /** 携带语义的按需观察订阅；框架只为已安装且可观察的规则查询指定范围。 */
+    default List<CarriedItemObservation> carriedItems() { return List.of(); }
 
     /** 订阅已命中后筛选事件内容，例如开始接触或特定声音；不承担广播筛选职责。 */
     default boolean matches(GhostEvent event) { return true; }

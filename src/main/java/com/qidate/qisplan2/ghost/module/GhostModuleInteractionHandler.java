@@ -46,11 +46,11 @@ public final class GhostModuleInteractionHandler {
             return;
         }
 
-        // TouchEvent 描述触碰来源与目标，不规定具体效果。
+        // TouchEvent 只描述接触到的目标，不暴露物品或持有者作为来源宿主。
         if (event.getTarget() instanceof LivingEntity target) {
             GhostModuleRuntime.dispatch(
                     new GhostItemModuleHost(stack, player),
-                    new TouchEvent(player, target)
+                    new TouchEvent(target)
             );
         }
     }
@@ -87,9 +87,9 @@ public final class GhostModuleInteractionHandler {
 
         // 持续手持每 tick 贡献一 tick 接触时长；没有把两次采样之间的空档补算进去。
         var host = new GhostItemModuleHost(stack, player);
-        GhostModuleRuntime.dispatch(host, TouchEvent.sample(player, player, false));
+        GhostModuleRuntime.dispatch(host, TouchEvent.sample(player, false));
         // 保留不可触物品原有的每秒一次触碰触发；瞬时事实不增加鬼地毯计时。
         if (player.isAlive() && player.tickCount % 20 == 0)
-            GhostModuleRuntime.dispatch(host, new TouchEvent(player, player));
+            GhostModuleRuntime.dispatch(host, new TouchEvent(player));
     }
 }

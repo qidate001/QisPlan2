@@ -149,9 +149,6 @@ public interface GhostModule {
     /** 声音到达目标时声明持续压制；默认没有，声音框架不得硬编码具体厉鬼。 */
     default GhostSuppression soundSuppression(GhostModuleContext context, ResourceLocation soundType) { return null; }
 
-    /** 是否接收手持来源对实体的交互事实，输入桥不硬编码具体厉鬼。 */
-    default boolean supportsEntityUse() { return false; }
-
     /** 附着时的独立模型资源，null 表示不额外显示。 */
     default ResourceLocation attachmentModel() { return null; }
 

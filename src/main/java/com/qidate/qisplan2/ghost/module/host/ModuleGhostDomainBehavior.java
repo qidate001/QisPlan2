@@ -106,19 +106,19 @@ public final class ModuleGhostDomainBehavior implements GhostDomainBehavior {
             final boolean exposeNow=exposure;
             GhostDomainInfluenceScope.run(weight,()->{
             if(target != source) {
-                if(definition.touch()) GhostContactEvents.sample(host, source, target);
+                if(definition.touch()) GhostContactEvents.sample(host, target);
                 if(definition.sight()) {
                     GhostModuleRuntime.dispatch(host,new TargetSeenEvent(target));
                     // “我看见目标”也意味着目标“被我看见”；沿用已有感知语义，不能反转为我被看见。
                     if(source != null) {
                         GhostModuleHost targetHost=target instanceof Player player ? new PlayerGhostModuleHost(player)
                                 : target instanceof GhostModuleHost modules ? modules : null;
-                        if(targetHost!=null)GhostModuleRuntime.dispatch(targetHost, new EntityPerceivedEvent(source,target));
+                        if(targetHost!=null)GhostModuleRuntime.dispatch(targetHost, new SourceSeenEvent(source));
                     }
                 }
             }
             if(exposeNow) {
-                var event=new GhostDomainExposureEvent(domain.getId(),source,target,domain.getStrength());
+                var event=new GhostDomainExposureEvent(domain.getId(),target,domain.getStrength());
                 if(componentRules)definition.program().dispatch(event,new GhostDomainAbilityContext(domain.getId(),target,domain.getLayer(),domain.getStrength()*weight,event,host.moduleWorld(module)));
                 GhostModuleRuntime.dispatch(host,event);
             }

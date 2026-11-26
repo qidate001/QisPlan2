@@ -95,5 +95,5 @@ public record GhostActorAdapter(GhostModuleHost host, ResourceLocation module, P
     /** 行动请求仍经过统一执行器，不能直接越过压制、媒介或死机状态。 */
     public void execute(ResourceLocation ability,GhostAbilityParameters parameters){GhostAbilityExecutor.tryExecuteWithResult(new GhostAbilityContext(host,module,ability,GhostAbilityContext.Source.BEHAVIOR,null,()->{},parameters));}
     /** 将附近目标转换成已经发生的空间事实。 */
-    public void nearby(LivingEntity target){GhostModuleRuntime.dispatch(host,new EntityNearbyEvent(body,target));}
+    public void nearby(LivingEntity target){GhostModuleRuntime.dispatch(host,new EntityNearbyEvent(target));}
 }

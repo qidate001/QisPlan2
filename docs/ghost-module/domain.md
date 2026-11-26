@@ -96,7 +96,7 @@ public final class ExampleMistModule implements GhostModule {
 只对追踪器确认的最终有效覆盖集合采集事实，已经被其他鬼域或隔绝规则排除的目标不会收到事件：
 
 - `TouchEvent`：本体与鬼域共用接触采样，一个宿主对一个目标每 tick 最多累计一次。离开后再次进入重新产生 `BEGIN`，不补算离开的时间。
-- `TargetSeenEvent(target)`：来源看见目标，与 `SourceSeenEvent(observer)` 方向相反。有实体观察者时，中间层还向目标宿主派发 `EntityPerceivedEvent(observer, target)`。
+- `TargetSeenEvent(target)`：来源看见目标，与 `SourceSeenEvent(observer)` 方向相反。有实体观察者时，中间层还向目标宿主派发 `SourceSeenEvent(observer)`。
 - `GhostDomainExposureEvent`：周期曝光事实，携带域 ID、来源、目标和域强度。静态来源的实体字段可为空，使用 `world.containsInDomain(event.domainId(), event.target())` 校验归属，不要仅凭事件类型实施效果。
 
 鬼雾声明每 20 tick 采样，并由自己的能力调用 `world.hurt(target, ModDamageTypes.GHOST_MIST, 0.1F)`。`hurt` 是原版数值伤害，不提交灵异袭击影响；`world.attack` 才进入灵异袭击裁决。普通伤害仍受原版伤害和死亡事件处理。当前公开的鬼雾侵蚀技能复用相同的普通伤害能力。

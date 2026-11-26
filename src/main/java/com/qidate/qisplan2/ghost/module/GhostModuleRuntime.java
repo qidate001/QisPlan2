@@ -102,6 +102,7 @@ public final class GhostModuleRuntime {
                 if (event instanceof ModuleTickEvent)
                     GhostModuleSoundManager.syncCarriedHost(host);
                 if (event instanceof ModuleTickEvent) ModuleGhostDomains.sync(host);
+                if (event instanceof ModuleTickEvent) GhostCarriedItemObserver.observe(host,session);
                 for (Recipient recipient : recipients(host,event)) {
                     var entry=recipient.entry();var delivery=recipient.delivery();var module=delivery.module();
                     if (!host.hasModule(entry.id())) continue;

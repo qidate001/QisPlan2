@@ -261,7 +261,6 @@ public final class NightWandererModule implements GhostModule {
     private static LivingEntity attackTarget(GhostAbilityContext context) {
         if (context.parameters() instanceof GhostTargetParameters input) return input.target();
         if (context.event() == null) return context.getModuleContext().world().aimedTarget(3);
-        return context.event() instanceof EntityNearbyEvent event
-                && context.getModuleContext().world().isOrigin(event.observer()) ? event.target() : null;
+        return context.event() instanceof EntityNearbyEvent event ? event.target() : null;
     }
 }

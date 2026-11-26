@@ -3,7 +3,7 @@ package com.qidate.qisplan2.event;
 import com.qidate.qisplan2.QisPlan2;
 import com.qidate.qisplan2.ghost.module.GhostModuleHost;
 import com.qidate.qisplan2.ghost.module.GhostModuleRuntime;
-import com.qidate.qisplan2.ghost.module.event.EntityDestructionAttemptEvent;
+import com.qidate.qisplan2.ghost.module.event.DestructionAttemptEvent;
 import com.qidate.qisplan2.ghost.module.host.player.PlayerGhostModuleHost;
 import java.util.Collections;
 import java.util.IdentityHashMap;
@@ -55,7 +55,7 @@ public final class GhostEntityDestructionHandler {
             GhostModuleHost host = entity instanceof Player player ? new PlayerGhostModuleHost(player)
                     : entity instanceof GhostModuleHost modules ? modules : null;
             if (host != null && !host.getModules().isEmpty()) {
-                var attempt = new EntityDestructionAttemptEvent(entity, source);
+                var attempt = new DestructionAttemptEvent(source.getEntity() instanceof LivingEntity attacker && attacker != entity ? attacker : null);
                 GhostModuleRuntime.dispatch(host, attempt);
                 if (attempt.isCanceled()) return prevented.getAsBoolean();
             }

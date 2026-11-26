@@ -3,13 +3,12 @@ package com.qidate.qisplan2.ghost.module.implementation;
 import java.util.Set;
 import com.qidate.qisplan2.ghost.module.ability.GhostAbilityInfluence;
 import com.qidate.qisplan2.death.ModDamageTypes;
-import com.qidate.qisplan2.death.SupernaturalDeathHandler;
 import com.qidate.qisplan2.ghost.module.*;
 import com.qidate.qisplan2.ghost.module.ability.GhostAbility;
 import com.qidate.qisplan2.ghost.module.ability.GhostAbilityContext;
 import com.qidate.qisplan2.ghost.module.ability.GhostAbilityStimulation;
 import com.qidate.qisplan2.ghost.module.data.GhostModuleInitialData;
-import com.qidate.qisplan2.ghost.module.event.EntityPerceivedEvent;
+import com.qidate.qisplan2.ghost.module.event.SourceSeenEvent;
 import com.qidate.qisplan2.ghost.module.event.GhostEvent;
 import com.qidate.qisplan2.ghost.module.influence.GhostInfluenceType;
 import java.util.List;
@@ -80,11 +79,11 @@ public final class InvisibleGhostModule implements GhostModule {
         }
 
         @Override
-        public Set<Class<? extends GhostEvent>> eventTypes() { return Set.of(EntityPerceivedEvent.class); }
+        public Set<Class<? extends GhostEvent>> eventTypes() { return Set.of(SourceSeenEvent.class); }
 
         /** 已由订阅索引定位；此处只判断事件携带的事实。 */
         public boolean matches(GhostEvent event) {
-            return event instanceof EntityPerceivedEvent perceivedEvent
+            return event instanceof SourceSeenEvent perceivedEvent
                     && perceivedEvent.observer() instanceof Player;
         }
 
@@ -101,7 +100,7 @@ public final class InvisibleGhostModule implements GhostModule {
                 GhostRuleContext context,
                 GhostEvent event
         ) {
-            if (!(event instanceof EntityPerceivedEvent perceivedEvent)
+            if (!(event instanceof SourceSeenEvent perceivedEvent)
                     || !(perceivedEvent.observer() instanceof Player player)) {
                 return;
             }
@@ -144,7 +143,7 @@ public final class InvisibleGhostModule implements GhostModule {
 
         @Override
         public boolean canExecute(GhostAbilityContext context) {
-            return context.event() instanceof EntityPerceivedEvent event
+            return context.event() instanceof SourceSeenEvent event
                     && event.observer() instanceof Player || context.event() == null
                     && context.getModuleContext().world().validTarget(context.getModuleContext().world().aimedTarget(8));
         }
@@ -167,15 +166,12 @@ public final class InvisibleGhostModule implements GhostModule {
                 return module.world().attack(module.world().aimedTarget(8), ModDamageTypes.INVISIBLE_GHOST, module.intensity());
             }
 
-            if (!(context.event() instanceof EntityPerceivedEvent event)) return false;
+            if (!(context.event() instanceof SourceSeenEvent event)) return false;
 
             if (!(event.observer() instanceof Player player)) return false;
 
-            return SupernaturalDeathHandler.tryKill(
-                    player,
-                    ModDamageTypes.invisibleGhost(event.target()),
-                    context.getModuleContext().intensity()
-            );
+            return context.getModuleContext().world().attack(
+                    player, ModDamageTypes.INVISIBLE_GHOST, context.getModuleContext().intensity());
         }
     }
 }

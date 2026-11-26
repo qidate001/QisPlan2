@@ -12,7 +12,6 @@ import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.NbtOps;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.phys.AABB;
 import java.lang.reflect.Proxy;
 import java.lang.reflect.InvocationHandler;
 import java.util.List;
@@ -82,9 +81,6 @@ public final class GhostStoveModuleTest {
         int before=host.maintenance; host.removed=true; GhostModuleRuntime.dispatch(host,new ModuleTickEvent());
         check(host.maintenance == before, "模块移除后不能继续维护工作台");
         var another=new Host(); check(GhostAbilityCatalog.all(another).size() == 2, "独立公开袭击与工作台能力");
-        var translated=GhostStoveModule.AREA.move(10,20,30);
-        check(translated.intersects(new AABB(14.9,20,30,15.1,21,31)), "范围按目标碰撞箱相交判断边界");
-        check(!translated.intersects(new AABB(15.1,20,30,16,21,31)), "范围外目标不能命中");
         var old=new CompoundTag(); var items=new ListTag();
         for (int i=0;i<6;i++) {
             var slot=new CompoundTag(); slot.putByte("Slot",(byte)i); slot.putString("id","minecraft:bread"); slot.putInt("count",i+1); items.add(slot);

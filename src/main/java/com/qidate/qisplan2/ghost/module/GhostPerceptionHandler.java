@@ -1,7 +1,7 @@
 package com.qidate.qisplan2.ghost.module;
 
 import com.qidate.qisplan2.entity.ModularGhostEntity;
-import com.qidate.qisplan2.ghost.module.event.EntityPerceivedEvent;
+import com.qidate.qisplan2.ghost.module.event.SourceSeenEvent;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.phys.Vec3;
@@ -45,7 +45,7 @@ public final class GhostPerceptionHandler {
 
             GhostModuleRuntime.dispatch(
                     ghost,
-                    new EntityPerceivedEvent(player, ghost)
+                    new SourceSeenEvent(player)
             );
         }
     }

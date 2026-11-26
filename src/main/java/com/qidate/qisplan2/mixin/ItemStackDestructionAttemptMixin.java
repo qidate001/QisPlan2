@@ -1,7 +1,7 @@
 package com.qidate.qisplan2.mixin;
 
 import com.qidate.qisplan2.ghost.module.GhostModuleRuntime;
-import com.qidate.qisplan2.ghost.module.event.ItemDestructionAttemptEvent;
+import com.qidate.qisplan2.ghost.module.event.DestructionAttemptEvent;
 import com.qidate.qisplan2.ghost.module.host.item.GhostItemModuleHost;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.LivingEntity;
@@ -85,14 +85,8 @@ public abstract class ItemStackDestructionAttemptMixin {
             return;
         }
 
-        ItemDestructionAttemptEvent event =
-                new ItemDestructionAttemptEvent(
-                        stack,
-                        holder,
-                        originalDamage,
-                        resultingDamage - originalDamage,
-                        maxDamage
-                );
+        DestructionAttemptEvent event =
+                new DestructionAttemptEvent(holder);
 
         GhostModuleRuntime.dispatch(host, event);
 

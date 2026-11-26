@@ -30,7 +30,7 @@
 先复用 `ghost.module.event` 中已有事件，再考虑新增：
 
 - 接触：`TouchEvent`。
-- 看见/被感知：`EntityPerceivedEvent`。
+- 被看见：`SourceSeenEvent`；看见目标：`TargetSeenEvent`。
 - 门变动：`DoorChangedEvent`。
 - 听见敲门：`DoorKnockHeardEvent`。
 - 灵异声音变化：`GhostSoundEvent`。
@@ -43,7 +43,7 @@
 
 ## 显式订阅：从注册到派发
 
-每条规则必须实现 `eventTypes()`，返回稳定且非空的事件类型集合。定义在注册时读取一次，`getRules()` 不再是运行时动态查询接口。类型声明可以使用事件父接口，例如 `DestructionAttemptEvent.class`；具体的方块、物品、实体摧毁事件会自动命中它。规则同时订阅父接口与具体事件时只执行一次，规则顺序保持模块原声明顺序。
+每条规则必须实现 `eventTypes()`，返回稳定的事件类型集合；普通规则不能为空，声明了 `carriedItems()` 的观察规则可以返回空集合。定义在注册时读取一次，`getRules()` 不再是运行时动态查询接口。类型声明可以使用通用事件父接口。摧毁直接订阅 `DestructionAttemptEvent.class`：方块、物品和实体的适配器发布的就是同一个事件类，不再携带可识别宿主的子类。规则同时订阅父接口与具体事件时只执行一次，规则顺序保持模块原声明顺序。
 
 ```java
 @Override
@@ -78,3 +78,36 @@ public boolean ticksAbilities() { return true; }
 ```
 
 `onAbilityEvent` 仅接收 `abilityEventTypes` 声明的事实；`tickAbilities` 仅在 `ticksAbilities()` 为 true 时执行。两者默认都没有订阅，模块可分别选择。注册时声明不随某个实例的开关变化；实例尚未启动能力时，在回调内检查 customData 即可。不要订阅 `GhostEvent.class` 接收所有事件，除非这条规则确实具有全事件语义。
+
+
+## 语义与底层事实的边界
+
+事件表达对世界事实的解释，不表示某个 Minecraft 回调或模块内部步骤。一次事实可以由适配层解释为多个语义，例如鬼域覆盖可以同时产生接触与看见；多个底层事实也可以汇合为同一个语义。
+
+- `DestructionAttemptEvent(attacker)`：即将被摧毁。订阅者只可读取责任者、请求取消；方块损坏、耐久回滚、实体死亡取消由各自入口落实。环境破坏的责任者允许为空。
+- `GhostUseEvent(user, target)`：使用，target 可为空，是此次操作的作用对象，不是模块宿主。
+- `SourceSeenEvent(observer)` / `TargetSeenEvent(target)`：被看见 / 看见目标，方向不能颠倒。普通视觉与特殊鬼域视觉可发布相同语义。
+- `TouchEvent(target, phase, elapsedTicks)` 与 `EntityNearbyEvent(target)` 不携带来源宿主；鬼域暴露事件也只保留鬼域 ID、目标和强度。
+- 鬼签的抽样是模块内部控制流：读取一次随机数，选择对应能力 ID，沿用原来的使用事件提交裁决。不存在“签文结果语义事件”。
+- `ModuleTickEvent` 是调度通知，而非世界语义；仅用于明确订阅的维护逻辑，不能将“技能请求”包装成它来绕过媒介。
+
+## 按需订阅携带物品
+
+携带是持续事实，每次观察对一名匹配目标产生一次 `ItemCarriedEvent(target, item)`；不按相同物品的槽位或数量重复袭击。事件中的物品是快照，不暴露背包结构，能力媒介仍须重查实时条件。
+
+```java
+@Override
+public Set<Class<? extends GhostEvent>> eventTypes() { return Set.of(); }
+
+@Override
+public List<CarriedItemObservation> carriedItems() {
+    return List.of(new CarriedItemObservation(
+            new AABB(-5, -5, -5, 5, 5, 5),
+            CarriedItemSelector.tag(TagKey.create(Registries.ITEM,
+                    ResourceLocation.parse("example:cursed_offerings")))));
+}
+```
+
+也可使用 `CarriedItemSelector.items(id1, id2)` 指定物品 ID；`CarriedItemSelector.food()` 使用食物属性条件，鬼灶台采用此方式。自定义条件实现 `matches(stack, carrier)`，不得通过它识别模块自身宿主。
+
+注册时构建模块 ID 到观察规则的索引。每轮只查询已安装、已承载、未死机且规则未被压制的观察计划；未暴露到世界不查询。同模块相同 AABB 的实体查询复用一次；同一规则声明多个观察条件时按“任一命中”处理，同一目标每轮只投递一次，命中物品条件后直接投递对应规则，和本轮其他事实共享裁决会话，不向所有携带规则广播再过滤。沉睡模块仍观察触犯并复苏，但不会反击。观察声明无需再订阅 `ModuleTickEvent` 或自行生成携带事件。

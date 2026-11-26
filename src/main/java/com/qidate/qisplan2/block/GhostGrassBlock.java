@@ -43,7 +43,7 @@ public class GhostGrassBlock extends Block implements GhostModuleHost {
     @Override
     public void entityInside(BlockState state, Level level, BlockPos pos, Entity entity) {
         if (level.isClientSide() || !(entity instanceof LivingEntity target) || !target.isAlive()) return;
-        GhostModuleRuntime.dispatch(this, new TouchEvent(null, target));
+        GhostModuleRuntime.dispatch(this, new TouchEvent(target));
     }
 
     /** 非创造模式不能正常挖掘，创造模式沿用原版处理。 */

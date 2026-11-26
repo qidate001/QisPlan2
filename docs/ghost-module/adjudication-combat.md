@@ -85,7 +85,7 @@ double actual = context.resolvedIntensity(target.getUUID(), originalIntensity);
 
 模块通过 `getSuppressions(GhostModuleContext)` 声明持续压制。媒介通过 `world().attachments().embedded()` 查询；普通压制使用有限强度，无解压制使用 `GhostSuppression.absolute()`。模块不知道承载它的是什么，也不处理具体存档、实体或网络。
 
-棺材钉的公开 `coffin_nail/embed` 能力通过 `GhostAttachmentAccess` 查询并实施插入；同一个模块可以放在支持该端口的宿主中。当前实装物理端口支持手持物品来源，未实现物理插入的宿主返回媒介不成立，不在模块内猜测宿主。手持来源的实体交互事实为 `EntityUsedEvent`，通过 `supportsEntityUse()` 声明交互入口，并用 `abilityEventTypes()` 订阅该事实；它不是插入请求本身。
+棺材钉的公开 `coffin_nail/embed` 能力通过 `GhostAttachmentAccess` 查询并实施插入；同一个模块可以放在支持该端口的宿主中。当前实装物理端口支持手持物品来源，未实现物理插入的宿主返回媒介不成立，不在模块内猜测宿主。交互适配器统一发布 `GhostUseEvent(user, target)`，并查询 `abilityEventTypes()` / 规则订阅索引决定是否投递；空目标代表无指定作用对象的使用。无需额外声明实体交互开关，它不是插入请求本身。
 
 已建立的插入关系由物理媒介维持，源模块死机不自动拔钉。来源存放于附着容器内，不执行普通背包 tick，也不能被目标当作自身模块调用。首版实体交互限制一个插入槽位；存储采用列表，保留多附着扩展空间。拔出、死亡掉落及原宿主最后一个模块被驾驭时返还原物品，不生成默认的新物品；创造模式插入不消费，也不产生可回收副本。
 

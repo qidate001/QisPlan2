@@ -70,7 +70,7 @@ new StaticBlockModuleHost(ContactEchoModule.ID, 10);
 宿主适配或方块接触采集代码在服务端确认接触后分发：
 
 ```java
-GhostModuleRuntime.dispatch(host, TouchEvent.sample(null, target, beginning));
+GhostModuleRuntime.dispatch(host, TouchEvent.sample(target, beginning));
 ```
 
 `host / target / beginning` 由采集层取得。`beginning` 必须来自真实的进入/离开检测，不能每 tick 一律传 `true`，否则“开始接触”规则会每 tick 重复触发。

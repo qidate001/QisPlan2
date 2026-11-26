@@ -1,9 +1,9 @@
 package com.qidate.qisplan2.ghost.module.host.attachment;
 
 import com.qidate.qisplan2.QisPlan2;
-import com.qidate.qisplan2.ghost.module.GhostModuleRegistry;
+import com.qidate.qisplan2.ghost.module.GhostEventSubscriptions;
 import com.qidate.qisplan2.ghost.module.GhostModuleRuntime;
-import com.qidate.qisplan2.ghost.module.event.EntityUsedEvent;
+import com.qidate.qisplan2.ghost.module.event.GhostUseEvent;
 import com.qidate.qisplan2.ghost.module.host.item.GhostItemModuleHost;
 import com.qidate.qisplan2.network.GhostAttachmentNetwork;
 import net.minecraft.server.level.ServerPlayer;
@@ -35,14 +35,12 @@ public final class GhostAttachmentEvents {
         }
         if (player.isShiftKeyDown()) return;
         var host = new GhostItemModuleHost(event.getItemStack(), player);
-        boolean supported = host.getModules().stream().map(e -> GhostModuleRegistry.get(e.id()))
-                .anyMatch(m -> m != null && m.supportsEntityUse());
+        boolean supported = GhostEventSubscriptions.subscribers(GhostUseEvent.class).stream()
+                .anyMatch(delivery -> host.hasModule(delivery.module().getId()));
         if (!supported) return;
-        boolean before = GhostAttachments.hasAttachments(target);
-        if (!player.level().isClientSide()) GhostModuleRuntime.dispatch(host, new EntityUsedEvent(player, target));
-        if (player.level().isClientSide() || before != GhostAttachments.hasAttachments(target)) {
-            event.setCanceled(true); event.setCancellationResult(InteractionResult.SUCCESS);
-        }
+        if (!player.level().isClientSide()) GhostModuleRuntime.dispatch(host, new GhostUseEvent(player, target));
+        // 已路由为一次模块使用，消费底层交互，避免原版后续物品使用再次发布同一操作。
+        event.setCanceled(true); event.setCancellationResult(InteractionResult.SUCCESS);
     }
     /** 载入只迁移旧状态及释放旧缓存，不反复写入模块。 */
     @SubscribeEvent public static void joined(EntityJoinLevelEvent event) {

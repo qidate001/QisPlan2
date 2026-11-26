@@ -21,6 +21,7 @@ public final class GhostStoveModule implements GhostModule {
     public static final ResourceLocation WORKSTATION = ResourceLocation.parse("qisplan2:ghost_stove/workstation");
     /** 以环境位置为中心各延伸五格；适配器只负责平移与查询。 */
     public static final AABB AREA = new AABB(-5,-5,-5,5,5,5);
+    private static final CarriedItemSelector FOOD = CarriedItemSelector.food();
     /** 沿用旧默认灵异强度 1。 */
     public ResourceLocation getId() { return ID; }
     /** 工作台制作属于能力维护；死机禁止自动袭击，但不禁止已经投入的炼制。 */
@@ -38,11 +39,11 @@ public final class GhostStoveModule implements GhostModule {
     /** 目标必须仍在范围内、符合袭击资格并携带食物。 */
     private static boolean eligible(GhostModuleContext context, LivingEntity target) {
         return target != null && context.world().inArea(target,AREA)
-                && context.world().hasCarriedItem(target, stack -> stack.getFoodProperties(target) != null);
+                && context.world().hasCarriedItem(target, stack -> FOOD.matches(stack, target));
     }
     /** 从语义或主动瞄准解析作用目标，不返回或识别来源载体。 */
     private static LivingEntity target(GhostAbilityContext context) {
-        return context.event() instanceof FoodCarriedEvent event ? event.target() : context.getModuleContext().world().aimedTarget(8);
+        return context.event() instanceof ItemCarriedEvent event ? event.target() : context.getModuleContext().world().aimedTarget(8);
     }
     /** 工作台的交互者由可信的调用参数提供。 */
     private static LivingEntity user(GhostAbilityContext context) {
@@ -53,21 +54,21 @@ public final class GhostStoveModule implements GhostModule {
     public List<GhostRule> getRules() { return List.of(new GhostRule() {
         /** 返回规则标识。 */
         public ResourceLocation getId() { return ResourceLocation.parse("qisplan2:ghost_stove/nearby_food"); }
-        /** 接受世界周期观察。 */
-        public Set<Class<? extends GhostEvent>> eventTypes() { return Set.of(ModuleTickEvent.class); }
 
-        /** 没有暴露到世界的模块不产生范围效果。 */
-        public boolean canTrigger(GhostRuleContext c, GhostEvent event) { return c.getModuleContext().world().present(); }
-        /** 仅附近确有携食实体才算触犯，单纯 Tick 不惊醒。 */
-        public boolean disturbedWhileSleeping(GhostRuleContext c, GhostEvent event) {
-            var m = c.getModuleContext();
-            return m.world().present() && m.world().livingEntities(AREA).stream().anyMatch(target -> eligible(m, target));
+        /** 携带事件由范围和物品条件订阅产生，无需订阅周期事件。 */
+        public Set<Class<? extends GhostEvent>> eventTypes() { return Set.of(); }
+
+        /** 食物条件也可以替换为 CarriedItemSelector.items(...) 或 tag(...)。 */
+        public List<CarriedItemObservation> carriedItems() { return List.of(new CarriedItemObservation(AREA, FOOD)); }
+
+        /** 规则只处理框架已观察到的事实，能力媒介在实际执行前重新验证。 */
+        public boolean canTrigger(GhostRuleContext c, GhostEvent event) {
+            return event instanceof ItemCarriedEvent && c.getModuleContext().world().present();
         }
-        /** 不扫描方块、不在模块中分辨玩家背包或其他载体。 */
+        /** 同一次携带事实参与本轮共享裁决，不再由模块伪造事件。 */
         public void onTrigger(GhostRuleContext c, GhostEvent event) {
-            var m = c.getModuleContext();
-            for (var target : m.world().livingEntities(AREA)) if (eligible(m,target))
-                c.submitAbilityInfluence(ATTACK,new FoodCarriedEvent(target),target.getUUID(),GhostInfluenceType.ATTACK,m.intensity());
+            var target = ((ItemCarriedEvent) event).target();
+            c.submitAbilityInfluence(ATTACK,event,target.getUUID(),GhostInfluenceType.ATTACK,c.getModuleContext().intensity());
         }
     }); }
     /** 两个独立公开能力分别声明自己的媒介，工作台不继承携食袭击条件。 */

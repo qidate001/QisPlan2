@@ -33,13 +33,13 @@ public final class GhostContactEvents {
     }
 
     /** 只在适配边界解析稳定宿主身份，瞬时点击事件不经过这个持续采样器。 */
-    public static void sample(GhostModuleHost host, LivingEntity source, LivingEntity target) {
+    public static void sample(GhostModuleHost host, LivingEntity target) {
         Object key = host instanceof GhostItemModuleHost item ? item.stack() : GhostEnvironmentAdapters.bearer(host);
         if(key == null) key = host;
 
         var phase = SOURCES.computeIfAbsent(key,ignored -> new Samples()).sample(target.getUUID(),target.level().getGameTime());
 
         if(phase != null)
-            GhostModuleRuntime.dispatch(host, new TouchEvent(source, target, phase, 1));
+            GhostModuleRuntime.dispatch(host, new TouchEvent(target, phase, 1));
     }
 }

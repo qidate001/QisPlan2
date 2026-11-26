@@ -28,6 +28,6 @@ public final class GhostCarpetHandler {
         var state = target.level().getBlockState(pos);
         if (!state.is(ModBlocks.GHOST_CARPET.get())) state = target.level().getBlockState(pos.below());
         if (state.is(ModBlocks.GHOST_CARPET.get()) && state.getBlock() instanceof GhostModuleHost host)
-            GhostModuleRuntime.dispatch(host, TouchEvent.sample(null, target, false));
+            GhostModuleRuntime.dispatch(host, TouchEvent.sample(target, false));
     }
 }

@@ -10,6 +10,13 @@ public final class GhostEventSubscriptions {
     private static final Map<Class<?>,List<Listener>> BY_TYPE=new HashMap<>();
     private static final Map<Class<?>,List<Delivery>> RESOLVED=new HashMap<>();
     private static final Map<ResourceLocation,Map<ResourceLocation,GhostRule>> RULES=new HashMap<>();
+    private static final Map<ResourceLocation,List<CarriedSubscription>> CARRIED = new HashMap<>();
+    /** 携带观察直接绑定注册时的规则，不向同类型的其他规则广播。 */
+    public record CarriedSubscription(GhostRule rule, CarriedItemObservation observation) {}
+    /** 按模块 ID 查询已编译的观察计划，不重新读取模块定义。 */
+    public static synchronized List<CarriedSubscription> carried(ResourceLocation module) {
+        return CARRIED.getOrDefault(module, List.of());
+    }
     private static int nextOrder;
     private GhostEventSubscriptions() {}
 
@@ -36,12 +43,15 @@ public final class GhostEventSubscriptions {
     static synchronized void register(GhostModule module) {
         Map<Class<?>,List<Listener>> pending=new HashMap<>();
         Set<ResourceLocation> ids=new HashSet<>();
+        List<CarriedSubscription> carried=new ArrayList<>();
         List<GhostRule> rules=List.copyOf(module.getRules());
         for(int i=0;i<rules.size();i++) {
             GhostRule rule=rules.get(i);
             if(!ids.add(Objects.requireNonNull(rule.getId())))throw new IllegalArgumentException("Duplicate rule: "+rule.getId());
             Set<Class<? extends GhostEvent>> types=Set.copyOf(rule.eventTypes());
-            if(types.isEmpty())throw new IllegalArgumentException("Rule must declare event subscriptions: "+rule.getId());
+            var observations=List.copyOf(rule.carriedItems());
+            for(var observation:observations)carried.add(new CarriedSubscription(rule,observation));
+            if(types.isEmpty() && observations.isEmpty())throw new IllegalArgumentException("Rule must declare event subscriptions: "+rule.getId());
             for(Class<?> type:types)add(pending,type,new Listener(module,nextOrder,rule,i,false,false));
         }
         for(Class<?> type:Set.copyOf(module.abilityEventTypes()))
@@ -50,6 +60,7 @@ public final class GhostEventSubscriptions {
         pending.forEach((type,list)->BY_TYPE.computeIfAbsent(type,ignored->new ArrayList<>()).addAll(list));
         Map<ResourceLocation,GhostRule> byId=new HashMap<>();
         rules.forEach(rule->byId.put(rule.getId(),rule));RULES.put(module.getId(),Map.copyOf(byId));
+        CARRIED.put(module.getId(),List.copyOf(carried));
         nextOrder++;RESOLVED.clear();
     }
     /** 拒绝伪造类型，防止不相关的 Java 类型进入事件总线。 */

@@ -33,7 +33,7 @@ public final class PlayerModuleEvents {
         for (var target : player.serverLevel().getEntitiesOfClass(LivingEntity.class,
                 player.getBoundingBox().inflate(0.05), e -> e != player && e.isAlive())) {
             current.add(target.getUUID());
-            GhostContactEvents.sample(host, player, target);
+            GhostContactEvents.sample(host, target);
             if (!player.isAlive()) break;
         }
         TOUCHING.put(player, current);
