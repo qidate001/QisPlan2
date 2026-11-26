@@ -114,13 +114,13 @@ double actual = context.resolvedIntensity(target.getUUID(), originalIntensity);
 
 ## 明确袭击意图
 
-`tryKill` 与 `world.attack` 现在只表示纯灵异袭击，对实际承载厉鬼模块的目标无效，包括驾驭了厉鬼的玩家。它们不会再隐式转换为一秒压制。
+`tryKill` 与 `world.attack` 现在只表示纯灵异袭击，仅对厉鬼本体无效；凡人、普通生物与驭鬼者都可以受到袭击。它们不会再隐式转换为一秒压制。
 
 使用 `world.affect(target, damageType, strength, GhostAttackMode)` 选择：
 
 - `ATTACK`：只袭击非厉鬼。
 - `SUPPRESSION`：只对目标的厉鬼模块及持续诅咒建立短时压制，不杀死普通生物。
-- `AUTO`：按目标是否实际承载厉鬼模块，在提交裁决前选择压制或袭击。
+- `AUTO`：按目标本体是否为厉鬼，在提交裁决前选择压制或袭击；驭鬼者走袭击分支。
 
 能力的 `activeInfluence` 也可调用 `GhostAbilityInfluence.of(target, mode, strength)`，其意图必须与最终世界操作一致。压制拥有独立 `GhostInfluenceType.SUPPRESSION`，参与保护对抗；不能声明 ATTACK 却在获准回调执行 SUPPRESSION。
 
@@ -129,3 +129,8 @@ double actual = context.resolvedIntensity(target.getUUID(), originalIntensity);
 ## 死机后的复苏回落
 
 死机不把复苏值锁死为零。主动能力仍经过媒介与正常代价结算，随后共享状态运行时按每秒 `deadlockedRevivalDecayPerSecond()` 回落，默认等于复苏上限的 10%。该速度不乘鬼签的正向复苏倍率，不补算离线时间；归零后停止写入，不会解除死机。模块可以覆盖该非负有限数值。死签使用 AUTO，能力声明、规则提交和世界操作保持一致，因此对凡人与驭鬼者都能进入生签对应的同源对抗。
+
+
+本体身份由 `GhostBodyIdentity` 端口声明，不能根据模块数量、诅咒、手持物品或玩家类型推断。现有 `SupernaturalEntity` 默认声明厉鬼本体；未来异类可通过同一端口接入。普通目标未声明该身份，驾驭模块不会改变它。
+
+压制资格与本体身份独立：凡人没有可压制内容时压制无效；驭鬼者虽然仍可被袭击，但其承载模块及诅咒仍可被显式压制。`AUTO` 只选择一种意图，不对驭鬼者同时发动袭击和压制。身份判定只影响路由和厉鬼本体的袭击免疫，既有防护能力、生签裁决和死机逻辑继续生效。

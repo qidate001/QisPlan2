@@ -13,7 +13,7 @@ public class SupernaturalDeathHandler {
     public static boolean apply(LivingEntity target, DamageSource source, double strength, GhostAttackMode mode) {
         if(target.level().isClientSide()||!target.isAlive()||!Double.isFinite(strength)||strength<=0)return false;
         if(source.getEntity()!=null&&!GhostLayerHandler.canSee(source.getEntity(),target))return false;
-        if(mode.resolve(GhostPersistentSuppression.isGhost(target))==GhostAttackMode.SUPPRESSION)
+        if(mode.resolve(GhostBodyIdentity.isGhost(target))==GhostAttackMode.SUPPRESSION)
             return GhostPersistentSuppression.pulse(target,strength);
         return tryKill(target,source,strength);
     }
@@ -59,7 +59,7 @@ public class SupernaturalDeathHandler {
 //        );
 
 
-        if (entity.level().isClientSide() || !entity.isAlive() || GhostPersistentSuppression.isGhost(entity)) {
+        if (entity.level().isClientSide() || !entity.isAlive() || GhostBodyIdentity.isGhost(entity)) {
             return false;
         }
 

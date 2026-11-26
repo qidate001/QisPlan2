@@ -31,8 +31,6 @@ public final class GhostPersistentSuppression {
 
     /** 接口边界负责识别身体，厉鬼定义只声明效果。 */
     public static GhostModuleHost host(LivingEntity target){return target instanceof Player player?new PlayerGhostModuleHost(player):target instanceof GhostModuleHost host?host:null;}
-    /** 判断实际承载的厉鬼，不把玩家类型当作凡人判据。 */
-    public static boolean isGhost(LivingEntity target){var host=host(target);return host!=null&&host.getModules().stream().anyMatch(e->host.carriesModule(e.id()));}
     /** 身体承载与装备是不同宿主，但所在环境可以同时压制两者。 */
     private static boolean carriesSupernaturalContent(LivingEntity target){
         return !CurseManager.getByTarget(target.getUUID()).isEmpty()

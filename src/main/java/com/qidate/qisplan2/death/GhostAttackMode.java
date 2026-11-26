@@ -4,8 +4,8 @@ package com.qidate.qisplan2.death;
 public enum GhostAttackMode {
     ATTACK, SUPPRESSION, AUTO;
 
-    /** 只解析 AUTO，显式袭击不会因为目标承载厉鬼而偷偷转为压制。 */
-    public GhostAttackMode resolve(boolean carriesGhost) {
-        return this == AUTO ? (carriesGhost ? SUPPRESSION : ATTACK) : this;
+    /** 只解析 AUTO，显式袭击不会因为目标身份而偷偷转为压制。 */
+    public GhostAttackMode resolve(boolean ghostBody) {
+        return this == AUTO ? (ghostBody ? SUPPRESSION : ATTACK) : this;
     }
 }

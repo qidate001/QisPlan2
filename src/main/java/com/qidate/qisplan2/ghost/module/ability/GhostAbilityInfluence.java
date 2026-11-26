@@ -1,6 +1,7 @@
 package com.qidate.qisplan2.ghost.module.ability;
 
-import com.qidate.qisplan2.ghost.module.host.GhostPersistentSuppression;
+import com.qidate.qisplan2.death.GhostBodyIdentity;
+
 import com.qidate.qisplan2.death.GhostAttackMode;
 
 import com.qidate.qisplan2.ghost.domain.GhostDomainInfluenceScope;
@@ -23,9 +24,9 @@ public record GhostAbilityInfluence(UUID target, GhostInfluenceType type, double
                 : new GhostAbilityInfluence(target.getUUID(), type, intensity, target.getServer());
     }
 
-    /** 能力声明可以明确选择三种意图；AUTO 在提交裁决前按真实承载确定类型。 */
+    /** 能力声明可以明确选择三种意图；AUTO 在提交裁决前按本体身份确定类型，驭鬼者仍走袭击。 */
     public static GhostAbilityInfluence of(LivingEntity target, GhostAttackMode mode, double intensity) {
-        boolean suppression=mode.resolve(target!=null && GhostPersistentSuppression.isGhost(target))==GhostAttackMode.SUPPRESSION;
+        boolean suppression=mode.resolve(target!=null && GhostBodyIdentity.isGhost(target))==GhostAttackMode.SUPPRESSION;
         return of(target,suppression?GhostInfluenceType.SUPPRESSION:GhostInfluenceType.ATTACK,intensity);
     }
 

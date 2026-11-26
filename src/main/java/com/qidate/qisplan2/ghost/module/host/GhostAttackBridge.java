@@ -1,5 +1,7 @@
 package com.qidate.qisplan2.ghost.module.host;
 
+import com.qidate.qisplan2.death.GhostBodyIdentity;
+
 import com.qidate.qisplan2.ghost.curse.Curse;
 
 import com.qidate.qisplan2.ghost.curse.CurseManager;
@@ -34,7 +36,7 @@ public final class GhostAttackBridge {
     public static SupernaturalAttackEvent resolveFresh(LivingEntity target, double intensity, GhostInfluence source) {
         var event = new SupernaturalAttackEvent(target.getUUID(), Math.max(0, intensity));
         if (target.level().isClientSide() || !target.isAlive()) return event;
-        if (GhostPersistentSuppression.isGhost(target)) { event.block(); return event; }
+        if (GhostBodyIdentity.isGhost(target)) { event.block(); return event; }
         if (intensity <= 0) { event.block(); return event; }
         var hosts = new ArrayList<GhostModuleHost>();
         if (target instanceof Player player) hosts.add(new PlayerGhostModuleHost(player));

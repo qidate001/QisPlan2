@@ -2,6 +2,9 @@ package com.qidate.qisplan2.ghost.module;
 
 import com.qidate.qisplan2.ghost.curse.*;
 import com.qidate.qisplan2.death.GhostAttackMode;
+import com.qidate.qisplan2.death.GhostBodyIdentity;
+import com.qidate.qisplan2.death.SupernaturalEntity;
+import com.qidate.qisplan2.ghost.module.data.GhostModuleData;
 import com.qidate.qisplan2.ghost.module.host.GhostPersistentSuppression;
 import com.qidate.qisplan2.ghost.module.suppression.GhostSuppression;
 import com.qidate.qisplan2.ghost.module.suppression.GhostSuppressionState;
@@ -52,6 +55,18 @@ public final class CurseComponentTest {
                     &&report.effective().canUseAbility(true)==damage.isBlocked(),"最终许可必须反映真实生签抵挡结果");
             check(report.blockers().size()==(damage.isBlocked()?1:0),"没有抵挡不能伪造保护来源");
         }
+        // 身份判定不读取模块表：承载者仍可被袭击，只有本体声明为鬼才走压制。
+        GhostModuleHost possessor = () -> List.of(new GhostModuleData.Entry(ResourceLocation.parse("qisplan2_test:carried"), 10));
+        SupernaturalEntity ghost = new SupernaturalEntity() {
+            public double getSupernaturalStrength() { return 0; }
+            public boolean isSupernaturallyStunned() { return true; }
+        };
+        GhostBodyIdentity human = () -> false;
+        check(!GhostBodyIdentity.isGhost(possessor) && !GhostBodyIdentity.isGhost(human), "承载模块不能赋予厉鬼本体身份");
+        check(GhostAttackMode.AUTO.resolve(GhostBodyIdentity.isGhost(possessor)) == GhostAttackMode.ATTACK,
+                "驭鬼者的自动意图必须为袭击");
+        check(GhostAttackMode.AUTO.resolve(GhostBodyIdentity.isGhost(ghost)) == GhostAttackMode.SUPPRESSION,
+                "真正厉鬼本体的自动意图必须为压制");
         check(GhostAttackMode.AUTO.resolve(true)==GhostAttackMode.SUPPRESSION
                 && GhostAttackMode.AUTO.resolve(false)==GhostAttackMode.ATTACK
                 && GhostAttackMode.ATTACK.resolve(true)==GhostAttackMode.ATTACK,"自动路由不能改变显式袭击语义");
