@@ -68,6 +68,19 @@ public final class SuppressionSleepTest {
                 public void onTrigger(GhostRuleContext c, GhostEvent event) { effects++; }
             }); }
         });
+        var deadlocked = new Host(); deadlocked.setRevival(ID,80); deadlocked.setDeadlocked(ID,true);
+        deadlocked.advance(20);
+        check(deadlocked.entry().revival()==70,"死机每秒回落最大复苏值的百分之十");
+        GhostModuleCombatState.tick(deadlocked);
+        check(deadlocked.entry().revival()==70,"同 tick 重复分发不得加速回落");
+        new GhostModuleContext(deadlocked,ID).addRevival(20);
+        check(deadlocked.entry().revival()==90,"死机仍保留能力复苏代价，不锁零");
+        deadlocked.advance(200);
+        check(deadlocked.entry().revival()==0&&deadlocked.entry().deadlocked(),"回落不得负值或解除死机");
+        var quiet=deadlocked.getModuleCustomData(ID);deadlocked.advance(20);
+        check(quiet.equals(deadlocked.getModuleCustomData(ID)),"零复苏死机不重复写入状态");
+        deadlocked.setDeadlocked(ID,false);deadlocked.setRevival(ID,50);deadlocked.advance(20);
+        check(deadlocked.entry().revival()==50,"未死机模块不能误享快速回落");
         var base = new Host(); base.pressure=150;
         base.advance(5999); check(!base.entry().sleeping(), "基准完整压制不足五分钟不入睡");
         base.advance(1); check(base.entry().sleeping(), "恰好1.5倍时五分钟入睡");

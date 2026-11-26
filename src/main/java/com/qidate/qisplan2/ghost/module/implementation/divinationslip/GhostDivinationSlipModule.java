@@ -10,6 +10,7 @@ import com.qidate.qisplan2.ghost.module.ability.GhostInvocationParameters;
 import com.qidate.qisplan2.ghost.module.ability.GhostAbilityStimulation;
 import com.qidate.qisplan2.QisPlan2;
 import com.qidate.qisplan2.death.ModDamageTypes;
+import com.qidate.qisplan2.death.GhostAttackMode;
 import com.qidate.qisplan2.death.SupernaturalDeathHandler;
 import com.qidate.qisplan2.ghost.bearing.SpiritualPart;
 import com.qidate.qisplan2.ghost.corrosion.GhostCorrosion;
@@ -293,7 +294,7 @@ public final class GhostDivinationSlipModule implements GhostModule {
                             resultAbility(result),
                             resultEvent,
                             user.getUUID(),
-                            GhostInfluenceType.ATTACK,
+                            GhostAbilityInfluence.of(user, GhostAttackMode.AUTO, context.getModuleContext().intensity()).type(),
                             context.getModuleContext().intensity()
                     );
                 }
@@ -323,7 +324,11 @@ public final class GhostDivinationSlipModule implements GhostModule {
     private record DivinationSlipAbility(int result, String name) implements GhostAbility {
         /** 主动渠道与规则使用相同的袭击/保护语义，获准前不执行世界效果。 */
         @Override public GhostAbilityInfluence activeInfluence(GhostAbilityContext context) {
-            return result == GHOST_RESULT ? null : GhostAbilityInfluence.of(recipient(context), result == LIFE_RESULT ? GhostInfluenceType.PROTECTION : GhostInfluenceType.ATTACK, context.getModuleContext().intensity());
+            return switch (result) {
+                case LIFE_RESULT -> GhostAbilityInfluence.of(recipient(context), GhostInfluenceType.PROTECTION, context.getModuleContext().intensity());
+                case DEATH_RESULT -> GhostAbilityInfluence.of(recipient(context), GhostAttackMode.AUTO, context.getModuleContext().intensity());
+                default -> null;
+            };
         }
 
         /** 每种签文有自己的能力 ID。 */
@@ -438,10 +443,11 @@ public final class GhostDivinationSlipModule implements GhostModule {
     private static boolean useDeath(LivingEntity user, GhostAbilityContext context) {
         sendResultIfPlayer(user, DEATH_RESULT);
 
-        return SupernaturalDeathHandler.tryKill(
+        return SupernaturalDeathHandler.apply(
                 user,
                 ModDamageTypes.ghostDivinationSlip(user),
-                context.getModuleContext().intensity()
+                context.getModuleContext().intensity(),
+                GhostAttackMode.AUTO
         );
     }
 

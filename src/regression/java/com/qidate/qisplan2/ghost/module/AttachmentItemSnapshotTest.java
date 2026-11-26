@@ -1,6 +1,9 @@
 package com.qidate.qisplan2.ghost.module;
 
 import com.qidate.qisplan2.core.ModDataComponents;
+import com.qidate.qisplan2.entity.ModularGhostEntity;
+import net.minecraft.world.item.Items;
+import net.minecraft.world.item.component.CustomData;
 import com.qidate.qisplan2.ghost.module.data.GhostModuleData;
 import com.qidate.qisplan2.ghost.module.host.attachment.AttachedGhostHost;
 import com.qidate.qisplan2.ghost.module.host.attachment.GhostAttachedItemSnapshot;
@@ -65,6 +68,16 @@ public final class AttachmentItemSnapshotTest {
         var custom = new CompoundTag(); custom.putString("test", "模块私有数据"); custom.putInt("progress", 91);
         var modules = List.of(new GhostModuleData.Entry(CoffinNailModule.ID, 73, 26, true, true, custom),
                 new GhostModuleData.Entry(GhostBookModule.ID, 19, 8, false, false, new CompoundTag()));
+        var egg=new ItemStack(Items.PIG_SPAWN_EGG);
+        var marker=new CompoundTag();marker.putString("GhostModule",CoffinNailModule.ID.toString());
+        var spawnData=ModularGhostEntity.createSpawnData(modules);
+        egg.set(DataComponents.CUSTOM_DATA,CustomData.of(marker));
+        egg.set(DataComponents.ENTITY_DATA,CustomData.of(spawnData));
+        egg.set(ModDataComponents.GHOST_MODULES.get(),modules);
+        check(GhostItemData.getModules(egg).isEmpty(),"旧刷怪蛋模板不能成为活跃物品模块");
+        check(egg.get(DataComponents.ENTITY_DATA).copyTag().equals(spawnData),"过滤旧模板不得丢失待生成实体的模块数据");
+        egg.remove(ModDataComponents.GHOST_MODULES.get());
+        check(GhostItemData.getModules(egg).isEmpty(),"新刷怪蛋仅保存实体数据");
         original.set(ModDataComponents.GHOST_MODULES.get(), modules);
         original.remove(DataComponents.ATTRIBUTE_MODIFIERS);
         var originId = UUID.randomUUID();

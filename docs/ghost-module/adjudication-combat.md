@@ -125,3 +125,7 @@ double actual = context.resolvedIntensity(target.getUUID(), originalIntensity);
 能力的 `activeInfluence` 也可调用 `GhostAbilityInfluence.of(target, mode, strength)`，其意图必须与最终世界操作一致。压制拥有独立 `GhostInfluenceType.SUPPRESSION`，参与保护对抗；不能声明 ATTACK 却在获准回调执行 SUPPRESSION。
 
 一次性压制持续一秒，连续命中刷新到期时间，不累计时长。持续鬼域和诅咒通过来源关系维持压制，不能每秒补一次短时袭击模拟。诅咒的独立强度与状态见 [诅咒与持续能力](curse.md)。
+
+## 死机后的复苏回落
+
+死机不把复苏值锁死为零。主动能力仍经过媒介与正常代价结算，随后共享状态运行时按每秒 `deadlockedRevivalDecayPerSecond()` 回落，默认等于复苏上限的 10%。该速度不乘鬼签的正向复苏倍率，不补算离线时间；归零后停止写入，不会解除死机。模块可以覆盖该非负有限数值。死签使用 AUTO，能力声明、规则提交和世界操作保持一致，因此对凡人与驭鬼者都能进入生签对应的同源对抗。

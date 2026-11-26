@@ -25,8 +25,7 @@ public record GhostAbilityInfluence(UUID target, GhostInfluenceType type, double
 
     /** 能力声明可以明确选择三种意图；AUTO 在提交裁决前按真实承载确定类型。 */
     public static GhostAbilityInfluence of(LivingEntity target, GhostAttackMode mode, double intensity) {
-        boolean suppression=mode==GhostAttackMode.SUPPRESSION
-                || mode==GhostAttackMode.AUTO && target!=null && GhostPersistentSuppression.isGhost(target);
+        boolean suppression=mode.resolve(target!=null && GhostPersistentSuppression.isGhost(target))==GhostAttackMode.SUPPRESSION;
         return of(target,suppression?GhostInfluenceType.SUPPRESSION:GhostInfluenceType.ATTACK,intensity);
     }
 

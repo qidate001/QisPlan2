@@ -8,6 +8,9 @@ import com.qidate.qisplan2.ghost.module.data.GhostModuleContainer;
 import com.qidate.qisplan2.ghost.module.data.GhostModuleData;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.SpawnEggItem;
+import net.minecraft.core.component.DataComponents;
+import net.minecraft.world.item.component.CustomData;
 
 import java.util.List;
 import java.util.Objects;
@@ -33,6 +36,13 @@ public final class GhostItemData {
      */
     public static List<GhostModuleData.Entry> getModules(ItemStack stack) {
         Objects.requireNonNull(stack, "stack");
+
+        // 兼容旧创造栏模板：旧版本重复写入了 GHOST_MODULES 和 ENTITY_DATA。
+        // 保留生成实体的数据，但不能把其中的模板模块当成当前物品的活跃厉鬼。
+        if (stack.getItem() instanceof SpawnEggItem
+                && stack.getOrDefault(DataComponents.CUSTOM_DATA, CustomData.EMPTY).copyTag().contains("GhostModule")
+                && stack.getOrDefault(DataComponents.ENTITY_DATA, CustomData.EMPTY).copyTag().contains("QisPlan2GhostModules"))
+            return List.of();
 
         return List.copyOf(
                 stack.getOrDefault(

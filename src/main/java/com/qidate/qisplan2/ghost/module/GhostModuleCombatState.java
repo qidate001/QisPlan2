@@ -90,6 +90,11 @@ public final class GhostModuleCombatState {
             var custom = data.getModuleCustomData(entry.id());
             var combat = custom.getCompound(KEY).copy();
             boolean sleeping = entry.sleeping();
+            var definition = GhostModuleRegistry.get(entry.id());
+            double decay = entry.deadlocked() && definition != null ? definition.deadlockedRevivalDecayPerSecond() : 0;
+            if (!Double.isFinite(decay) || decay < 0) throw new IllegalStateException("Invalid deadlocked revival decay: " + entry.id());
+            boolean decaying = entry.deadlocked() && entry.revival() > 0 && decay > 0;
+
             // 旧状态只迁移一次：有限停滞变为沉睡，永久停滞统一进入模块裁决死机。
             if (combat.contains("stunTicks") || combat.contains("permanentStun")) {
                 double legacy = Math.max(0, combat.getInt("stunTicks"));
@@ -100,15 +105,17 @@ public final class GhostModuleCombatState {
             var suppression = host.suppression(entry.id());
             boolean complete = suppression.external() == GhostSuppression.Level.COMPLETE
                     || suppression.internal() == GhostSuppression.Level.COMPLETE;
-            if (!sleeping && !complete && combat.getDouble("pressureProgress") == 0 && !combat.contains("attackUntil")
+            if (!decaying && !sleeping && !complete && combat.getDouble("pressureProgress") == 0 && !combat.contains("attackUntil")
                     && combat.equals(custom.getCompound(KEY))) continue;
             // 已到稳定上限且没有待清理短时关系时，不反复修改 NBT 或触发同步。
-            if (sleeping && complete && !combat.contains("attackUntil")
+            if (!decaying && sleeping && complete && !combat.contains("attackUntil")
                     && combat.getDouble("sleepTicks") == sleepCap(suppression.pressure(), entry.intensity())
                     && combat.equals(custom.getCompound(KEY))) continue;
             long now = host.moduleWorld(entry.id()).gameTime();
             if (combat.contains("lastTick") && combat.getLong("lastTick") == now) continue;
             combat.putLong("lastTick", now);
+            // 同一游戏 tick 只回落一次；不补算离线时间，归零后停止重复写入。
+            if (decaying) state.setRevival(entry.id(), Math.max(0, entry.revival() - decay / 20D));
             if (combat.contains("attackUntil") && combat.getLong("attackUntil") <= now) {
                 combat.remove("attackUntil"); combat.remove("attackStrength");
             }

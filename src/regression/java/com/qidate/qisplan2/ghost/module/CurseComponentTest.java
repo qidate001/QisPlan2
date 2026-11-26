@@ -1,6 +1,7 @@
 package com.qidate.qisplan2.ghost.module;
 
 import com.qidate.qisplan2.ghost.curse.*;
+import com.qidate.qisplan2.death.GhostAttackMode;
 import com.qidate.qisplan2.ghost.curse.type.ghostdivination.*;
 import com.qidate.qisplan2.ghost.module.component.*;
 import com.qidate.qisplan2.ghost.module.event.*;
@@ -40,6 +41,17 @@ public final class CurseComponentTest {
             var event=new SupernaturalSuppressionEvent(target,incoming);
             life.program().dispatch(event,new CurseAbilityContext(UUID.randomUUID(),target,50,event,response,()->{},null));
             check(damage.isBlocked()==(incoming<50),"life curse must confront suppression using own strength");
+        }
+        check(GhostAttackMode.AUTO.resolve(true)==GhostAttackMode.SUPPRESSION
+                && GhostAttackMode.AUTO.resolve(false)==GhostAttackMode.ATTACK
+                && GhostAttackMode.ATTACK.resolve(true)==GhostAttackMode.ATTACK,"自动路由不能改变显式袭击语义");
+        for(var eventType:List.of(GhostAttackMode.ATTACK,GhostAttackMode.SUPPRESSION)){
+            boolean[] deadlock={false},removed={false};
+            var damage=new SupernaturalAttackEvent(target,50);
+            var response=new GhostAttackContext(damage,GhostDivinationSlipModule.ID,()->deadlock[0]=true,()->50);
+            GhostEvent event=eventType==GhostAttackMode.ATTACK?damage:new SupernaturalSuppressionEvent(target,50);
+            life.program().dispatch(event,new CurseAbilityContext(UUID.randomUUID(),target,50,event,response,()->removed[0]=true,null));
+            check(deadlock[0]&&removed[0]&&damage.isDeadlocked(),"生签与同源死签在袭击及压制路径均须裁决死机");
         }
         var eye=new GhostEyeModule().domainDefinition().orElseThrow();
         check(eye.suppression().offer(4,100)==null&&eye.suppression().offer(5,100).strength()==100,"eye aura requires grade five");

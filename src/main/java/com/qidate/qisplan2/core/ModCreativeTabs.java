@@ -1,13 +1,11 @@
 package com.qidate.qisplan2.core;
 
+import com.qidate.qisplan2.ghost.module.data.GhostModuleData;
 import com.qidate.qisplan2.QisPlan2;
 import com.qidate.qisplan2.entity.painting.GhostPaintingVariants;
 import com.qidate.qisplan2.entity.ModularGhostEntity;
 import com.qidate.qisplan2.ghost.module.GhostModule;
-import com.qidate.qisplan2.ghost.module.GhostModuleDataModifier;
 import com.qidate.qisplan2.ghost.module.GhostModuleRegistry;
-import com.qidate.qisplan2.ghost.module.host.item.GhostItemData;
-import com.qidate.qisplan2.ghost.module.host.item.GhostItemModuleHost;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
@@ -137,35 +135,13 @@ public class ModCreativeTabs {
                                     CustomData.of(tag)
                             );
 
-                            // 同时保存真实的模块实例数据。
-                            // 初始强度、复苏值和死机值均来自模块定义。
-                            GhostModuleDataModifier host = new GhostItemModuleHost(stack);
-
-                            boolean added = host.addModule(module);
-
-                            if (!added) {
-                                QisPlan2.LOGGER.warn(
-                                        "无法为模块化厉鬼刷怪蛋写入模块实例数据：{}",
-                                        module.getId()
-                                );
-                            } else {
-                                // ENTITY_DATA 才会由刷怪蛋传入新生实体；
-                                // GHOST_MODULES 组件仍保留在物品上供编辑和展示使用。
-                                stack.set(
-                                        DataComponents.ENTITY_DATA,
-                                        CustomData.of(
-                                                ModularGhostEntity.createSpawnData(
-                                                        GhostItemData.getModules(stack)
-                                                )
-                                        )
-                                );
-
-                                QisPlan2.LOGGER.info(
-                                        "已为模块化厉鬼刷怪蛋写入模块实例数据：{}，当前数据：{}",
-                                        module.getId(),
-                                        GhostItemData.getModules(stack)
-                                );
-                            }
+                            // 模块属于将要生成的实体，刷怪蛋本身不安装物品模块。
+                            // 只使用 ENTITY_DATA，避免手持模板参与身体加成、规则和压制。
+                            var initial = module.getInitialData();
+                            var modules = List.of(new GhostModuleData.Entry(
+                                    module.getId(), initial.intensity(), initial.revival()));
+                            stack.set(DataComponents.ENTITY_DATA,
+                                    CustomData.of(ModularGhostEntity.createSpawnData(modules)));
 
                             // 根据模块 ID 生成对应的翻译键。
                             ResourceLocation moduleId = module.getId();

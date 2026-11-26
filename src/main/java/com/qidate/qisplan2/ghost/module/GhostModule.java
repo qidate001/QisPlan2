@@ -42,6 +42,9 @@ import net.minecraft.resources.ResourceLocation;
  * 不属于模块实例的当前状态。
  */
 public interface GhostModule {
+    /** 死机时每秒回落的复苏值，默认十秒可清空满额复苏；使用能力仍照常支付复苏代价。 */
+    default double deadlockedRevivalDecayPerSecond() { return getMaxRevival() * 0.1D; }
+
     /** 本完整厉鬼拥有的诅咒定义；随模块注册，不再独立注册诅咒类型。 */
     default List<CurseType> curses() { return List.of(); }
 
