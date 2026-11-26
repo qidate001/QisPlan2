@@ -1,6 +1,7 @@
 package com.qidate.qisplan2.ghost.module;
 
 import com.qidate.qisplan2.ghost.bearing.HostComposition;
+import com.qidate.qisplan2.ghost.module.host.GhostLivingHosts;
 import com.qidate.qisplan2.ghost.bearing.SpiritualPart;
 import com.qidate.qisplan2.ghost.corrosion.GhostCorrosion;
 import com.qidate.qisplan2.ghost.module.data.GhostModuleData;
@@ -46,6 +47,17 @@ public final class ModuleFrameworkTest {
         };
         GhostModuleRegistry.register(definition);
         Host first=new Host(),second=new OtherHost();
+        // 同一套模块和属性公式，只改变它与身体的承载关系。
+        var carried=new GhostLivingHosts.Binding(second,GhostLivingHosts.Relation.CARRIED_ITEM);
+        var intrinsic=new GhostLivingHosts.Binding(first,GhostLivingHosts.Relation.INTRINSIC);
+        var heldOnly=GhostLivingHosts.intrinsic(List.of(carried));
+        equal(heldOnly.stream().mapToDouble(GhostHostProperties::maxHealthBonus).sum(),0,"仅持有物品不能获得身体生命加成");
+        equal(heldOnly.stream().mapToDouble(GhostHostProperties::damageReduction).sum(),0,"仅持有物品不能获得身体通用减伤");
+        var mixed=GhostLivingHosts.intrinsic(List.of(intrinsic,carried));
+        if(mixed.size()!=1||mixed.getFirst()!=first)throw new AssertionError("持有来源不能混入身体承载");
+        equal(mixed.stream().mapToDouble(GhostHostProperties::maxHealthBonus).sum(),GhostHostProperties.maxHealthBonus(first),"物品不能叠加体内模块生命加成");
+        if(second.getModules().isEmpty()||GhostHostProperties.maxHealthBonus(second)<=0)throw new AssertionError("不能靠删除物品模块或禁用通用公式修复承载边界");
+
         equal(GhostHostProperties.damageReduction(first),.5,"通用减伤公式");
         equal(GhostHostProperties.damageReduction(first),GhostHostProperties.damageReduction(second),"宿主身份不能改变减伤");
         equal(GhostHostProperties.maxHealthBonus(first),GhostHostProperties.maxHealthBonus(second),"宿主身份不能改变生命加成");

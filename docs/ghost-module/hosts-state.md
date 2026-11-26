@@ -105,7 +105,7 @@ GhostModuleRuntime.dispatch(host, TouchEvent.sample(null, target, beginning));
 
 `bodyEffects(context)` 返回 `GhostBodyEffects`，声明移动速度加值和短时药水效果。夜游鬼的明暗速度、失明和夜视已经使用这个入口；不再存在玩家版和厉鬼实体版两套公式。
 
-`GhostHostProperties` 根据宿主实际组成和已承载模块计算侵蚀、普通伤害减免、生命上限加成及有效强度。自主模块完整发挥，受控模块按复苏比例发挥；此差异由通用承载关系声明，不能按玩家身份判断。`GhostHostBodyHandler` 将这些结果应用到生命身体及装备来源；没有生命属性的载体不会被强行添加生命值。界面同样读取这个计算入口。
+`GhostHostProperties` 根据宿主实际组成和已承载模块计算侵蚀、普通伤害减免、生命上限加成及有效强度。自主模块完整发挥，受控模块按复苏比例发挥；此差异由通用承载关系声明，不能按玩家身份判断。`GhostHostBodyHandler` 只把身体自身承载的通用生命上限和减伤应用到该身体。`GhostLivingHosts` 区分 `INTRINSIC` 与 `CARRIED_ITEM`；手持或穿戴物品仍是独立宿主，其侵蚀和通用属性不会转移给携带者。装备通过媒介提供的显式能力效果（例如寿衣抵挡）仍照常执行；没有生命属性的载体不会被强行添加生命值。界面同样读取这个计算入口。
 
 ### 安装、生命周期与数据
 
