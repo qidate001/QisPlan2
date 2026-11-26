@@ -2,7 +2,6 @@ package com.qidate.qisplan2.ghost.module;
 
 import com.qidate.qisplan2.ghost.module.event.GhostEvent;
 import com.qidate.qisplan2.ghost.module.event.DestructionAttemptEvent;
-import com.qidate.qisplan2.ghost.module.implementation.GhostStoveModule;
 import com.qidate.qisplan2.ghost.module.event.ModuleTickEvent;
 import com.qidate.qisplan2.ghost.module.data.GhostModuleData;
 import com.qidate.qisplan2.ghost.module.suppression.GhostSuppressionState;
@@ -11,6 +10,7 @@ import net.minecraft.resources.ResourceLocation;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Proxy;
 import java.util.*;
+import net.minecraft.world.phys.AABB;
 
 /** 验证实际派发只调用订阅者，而不是把全量分发藏在类型过滤方法后。 */
 public final class EventSubscriptionTest {
@@ -101,11 +101,21 @@ public final class EventSubscriptionTest {
         var destruction=new DestructionAttemptEvent(null);
         GhostModuleRuntime.dispatch(host,destruction);
         check(destruction.isCanceled(),"统一摧毁语义必须保留可取消结果，且允许环境破坏无责任者");
-        var stove=GhostEventSubscriptions.carried(GhostStoveModule.ID);
-        check(stove.size()==1,"携带观察声明在注册时建立计划");
+        var carriedId=ResourceLocation.parse("qisplan2_test:carried_subscription");
+        GhostModuleRegistry.register(new GhostModule() {
+            public ResourceLocation getId(){return carriedId;}
+            public List<GhostRule> getRules(){return List.of(new GhostRule() {
+                public ResourceLocation getId(){return carriedId;}
+                public Set<Class<? extends GhostEvent>> eventTypes(){return Set.of();}
+                public List<CarriedItemObservation> carriedItems(){return List.of(
+                        new CarriedItemObservation(new AABB(-5,-5,-5,5,5,5),CarriedItemSelector.food()));}
+                public boolean canTrigger(GhostRuleContext c,GhostEvent e){return true;}
+                public void onTrigger(GhostRuleContext c,GhostEvent e){}
+            });}
+        });
+        check(GhostEventSubscriptions.carried(carriedId).size()==1,"携带观察声明在注册时建立计划");
         check(GhostEventSubscriptions.subscribers(ModuleTickEvent.class).stream()
-                .filter(d->d.module().getId().equals(GhostStoveModule.ID))
-                .allMatch(d->d.rules().isEmpty()),"携带规则不能再接收Tick然后自己扫描");
+                .noneMatch(d->d.module().getId().equals(carriedId)),"携带订阅不应隐式订阅Tick广播");
         System.out.println("Indexed event subscription, inheritance, deduplication, cache and removal checks passed");
     }
     /** 创建独立的测试实例状态，不共享可变 customData。 */

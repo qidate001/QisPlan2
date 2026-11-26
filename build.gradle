@@ -209,16 +209,16 @@ sourceSets {
     }
 }
 
-// 验证规则死机与玩家主动调用的边界，无需额外测试框架或启动游戏。
-tasks.register('possessionInvocationTest', JavaExec) {
+// 执行框架回归检查：承载、订阅、能力、裁决、压制、诅咒与鬼域，无需启动游戏。
+tasks.register('frameworkRegressionTest', JavaExec) {
     dependsOn tasks.named('regressionClasses')
     classpath = sourceSets.regression.runtimeClasspath
-    mainClass = 'com.qidate.qisplan2.ghost.module.PossessionInvocationTest'
+    mainClass = 'com.qidate.qisplan2.ghost.module.FrameworkRegressionTest'
     workingDir = layout.buildDirectory.dir('regression-run').get().asFile
     doFirst { workingDir.mkdirs() }
 }
 tasks.named('check') {
-    dependsOn tasks.named('possessionInvocationTest')
+    dependsOn tasks.named('frameworkRegressionTest')
 }
 
 // 模块只能依赖语义事件、模块数据和环境端口，不能绕过端口取回载体。

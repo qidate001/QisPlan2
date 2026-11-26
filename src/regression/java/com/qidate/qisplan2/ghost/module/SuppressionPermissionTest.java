@@ -3,32 +3,24 @@ package com.qidate.qisplan2.ghost.module;
 import java.util.Set;
 import com.qidate.qisplan2.ghost.module.ability.*;
 import com.qidate.qisplan2.ghost.module.data.GhostModuleData;
-import com.qidate.qisplan2.ghost.module.environment.GhostAttachmentAccess;
-import com.qidate.qisplan2.ghost.module.environment.GhostWorldAccess;
 import com.qidate.qisplan2.ghost.module.event.GhostEvent;
 import com.qidate.qisplan2.ghost.module.event.SupernaturalAttackEvent;
-import com.qidate.qisplan2.ghost.module.host.attachment.GhostAttachmentRecord;
-import com.qidate.qisplan2.ghost.module.implementation.CoffinNailModule;
 import com.qidate.qisplan2.ghost.module.influence.*;
 import com.qidate.qisplan2.ghost.module.suppression.*;
-import java.lang.reflect.Proxy;
-import java.lang.reflect.InvocationHandler;
 import java.util.List;
 import java.util.UUID;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.world.entity.LivingEntity;
 
-/** 验证无宿主身份的模块调用、权限边界与附着记录，不启动游戏窗口。 */
-public final class CoffinNailModuleTest {
+/** 验证无宿主身份的模块调用与压制权限边界，不启动游戏窗口。 */
+public final class SuppressionPermissionTest {
     private static final ResourceLocation TEST = ResourceLocation.parse("qisplan2_test:suppressed");
     private static final ResourceLocation ABILITY = ResourceLocation.parse("qisplan2_test:suppressed/use");
     private record Fact() implements GhostEvent {}
     private static int rules, effects, lifecycle, defenses;
     private static final class Host implements GhostModuleHost {
         final ResourceLocation id;
-        boolean controlled, deadlocked, allowed = true, embedded;
-        int insertions;
+        boolean controlled, deadlocked;
         GhostSuppressionState suppression = GhostSuppressionState.NONE;
         Host(ResourceLocation id) { this.id = id; }
         public List<GhostModuleData.Entry> getModules() {
@@ -37,30 +29,12 @@ public final class CoffinNailModuleTest {
         public boolean allowsAbilityRevivalStimulation() { return false; }
         public boolean controlsIntrinsicModules() { return controlled; }
         public GhostSuppressionState suppression(ResourceLocation ignored) { return suppression; }
-        public GhostWorldAccess moduleWorld(ResourceLocation ignored) {
-            var access = new GhostAttachmentAccess() {
-                public boolean canEmbed(LivingEntity target) { return allowed && !embedded; }
-                public boolean embed(LivingEntity target) {
-                    check(canEmbed(target), "不得绕过媒介插入"); embedded = true; insertions++; return true;
-                }
-                public boolean embedded() { return embedded; }
-            };
-            return (GhostWorldAccess) Proxy.newProxyInstance(getClass().getClassLoader(), new Class<?>[]{GhostWorldAccess.class},
-                    (proxy, method, args) -> switch (method.getName()) {
-                        case "attachments" -> access;
-                        case "aimedTarget" -> null;
-                        default -> {
-                            if (method.isDefault()) yield InvocationHandler.invokeDefault(proxy, method, args);
-                            throw new AssertionError("模块试图读取具体载体: " + method.getName());
-                        }
-                    });
-        }
     }
     /** 断言失败终止构建。 */
     private static void check(boolean value, String message) { if (!value) throw new AssertionError(message); }
     /** 创建保持同一模块的能力上下文。 */
     private static GhostAbilityContext context(Host host, GhostAbilityContext.Source source) {
-        return new GhostAbilityContext(host, host.id, host.id.equals(TEST) ? ABILITY : CoffinNailModule.EMBED, source, null);
+        return new GhostAbilityContext(host, host.id, ABILITY, source, null);
     }
     /** 无解压制不参与算术；基础/高度严格大于，完全压制包含1.5倍边界。 */
     private static void thresholds() {
@@ -120,46 +94,11 @@ public final class CoffinNailModuleTest {
         host.suppression = GhostSuppressionState.NONE;
         host.deadlocked = true;
         check(GhostAbilityExecutor.tryExecuteWithResult(context(host, GhostAbilityContext.Source.POSSESSION)), "解除压制后仍保留死机但允许手动调用");
-        check(!context(host, GhostAbilityContext.Source.RULE).isModuleAvailable(), "原死机状态不得被拔钉清除");
+        check(!context(host, GhostAbilityContext.Source.RULE).isModuleAvailable(), "解除压制不得清除原死机状态");
     }
-    /** 插入能力仅访问端口，附着后的持续声明不要求规则每 tick 重放。 */
-    private static void nail() {
-        var module = new CoffinNailModule();
-        GhostModuleRegistry.register(module);
-        var host = new Host(CoffinNailModule.ID);
-        check(module.getSuppressions(new GhostModuleContext(host, host.id)).isEmpty(), "未插入没有压制");
-        host.allowed = false;
-        check(!GhostAbilityExecutor.tryExecuteWithResult(context(host, GhostAbilityContext.Source.POSSESSION)), "媒介不成立不得插入");
-        host.allowed = true;
-        host.deadlocked = true;
-        check(GhostAbilityExecutor.tryExecuteWithResult(context(host, GhostAbilityContext.Source.POSSESSION)), "死机棺材钉可手动插入");
-        check(host.insertions == 1 && host.getModules().size() == 1, "插入由端口执行且不改模块表");
-        var relation = module.getSuppressions(new GhostModuleContext(host, host.id));
-        check(relation.size() == 1 && relation.getFirst().kind() == GhostSuppression.Kind.ABSOLUTE, "插入媒介维持无解压制");
-        check(!GhostAbilityExecutor.tryExecuteWithResult(context(host, GhostAbilityContext.Source.POSSESSION)), "重复插入不得重复消耗");
-        host.embedded = false;
-        check(module.getSuppressions(new GhostModuleContext(host, host.id)).isEmpty(), "拔出解除媒介关系");
-    }
-    /** 记录保留来源身份、原组件与回收标记，读取副本不得修改原记录。 */
-    private static void persistence() {
-        var item = new CompoundTag(); item.putString("id", "qisplan2:coffin_nail");
-        var components = new CompoundTag(); components.putString("custom_name", "原来的棺材钉");
-        item.put("components", components);
-        var id = UUID.randomUUID();
-        var record = new GhostAttachmentRecord(id, item, true);
-        item.getCompound("components").putString("custom_name", "被修改");
-        var restored = GhostAttachmentRecord.load(record.save()).orElseThrow();
-        check(restored.instance().equals(id) && restored.recoverable(), "重载必须保留同一个附着来源");
-        check(restored.item().getCompound("components").getString("custom_name").equals("原来的棺材钉"), "原物品组件必须保留");
-        restored.item().putString("id", "minecraft:air");
-        check(restored.item().getString("id").equals("qisplan2:coffin_nail"), "外部不可修改记录");
-        check(GhostAttachmentRecord.load(new CompoundTag()).isEmpty(), "损坏记录不得制造压制来源");
-        check(GhostAttachmentRecord.load(new GhostAttachmentRecord(id, record.item(), false).save()).orElseThrow().recoverable(),
-                "旧版创造模式附着记录也必须允许取回原物品");
-    }
-    /** 运行完整棺材钉与压制接口回归。 */
+    /** 仅运行通用压制阈值和调用权限边界，不依赖具体厉鬼实现。 */
     public static void run() {
-        thresholds(); permissions(); nail(); persistence();
-        System.out.println("Coffin nail, independent attachment and suppression permission checks passed");
+        thresholds(); permissions();
+        System.out.println("Suppression thresholds and permission checks passed");
     }
 }

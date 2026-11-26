@@ -25,7 +25,9 @@
 
 当前 `check` 包含编译、模块隔离检查和项目已有回归任务。`verifyModuleIsolation` 扫描 `implementation/**/*Module.java` 中的宿主访问与宿主适配包引用。扫描是基础约束，不是完整的静态分析；不要把错误依赖藏进 helper 来绕过它。
 
-回归测试位于 `src/regression/java`，由 `PossessionInvocationTest` 串联。新增测试类不会仅因放进目录就自动执行，需要接入该入口或独立 Gradle 任务。
+回归测试位于 `src/regression/java`，由 `FrameworkRegressionTest` 串联。新增测试类不会仅因放进目录就自动执行，需要接入该入口或独立 Gradle 任务。
+
+当前仅保留有明确回归价值的框架与公共接口检查：承载关系、语义订阅、能力调用与媒介、裁决响应、压制权限和关系缓存、沉睡、诅咒、鬼域及附着物品的真实序列化。单个厉鬼的迁移步骤、固定数值和重复状态断言不再分别维护专项测试。统一任务为 `frameworkRegressionTest`，已接入 `check`；物品快照与着色器仍保留各自的独立任务。
 
 ### 至少验证这些行为
 

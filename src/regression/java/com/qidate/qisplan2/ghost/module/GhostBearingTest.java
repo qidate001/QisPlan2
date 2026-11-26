@@ -45,6 +45,8 @@ public final class GhostBearingTest {
 
     /** 验证所有支持的安装、存档、扩展与失败路径。 */
     public static void run() {
+        // 测试自行准备替换式样本，不依赖其他专项测试的注册副作用。
+        if (!GhostModuleRegistry.contains(GhostShroudModule.ID)) GhostModuleRegistry.register(new GhostShroudModule());
         var skin = GhostShroudModule.ID;
         var otherSkin = module("other_skin", GhostModuleForm.replacing(SpiritualPart.SKIN));
         var heart = module("heart", GhostModuleForm.replacing(SpiritualPart.HEART));

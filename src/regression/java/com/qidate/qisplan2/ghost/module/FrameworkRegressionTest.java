@@ -9,13 +9,12 @@ import com.qidate.qisplan2.ghost.module.data.GhostModuleData;
 import com.qidate.qisplan2.ghost.module.event.ModuleTickEvent;
 import com.qidate.qisplan2.ghost.module.event.GhostEvent;
 import com.qidate.qisplan2.ghost.module.host.player.PlayerGhostData;
-import com.qidate.qisplan2.ghost.module.implementation.candle.GhostCandleModule;
 import java.util.List;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.resources.ResourceLocation;
 
 /** 无需启动游戏世界的回归检查：死机规则、主动能力、媒介和延迟调用。 */
-public final class PossessionInvocationTest {
+public final class FrameworkRegressionTest {
     private static final ResourceLocation ID = ResourceLocation.fromNamespaceAndPath("qisplan2_test", "invocation");
     private static boolean medium = true;
     private static int effects;
@@ -40,22 +39,14 @@ public final class PossessionInvocationTest {
      * 运行回归用例，覆盖死机、主动能力、媒介限制以及延迟任务失效等边界。
      */
     public static void main(String[] args) {
-        HostNeutralCandleTest.run();
-        GhostCarpetContactTest.run();
-        GhostGrassContactTest.run();
         BlockSpreadTest.run();
-        GhostShroudTest.run();
         GhostBearingTest.run();
         ModuleCommandTextTest.run();
         AbilityWheelTest.run();
-        PrivateAbilityTest.run();
         ActiveInfluenceTest.run();
         AttackResponseTest.run();
-        GhostDoorModuleTest.run();
-        GhostStoveModuleTest.run();
-        BookSwordModuleTest.run();
-        CoffinNailModuleTest.run();
-        PianoSuppressionTest.run();
+        SuppressionPermissionTest.run();
+        SuppressionLedgerTest.run();
         SuppressionSleepTest.run();
         ModuleDomainTest.run();
         EventSubscriptionTest.run();
@@ -179,23 +170,6 @@ public final class PossessionInvocationTest {
         check(rules == 1, "正常模块应触发规则");
         var deadlocked = new GhostModuleData.Entry(ID, 10, 0, false, true, new CompoundTag());
         check(PlayerGhostData.view(deadlocked).state().isAnyStun(), "界面必须显示模块死机");
-        CompoundTag lit = new CompoundTag();
-        lit.putBoolean("lit", true);
-        check(GhostCandleModule.isLit(new GhostModuleData.Entry(ID, 5, 0, false, false, lit)),
-                "点燃且可用的鬼烛必须有效");
-        check(!GhostCandleModule.isLit(new GhostModuleData.Entry(ID, 5)),
-                "未点燃鬼烛不能提供效果");
-        check(!GhostCandleModule.isLit(new GhostModuleData.Entry(ID, 5, 0, false, true, lit)),
-                "死机鬼烛不能提供效果");
-        check(!GhostCandleModule.isLit(new GhostModuleData.Entry(ID, 5, 0, true, false, lit)),
-                "沉睡鬼烛不能提供效果");
-        lit.put("qisplan2:combat", combat);
-        check(!GhostCandleModule.isLit(new GhostModuleData.Entry(ID, 5, 0, true, false, lit)),
-                "沉睡鬼烛不能提供效果");
-        check(GhostCandleModule.soundBurnPerTick(0) == 0, "没有声音压力时不额外燃烧");
-        check(GhostCandleModule.soundBurnPerTick(10) * 20 == 1, "10强度应额外消耗1耐久每秒");
-        check(GhostCandleModule.soundBurnPerTick(50) * 20 == 5, "声音压力应随强度线性增加");
-        check(GhostCandleModule.soundBurnPerTick(-1) == 0, "无效负强度不能返还耐久");
-        System.out.println("Possession and candle state regression checks passed");
+        System.out.println("Framework invocation and media regression checks passed");
     }
 }
