@@ -146,12 +146,13 @@ public final class CurseHudOverlay {
                                     + curse.type().getPath()
                     );
 
+            if(curse.dormant())name=name.copy().append(" [").append(Component.translatable("curse.qisplan2.state.dormant")).append("]");
             guiGraphics.drawString(
                     font,
                     name,
                     LEFT + ICON_SIZE + 4,
                     y + 4,
-                    0xFFFFFFFF,
+                    curse.dormant()?0xFF999999:0xFFFFFFFF,
                     true
             );
 

@@ -2,12 +2,22 @@ package com.qidate.qisplan2.death;
 
 import com.qidate.qisplan2.event.GhostEntityDestructionHandler;
 import com.qidate.qisplan2.ghost.module.host.GhostAttackBridge;
+import com.qidate.qisplan2.ghost.module.host.GhostPersistentSuppression;
 import com.qidate.qisplan2.core.ModGameRules;
 import com.qidate.qisplan2.ghost.layer.GhostLayerHandler;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.LivingEntity;
 
 public class SupernaturalDeathHandler {
+    /** 显式选择袭击、压制或自动路由；压制不会伤害普通生物。 */
+    public static boolean apply(LivingEntity target, DamageSource source, double strength, GhostAttackMode mode) {
+        if(target.level().isClientSide()||!target.isAlive()||!Double.isFinite(strength)||strength<=0)return false;
+        if(source.getEntity()!=null&&!GhostLayerHandler.canSee(source.getEntity(),target))return false;
+        if(mode==GhostAttackMode.SUPPRESSION || mode==GhostAttackMode.AUTO&&GhostPersistentSuppression.isGhost(target))
+            return GhostPersistentSuppression.pulse(target,strength);
+        return tryKill(target,source,strength);
+    }
+
 
 
     /**
@@ -49,7 +59,7 @@ public class SupernaturalDeathHandler {
 //        );
 
 
-        if (!entity.isAlive()) {
+        if (entity.level().isClientSide() || !entity.isAlive() || GhostPersistentSuppression.isGhost(entity)) {
             return false;
         }
 
@@ -79,14 +89,6 @@ public class SupernaturalDeathHandler {
         var attack = GhostAttackBridge.resolve(entity, supernaturalIntensity);
         if (attack.isBlocked() || attack.remainingIntensity() <= 0) return false;
         supernaturalIntensity = attack.remainingIntensity();
-
-        /*
-         * 灵异实体受到灵异攻击
-         */
-        if (entity instanceof SupernaturalEntity supernaturalEntity) {
-            supernaturalEntity.onSupernaturalAttack(supernaturalIntensity);
-            return false;
-        }
 
         /*
          * 普通实体仍然是秒杀逻辑

@@ -1,5 +1,9 @@
 package com.qidate.qisplan2.ghost.module;
 
+import com.qidate.qisplan2.ghost.module.host.GhostEnvironmentAdapters;
+import com.qidate.qisplan2.ghost.curse.CurseManager;
+import net.minecraft.nbt.Tag;
+
 import com.qidate.qisplan2.ghost.module.ability.GhostAbilityParameters;
 import com.qidate.qisplan2.ghost.module.ability.GhostAbilityExecutor;
 import com.qidate.qisplan2.ghost.module.ability.GhostAbilityContext;
@@ -156,6 +160,8 @@ public record GhostModuleContext(
             );
         }
 
+        var body = GhostEnvironmentAdapters.bearer(host);
+        if (body != null) amount *= CurseManager.revivalMultiplier(body);
         // 所有载体共享复苏缓冲；百分比储备按当前模块的复苏上限换算。
         if (host instanceof GhostModuleCustomDataModifier modifier && maxRevival > 0 && amount > 0) {
             var custom = modifier.getModuleCustomData(moduleId);
@@ -204,7 +210,7 @@ public record GhostModuleContext(
 
         CompoundTag data = getCustomData();
 
-        return data.contains(key, net.minecraft.nbt.Tag.TAG_STRING)
+        return data.contains(key, Tag.TAG_STRING)
                 ? data.getString(key)
                 : defaultValue;
     }
@@ -230,7 +236,7 @@ public record GhostModuleContext(
 
         CompoundTag data = getCustomData();
 
-        return data.contains(key, net.minecraft.nbt.Tag.TAG_DOUBLE)
+        return data.contains(key, Tag.TAG_DOUBLE)
                 ? data.getDouble(key)
                 : defaultValue;
     }
@@ -261,7 +267,7 @@ public record GhostModuleContext(
 
         CompoundTag data = getCustomData();
 
-        return data.contains(key, net.minecraft.nbt.Tag.TAG_BYTE)
+        return data.contains(key, Tag.TAG_BYTE)
                 ? data.getBoolean(key)
                 : defaultValue;
     }

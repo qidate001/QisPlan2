@@ -1,5 +1,7 @@
 package com.qidate.qisplan2.ghost.module.host;
 
+import com.qidate.qisplan2.death.GhostAttackMode;
+
 import com.qidate.qisplan2.ghost.domain.GhostDomainInfluenceScope;
 import java.util.function.BooleanSupplier;
 import java.nio.charset.StandardCharsets;
@@ -452,6 +454,10 @@ public final class GhostWorldAdapters {
              * 先检查目标世界，再交给统一死亡处理；返回实际击杀是否成功。
              */
             public boolean attack(LivingEntity target, ResourceKey<DamageType> type, double intensity) {
+                return affect(target,type,intensity,GhostAttackMode.ATTACK);
+            }
+            /** 统一校验跨层、维度及来源能力权限，再按目标实际承载状态路由。 */
+            public boolean affect(LivingEntity target,ResourceKey<DamageType> type,double intensity,GhostAttackMode mode) {
                 if (!host.suppression(id).canUseAbility(host.controlsIntrinsicModules())) return false;
                 // 静态来源没有实体形体；由目标所在的服务端世界提供伤害注册表。
                 // 有已知世界时仍严格检查维度，不能跨维度袭击。
@@ -460,7 +466,7 @@ public final class GhostWorldAdapters {
                 var damage = new DamageSource(target.level().registryAccess().registryOrThrow(Registries.DAMAGE_TYPE)
                         .getHolderOrThrow(type), source());
                 if(source() instanceof AnimatedModularGhostEntity animated) animated.playVisualAction("attack");
-                return SupernaturalDeathHandler.tryKill(target, damage, intensity * GhostDomainInfluenceScope.weight());
+                return SupernaturalDeathHandler.apply(target, damage, intensity * GhostDomainInfluenceScope.weight(),mode);
             }
 
             /**

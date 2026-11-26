@@ -9,7 +9,6 @@ import com.qidate.qisplan2.ghost.module.implementation.umbrella.GhostRainEffect;
 
 import com.qidate.qisplan2.client.BlackRainParticle;
 import com.qidate.qisplan2.client.GhostUmbrellaClient;
-import com.qidate.qisplan2.client.curse.CurseClientBootstrap;
 import com.qidate.qisplan2.entity.ModularGhostRenderer;
 import com.qidate.qisplan2.entity.painting.GhostPaintingRenderer;
 import com.qidate.qisplan2.ghost.domain.client.ClientGhostDomainEvents;
@@ -124,7 +123,6 @@ public class QisPlan2Client {
         );
 
         // 注册客户端诅咒
-        CurseClientBootstrap.register();
 
         // 鬼域效果注册
         GhostDomainClientEffects.installModules();

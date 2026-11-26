@@ -1,5 +1,21 @@
 package com.qidate.qisplan2.ghost.curse;
 
+import com.qidate.qisplan2.ghost.module.influence.GhostInfluence;
+import com.qidate.qisplan2.ghost.module.GhostModuleDataModifier;
+import com.qidate.qisplan2.ghost.module.event.GhostEvent;
+
+import com.qidate.qisplan2.ghost.module.event.SupernaturalSuppressionEvent;
+import com.qidate.qisplan2.ghost.module.host.GhostPersistentSuppression;
+import com.qidate.qisplan2.ghost.module.event.SupernaturalAttackEvent;
+import com.qidate.qisplan2.ghost.module.influence.GhostAttackContext;
+import com.qidate.qisplan2.ghost.module.event.ModuleTickEvent;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.entity.LivingEntity;
+import java.util.function.Predicate;
+import java.util.LinkedHashMap;
+import java.util.HashMap;
+import java.util.Map;
+
 import com.qidate.qisplan2.QisPlan2;
 import com.qidate.qisplan2.network.curse.CurseNetwork;
 import net.minecraft.server.MinecraftServer;
@@ -21,6 +37,64 @@ import java.util.UUID;
  * 5. 自动清理失效诅咒
  */
 public final class CurseManager {
+    private static final Map<UUID, Curse.Status> LAST_STATUS=new HashMap<>();
+    /** 目标索引使事件只查询该对象身上的诅咒，不再扫描全服诅咒。 */
+    private static final Map<UUID, Map<UUID, Curse>> BY_TARGET = new HashMap<>();
+    /** 将加载后的实例纳入两个索引；相同实例 ID 替换时先删除旧目标映射。 */
+    private static void index(Curse curse) {
+        var old=CURSES.put(curse.getId(),curse);
+        if(old!=null){var entries=BY_TARGET.get(old.getTarget());if(entries!=null){entries.remove(old.getId());if(entries.isEmpty())BY_TARGET.remove(old.getTarget());}}
+        BY_TARGET.computeIfAbsent(curse.getTarget(),k->new LinkedHashMap<>()).put(curse.getId(),curse);
+    }
+    /** 查找已加载的目标，允许非玩家生物承受诅咒；不强制加载区块。 */
+    public static LivingEntity target(MinecraftServer server,UUID id) {
+        if(server==null)return null;
+        for(var level:server.getAllLevels()){var entity=level.getEntity(id);if(entity instanceof LivingEntity living)return living;}
+        return null;
+    }
+    /** 按该诅咒自己的强度评估压制，任何已成立的压制使持续效果沉寂。 */
+    public static Curse.Status status(MinecraftServer server,Curse curse){
+        var target=target(server,curse.getTarget());if(target==null)return Curse.Status.DORMANT;
+        return GhostPersistentSuppression.curseState(target,curse.getId(),curse.getType(),curse.getStrength()).canAct()?Curse.Status.RUNNING:Curse.Status.DORMANT;
+    }
+    /** 常态复苏倍率来自有效声明，多个同类效果不重复相乘。 */
+    public static double revivalMultiplier(LivingEntity target){
+        double multiplier=1;
+        for(var curse:getByTarget(target.getUUID())){var type=CurseRegistry.get(curse.getType());if(type!=null&&curse.isValid(target.getServer())&&curse.status(target.getServer())==Curse.Status.RUNNING)multiplier=Math.max(multiplier,type.revivalMultiplier());}
+        return multiplier;
+    }
+    /** 持续保护以压制事实触发能力，绝对压制不能用有限强度抵消。 */
+    public static boolean blocksSuppression(LivingEntity target,double strength){
+        if(!Double.isFinite(strength)||strength<=0||target.getServer()==null)return false;
+        return resolveSuppression(target,strength,null).isBlocked();
+    }
+    /** 压制与袭击分别产生语义事实，但使用相同强度对抗上下文和同源死机回调。 */
+    public static SupernaturalAttackEvent resolveSuppression(LivingEntity target,double strength,
+            GhostInfluence source){
+        var incoming=new SupernaturalAttackEvent(target.getUUID(),strength);
+        var attack=new GhostAttackContext(incoming,source==null?null:source.moduleId(),()->{
+            if(source!=null && source.host() instanceof GhostModuleDataModifier modifier)
+                modifier.setDeadlocked(source.moduleId(),true);
+        },()->strength);
+        for(var curse:getByTarget(target.getUUID())) {
+            if(!curse.isValid(target.getServer())||curse.status(target.getServer())!=Curse.Status.RUNNING)continue;
+            var type=CurseRegistry.get(curse.getType());if(type==null)continue;
+            var event=new SupernaturalSuppressionEvent(target.getUUID(),strength);
+            type.program().dispatch(event,new CurseAbilityContext(curse.getId(),curse.getTarget(),curse.getStrength(),event,attack,()->remove(target.getServer(),curse.getId()),null));
+        }
+        return incoming;
+    }
+    /** 直接调用持续诅咒的能力也检查存活、压制状态和能力媒介，不允许旁路沉寂。 */
+    public static boolean execute(MinecraftServer server,UUID instance,ResourceLocation ability,GhostEvent event){
+        var curse=get(instance);if(curse==null||!curse.isValid(server)||curse.status(server)!=Curse.Status.RUNNING)return false;
+        var type=CurseRegistry.get(curse.getType());if(type==null)return false;
+        return type.program().execute(ability,new CurseAbilityContext(instance,curse.getTarget(),curse.getStrength(),event,null,()->remove(server,instance),()->curse.tick(server)));
+    }
+    /** 按目标与类型移除全部匹配实例，所有删除都走同一释放、存档和同步入口。 */
+    public static int removeTarget(MinecraftServer server,UUID target,ResourceLocation type){
+        int removed=0;for(var curse:getByTarget(target))if(type==null||type.equals(curse.getType())){remove(server,curse.getId());removed++;}return removed;
+    }
+
 
     /*
      * 所有正在运行中的诅咒。
@@ -31,8 +105,8 @@ public final class CurseManager {
      * Value：
      *     Curse 实例
      */
-    private static final java.util.Map<UUID, Curse> CURSES =
-            new java.util.HashMap<>();
+    private static final Map<UUID, Curse> CURSES =
+            new HashMap<>();
 
     private CurseManager() {
     }
@@ -47,10 +121,8 @@ public final class CurseManager {
             MinecraftServer server,
             Curse curse
     ) {
-        CURSES.put(
-                curse.getId(),
-                curse
-        );
+        if(CURSES.containsKey(curse.getId()))remove(server,curse.getId());
+        index(curse);
 
         QisPlan2.LOGGER.info(
                 "[诅咒系统] 注册诅咒：{}，目标：{}",
@@ -75,10 +147,7 @@ public final class CurseManager {
     }
 
     /**
-     * 注销一个诅咒。
-     */
-    /**
-     * 注销一个诅咒。
+     * 注销一个诅咒，同时释放世界效果与持续压制关系。
      */
     public static void remove(
             MinecraftServer server,
@@ -96,6 +165,12 @@ public final class CurseManager {
             return;
         }
 
+        LAST_STATUS.remove(curseId);
+        removed.suspend(server);
+        var body=target(server,removed.getTarget());
+        if(body!=null)GhostPersistentSuppression.remove(body,removed.getId());
+        var indexed=BY_TARGET.get(removed.getTarget());
+        if(indexed!=null){indexed.remove(curseId);if(indexed.isEmpty())BY_TARGET.remove(removed.getTarget());}
         QisPlan2.LOGGER.info(
                 "[诅咒系统] 注销诅咒：{}",
                 curseId
@@ -121,7 +196,7 @@ public final class CurseManager {
      */
     public static void removeBySource(
             MinecraftServer server,
-            java.util.function.Predicate<Curse> predicate
+            Predicate<Curse> predicate
     ) {
         List<UUID> removeIds = new ArrayList<>();
 
@@ -151,10 +226,13 @@ public final class CurseManager {
             Curse curse
     ) {
 
-        CURSES.put(
-                curse.getId(),
-                curse
-        );
+        index(curse);
+    }
+
+    /** 强度或寿命被刷新后同时更新存档与目标展示，避免 HUD 使用旧到期时间。 */
+    public static void changed(MinecraftServer server,Curse curse){
+        if(CURSES.get(curse.getId())!=curse)return;
+        markDirty();syncTarget(server,curse.getTarget());
     }
 
     /**
@@ -217,18 +295,8 @@ public final class CurseManager {
             UUID target
     ) {
 
-        List<Curse> result =
-                new ArrayList<>();
-
-        for (Curse curse : CURSES.values()) {
-
-            if (curse.getTarget().equals(target)) {
-
-                result.add(curse);
-            }
-        }
-
-        return result;
+        var entries=BY_TARGET.get(target);
+        return entries==null?List.of():List.copyOf(entries.values());
     }
 
     /**
@@ -267,7 +335,25 @@ public final class CurseManager {
             /*
              * 执行诅咒逻辑。
              */
-            curse.tick(server);
+            if(CURSES.get(curse.getId())!=curse)continue;
+            var body=target(server,curse.getTarget());
+            var declaration=CurseRegistry.get(curse.getType());
+            if(body!=null){
+                var offer=declaration==null||curse.status(server)!=Curse.Status.RUNNING?null:declaration.suppression().offer(1,curse.getStrength());
+                if(offer==null)GhostPersistentSuppression.remove(body,curse.getId());
+                else GhostPersistentSuppression.put(body,curse.getId(),offer);
+            }
+            var currentStatus=curse.status(server);
+            if(LAST_STATUS.put(curse.getId(),currentStatus)!=currentStatus)syncTarget(server,curse.getTarget());
+            curse.tickDormant();
+            if(curse.status(server)==Curse.Status.DORMANT){curse.suspend(server);}
+            else {
+                var type=CurseRegistry.get(curse.getType());
+                var event=new ModuleTickEvent();
+                if(type!=null)type.program().dispatch(event,new CurseAbilityContext(curse.getId(),curse.getTarget(),curse.getStrength(),event,null,()->remove(server,curse.getId()),()->curse.tick(server)));
+            }
+            if(!curse.isValid(server))remove(server,curse.getId());
+            if(curse.getRemainingTicks()>=0)markDirty();
         }
     }
 
@@ -285,5 +371,7 @@ public final class CurseManager {
     public static void clear() {
 
         CURSES.clear();
+        BY_TARGET.clear();
+        LAST_STATUS.clear();
     }
 }

@@ -64,6 +64,7 @@ public final class PossessionInvocationTest {
         DomainConflictTest.run();
         DomainEffectExtensionTest.run();
         ModuleFrameworkTest.run();
+        CurseComponentTest.run();
         GhostModuleRegistry.register(new GhostModule() {
             /**
              * 获取当前定义的唯一标识。

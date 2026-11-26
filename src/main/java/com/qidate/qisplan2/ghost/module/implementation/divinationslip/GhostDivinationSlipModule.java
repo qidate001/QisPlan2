@@ -1,5 +1,7 @@
 package com.qidate.qisplan2.ghost.module.implementation.divinationslip;
 
+import com.qidate.qisplan2.ghost.curse.CurseType;
+
 import java.util.Set;
 import com.qidate.qisplan2.ghost.module.influence.GhostAttackContext;
 
@@ -41,6 +43,10 @@ import net.minecraft.world.entity.LivingEntity;
 import static com.qidate.qisplan2.QisPlan2.MODID;
 
 public final class GhostDivinationSlipModule implements GhostModule {
+    private static final List<CurseType> CURSES = List.of(new GhostDivinationCurseType(), new GhostRevivalCurseType());
+    /** 生签的持续保护属于鬼签本身，载体不另行注册。 */
+    @Override public List<CurseType> curses() { return CURSES; }
+
     /** 生签持续保护的对抗声明：同源相当触发死机，其余按最近一秒累计强度抵挡。 */
     public static void resolveLifeProtection(
             GhostAttackContext attack, double strength,
@@ -372,7 +378,7 @@ public final class GhostDivinationSlipModule implements GhostModule {
         if (existing != null) {
             existing.addTime(LIFE_DURATION);
             existing.setStrength(strength);
-            CurseManager.markDirty();
+            CurseManager.changed(serverLevel.getServer(),existing);
             return true;
         }
 
@@ -412,10 +418,15 @@ public final class GhostDivinationSlipModule implements GhostModule {
 
     /**
      * 展示抽到鬼签的结果。
-     * 当前鬼签结果没有额外世界效果，本方法不单独增加复苏；调用入口负责相应代价。
+     * 鬼签留下持续复苏诅咒，运行期间共享复苏效率翻倍；重复使用刷新寿命，不叠乘倍率。
      */
     private static boolean useGhost(LivingEntity user, GhostAbilityContext context) {
-        // 鬼签目前没有额外效果。
+        if(user.getServer()==null)return false;
+        var state=new CompoundTag();state.putInt("Strength",(int)context.getModuleContext().intensity());state.putInt("RemainingTicks",LIFE_DURATION);
+        for(var curse:CurseManager.getByTarget(user.getUUID()))if(curse.getType().equals(GhostRevivalCurseType.ID)){
+            curse.setRemainingTicks(Math.max(curse.getRemainingTicks(),LIFE_DURATION));curse.setStrength(state.getInt("Strength"));CurseManager.changed(user.getServer(),curse);sendResultIfPlayer(user,GHOST_RESULT);return true;
+        }
+        CurseManager.add(user.getServer(),new GhostRevivalCurseType().create(user.getUUID(),new GhostDivinationCurseSource(),state));
         sendResultIfPlayer(user, GHOST_RESULT);
         return true;
     }

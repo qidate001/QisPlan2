@@ -105,10 +105,8 @@ public final class CurseSavedData
             HolderLookup.Provider provider
     ) {
 
-        tag.put(
-                CURSES,
-                curses.copy()
-        );
+        if(instance==this)rebuildFromManager();
+        tag.put(CURSES, curses.copy());
 
         return tag;
     }
@@ -159,7 +157,7 @@ public final class CurseSavedData
             return;
         }
 
-        instance.rebuildFromManager();
+        instance.setDirty();
     }
 
     /**
@@ -237,6 +235,7 @@ public final class CurseSavedData
      * 静态 instance 仍然指向旧服务器的数据。
      */
     public static void clearInstance() {
+        if(instance!=null)instance.rebuildFromManager();
         instance = null;
     }
 }

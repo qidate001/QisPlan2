@@ -1,5 +1,7 @@
 package com.qidate.qisplan2.ghost.module.environment;
 
+import com.qidate.qisplan2.death.GhostAttackMode;
+
 import java.util.function.BooleanSupplier;
 import net.minecraft.world.level.GameRules;
 
@@ -188,6 +190,11 @@ public interface GhostWorldAccess {
      * 先检查目标世界，再交给统一死亡处理；返回实际击杀是否成功。
      */
     boolean attack(LivingEntity target, ResourceKey<DamageType> type, double intensity);
+    /** 显式选择效果意图；旧 attack 的语义保持纯袭击，不能偷偷转换成压制。 */
+    default boolean affect(LivingEntity target, ResourceKey<DamageType> type, double intensity, GhostAttackMode mode) {
+        return mode==GhostAttackMode.ATTACK && attack(target,type,intensity);
+    }
+
 
     /**
      * 判断指定位置是否满足敲门系统认可的门条件。

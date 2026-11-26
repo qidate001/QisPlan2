@@ -4,6 +4,7 @@ import com.qidate.qisplan2.ghost.module.host.GhostContactEvents;
 
 import com.qidate.qisplan2.ghost.module.GhostModuleCombatState;
 import com.qidate.qisplan2.ghost.module.host.GhostSoundSuppression;
+import com.qidate.qisplan2.ghost.module.host.GhostPersistentSuppression;
 import com.qidate.qisplan2.ghost.module.host.attachment.GhostAttachments;
 import com.qidate.qisplan2.ghost.module.suppression.GhostSuppressionState;
 import com.qidate.qisplan2.ghost.bearing.HostComposition;
@@ -400,8 +401,9 @@ public class ModularGhostEntity extends PathfinderMob
 
     /** 返回本模块受到的外来关系，不在实体内维护钉住布尔量。 */
     @Override public GhostSuppressionState suppression(ResourceLocation module) {
-        return GhostAttachments.suppression(this, module).merge(
-                GhostSoundSuppression.state(this, module)).merge(GhostModuleCombatState.attackSuppression(this, module));
+        return GhostPersistentSuppression.protect(this, GhostAttachments.suppression(this, module).merge(
+                GhostSoundSuppression.state(this, module)).merge(GhostModuleCombatState.attackSuppression(this, module))
+                .merge(GhostPersistentSuppression.state(this, module, getModules().stream().filter(e->e.id().equals(module)).mapToDouble(e->e.intensity()).findFirst().orElse(0))));
     }
 
     /**
@@ -411,12 +413,6 @@ public class ModularGhostEntity extends PathfinderMob
     @Override public boolean isSupernaturallyStunned() {
         return !getModules().isEmpty() && getModules().stream().noneMatch(
                 e -> GhostModuleCombatState.available(e) && suppression(e.id()).canAct());
-    }
-
-    /** 灵异袭击按残余强度建立一秒压制，重复命中不叠加时间。 */
-    @Override public void onSupernaturalAttack(double strength) {
-        GhostModuleCombatState.attacked(this, strength);
-        if (isSupernaturallyStunned()) stopGhostMovement();
     }
 
     /**

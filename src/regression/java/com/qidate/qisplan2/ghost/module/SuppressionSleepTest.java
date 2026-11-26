@@ -71,7 +71,8 @@ public final class SuppressionSleepTest {
         var base = new Host(); base.pressure=150;
         base.advance(5999); check(!base.entry().sleeping(), "基准完整压制不足五分钟不入睡");
         base.advance(1); check(base.entry().sleeping(), "恰好1.5倍时五分钟入睡");
-        base.advance(12000); check(GhostModuleCombatState.sleepTicks(base.entry()) <= 12001, "基础沉睡最多十分钟");
+        base.advance(40); check(GhostModuleCombatState.sleepTicks(base.entry())==1220, "普通压制两秒增加一秒沉睡");
+        base.advance(24000); check(GhostModuleCombatState.sleepTicks(base.entry()) <= 12001, "基础沉睡最多十分钟");
         int stable = GhostModuleCombatState.sleepTicks(base.entry()); var frozen = base.getModuleCustomData(ID); base.advance(100);
         check(frozen.equals(base.getModuleCustomData(ID)), "稳定上限不重复写入或同步状态");
         check(GhostModuleCombatState.sleepTicks(base.entry()) == stable, "继续压制不能突破上限");
@@ -83,12 +84,13 @@ public final class SuppressionSleepTest {
         var absolute = new Host(); absolute.pressure=Double.POSITIVE_INFINITY;
         absolute.advance(299); check(!absolute.entry().sleeping(), "无解压制不足十五秒不入睡");
         absolute.advance(1); check(absolute.entry().sleeping(), "无解压制十五秒入睡");
+        absolute.advance(40); check(GhostModuleCombatState.sleepTicks(absolute.entry())==1220, "无解压制同样两秒增加一秒沉睡");
         check(GhostModuleCombatState.sleepCap(Double.POSITIVE_INFINITY,100)==1728000, "无解上限二十四小时");
         var interrupted = new Host(); interrupted.pressure=300; interrupted.advance(1000);
         interrupted.pressure=0; interrupted.advance(1); interrupted.pressure=300; interrupted.advance(500);
         check(!interrupted.entry().sleeping(), "中断完全压制必须重计连续入睡进度");
-        var attack = new Host(); GhostModuleCombatState.attacked(attack,300); attack.advance(10);
-        GhostModuleCombatState.attacked(attack,300); attack.time=29;
+        var attack = new Host(); GhostModuleCombatState.suppressForOneSecond(attack,300); attack.advance(10);
+        GhostModuleCombatState.suppressForOneSecond(attack,300); attack.time=29;
         check(!attack.suppression(ID).canUseAbility(false), "第二次袭击刷新至命中后一秒");
         var dataBeforeInfo = attack.getModuleCustomData(ID);
         var diagnostic = GhostConflictDiagnostics.snapshot(attack);
@@ -99,7 +101,7 @@ public final class SuppressionSleepTest {
         attack.time=30; check(GhostConflictDiagnostics.snapshot(attack).isEmpty(), "到期但尚未清理NBT的关系不能继续显示");
         check(attack.suppression(ID).canAct(), "到期立即解除，不累加第二段一秒");
         check(new GhostSuppression(GhostSuppression.Kind.NORMAL,0).level(0)==GhostSuppression.Level.NONE, "零对零不能形成完全压制");
-        var weak = new Host(); GhostModuleCombatState.attacked(weak,50);
+        var weak = new Host(); GhostModuleCombatState.suppressForOneSecond(weak,50);
         check(weak.suppression(ID).canAct(), "弱袭击不能绕过强度阈值强制停滞");
         GhostModuleCombatState.sleep(weak,weak.entry(),1200);
         int before=effects; GhostModuleRuntime.dispatch(weak,new Violation());

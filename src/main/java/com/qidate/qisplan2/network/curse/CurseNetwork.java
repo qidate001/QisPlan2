@@ -38,7 +38,7 @@ public final class CurseNetwork {
     ) {
 
         var registrar =
-                event.registrar("1");
+                event.registrar("2");
 
         registrar.playToClient(
                 SyncCursePayload.TYPE,
@@ -68,7 +68,7 @@ public final class CurseNetwork {
                                 curse.id(),
                                 curse.type(),
                                 curse.strength(),
-                                curse.remainingTicks()
+                                curse.remainingTicks(), curse.dormant()
                         )
                 );
             }
@@ -103,7 +103,7 @@ public final class CurseNetwork {
                             curse.getId(),
                             curse.getType(),
                             curse.getStrength(),
-                            curse.getRemainingTicks()
+                            curse.getRemainingTicks(), curse.status(player.getServer()) == Curse.Status.DORMANT
                     )
             );
         }

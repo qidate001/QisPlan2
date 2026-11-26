@@ -55,6 +55,11 @@ public final class GhostConflictDiagnostics {
             for (var entry : host.getModules()) result.add(new Relation(false, "attachment", source.instance().toString(),
                     source.item(), source.module(), describe(host), entry.id(), source.suppression(), entry.intensity(), false, -1));
         }
+        if(target!=null)for(var source:GhostPersistentSuppression.relations(target).entrySet()){
+            for(var entry:host.getModules())result.add(new Relation(false,"persistent",source.getKey().toString(),
+                    Component.translatable("command.qisplan2.module.conflict.persistent"),null,describe(host),entry.id(),
+                    source.getValue().suppression(),entry.intensity(),source.getValue().internal(),-1));
+        }
         for (var entry : host.getModules()) {
             var data = entry.customData().getCompound(GhostModuleCombatState.KEY);
             if (!data.contains("attackUntil")) continue;

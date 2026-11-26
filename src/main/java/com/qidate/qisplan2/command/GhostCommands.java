@@ -1298,7 +1298,8 @@ public final class GhostCommands {
                     Component.translatable(
                             "command.qisplan2.curse.entry",
                             curse.getId().toString(),
-                            curse.getTarget().toString()
+                            curse.getTarget().toString(), curse.getType().toString(), curse.getStrength(), curse.getRemainingTicks(),
+                            Component.translatable("curse.qisplan2.state."+curse.status(context.getSource().getServer()).name().toLowerCase(Locale.ROOT))
                     )
             );
         }
@@ -1406,21 +1407,17 @@ public final class GhostCommands {
 
             context.getSource()
                     .sendFailure(
-                            Component.literal(
-                                    "诅咒不存在：" + curseId
-                            )
+                            Component.translatable("command.qisplan2.curse.missing",curseId.toString())
                     );
 
             return 0;
         }
 
-//        CurseManager.remove(curseId);
+        CurseManager.remove(context.getSource().getServer(), curseId);
 
         context.getSource()
                 .sendSuccess(
-                        () -> Component.literal(
-                                "已移除诅咒：" + curseId
-                        ),
+                        () -> Component.translatable("command.qisplan2.curse.removed",curseId.toString()),
                         true
                 );
 

@@ -10,6 +10,7 @@ import com.qidate.qisplan2.death.QisDeathHandler;
 import net.minecraft.server.level.ServerPlayer;
 import com.qidate.qisplan2.ghost.module.GhostModuleCombatState;
 import com.qidate.qisplan2.ghost.module.host.GhostSoundSuppression;
+import com.qidate.qisplan2.ghost.module.host.GhostPersistentSuppression;
 import com.qidate.qisplan2.ghost.module.host.attachment.GhostAttachments;
 import com.qidate.qisplan2.ghost.module.suppression.GhostSuppressionState;
 import com.qidate.qisplan2.ghost.bearing.HostComposition;
@@ -80,8 +81,9 @@ public final class PlayerGhostModuleHost
 
     /** 只读附着关系计算出的状态，不从背包或世界扫描压制来源。 */
     @Override public GhostSuppressionState suppression(ResourceLocation module) {
-        return GhostAttachments.suppression(player, module).merge(
-                GhostSoundSuppression.state(player, module)).merge(GhostModuleCombatState.attackSuppression(this, module));
+        return GhostPersistentSuppression.protect(player, GhostAttachments.suppression(player, module).merge(
+                GhostSoundSuppression.state(player, module)).merge(GhostModuleCombatState.attackSuppression(this, module))
+                .merge(GhostPersistentSuppression.state(player, module, getModules().stream().filter(e->e.id().equals(module)).mapToDouble(e->e.intensity()).findFirst().orElse(0))));
     }
 
     /** 玩家固定采用二十一个人形承载部位。 */

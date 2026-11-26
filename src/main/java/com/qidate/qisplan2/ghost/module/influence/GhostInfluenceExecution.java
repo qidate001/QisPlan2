@@ -1,5 +1,7 @@
 package com.qidate.qisplan2.ghost.module.influence;
 
+import com.qidate.qisplan2.ghost.curse.CurseManager;
+
 import com.qidate.qisplan2.ghost.module.event.SupernaturalAttackEvent;
 import com.qidate.qisplan2.ghost.module.host.GhostAttackBridge;
 import java.util.UUID;
@@ -35,7 +37,7 @@ public final class GhostInfluenceExecution {
     /** 在已隔离的作用域内收集保护并提交最终效果，阻断分支也由外层统一清理。 */
     private static GhostInfluenceOutcome executeIsolated(GhostInfluence influence, GhostInfluenceOutcome outcome,
             Consumer<GhostInfluenceOutcome> effect) {
-        if (influence.type() != GhostInfluenceType.ATTACK) { effect.accept(outcome); return outcome; }
+        if (influence.type() != GhostInfluenceType.ATTACK && influence.type() != GhostInfluenceType.SUPPRESSION) { effect.accept(outcome); return outcome; }
         if (outcome.effectiveIntensity() <= 0)
             return new GhostInfluenceOutcome(GhostInfluenceResolution.SUPPRESSED, outcome.originalIntensity(), 0);
         var attack = new SupernaturalAttackEvent(influence.targetId(), outcome.effectiveIntensity());
@@ -43,7 +45,9 @@ public final class GhostInfluenceExecution {
         if (server != null) {
             for (var level : server.getAllLevels()) {
                 if (level.getEntity(influence.targetId()) instanceof LivingEntity target) {
-                    attack = GhostAttackBridge.resolveFresh(target, outcome.effectiveIntensity(), influence);
+                    attack = influence.type()==GhostInfluenceType.SUPPRESSION
+                            ? CurseManager.resolveSuppression(target,outcome.effectiveIntensity(),influence)
+                            : GhostAttackBridge.resolveFresh(target, outcome.effectiveIntensity(), influence);
                     break;
                 }
             }

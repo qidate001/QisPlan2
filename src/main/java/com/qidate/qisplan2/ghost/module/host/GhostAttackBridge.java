@@ -1,5 +1,7 @@
 package com.qidate.qisplan2.ghost.module.host;
 
+import com.qidate.qisplan2.ghost.curse.Curse;
+
 import com.qidate.qisplan2.ghost.curse.CurseManager;
 import com.qidate.qisplan2.ghost.module.GhostModuleHost;
 import com.qidate.qisplan2.ghost.module.GhostModuleRuntime;
@@ -32,6 +34,7 @@ public final class GhostAttackBridge {
     public static SupernaturalAttackEvent resolveFresh(LivingEntity target, double intensity, GhostInfluence source) {
         var event = new SupernaturalAttackEvent(target.getUUID(), Math.max(0, intensity));
         if (target.level().isClientSide() || !target.isAlive()) return event;
+        if (GhostPersistentSuppression.isGhost(target)) { event.block(); return event; }
         if (intensity <= 0) { event.block(); return event; }
         var hosts = new ArrayList<GhostModuleHost>();
         if (target instanceof Player player) hosts.add(new PlayerGhostModuleHost(player));
@@ -42,7 +45,7 @@ public final class GhostAttackBridge {
         var responses = GhostAttackResponses.collect(hosts);
         var server = target.getServer();
         for (var curse : CurseManager.getByTarget(target.getUUID())) {
-            if (server == null || !curse.isValid(server) || !(curse instanceof GhostInfluenceProvider provider)) continue;
+            if (server == null || !curse.isValid(server) || curse.status(server) != Curse.Status.RUNNING || !(curse instanceof GhostInfluenceProvider provider)) continue;
             var response = provider.attackResponse(() -> CurseManager.remove(server, curse.getId()));
             if (response != null) responses.add(response);
         }

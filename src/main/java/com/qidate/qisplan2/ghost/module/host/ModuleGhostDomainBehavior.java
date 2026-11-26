@@ -1,5 +1,9 @@
 package com.qidate.qisplan2.ghost.module.host;
 
+import com.qidate.qisplan2.ghost.module.suppression.GhostSuppression;
+
+import com.qidate.qisplan2.ghost.module.domain.GhostDomainAbilityContext;
+
 import com.qidate.qisplan2.ghost.domain.*;
 import com.qidate.qisplan2.ghost.module.*;
 import com.qidate.qisplan2.ghost.module.domain.GhostDomainDefinition;
@@ -24,6 +28,7 @@ public final class ModuleGhostDomainBehavior implements GhostDomainBehavior {
     private final GhostModuleHost host;
     private final ResourceLocation module;
     private final GhostDomainDefinition definition;
+    private final Set<LivingEntity> suppressed = new HashSet<>();
     private int elapsed;
     private int automationTicks;
     private GhostDomainSettings settings=GhostDomainSettings.DEFAULT;
@@ -82,10 +87,13 @@ public final class ModuleGhostDomainBehavior implements GhostDomainBehavior {
     @Override public int getTickInterval() { return 1; }
     /** 对有效覆盖集合发出接触、看见及周期曝光，能力仍经过模块执行器。 */
     @Override public void onTick(ServerLevel level,GhostDomain domain,Set<Entity> entities) {
-        if (!sourcePresent(level,domain)) return;
+        if (!sourcePresent(level,domain)) { clearSuppression(domain); return; }
+        updateSuppression(level,domain,entities);
         automate(level,domain,entities);
         if(!sourcePresent(level,domain))return;
         var source=GhostEnvironmentAdapters.bearer(host);
+        var entry=host.getModules().stream().filter(e->e.id().equals(module)).findFirst().orElse(null);
+        boolean componentRules=entry!=null&&GhostModuleCombatState.available(entry)&&host.suppression(module).canRunRules();
         boolean exposure=definition.exposureInterval()>0 && ++elapsed>=definition.exposureInterval();
         if(exposure) elapsed=0;
         for(var entity : List.copyOf(entities)) {
@@ -108,12 +116,36 @@ public final class ModuleGhostDomainBehavior implements GhostDomainBehavior {
                     }
                 }
             }
-            if(exposeNow) GhostModuleRuntime.dispatch(host, new GhostDomainExposureEvent(domain.getId(), source, target, domain.getStrength()));
+            if(exposeNow) {
+                var event=new GhostDomainExposureEvent(domain.getId(),source,target,domain.getStrength());
+                if(componentRules)definition.program().dispatch(event,new GhostDomainAbilityContext(domain.getId(),target,domain.getLayer(),domain.getStrength()*weight,event,host.moduleWorld(module)));
+                GhostModuleRuntime.dispatch(host,event);
+            }
+            var tick=new ModuleTickEvent();
+            if(componentRules)definition.program().dispatch(tick,new GhostDomainAbilityContext(domain.getId(),target,domain.getLayer(),domain.getStrength()*weight,tick,host.moduleWorld(module)));
             });
         }
     }
+    /** 对无生命实体形体的宿主提供同一个声明查询，不执行任何来源能力。 */
+    public GhostSuppression suppressionAt(GhostDomain domain,double weight){
+        return definition.suppression().offer(domain.getLayer(),domain.getStrength()*weight);
+    }
+    /** 利用管理器已算好的有效覆盖集合维护关系，离开、遮断、等级变化都会撤销旧来源。 */
+    private void updateSuppression(ServerLevel level,GhostDomain domain,Set<Entity> entities){
+        var current=new HashSet<LivingEntity>();
+        var source=GhostEnvironmentAdapters.bearer(host);
+        for(var entity:entities)if(entity instanceof LivingEntity target && target!=source && target.isAlive()){
+            double weight=GhostDomainManager.get(level).influence(domain,target);
+            var offer=definition.suppression().offer(domain.getLayer(),domain.getStrength()*weight);
+            if(offer!=null){current.add(target);GhostPersistentSuppression.put(target,domain.getId(),offer);}
+        }
+        for(var target:suppressed)if(!current.contains(target))GhostPersistentSuppression.remove(target,domain.getId());
+        suppressed.clear();suppressed.addAll(current);
+    }
+    /** 鬼域关闭时立即解除来源关系，不等待目标下一次 tick。 */
+    private void clearSuppression(GhostDomain domain){for(var target:suppressed)GhostPersistentSuppression.remove(target,domain.getId());suppressed.clear();}
     /** 世界管理器移除鬼域时同步撤销快速索引。 */
-    @Override public void onRemove(ServerLevel level,GhostDomain domain) { ModuleGhostDomains.forget(host,module,domain); }
+    @Override public void onRemove(ServerLevel level,GhostDomain domain) { clearSuppression(domain); ModuleGhostDomains.forget(host,module,domain); }
     /** 通用层数变化写回模块，以便转移、跨维度与读档重建。 */
     @Override public void onDomainLayerChanged(ServerLevel level,GhostDomain domain) { ModuleGhostDomains.saveLayer(host,module,domain.getLayer()); }
     /** 视觉与传送开关来自声明，层数运算保留框架默认实现。 */

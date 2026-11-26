@@ -1,5 +1,7 @@
 package com.qidate.qisplan2.ghost.module;
 
+import com.qidate.qisplan2.ghost.curse.CurseType;
+
 import java.util.Set;
 import com.qidate.qisplan2.ghost.module.domain.GhostDomainDefinition;
 import com.qidate.qisplan2.ghost.module.domain.GhostDomainPanel;
@@ -40,6 +42,12 @@ import net.minecraft.resources.ResourceLocation;
  * 不属于模块实例的当前状态。
  */
 public interface GhostModule {
+    /** 本完整厉鬼拥有的诅咒定义；随模块注册，不再独立注册诅咒类型。 */
+    default List<CurseType> curses() { return List.of(); }
+
+    /** 完全压制入睡后每 tick 增加的沉睡深度；默认压制两秒积累一秒，独立于入睡门槛。 */
+    default double suppressionSleepAccumulationRate() { return 0.5D; }
+
     /** 身体效果由完整模块统一声明，各宿主共用；没有对应物理属性的宿主忽略投影。 */
     default GhostBodyEffects bodyEffects(GhostModuleContext context) { return GhostBodyEffects.NONE; }
 

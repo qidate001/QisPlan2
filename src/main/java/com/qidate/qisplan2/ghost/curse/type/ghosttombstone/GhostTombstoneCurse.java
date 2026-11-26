@@ -1,11 +1,17 @@
 package com.qidate.qisplan2.ghost.curse.type.ghosttombstone;
 
+import net.minecraft.resources.ResourceKey;
+import net.minecraft.world.level.Level;
+import java.util.Set;
+
 import com.qidate.qisplan2.core.ModTags;
 import com.qidate.qisplan2.ghost.curse.AbstractCurse;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.server.level.ServerPlayer;
+import com.qidate.qisplan2.ghost.curse.CurseManager;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.AABB;
 
@@ -85,9 +91,7 @@ public class GhostTombstoneCurse
         /*
          * 找到诅咒目标。
          */
-        ServerPlayer player =
-                server.getPlayerList()
-                        .getPlayer(getTarget());
+        LivingEntity player = CurseManager.target(server,getTarget());
 
         /*
          * 玩家不在线时不处理。
@@ -162,12 +166,10 @@ public class GhostTombstoneCurse
          */
         player.noPhysics = true;
 
-        player.connection.teleport(
+        player.teleportTo(
                 player.getX(),
                 player.getY() - SINK_SPEED,
-                player.getZ(),
-                player.getYRot(),
-                player.getXRot()
+                player.getZ()
         );
     }
 
@@ -191,7 +193,7 @@ public class GhostTombstoneCurse
      * 就不算完全埋入。
      */
     private static boolean isCompletelyBuried(
-            ServerPlayer player
+            LivingEntity player
     ) {
 
         AABB box =
@@ -276,7 +278,7 @@ public class GhostTombstoneCurse
      */
     private void teleportIntoTomb(
             MinecraftServer server,
-            ServerPlayer player
+            LivingEntity player
     ) {
 
         /*
@@ -314,14 +316,8 @@ public class GhostTombstoneCurse
         /*
          * 跨维度 / 同维度统一使用 ServerPlayer.teleportTo。
          */
-        player.teleportTo(
-                targetLevel,
-                x,
-                y,
-                z,
-                player.getYRot(),
-                player.getXRot()
-        );
+        if(player instanceof ServerPlayer serverPlayer) serverPlayer.teleportTo(targetLevel,x,y,z,player.getYRot(),player.getXRot());
+        else player.teleportTo(targetLevel,x,y,z,Set.of(),player.getYRot(),player.getXRot());
 
         /*
          * 设置传送冷却。
@@ -330,7 +326,10 @@ public class GhostTombstoneCurse
                 TELEPORT_COOLDOWN_TICKS;
     }
 
-    private net.minecraft.resources.ResourceKey<net.minecraft.world.level.Level>
+    /** 诅咒移除或沉寂时释放穿透状态，避免目标永久失去碰撞。 */
+    @Override public void suspend(MinecraftServer server){var target=CurseManager.target(server,getTarget());if(target!=null)target.noPhysics=false;}
+
+    private ResourceKey<Level>
     getSourceDimension() {
         return ((GhostTombstoneCurseSource) getSource()).dimension();
     }

@@ -174,7 +174,7 @@
 
   "command.qisplan2.curse.empty": "There are currently no active curses.",
   "command.qisplan2.curse.header": "Currently active curses:",
-  "command.qisplan2.curse.entry": "Curse ID: %s, Target: %s",
+  "command.qisplan2.curse.entry": "§b%s §7→ %s §e%s §7Strength %s; %s ticks remaining; %s",
 
   "command.qisplan2.isay.disabled": "§cThe /isay feature has been disabled by an administrator.",
   "command.qisplan2.isay.api_key_missing": "§cError: Please set the API Key in the mod configuration first!",
@@ -465,5 +465,11 @@
   "ability.qisplan2.ghost_umbrella.config.domain_up": "Domain +",
   "ability.qisplan2.ghost_umbrella.config.domain_down": "Domain -",
   "ability.qisplan2.ghost_umbrella.config.self_up": "Self +",
-  "ability.qisplan2.ghost_umbrella.config.self_down": "Self -"
+  "ability.qisplan2.ghost_umbrella.config.self_down": "Self -",
+  "curse.qisplan2.ghost_divination_revival": "Ghost Slip Curse",
+  "curse.qisplan2.state.running": "Running",
+  "curse.qisplan2.state.dormant": "Dormant",
+  "command.qisplan2.curse.missing": "§cCurse not found: %s",
+  "command.qisplan2.curse.removed": "§aRemoved curse: %s",
+  "command.qisplan2.module.conflict.persistent": "Persistent suppression (domain / curse)"
 }

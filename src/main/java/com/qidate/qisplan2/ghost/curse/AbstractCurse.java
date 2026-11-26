@@ -112,6 +112,8 @@ public abstract class AbstractCurse
      * <p>
      * 无限持续的诅咒不会减少时间。
      */
+    @Override public void tickDormant() { tickDuration(); }
+
     protected void tickDuration() {
 
         if (remainingTicks > 0) {

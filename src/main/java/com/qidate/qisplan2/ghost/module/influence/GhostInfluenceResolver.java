@@ -95,7 +95,7 @@ public final class GhostInfluenceResolver {
 
             if (influence.type() == GhostInfluenceType.PROTECTION) {
                 protections.add(index);
-            } else if (influence.type() == GhostInfluenceType.ATTACK) {
+            } else if (GhostInfluenceConflictRegistry.areMutuallyExclusive(GhostInfluenceType.PROTECTION, influence.type())) {
                 attacks.add(index);
             }
         }

@@ -1,5 +1,8 @@
 package com.qidate.qisplan2.ghost.module.implementation.mist;
 import com.qidate.qisplan2.ghost.module.ability.DefinedGhostAbility;
+import com.qidate.qisplan2.ghost.module.component.GhostSuppressionAura;
+import com.qidate.qisplan2.ghost.module.environment.GhostWanderGoal;
+
 import com.qidate.qisplan2.ghost.module.ability.GhostDomainShortcut;
 import com.qidate.qisplan2.ghost.module.ability.GhostAbility;
 import com.qidate.qisplan2.ghost.module.environment.GhostBehavior;
@@ -34,14 +37,14 @@ public final class GhostMistModule implements GhostModule {
     /** 鬼域属于本模块的身体；覆盖产生接触，额外感知由声明决定。 */
     @Override public Optional<GhostDomainDefinition> domainDefinition() {
         return Optional.of(new GhostDomainDefinition(80, 1, true, SphereDomainShape::new,
-                true, false, 20, true, true, List.of(new GhostDomainShaderEffect(ID, "GhostMist"))).withGrowth(GhostDomainGrowth.STANDARD));
+                true, false, 20, true, true, List.of(new GhostDomainShaderEffect(ID, "GhostMist"))).withGrowth(GhostDomainGrowth.STANDARD).withSuppression(new GhostSuppressionAura(1,1)));
     }
 
     /**
      * 声明需要的自主行动类型。
      * 具体 Goal 的创建、资源竞争和停止清理由行动适配层负责。
      */
-    @Override public GhostBehavior behavior() { return context -> { var actor = context.world().actor(); return actor == null ? java.util.List.of() : java.util.List.of(new com.qidate.qisplan2.ghost.module.environment.GhostWanderGoal(actor, 0.7D)); }; }
+    @Override public GhostBehavior behavior() { return context -> { var actor = context.world().actor(); return actor == null ? List.of() : List.of(new GhostWanderGoal(actor, 0.7D)); }; }
 
     /**
      * 构造或返回本定义使用的资源标识，保持注册与调用入口一致。

@@ -11,6 +11,7 @@
 | [能力与媒介](ghost-module/abilities-media.md) | 公开/私有能力、输入、持续能力、硬性前提与统一执行器 |
 | [灵异裁决与对抗](ghost-module/adjudication-combat.md) | 共享影响批次、抵挡、压制、沉睡、附着与复苏代价 |
 | [鬼域声明与能力](ghost-module/domain.md) | 几何、等级/分层、成长、空间归属、鬼域对抗与同源豁免 |
+| [诅咒与持续能力](ghost-module/curse.md) | 模块所属声明、组件程序、状态、常态压制与生命周期 |
 | [鬼域面板](ghost-module/domain-panel.md) | 自定义控件、公共按钮、进出权限和自动化 |
 | [鬼域渲染与效果](ghost-module/domain-rendering.md) | 效果适配器、标准参数前缀、着色器资源和空间裁剪 |
 | [自主行为（Goal）](ghost-module/autonomous-behavior.md) | 行为工厂、动作接口、资源冲突与共享调度 |

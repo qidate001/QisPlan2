@@ -1,5 +1,7 @@
 package com.qidate.qisplan2.ghost.module.host;
 
+import com.qidate.qisplan2.ghost.curse.CurseManager;
+
 import com.qidate.qisplan2.ghost.module.GhostModuleContext;
 import com.qidate.qisplan2.ghost.module.GhostModuleHost;
 import com.qidate.qisplan2.ghost.module.GhostModuleRegistry;
@@ -24,7 +26,7 @@ public final class GhostSoundSuppression {
         if (module == null) { remove(target.getUUID(), source); return; }
         var definition = GhostModuleRegistry.get(module);
         var targetHost = host(target);
-        if (definition == null || !origin.carriesModule(module) || targetHost == null || targetHost.getModules().isEmpty()) {
+        if (definition == null || !origin.carriesModule(module) || (targetHost == null || targetHost.getModules().isEmpty()) && CurseManager.getByTarget(target.getUUID()).isEmpty()) {
             remove(target.getUUID(), source); return;
         }
         var offer = definition.soundSuppression(new GhostModuleContext(origin, module), sound);
@@ -64,5 +66,5 @@ public final class GhostSoundSuppression {
     /** 目标离线、卸载或死亡时释放临时媒介关系；重新听到时自然重建。 */
     public static void removeTarget(UUID target) { TARGETS.remove(target); }
     /** 服务器关闭时清理，避免同进程重进存档残留关系。 */
-    public static void clear() { TARGETS.clear(); }
+    public static void clear() { TARGETS.clear(); GhostPersistentSuppression.clear(); }
 }

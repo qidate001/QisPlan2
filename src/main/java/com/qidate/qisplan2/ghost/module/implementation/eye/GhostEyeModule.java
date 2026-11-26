@@ -1,5 +1,7 @@
 package com.qidate.qisplan2.ghost.module.implementation.eye;
 
+import com.qidate.qisplan2.ghost.module.component.GhostSuppressionAura;
+
 import com.qidate.qisplan2.ghost.module.ability.DefinedGhostAbility;
 import com.qidate.qisplan2.ghost.module.ability.GhostDomainShortcut;
 import com.qidate.qisplan2.ghost.bearing.SpiritualPart;
@@ -203,7 +205,7 @@ public final class GhostEyeModule implements GhostModule {
     @Override
     public Optional<GhostDomainDefinition> domainDefinition() {
         return Optional.of(new GhostDomainDefinition(80, 1, true, SphereDomainShape::new,
-                true, true, 20, true, true, List.of(new GhostDomainShaderEffect(ID, "GhostEye"))).withLayering(true));
+                true, true, 20, true, true, List.of(new GhostDomainShaderEffect(ID, "GhostEye"))).withLayering(true).withSuppression(new GhostSuppressionAura(5,1)));
     }
 
     /** 鬼域页面从本模块声明生成，不要求界面认识具体厉鬼。 */

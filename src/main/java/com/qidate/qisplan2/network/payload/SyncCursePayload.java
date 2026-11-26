@@ -36,7 +36,8 @@ public record SyncCursePayload(
             UUID id,
             ResourceLocation type,
             int strength,
-            int remainingTicks
+            int remainingTicks,
+            boolean dormant
     ) {
 
         public static final StreamCodec<
@@ -55,6 +56,7 @@ public record SyncCursePayload(
 
                         ByteBufCodecs.INT,
                         CurseData::remainingTicks,
+                        ByteBufCodecs.BOOL, CurseData::dormant,
 
                         CurseData::new
                 );

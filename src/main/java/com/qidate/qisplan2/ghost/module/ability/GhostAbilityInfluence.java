@@ -1,5 +1,8 @@
 package com.qidate.qisplan2.ghost.module.ability;
 
+import com.qidate.qisplan2.ghost.module.host.GhostPersistentSuppression;
+import com.qidate.qisplan2.death.GhostAttackMode;
+
 import com.qidate.qisplan2.ghost.domain.GhostDomainInfluenceScope;
 import java.util.function.DoublePredicate;
 import com.qidate.qisplan2.ghost.module.influence.GhostInfluence;
@@ -18,6 +21,13 @@ public record GhostAbilityInfluence(UUID target, GhostInfluenceType type, double
     public static GhostAbilityInfluence of(LivingEntity target, GhostInfluenceType type, double intensity) {
         return target == null || target.getServer() == null ? null
                 : new GhostAbilityInfluence(target.getUUID(), type, intensity, target.getServer());
+    }
+
+    /** 能力声明可以明确选择三种意图；AUTO 在提交裁决前按真实承载确定类型。 */
+    public static GhostAbilityInfluence of(LivingEntity target, GhostAttackMode mode, double intensity) {
+        boolean suppression=mode==GhostAttackMode.SUPPRESSION
+                || mode==GhostAttackMode.AUTO && target!=null && GhostPersistentSuppression.isGhost(target);
+        return of(target,suppression?GhostInfluenceType.SUPPRESSION:GhostInfluenceType.ATTACK,intensity);
     }
 
     /** 收集目标上的持续影响，再统一裁决；只有获准回调可以执行能力效果。 */

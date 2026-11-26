@@ -1,5 +1,8 @@
 package com.qidate.qisplan2.ghost.module.implementation;
 
+import com.qidate.qisplan2.ghost.curse.type.ghosttombstone.GhostTombstoneCurseType;
+import com.qidate.qisplan2.ghost.curse.CurseType;
+
 import java.util.Set;
 import com.qidate.qisplan2.ghost.module.ability.GhostInvocationParameters;
 import net.minecraft.world.entity.LivingEntity;
@@ -24,6 +27,10 @@ import static com.qidate.qisplan2.QisPlan2.MODID;
  * 响应灵异使用事件，并请求进行题字。
  */
 public final class GhostTombstoneModule implements GhostModule {
+    private static final List<CurseType> CURSES = List.of(new GhostTombstoneCurseType());
+    /** 墓碑诅咒随完整厉鬼声明，保留原存档 ID。 */
+    @Override public List<CurseType> curses() { return CURSES; }
+
 
     public static final ResourceLocation ID =
             ResourceLocation.fromNamespaceAndPath(

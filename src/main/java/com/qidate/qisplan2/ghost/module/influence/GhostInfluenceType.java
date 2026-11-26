@@ -13,5 +13,8 @@ public enum GhostInfluenceType {
     /**
      * 对目标施加灵异袭击。
      */
-    ATTACK
+    ATTACK,
+
+    /** 只压制实际承载的厉鬼及持续诅咒，不造成凡人死亡。 */
+    SUPPRESSION
 }

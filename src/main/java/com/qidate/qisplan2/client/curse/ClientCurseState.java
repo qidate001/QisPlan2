@@ -79,17 +79,22 @@ public final class ClientCurseState {
          * </p>
          */
         private int remainingTicks;
+        private final boolean dormant;
+        /** 沉寂状态由服务端压制关系决定。 */
+        public boolean dormant(){return dormant;}
 
         public CurseData(
                 UUID id,
                 ResourceLocation type,
                 int strength,
-                int remainingTicks
+                int remainingTicks,
+                boolean dormant
         ) {
             this.id = id;
             this.type = type;
             this.strength = strength;
             this.remainingTicks = remainingTicks;
+            this.dormant = dormant;
         }
 
         public UUID id() {
@@ -121,7 +126,8 @@ public final class ClientCurseState {
          * 设置剩余持续时间。
          */
         public void setRemainingTicks(
-                int remainingTicks
+                int remainingTicks,
+                boolean dormant
         ) {
             this.remainingTicks = remainingTicks;
         }

@@ -172,7 +172,7 @@
 
   "command.qisplan2.curse.empty": "当前没有正在运行的诅咒。",
   "command.qisplan2.curse.header": "当前正在运行的诅咒：",
-  "command.qisplan2.curse.entry": "诅咒 ID：%s，目标：%s",
+  "command.qisplan2.curse.entry": "§b%s §7→ %s §e%s §7强度 %s；剩余 %s tick；%s",
 
   "command.qisplan2.isay.disabled": "§c/isay 功能已被管理员禁用。",
   "command.qisplan2.isay.api_key_missing": "§c错误：请先在模组配置中设置 API Key！",
@@ -463,5 +463,11 @@
   "ability.qisplan2.ghost_umbrella.config.domain_up": "总＋",
   "ability.qisplan2.ghost_umbrella.config.domain_down": "总－",
   "ability.qisplan2.ghost_umbrella.config.self_up": "自＋",
-  "ability.qisplan2.ghost_umbrella.config.self_down": "自－"
+  "ability.qisplan2.ghost_umbrella.config.self_down": "自－",
+  "curse.qisplan2.ghost_divination_revival": "鬼签诅咒",
+  "curse.qisplan2.state.running": "运行",
+  "curse.qisplan2.state.dormant": "沉寂",
+  "command.qisplan2.curse.missing": "§c诅咒不存在：%s",
+  "command.qisplan2.curse.removed": "§a已移除诅咒：%s",
+  "command.qisplan2.module.conflict.persistent": "持续能力压制（鬼域／诅咒）"
 }

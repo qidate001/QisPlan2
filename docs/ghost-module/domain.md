@@ -136,3 +136,13 @@ public final class ExampleMistModule implements GhostModule {
 同源按实际物理来源标识判断，不按模块 ID、厉鬼种类或阵营判断。同一来源展开的多个鬼域跳过彼此的范围压制、三级完全压制、领地扣除及同级交界强度分摊，各自保留效果；与外来源的鬼域仍各自正常对抗。同一实体及其携带物品沿用实体来源 UUID，没有实体身份的静态宿主由适配层提供共用来源标识。模块只声明自己的鬼域，不读取这些宿主信息。
 
 来源 UUID 已包含在鬼域同步数据中；服务端和客户端共同传入空间求解器。GPU 几何数据第二列的 w 分量保存本帧来源分组，保证渲染强度与服务端的同源豁免一致，不使用可能碰撞的 UUID 哈希。
+
+## 鬼域内部的规则与能力
+
+`GhostDomainDefinition.withProgram(GhostComponentProgram<GhostDomainAbilityContext>)` 声明鬼域自己的规则、能力和媒介，仍由完整厉鬼模块返回定义。上下文提供有效覆盖目标、等级、有效强度、事件及 `GhostWorldAccess`，不暴露宿主。
+
+运行时按有效覆盖发送 `ModuleTickEvent`，按 `exposureInterval` 发送 `GhostDomainExposureEvent`。组件规则遵守来源模块的规则权限，死机、沉睡或高度压制会停用规则；常态压制作为持续能力由鬼域自身生命周期维护。
+
+快速声明压制可使用 `withSuppression(new GhostSuppressionAura(minimumGrade, multiplier))`。鬼眼从 5 级开始、鬼雾始终以 1 倍有效鬼域强度压制覆盖内目标。框架复用有效覆盖集合维护来源关系，退出、空间裁剪、等级变化和鬼域关闭都会撤销对应关系。自己身体不被自己的鬼域压制。
+
+更多组件与生命周期约定见 [诅咒与持续能力](curse.md)。

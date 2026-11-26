@@ -10,7 +10,6 @@ import com.qidate.qisplan2.core.QisConfig;
 import com.qidate.qisplan2.event.GhostBlockInteractionHandler;
 import com.qidate.qisplan2.event.GhostBreakoutHandler;
 import com.qidate.qisplan2.event.GhostLayerCombatHandler;
-import com.qidate.qisplan2.ghost.curse.CurseRegistry;
 import com.qidate.qisplan2.ghost.domain.GhostDomainEntityEvents;
 import com.qidate.qisplan2.ghost.domain.GhostDomainPlayerLogout;
 import com.qidate.qisplan2.ghost.domain.GhostDomainPlayerSync;
@@ -117,7 +116,7 @@ public class QisPlan2 {
         );
 
         // 诅咒注册表注册
-        CurseRegistry.bootstrap();
+
 
         // 厉鬼模块注册
         GhostModuleRegistry.bootstrap();

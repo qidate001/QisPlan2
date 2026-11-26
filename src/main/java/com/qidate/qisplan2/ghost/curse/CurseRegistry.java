@@ -1,87 +1,38 @@
 package com.qidate.qisplan2.ghost.curse;
 
-import com.qidate.qisplan2.ghost.curse.type.ghostdivination.GhostDivinationCurseType;
-import com.qidate.qisplan2.ghost.curse.type.ghosttombstone.GhostTombstoneCurseType;
+import com.qidate.qisplan2.ghost.module.GhostModule;
+import com.qidate.qisplan2.ghost.module.GhostModuleRegistry;
+import java.util.*;
 import net.minecraft.resources.ResourceLocation;
 
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Set;
-
+/** 模块所属诅咒声明的查询视图。没有独立注册入口，旧存档仍按原类型 ID 读取。 */
 public final class CurseRegistry {
-
-    private static final Map<
-            ResourceLocation,
-            CurseType
-            > CURSES =
-            new HashMap<>();
-
-    private static boolean initialized = false;
-
-    private CurseRegistry() {
+    private CurseRegistry() {}
+    private static int moduleCount=-1;
+    private static Map<ResourceLocation,CurseType> definitions=Map.of();
+    private static Map<ResourceLocation,ResourceLocation> owners=Map.of();
+    /** 注册表只增不改，模块数变化时重建一次派生索引，运行时查询不遍历全部模块。 */
+    private static void refresh(){
+        var modules=GhostModuleRegistry.getAll();if(moduleCount==modules.size())return;
+        var next=new LinkedHashMap<ResourceLocation,CurseType>();var origin=new LinkedHashMap<ResourceLocation,ResourceLocation>();
+        for(var module:modules)for(var curse:module.curses()){next.put(curse.id(),curse);origin.put(curse.id(),module.getId());}
+        definitions=Map.copyOf(next);owners=Map.copyOf(origin);moduleCount=modules.size();
     }
-
-    /**
-     * 注册一个诅咒类型。
-     */
-    public static void register(
-            CurseType curse
-    ) {
-
-        CURSES.put(
-                curse.id(),
-                curse
-        );
+    /** 模块注册时验证跨模块重复 ID，拒绝歧义存档。 */
+    public static void validate(GhostModule module) {
+        var ids=new HashSet<ResourceLocation>();
+        for(var curse:module.curses())if(!ids.add(curse.id())||get(curse.id())!=null)throw new IllegalStateException("Duplicate module curse: "+curse.id());
     }
-
-    /**
-     * 获取诅咒类型。
-     */
-    public static CurseType get(
-            ResourceLocation id
-    ) {
-
-        return CURSES.get(id);
+    /** 仅从完整模块的声明查找类型。 */
+    public static CurseType get(ResourceLocation id) {
+        refresh();return definitions.get(id);
     }
-
-    /**
-     * 判断诅咒类型是否存在。
-     */
-    public static boolean contains(
-            ResourceLocation id
-    ) {
-
-        return CURSES.containsKey(id);
+    /** 查询所属模块，不要求原来的物理载体仍在场。 */
+    public static ResourceLocation owner(ResourceLocation id) {
+        refresh();return owners.get(id);
     }
-
-    /**
-     * 获取所有诅咒类型 ID。
-     *
-     * 用于命令自动补全。
-     */
-    public static Set<ResourceLocation> ids() {
-
-        return Collections.unmodifiableSet(
-                CURSES.keySet()
-        );
-    }
-
-    /**
-     * 注册所有诅咒类型。
-     */
-    public static void bootstrap() {
-
-        if (initialized) {
-            return;
-        }
-
-        initialized = true;
-
-        // 鬼墓碑
-        register(new GhostTombstoneCurseType());
-
-        // 鬼签（生签）
-        register(new GhostDivinationCurseType());
-    }
+    /** 命令补全来自模块声明。 */
+    public static Set<ResourceLocation> ids() {refresh();return definitions.keySet();}
+    /** 是否存在模块声明。 */
+    public static boolean contains(ResourceLocation id){return get(id)!=null;}
 }

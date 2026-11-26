@@ -49,7 +49,7 @@ public final class GhostInfluenceCollector {
         int submitted = 0;
 
         for (Curse curse : CurseManager.getByTarget(target)) {
-            if (!curse.isValid(server)) {
+            if (!curse.isValid(server) || curse.status(server) != Curse.Status.RUNNING) {
                 continue;
             }
 
@@ -73,7 +73,7 @@ public final class GhostInfluenceCollector {
     public static void collectCurses(GhostInfluenceSession session, GhostModuleHost host,
             ResourceLocation moduleId, ResourceLocation abilityId, UUID target, MinecraftServer server) {
         for (Curse curse : CurseManager.getByTarget(target)) {
-            if (!curse.isValid(server) || !(curse instanceof GhostInfluenceProvider provider)) continue;
+            if (!curse.isValid(server) || curse.status(server) != Curse.Status.RUNNING || !(curse instanceof GhostInfluenceProvider provider)) continue;
             if (provider.attackResponse(() -> {}) != null) continue;
             submitCurse(session, host, moduleId, abilityId, target, curse, provider,
                     () -> CurseManager.remove(server, curse.getId()));

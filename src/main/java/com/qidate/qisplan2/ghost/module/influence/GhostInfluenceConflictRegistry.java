@@ -21,6 +21,7 @@ public final class GhostInfluenceConflictRegistry {
             new HashSet<>();
 
     static {
+        register(GhostInfluenceType.PROTECTION, GhostInfluenceType.SUPPRESSION);
         register(
                 GhostInfluenceType.PROTECTION,
                 GhostInfluenceType.ATTACK

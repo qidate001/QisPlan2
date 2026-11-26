@@ -1,5 +1,12 @@
 package com.qidate.qisplan2.ghost.curse.type.ghostdivination;
 
+import com.qidate.qisplan2.ghost.module.implementation.divinationslip.GhostDivinationSlipModule;
+import com.qidate.qisplan2.ghost.module.event.SupernaturalSuppressionEvent;
+import com.qidate.qisplan2.ghost.module.component.GhostComponentProgram;
+import com.qidate.qisplan2.ghost.module.event.SupernaturalAttackEvent;
+import com.qidate.qisplan2.ghost.curse.CurseAbilityContext;
+import java.util.List;
+
 import com.qidate.qisplan2.ghost.curse.Curse;
 import com.qidate.qisplan2.ghost.curse.CurseSource;
 import com.qidate.qisplan2.ghost.curse.CurseType;
@@ -16,6 +23,17 @@ public class GhostDivinationCurseType
                     "qisplan2",
                     "ghost_divination"
             );
+
+    private static final ResourceLocation PROTECT=ResourceLocation.fromNamespaceAndPath("qisplan2","life_curse/protect");
+    private static final GhostComponentProgram<CurseAbilityContext> PROGRAM = new GhostComponentProgram<>(
+        List.of(new GhostComponentProgram.Ability<>(PROTECT,c->c.incoming()!=null&&c.incoming().event().remainingIntensity()>0,
+            c->GhostDivinationSlipModule.resolveLifeProtection(c.incoming(),c.strength(),c.remove()))),
+        List.of(new GhostComponentProgram.Rule<>(SupernaturalAttackEvent.class,c->true,PROTECT),
+            new GhostComponentProgram.Rule<>(SupernaturalSuppressionEvent.class,c->true,PROTECT)));
+    /** HUD 图标也随模块定义提供。 */
+    @Override public ResourceLocation icon(){return ResourceLocation.fromNamespaceAndPath("qisplan2","textures/item/life_sign.png");}
+    /** 生签只有受到袭击或压制才调用保护能力；持续时间仍由生命周期推进。 */
+    @Override public GhostComponentProgram<CurseAbilityContext> program(){return PROGRAM;}
 
     @Override
     public ResourceLocation id() {

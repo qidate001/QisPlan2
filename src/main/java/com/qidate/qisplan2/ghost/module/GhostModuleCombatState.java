@@ -1,5 +1,8 @@
 package com.qidate.qisplan2.ghost.module;
 
+import com.qidate.qisplan2.ghost.module.host.GhostEnvironmentAdapters;
+import com.qidate.qisplan2.ghost.curse.CurseManager;
+
 import com.qidate.qisplan2.ghost.module.data.GhostModuleData;
 import com.qidate.qisplan2.ghost.module.suppression.GhostSuppression;
 import com.qidate.qisplan2.ghost.module.suppression.GhostSuppressionState;
@@ -37,6 +40,13 @@ public final class GhostModuleCombatState {
     public static double sleepCap(double pressure, double intensity) {
         return pressure == Double.POSITIVE_INFINITY ? 24D * 60 * 60 * 20 : 12000D * sleepRate(pressure, intensity);
     }
+    /** 独立读取模块的深度积累声明；不能让无解压制的入睡加速倍率污染积累速度。 */
+    private static double accumulationRate(ResourceLocation moduleId) {
+        var module = GhostModuleRegistry.get(moduleId);
+        double value = module == null ? 0.5D : module.suppressionSleepAccumulationRate();
+        if (!Double.isFinite(value) || value < 0) throw new IllegalStateException("Invalid sleep accumulation rate: " + moduleId);
+        return value;
+    }
     /** 初始化沉睡，供命令、破体及旧存档迁移使用；不修改裁决死机。 */
     public static void sleep(GhostModuleHost host, GhostModuleData.Entry entry, double ticks) {
         if (!(host instanceof GhostModuleDataModifier state) || !(host instanceof GhostModuleCustomDataModifier data)) return;
@@ -48,8 +58,8 @@ public final class GhostModuleCombatState {
         custom.put(KEY, combat); data.setModuleCustomData(entry.id(), custom);
         state.setSleeping(entry.id(), ticks > 0);
     }
-    /** 残余袭击强度转换为一秒普通压制。每次命中替换强度并刷新到期，不累加持续时间。 */
-    public static void attacked(GhostModuleHost host, double strength) {
+    /** 显式的一秒普通压制；纯袭击入口不得调用。每次命中替换强度并刷新到期，不累加持续时间。 */
+    public static void suppressForOneSecond(GhostModuleHost host, double strength) {
         if (!(host instanceof GhostModuleCustomDataModifier data) || !Double.isFinite(strength) || strength <= 0) return;
         for (var entry : List.copyOf(host.getModules())) {
             var custom = data.getModuleCustomData(entry.id());
@@ -114,8 +124,12 @@ public final class GhostModuleCombatState {
                 if (complete) {
                     double cap = sleepCap(suppression.pressure(), entry.intensity());
                     // 较弱来源接管不会突然截断已经积累的深度；超过新上限时继续自然恢复。
-                    remaining = remaining > cap ? Math.max(cap, remaining - 1) : Math.min(cap, remaining + 2 * rate - 1);
-                } else remaining = Math.max(0, remaining - 1);
+                    remaining = remaining > cap ? Math.max(cap, remaining - 1) : Math.min(cap, remaining + accumulationRate(entry.id()));
+                } else {
+                    var body=GhostEnvironmentAdapters.bearer(host);
+                    double recovery=body==null?1:CurseManager.revivalMultiplier(body);
+                    remaining = Math.max(0, remaining - recovery);
+                }
                 combat.putDouble("sleepTicks", remaining);
                 sleeping = remaining > 0;
             }

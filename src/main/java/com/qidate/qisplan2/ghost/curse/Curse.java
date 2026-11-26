@@ -29,6 +29,15 @@ import java.util.UUID;
  * 由具体 Curse 实现负责。
  */
 public interface Curse {
+    /** 沉寂只暂停效果，不表示诅咒被移除或被目标驾驭。 */
+    enum Status { RUNNING, DORMANT }
+    /** 状态由当前目标的压制关系推导，来源卸载不等于效果结束。 */
+    default Status status(MinecraftServer server) { return CurseManager.status(server, this); }
+    /** 生命周期释放接口，移除、失效和沉寂时释放占用的临时世界效果。 */
+    default void suspend(MinecraftServer server) {}
+    /** 沉寂期间仍推进持续时间，但不执行能力。 */
+    default void tickDormant() {}
+
 
     /**
      * 获取这个诅咒实例自己的唯一 ID。

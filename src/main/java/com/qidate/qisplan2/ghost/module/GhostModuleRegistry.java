@@ -1,5 +1,7 @@
 package com.qidate.qisplan2.ghost.module;
 
+import com.qidate.qisplan2.ghost.curse.CurseRegistry;
+
 import com.qidate.qisplan2.ghost.module.implementation.*;
 import com.qidate.qisplan2.ghost.module.implementation.candle.RedGhostCandleModule;
 import com.qidate.qisplan2.ghost.module.implementation.candle.WhiteGhostCandleModule;
@@ -52,6 +54,7 @@ public final class GhostModuleRegistry {
             );
         }
 
+        CurseRegistry.validate(module);
         GhostEventSubscriptions.register(module);
         MODULES.put(id, module);
     }
