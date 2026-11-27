@@ -1,6 +1,7 @@
 package com.qidate.qisplan2.ghost.module;
 
 import com.qidate.qisplan2.ghost.curse.*;
+import com.qidate.qisplan2.ghost.curse.type.ghosttombstone.GhostTombstoneCurseType;
 import com.qidate.qisplan2.death.GhostAttackMode;
 import com.qidate.qisplan2.death.GhostBodyIdentity;
 import com.qidate.qisplan2.death.SupernaturalEntity;
@@ -24,6 +25,9 @@ public final class CurseComponentTest {
     private static void check(boolean value,String message){if(!value)throw new AssertionError(message);}
     private record Unrelated() implements GhostEvent {}
     public static void run(){
+        check(!new GhostDivinationCurseType().persistsAfterDeath(),"life slip must expire on death");
+        check(!new GhostRevivalCurseType().persistsAfterDeath(),"revival slip must expire on death");
+        check(new GhostTombstoneCurseType().persistsAfterDeath(),"tombstone must persist after death");
         var ability=ResourceLocation.parse("qisplan2_test:component");
         int[] count={0};boolean[] medium={false};
         var program=new GhostComponentProgram<Integer>(List.of(new GhostComponentProgram.Ability<>(ability,c->medium[0],c->count[0]+=c)),

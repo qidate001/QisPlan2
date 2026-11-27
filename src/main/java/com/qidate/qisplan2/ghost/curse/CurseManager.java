@@ -56,7 +56,7 @@ public final class CurseManager {
     }
     /** 按该诅咒自己的强度评估压制，任何已成立的压制使持续效果沉寂。 */
     public static Curse.Status status(MinecraftServer server,Curse curse){
-        var target=target(server,curse.getTarget());if(target==null)return Curse.Status.DORMANT;
+        var target=target(server,curse.getTarget());if(target==null || !target.isAlive())return Curse.Status.DORMANT;
         return GhostPersistentSuppression.curseState(target,curse.getId(),curse.getType(),curse.getStrength()).canAct()?Curse.Status.RUNNING:Curse.Status.DORMANT;
     }
     /** 常态复苏倍率来自有效声明，多个同类效果不重复相乘。 */
@@ -106,6 +106,19 @@ public final class CurseManager {
         var type=CurseRegistry.get(curse.getType());if(type==null)return false;
         return type.program().execute(ability,new CurseAbilityContext(instance,curse.getTarget(),curse.getStrength(),event,null,()->remove(server,instance),()->curse.tick(server)));
     }
+    /**
+     * 在目标死亡已确认后，按各诅咒声明清理；使用目标索引的副本，允许安全删除。
+     * 统一 remove 负责释放持续效果、压制关系、更新存档并同步客户端。
+     * 保留实例不更换 ID，也不重置其强度、剩余寿命或独有状态。
+     */
+    public static void onTargetDeath(MinecraftServer server, UUID target) {
+        for (Curse curse : getByTarget(target)) {
+            CurseType type = CurseRegistry.get(curse.getType());
+            if (type == null || !type.persistsAfterDeath()) remove(server, curse.getId());
+            else curse.suspend(server);
+        }
+    }
+
     /** 按目标与类型移除全部匹配实例，所有删除都走同一释放、存档和同步入口。 */
     public static int removeTarget(MinecraftServer server,UUID target,ResourceLocation type){
         int removed=0;for(var curse:getByTarget(target))if(type==null||type.equals(curse.getType())){remove(server,curse.getId());removed++;}return removed;
@@ -354,6 +367,11 @@ public final class CurseManager {
             if(CURSES.get(curse.getId())!=curse)continue;
             var body=target(server,curse.getTarget());
             var declaration=CurseRegistry.get(curse.getType());
+            // 旁观者死亡等路径可能跳过掉落阶段；在服务端 tick 中对已死亡目标兜底。
+            if(body!=null && !body.isAlive() && (declaration==null || !declaration.persistsAfterDeath())) {
+                remove(server,curse.getId());
+                continue;
+            }
             if(body!=null){
                 var offer=declaration==null||curse.status(server)!=Curse.Status.RUNNING?null:declaration.suppression().offer(1,curse.getStrength());
                 if(offer==null)GhostPersistentSuppression.remove(body,curse.getId());

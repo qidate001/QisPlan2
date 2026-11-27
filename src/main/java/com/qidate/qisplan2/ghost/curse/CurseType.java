@@ -23,6 +23,13 @@ public interface CurseType {
     /** 玩家是否能察觉此持续影响。 */
     default boolean detectable(){return true;}
 
+    /**
+     * 目标死亡后是否保留此诅咒，默认不保留。
+     * 保留的是同一实例及其状态，不是重生时重新施加；寿命和来源失效规则仍正常生效。
+     * 此声明对所有生物目标一致，由框架处理死亡清理，诅咒无需识别目标宿主类型。
+     */
+    default boolean persistsAfterDeath() { return false; }
+
     /** 诅咒可选择对所缠绕目标维持压制；现有三类诅咒均不声明。 */
     default GhostSuppressionAura suppression(){return GhostSuppressionAura.NONE;}
 

@@ -29,6 +29,10 @@ public class GhostTombstoneCurseType
                     "ghost_tombstone"
             );
 
+    /** 墓碑诅咒跨越目标死亡保留，重生后继续由同一实例作用。 */
+    @Override
+    public boolean persistsAfterDeath() { return true; }
+
     @Override
     public ResourceLocation id() {
         return ID;
