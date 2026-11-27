@@ -40,7 +40,7 @@ public final class GhostDomainConflictTextures {
                 data.put((float)node.center().x).put((float)node.center().y).put((float)node.center().z).put(domains.get(node.id()).floatValue());
                 data.put((float)node.strength()).put(node.grade()).put(node.shape()).put(sources.computeIfAbsent(node.source(),ignored->sources.size()));
             }
-            for(var owner:nodes)for(var other:nodes)mask.put(result.cuts(owner.id(),other.id())?1:0).put(0).put(0).put(0);
+            for(var owner:nodes)for(var other:nodes)mask.put(result.cuts(owner.id(),other.id())?1:0).put(owner.sameSpace(other)?1:0).put(0).put(0);
             data.flip();mask.flip();geometry=upload(geometry,2,count,data);cuts=upload(cuts,count,count,mask);
         } finally {
             MemoryUtil.memFree(data);MemoryUtil.memFree(mask);

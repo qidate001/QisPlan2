@@ -5,6 +5,8 @@ import net.minecraft.core.BlockPos;
 
 import com.qidate.qisplan2.QisPlan2;
 import com.qidate.qisplan2.ghost.isolation.GhostIsolationSystem;
+import com.qidate.qisplan2.ghost.isolation.GhostIsolationSavedData;
+import com.qidate.qisplan2.ghost.isolation.IsolationState;
 import com.qidate.qisplan2.network.QisNetwork;
 import com.qidate.qisplan2.network.ghostdomain.GhostDomainNetwork;
 import net.minecraft.resources.ResourceLocation;
@@ -23,17 +25,33 @@ public final class GhostDomainManager {
     private GhostDomainConflict.Result conflict=GhostDomainConflict.solve(List.of());
     private long conflictVersion=Long.MIN_VALUE;
     private boolean refreshingConflict;
+    private long isolationVersion=Long.MIN_VALUE;
     /** 缓存一份全域结果；原始参数不变时不运行成对计算或刷新实体索引。 */
     public GhostDomainConflict.Result conflict() {
         refreshConflict();
         return conflict;
     }
     private void refreshConflict() {
-        if(refreshingConflict || conflictVersion==GhostDomain.changeVersion())return;
+        if(refreshingConflict)return;
+        var isolationData=GhostIsolationSavedData.get(level);
+        if(conflictVersion==GhostDomain.changeVersion() && isolationVersion==isolationData.revision())return;
         refreshingConflict=true;
         try {
-            conflict=GhostDomainConflict.solve(domains.values().stream().map(GhostDomain::conflictNode).toList());
+            for(var domain:domains.values())updateSourceRegion(domain);
+            var spaces=new HashMap<UUID,List<AABB>>();
+            for(var region:isolationData.getRegions())if(region.getDimension().equals(level.dimension())
+                    && region.getState()==IsolationState.ISOLATED) {
+                spaces.put(region.getId(),region.getCuboids().stream().map(c->new AABB(
+                        c.getMin().getX(),c.getMin().getY(),c.getMin().getZ(),
+                        c.getMax().getX()+1D,c.getMax().getY()+1D,c.getMax().getZ()+1D)).toList());
+            }
+            var outsideHoles=spaces.values().stream().flatMap(List::stream).toList();
+            conflict=GhostDomainConflict.solve(domains.values().stream().map(domain->{
+                UUID region=sourceRegionIds.get(domain.getId());
+                return domain.conflictNode().inIsolation(region,region==null?outsideHoles:spaces.getOrDefault(region,List.of()));
+            }).toList());
             conflictVersion=GhostDomain.changeVersion();
+            isolationVersion=isolationData.revision();
             for(var domain:domains.values())domain.applyConflictRadius(conflict.radius(domain.getId()));
             for(var domain:List.copyOf(domains.values()))GhostDomainEntityTracker.get(level).updateDomain(domain);
         } finally { refreshingConflict=false; }
@@ -611,6 +629,7 @@ public final class GhostDomainManager {
                 domain.getId(),
                 currentRegionId
         );
+        conflictVersion=Long.MIN_VALUE;
 
         /*
          * ========================================================

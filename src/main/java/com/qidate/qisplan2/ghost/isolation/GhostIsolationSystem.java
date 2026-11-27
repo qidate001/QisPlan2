@@ -9,6 +9,7 @@ import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.Level;
 
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.UUID;
@@ -42,6 +43,7 @@ import java.util.UUID;
  * 后续再加入 Chunk → Region 索引进行优化。
  */
 public final class GhostIsolationSystem {
+    private GhostIsolationSystem() { }
 
     /**
      * 开放空间负缓存持续时间。
@@ -80,11 +82,7 @@ public final class GhostIsolationSystem {
     private record NegativeCacheKey(
             ResourceKey<Level> dimension,
             BlockPos pos
-    ) {
-    }
-
-    private GhostIsolationSystem() {
-    }
+    ) { }
 
     /**
      * 判断指定位置是否处于灵异隔绝空间。
@@ -100,7 +98,6 @@ public final class GhostIsolationSystem {
             ServerLevel level,
             BlockPos pos
     ) {
-
         return query(
                 level,
                 pos
@@ -138,7 +135,6 @@ public final class GhostIsolationSystem {
             ServerLevel level,
             BlockPos pos
     ) {
-
         GhostIsolationSavedData data =
                 GhostIsolationSavedData.get(level);
 
@@ -457,6 +453,9 @@ public final class GhostIsolationSystem {
             GhostIsolationSavedData data
     ) {
 
+        // 保留可修复缓存时避免同一秒内重复执行失败的洪水搜索；方块变化会主动清除此缓存。
+        if (region.canRestoreFromChanges() && isOpenCacheHit(level, region.getSeed())) return false;
+
         GhostIsolationDetector.DetectionResult result =
                 GhostIsolationDetector.detect(
                         level,
@@ -528,6 +527,12 @@ public final class GhostIsolationSystem {
          * 删除旧缓存。
          * ========================================================
          */
+        // 检测失败不丢弃已知的修复基线，否则开门期间查询一次，关门就无法快速恢复。
+        if (region.canRestoreFromChanges()) {
+            putOpenCache(level, region.getSeed());
+            return false;
+        }
+
         data.removeRegion(
                 region.getId()
         );
@@ -564,59 +569,28 @@ public final class GhostIsolationSystem {
             BlockPos pos
     ) {
 
-        /*
-         * 方块发生变化后，
-         * 立即清理附近的负缓存。
-         */
-        clearOpenCacheAround(
-                level,
-                pos
-        );
-
-        GhostIsolationSavedData data =
-                GhostIsolationSavedData.get(level);
-
-        for (GhostIsolationRegion region :
-                data.getRegions()) {
-
-            /*
-             * 只有已经确认的 Region
-             * 才需要进行失效处理。
-             */
-            if (region.getState() !=
-                    IsolationState.ISOLATED) {
-                continue;
-            }
-
-            /*
-             * 当前变化位置如果不靠近
-             * Region 的边界，
-             * 那么它不会影响这个空间
-             * 是否与外界连通。
-             */
-            if (!isNearRegionBoundary(
-                    region,
-                    pos
-            )) {
-                continue;
-            }
-
-            /*
-             * 标记为失效。
-             *
-             * 这里不立即重新检测。
-             */
-            region.setState(
-                    IsolationState.DIRTY
-            );
-
+        clearOpenCacheAround(level, pos);
+        GhostIsolationSavedData data = GhostIsolationSavedData.get(level);
+        boolean blocks = GhostIsolationBlockRegistry.canBlockSupernatural(level.getBlockState(pos));
+        // 包含边界外一格：墙体恰在相邻区块时仍能找到内部区域，最多查询四个区块索引。
+        var candidates = new HashSet<UUID>();
+        for (int x = (pos.getX() - 1) >> 4; x <= (pos.getX() + 1) >> 4; x++)
+            for (int z = (pos.getZ() - 1) >> 4; z <= (pos.getZ() + 1) >> 4; z++)
+                candidates.addAll(data.getRegionIds(level.dimension(), new ChunkPos(x, z)));
+        for (UUID id : candidates) {
+            GhostIsolationRegion region = data.getRegion(id);
+            if (region == null || !isNearRegionBoundary(region, pos)) continue;
+            IsolationState before = region.getState();
+            if (!region.updateIsolationAt(pos, blocks)) continue;
+            // 任意相关修复都使旧的失败检测过期，哪怕位置距种子超过负缓存清理半径。
+            OPEN_CACHE.remove(new NegativeCacheKey(level.dimension(), region.getSeed()));
             data.setDirty();
-
-            QisPlan2.LOGGER.info(
-                    "[灵异隔绝检测] Region {} 因方块变化而标记为 DIRTY，位置：{}",
-                    region.getId(),
-                    pos
-            );
+            if (region.getState() == IsolationState.ISOLATED) {
+                GhostDomainNetwork.sendIsolationAdd(level, region);
+            } else if (before == IsolationState.ISOLATED) {
+                // 服务端失效的同一时刻撤销客户端隔绝掩膜，不等待下次查询。
+                GhostDomainNetwork.sendIsolationRemove(level, region.getId());
+            }
         }
     }
 
@@ -833,8 +807,9 @@ public final class GhostIsolationSystem {
         for (GhostIsolationRegion region :
                 data.getRegions()) {
 
-            if (region.getState()
-                    != IsolationState.ISOLATED) {
+            if (!region.getDimension().equals(level.dimension())) continue;
+            if (region.getState() != IsolationState.ISOLATED
+                    && region.getState() != IsolationState.DIRTY) {
 
                 continue;
             }
@@ -842,17 +817,20 @@ public final class GhostIsolationSystem {
             /*
              * Region 的粗略 AABB 与 Batch 范围没有交集。
              */
-            if (region.getMax().getX() < minBlockX
-                    || region.getMin().getX() > maxBlockX
-                    || region.getMax().getZ() < minBlockZ
-                    || region.getMin().getZ() > maxBlockZ) {
+            if (region.getMax().getX() + 1 < minBlockX
+                    || region.getMin().getX() - 1 > maxBlockX
+                    || region.getMax().getZ() + 1 < minBlockZ
+                    || region.getMin().getZ() - 1 > maxBlockZ) {
 
                 continue;
             }
 
+            // 批量变动缺少逐位置记录，即使此前已脏也必须撤销快速恢复资格。
             region.setState(
                     IsolationState.DIRTY
             );
+            OPEN_CACHE.remove(new NegativeCacheKey(level.dimension(), region.getSeed()));
+            GhostDomainNetwork.sendIsolationRemove(level, region.getId());
 
             QisPlan2.LOGGER.info(
                     "[灵异隔绝检测] Region {} 因批量方块变化而标记为 DIRTY，Batch Chunk：X {}~{}，Z {}~{}",

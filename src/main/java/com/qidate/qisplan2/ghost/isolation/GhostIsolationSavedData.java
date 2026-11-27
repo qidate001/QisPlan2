@@ -41,6 +41,11 @@ public final class GhostIsolationSavedData
      * 当前服务器正在使用的灵异隔绝存档数据。
      */
     private static GhostIsolationSavedData instance;
+    private long revision;
+    /** 区域状态、几何或成员变化都会推进版本，供鬼域共享快照失效。 */
+    @Override public void setDirty() { super.setDirty(); revision++; }
+    /** 只读版本，不触发检测或加载区块。 */
+    public long revision() { return revision; }
 
     /**
      * 已保存的灵异隔绝区域。

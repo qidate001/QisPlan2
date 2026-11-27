@@ -77,10 +77,9 @@ public abstract class LevelMixin {
                         );
 
         /*
-         * 普通方块之间的变化，
-         * 与灵异隔绝完全无关。
+         * 隔绝能力不变时无需失效：普通方块互换、隔绝材料互换都不改变连通性。
          */
-        if (!oldBlocks && !newBlocks) {
+        if (oldBlocks == newBlocks) {
             return;
         }
 

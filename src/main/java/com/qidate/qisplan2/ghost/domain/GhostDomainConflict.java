@@ -1,6 +1,7 @@
 package com.qidate.qisplan2.ghost.domain;
 
 import net.minecraft.world.phys.Vec3;
+import net.minecraft.world.phys.AABB;
 import java.util.*;
 
 /**
@@ -10,7 +11,18 @@ import java.util.*;
 public final class GhostDomainConflict {
     private GhostDomainConflict() {}
     /** 球体为 1，圆柱为 0；与鬼域网络形状协议一致。 */
-    public record Node(UUID id, Vec3 center, double radius, double strength, int grade, int shape, UUID source) {
+    public record Node(UUID id, Vec3 center, double radius, double strength, int grade, int shape, UUID source,
+                       UUID region, List<AABB> isolation) {
+        /** 不需要隔绝裁剪的旧几何调用。 */
+        public Node(UUID id,Vec3 center,double radius,double strength,int grade,int shape,UUID source) {
+            this(id,center,radius,strength,grade,shape,source,null,null);
+        }
+        /** 适配层提供隔绝空间快照；null 为仅做分组的客户端节点。 */
+        public Node inIsolation(UUID region,List<AABB> boxes) {
+            return new Node(id,center,radius,strength,grade,shape,source,region,boxes);
+        }
+        /** 不同隔绝空间完全不参与对抗，包括内外两个方向。 */
+        public boolean sameSpace(Node other) { return Objects.equals(region,other.region); }
         /** 旧调用未提供来源时按独立来源处理，不能因缺省值互相豁免。 */
         public Node(UUID id,Vec3 center,double radius,double strength,int grade,int shape) {
             this(id,center,radius,strength,grade,shape,id);
@@ -19,6 +31,7 @@ public final class GhostDomainConflict {
         public boolean sameSource(Node other) { return source.equals(other.source); }
         public Node {
             Objects.requireNonNull(id);
+            if (isolation != null) isolation=List.copyOf(isolation);
             if (source == null) source=id;
             if (!Double.isFinite(radius) || radius < 0 || !Double.isFinite(strength) || strength < 0 || grade < 1)
                 throw new IllegalArgumentException("Invalid domain conflict input");
@@ -26,6 +39,10 @@ public final class GhostDomainConflict {
         /** 对给定范围执行真实几何包含查询，圆柱沿用框架的无限高度。 */
         public boolean contains(Vec3 point, double extent) {
             if (extent<=0) return false;
+            if (isolation != null) {
+                boolean inside=isolation.stream().anyMatch(box->box.contains(point));
+                if (inside != (region != null)) return false;
+            }
             double dx = point.x - center.x, dz = point.z - center.z, dy = shape == 1 ? point.y - center.y : 0;
             return dx * dx + dy * dy + dz * dz <= extent * extent;
         }
@@ -55,20 +72,29 @@ public final class GhostDomainConflict {
         public int crossings(UUID id,Vec3 from,Vec3 to) {
             Node node=nodes.stream().filter(n->n.id().equals(id)).findFirst().orElse(null);
             if(node==null||radius(id)<=0)return 0;
-            Vec3 delta=to.subtract(from),offset=from.subtract(node.center());
+            Vec3 movement=to.subtract(from),delta=movement,offset=from.subtract(node.center());
             if(node.shape()==0){delta=new Vec3(delta.x,0,delta.z);offset=new Vec3(offset.x,0,offset.z);}
+            var points=new TreeSet<Double>();
             double a=delta.lengthSqr(),b=offset.dot(delta),c=offset.lengthSqr()-radius(id)*radius(id);
-            if(a<1e-16)return 0;double discriminant=b*b-a*c;if(discriminant<=0)return 0;
-            double root=Math.sqrt(discriminant);int result=0;
-            for(double t:new double[]{(-b-root)/a,(-b+root)/a}) {
-                if(t<0||t>1)continue;
-                Vec3 point=from.lerp(to,t);
+            double discriminant=b*b-a*c;
+            if(a>=1e-16 && discriminant>0) {
+                double root=Math.sqrt(discriminant);
+                addCrossing(points,(-b-root)/a); addCrossing(points,(-b+root)/a);
+            }
+            // 隔绝边界也是真实边界。按所有长方体交点分段，内部拼接面不会制造进出。
+            if(node.isolation()!=null)for(var box:node.isolation())boxCrossings(points,box,from,movement);
+            var ordered=new ArrayList<>(points); int result=0;
+            for(int i=0;i<ordered.size();i++) {
+                double t=ordered.get(i);
+                double left=i==0?(t>0?t/2:-1e-7):(ordered.get(i-1)+t)/2;
+                double right=i+1==ordered.size()?(t<1?(t+1)/2:1+1e-7):(t+ordered.get(i+1))/2;
+                boolean before=node.contains(from.add(movement.scale(left)),radius(id));
+                boolean after=node.contains(from.add(movement.scale(right)),radius(id));
+                if(before==after)continue;
+                Vec3 point=from.add(movement.scale(t));
                 boolean cut=false;
                 for(Node other:nodes)if(cuts(id,other.id())&&other.contains(point,radius(other.id()))){cut=true;break;}
-                if(cut)continue;
-                // 法线与运动方向点积为负代表进入，为正代表离开。
-                double direction=offset.add(delta.scale(t)).dot(delta);
-                if(direction<0)result|=1;else result|=2;
+                if(!cut)result|=after?1:2;
             }
             return result;
         }
@@ -79,7 +105,7 @@ public final class GhostDomainConflict {
             double sum=0;int count=0;
             for (Node node:nodes)
                 if((node.id().equals(self.id()) || !node.sameSource(self))
-                        && node.grade() == self.grade()
+                        && node.sameSpace(self) && node.grade() == self.grade()
                         && owns(node.id(),point)) {
 
                     sum += node.strength();
@@ -96,7 +122,7 @@ public final class GhostDomainConflict {
         // 高等级先裁定完全压制；已失去领地的来源不再压制第三个域。
         List<Node> byGrade=nodes.stream().sorted(Comparator.comparingInt(Node::grade).reversed()).toList();
         for(Node low:byGrade)for(Node high:byGrade) {
-            if(!low.sameSource(high) && high.grade() - low.grade() >= 3 && radii.get(high.id()) > 0 && high.contains(low.center(),high.radius())) {
+            if(low.sameSpace(high) && !low.sameSource(high) && high.grade() - low.grade() >= 3 && radii.get(high.id()) > 0 && high.contains(low.center(),high.radius())) {
                 radii.put(low.id(), 0D);break;
             }
         }
@@ -104,7 +130,7 @@ public final class GhostDomainConflict {
         radii.forEach((id,radius)->{if(radius<=0)suppressed.add(id);});
         for(int i=0;i<nodes.size();i++)for(int j=i+1;j<nodes.size();j++){
             Node a=nodes.get(i),b=nodes.get(j);
-            if(a.sameSource(b) || suppressed.contains(a.id()) || suppressed.contains(b.id()))continue;
+            if(!a.sameSpace(b) || a.sameSource(b) || suppressed.contains(a.id()) || suppressed.contains(b.id()))continue;
             double overlap=overlapArea(a,b);if(overlap<=0)continue;
             boolean aInB=b.contains(a.center(),b.radius()),bInA=a.contains(b.center(),a.radius());
             // 源头进入高三级鬼域时，无论两者几何大小如何都完全压制。
@@ -134,6 +160,21 @@ public final class GhostDomainConflict {
         }
         // 完全压制的域不能继续从其他鬼域中挖空空间。
         return new Result(nodes,radii,cuts);
+    }
+    /** 只保留本次线段中的精确交点。 */
+    private static void addCrossing(Set<Double> points,double t) { if(t>=0 && t<=1)points.add(t); }
+    /** 射线与长方体的 slab 求交；不按固定步长采样，支持跨越薄墙和不规则区域。 */
+    private static void boxCrossings(Set<Double> points,AABB box,Vec3 from,Vec3 delta) {
+        double lo=Double.NEGATIVE_INFINITY,hi=Double.POSITIVE_INFINITY;
+        double[] starts={from.x,from.y,from.z},steps={delta.x,delta.y,delta.z};
+        double[] mins={box.minX,box.minY,box.minZ},maxs={box.maxX,box.maxY,box.maxZ};
+        for(int axis=0;axis<3;axis++) {
+            if(Math.abs(steps[axis])<1e-16) { if(starts[axis]<mins[axis]||starts[axis]>=maxs[axis])return; continue; }
+            double x=(mins[axis]-starts[axis])/steps[axis],y=(maxs[axis]-starts[axis])/steps[axis];
+            lo=Math.max(lo,Math.min(x,y));hi=Math.min(hi,Math.max(x,y));
+            if(lo>=hi)return;
+        }
+        addCrossing(points,lo);addCrossing(points,hi);
     }
     private static void limit(Map<UUID,Double> radii,Node node,double value){radii.compute(node.id(),(id,old)->Math.min(old,value));}
     /** 内域按等级差与相对强度收缩；强度优势不把范围扩大到原始声明之外。 */

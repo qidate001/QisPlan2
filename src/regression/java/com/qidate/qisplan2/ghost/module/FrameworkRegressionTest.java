@@ -40,6 +40,7 @@ public final class FrameworkRegressionTest {
      */
     public static void main(String[] args) {
         BlockSpreadTest.run();
+        GhostIsolationCacheTest.run();
         GhostBearingTest.run();
         ModuleCommandTextTest.run();
         AbilityWheelTest.run();

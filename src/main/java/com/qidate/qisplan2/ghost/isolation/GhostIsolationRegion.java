@@ -9,6 +9,9 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.Level;
 
 import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.Set;
+import net.minecraft.core.Direction;
 import java.util.List;
 import java.util.UUID;
 
@@ -38,6 +41,40 @@ public class GhostIsolationRegion {
     private final BlockPos seed;
 
     private IsolationState state;
+
+    /** 相对最后一次有效空间发生隔绝能力变化的位置；空集合才证明原空间已经恢复。 */
+    private final Set<BlockPos> changedIsolation = new HashSet<>();
+
+    /** 只有完整追踪了失效原因才能快速恢复；旧 DIRTY 存档和批量变动不能走此路径。 */
+    private boolean repairTracked;
+
+    /** 原空间内部或与内部六面相邻的边界才会影响缓存，排除粗包围盒中的无关位置。 */
+    public boolean affectedBy(BlockPos pos) {
+        if (containsExact(dimension, pos)) return true;
+        for (Direction direction : Direction.values())
+            if (containsExact(dimension, pos.relative(direction))) return true;
+        return false;
+    }
+
+    /**
+     * 按当前隔绝能力更新差异，返回缓存是否发生变化。
+     * 原内部必为可传播空间，相邻外部必为隔绝边界，因此无须保存所有墙体方块。
+     * 多处破坏必须全部恢复；内部新增隔绝墙也须重新检测，不能直接沿用旧几何。
+     */
+    public boolean updateIsolationAt(BlockPos pos, boolean blocks) {
+        if (!affectedBy(pos)) return false;
+        if (state != IsolationState.ISOLATED && (state != IsolationState.DIRTY || !repairTracked)) return false;
+        boolean expected = !containsExact(dimension, pos);
+        boolean changed = blocks == expected ? changedIsolation.remove(pos) : changedIsolation.add(pos.immutable());
+        if (!changed) return false;
+        repairTracked = !changedIsolation.isEmpty();
+        state = repairTracked ? IsolationState.DIRTY : IsolationState.ISOLATED;
+        return true;
+    }
+
+    /** 失效空间仍保留可验证的原几何，可在原来的缺口全部修复后直接恢复。 */
+    public boolean canRestoreFromChanges() { return state == IsolationState.DIRTY && repairTracked; }
+
 
     /**
      * 精确的隔绝空间。
@@ -105,6 +142,8 @@ public class GhostIsolationRegion {
             IsolationState state
     ) {
         this.state = state;
+        repairTracked = false;
+        changedIsolation.clear();
     }
 
     /**
@@ -240,6 +279,8 @@ public class GhostIsolationRegion {
                 cuboidList
         );
 
+        tag.putBoolean("RepairTracked", repairTracked);
+        tag.putLongArray("ChangedIsolation", changedIsolation.stream().mapToLong(BlockPos::asLong).toArray());
         return tag;
     }
 
@@ -329,7 +370,7 @@ public class GhostIsolationRegion {
                 }
             }
 
-            return new GhostIsolationRegion(
+            GhostIsolationRegion region = new GhostIsolationRegion(
                     id,
                     dimension,
                     min,
@@ -338,6 +379,15 @@ public class GhostIsolationRegion {
                     cuboids,
                     state
             );
+            if (state == IsolationState.DIRTY && tag.getBoolean("RepairTracked")) {
+                for (long position : tag.getLongArray("ChangedIsolation")) {
+                    BlockPos changed = BlockPos.of(position);
+                    if (!region.affectedBy(changed)) return null;
+                    region.changedIsolation.add(changed);
+                }
+                region.repairTracked = !region.changedIsolation.isEmpty();
+            }
+            return region;
 
         } catch (Exception exception) {
             return null;

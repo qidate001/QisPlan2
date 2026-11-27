@@ -5,6 +5,7 @@ import com.qidate.qisplan2.ghost.domain.GhostDomainInfluenceScope;
 import com.qidate.qisplan2.ghost.module.domain.GhostDomainSettings;
 import com.qidate.qisplan2.ghost.module.implementation.eye.GhostEyeModule;
 import net.minecraft.world.phys.Vec3;
+import net.minecraft.world.phys.AABB;
 import java.util.List;
 import java.util.UUID;
 
@@ -74,6 +75,36 @@ public final class DomainConflictTest {
         check(mixed.weight(ownA.id(),intersection)==.5&&mixed.weight(ownB.id(),intersection)==.75,"同源仍分别与外来源分摊，不互相削弱");
         var hostile=node(4,80,200,1000,5);
         check(GhostDomainConflict.solve(List.of(ownInner,hostile)).radius(ownInner.id())==0,"不同来源继续执行完全压制");
+        // 隔绝区域裁剪的是实际领地，而非仅改变最终画面。
+        var roomId=new UUID(1,1);
+        var room=List.of(new AABB(-2,-2,-2,2,2,2));
+        var trapped=node(21,0,100,1000,8).inIsolation(roomId,room);
+        var outside=node(22,10,100,10,1).inIsolation(null,room);
+        var isolated=GhostDomainConflict.solve(List.of(trapped,outside));
+        check(isolated.radius(outside.id())==100 && isolated.radius(trapped.id())==100,
+                "区内高等级鬼域不能压制区外鬼域");
+        check(!isolated.cuts(outside.id(),trapped.id())&&!isolated.cuts(trapped.id(),outside.id()),
+                "隔绝区内外不能互相挖除领地");
+        check(isolated.crossings(trapped.id(),Vec3.ZERO,new Vec3(3,0,0))==2,"离开隔绝区就是离开受限鬼域");
+        check(isolated.crossings(trapped.id(),new Vec3(3,0,0),Vec3.ZERO)==1,"进入隔绝区就是进入受限鬼域");
+        check(isolated.crossings(trapped.id(),new Vec3(-3,0,0),new Vec3(3,0,0))==3,"高速穿过隔绝区必须检查双向权限");
+        check(isolated.crossings(trapped.id(),new Vec3(90,0,0),new Vec3(110,0,0))==0,"区外原始半径不应制造虚假边界");
+        check(!isolated.owns(trapped.id(),new Vec3(3,0,0))&&!isolated.owns(outside.id(),Vec3.ZERO),"实际能力覆盖也必须裁剪");
+        check(isolated.crossings(outside.id(),Vec3.ZERO,new Vec3(3,0,0))==1,"从隔绝空洞走向外界属于进入区外鬼域");
+        var highOutside=node(22,10,100,1000,8).inIsolation(null,room);
+        var lowInside=node(21,0,100,10,1).inIsolation(roomId,room);
+        check(GhostDomainConflict.solve(List.of(highOutside,lowInside)).radius(lowInside.id())==100,
+                "区外高等级鬼域也不能穿过隔绝压制区内");
+        var segmented=node(23,0,100,10,2).inIsolation(roomId,List.of(
+                new AABB(-2,-2,-2,0,2,2),new AABB(0,-2,-2,2,2,2)));
+        check(GhostDomainConflict.solve(List.of(segmented)).crossings(segmented.id(),new Vec3(-1,0,0),new Vec3(1,0,0))==0,
+                "隔绝区域分解长方体的内部拼接面不是进出边界");
+        var sameGradeOutside=node(22,10,100,1000,8).inIsolation(null,room);
+        var weights=GhostDomainConflict.solve(List.of(trapped,sameGradeOutside));
+        check(weights.weight(trapped.id(),Vec3.ZERO)==1 && weights.weight(sameGradeOutside.id(),new Vec3(3,0,0))==1,
+                "同级鬼域不能跨隔绝空间分摊强度");
+        check(GhostDomainConflict.solve(List.of(node(21,0,100,1000,8),node(22,10,100,10,1))).radius(outside.id())==0,
+                "隔绝失效并撤销空间裁剪后正常恢复对抗");
         Runnable[] deferred={null};GhostDomainInfluenceScope.run(.25,()->deferred[0]=GhostDomainInfluenceScope.capture(
             ()->check(GhostDomainInfluenceScope.weight()==.25,"延迟事实保持本次倍率")));
         deferred[0].run();check(GhostDomainInfluenceScope.weight()==1,"作用域退出恢复倍率");
