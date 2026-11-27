@@ -69,7 +69,9 @@ public final class ClientGhostDomainManager {
              * 这些域不会收到旧维度广播的 REMOVE，
              * 因此这里必须主动清理。
              */
-            clear();
+            // 登录或切维度的数据包可能先于首个 tick 到达，保留已经同步的新维度鬼域。
+            DOMAINS.values().removeIf(domain -> !currentDimension.equals(domain.getDimension()));
+            conflictInputs=List.of();conflict=GhostDomainConflict.solve(List.of());
 
             QisPlan2.LOGGER.info(
                     "[GhostDomain] CLIENT 维度切换，清理旧鬼域: {}",
@@ -185,6 +187,7 @@ public final class ClientGhostDomainManager {
     }
 
     public static void clear() {
+        LAST_DIMENSION = null;
         DOMAINS.clear();
         conflictInputs=List.of();conflict=GhostDomainConflict.solve(List.of());
         GhostDomainConflictTextures.clear();

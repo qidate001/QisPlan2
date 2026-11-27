@@ -12,7 +12,7 @@ import net.minecraft.world.level.chunk.status.ChunkStatus;
 import org.lwjgl.BufferUtils;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL12;
-import org.lwjgl.opengl.GL30;
+import com.qidate.qisplan2.ghost.domain.client.renderer.GhostTextureUpload;
 
 import java.nio.FloatBuffer;
 import java.util.Arrays;
@@ -532,17 +532,7 @@ public final class GhostIsolationGpuData {
          * 上传 RGBA32F Texture
          * ====================================================
          */
-        GL11.glTexImage2D(
-                GL11.GL_TEXTURE_2D,
-                0,
-                GL30.GL_RGBA32F,
-                TEXTURE_WIDTH,
-                MAX_CUBOIDS,
-                0,
-                GL11.GL_RGBA,
-                GL11.GL_FLOAT,
-                buffer
-        );
+        GhostTextureUpload.rgba32f(TEXTURE_WIDTH, MAX_CUBOIDS, buffer, true);
 
         /*
          * ====================================================

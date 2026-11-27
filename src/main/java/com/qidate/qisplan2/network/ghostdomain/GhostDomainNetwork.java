@@ -338,6 +338,11 @@ public final class GhostDomainNetwork {
      * ========================================================
      */
 
+    /** 登录快照：在 ADD 之后向单个玩家补发来源的隔绝空间身份。 */
+    public static void sendSourceRegion(ServerPlayer player, GhostDomain domain, UUID regionId) {
+        PacketDistributor.sendToPlayer(player, new GhostDomainSourceRegionPayload(domain.getId(), regionId));
+    }
+
     /**
      * 向指定维度中的所有玩家同步
      * GhostDomain Source 当前所在的灵异隔绝 Region。

@@ -169,6 +169,8 @@ public final class GhostDomainManager {
                 level,
                 domain
         );
+        // refreshConflict 可能先发过身份变化；ADD 之后补齐，确保客户端已有接收对象。
+        GhostDomainNetwork.sendSourceRegion(level, domain, sourceRegionIds.get(domain.getId()));
     }
 
     public void syncToPlayer(ServerPlayer player) {
@@ -179,6 +181,8 @@ public final class GhostDomainManager {
                     player,
                     domain
             );
+            // 重连时即使来源没有移动，也必须发送当前区域身份。
+            GhostDomainNetwork.sendSourceRegion(player, domain, sourceRegionIds.get(domain.getId()));
         }
 
         QisPlan2.LOGGER.info(

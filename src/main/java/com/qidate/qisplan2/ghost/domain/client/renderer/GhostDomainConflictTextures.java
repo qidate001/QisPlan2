@@ -5,7 +5,6 @@ import com.qidate.qisplan2.ghost.domain.client.ClientGhostDomainManager;
 import net.minecraft.client.renderer.ShaderInstance;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL13;
-import org.lwjgl.opengl.GL30;
 import org.lwjgl.system.MemoryUtil;
 import java.util.*;
 
@@ -57,9 +56,8 @@ public final class GhostDomainConflictTextures {
         GL11.glTexParameteri(GL11.GL_TEXTURE_2D,GL11.GL_TEXTURE_MIN_FILTER,GL11.GL_NEAREST);
         GL11.glTexParameteri(GL11.GL_TEXTURE_2D,GL11.GL_TEXTURE_MAG_FILTER,GL11.GL_NEAREST);
         // 尺寸不变时复用显存；静止域的几何及扣除矩阵完全不重复上传。
-        if(previous!=null&&previous.length==values.length&&widths.getOrDefault(texture,0)==width)
-            GL11.glTexSubImage2D(GL11.GL_TEXTURE_2D,0,0,0,width,height,GL11.GL_RGBA,GL11.GL_FLOAT,data);
-        else GL11.glTexImage2D(GL11.GL_TEXTURE_2D,0,GL30.GL_RGBA32F,width,height,0,GL11.GL_RGBA,GL11.GL_FLOAT,data);
+        boolean reuse=previous!=null&&previous.length==values.length&&widths.getOrDefault(texture,0)==width;
+        GhostTextureUpload.rgba32f(width,height,data,!reuse);
         uploaded.put(texture,values);widths.put(texture,width);return texture;
     }
     /** 标准着色器使用共享契约，专属前缀仍由效果自身负责。 */

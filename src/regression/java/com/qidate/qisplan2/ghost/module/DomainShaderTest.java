@@ -11,6 +11,9 @@ import org.lwjgl.opengl.GL;
 import org.lwjgl.opengl.GL20;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL30;
+import org.lwjgl.opengl.GL15;
+import org.lwjgl.opengl.GL21;
+import com.qidate.qisplan2.ghost.domain.client.renderer.GhostTextureUpload;
 import org.lwjgl.BufferUtils;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -44,7 +47,45 @@ public final class DomainShaderTest {
                 System.out.println(name+" GLSL compile and link passed");
             }
             verifyIsolationVisibility(core);
+            verifyTextureUpload();
         } finally {GLFW.glfwDestroyWindow(window);GLFW.glfwTerminate();}
+    }
+    /** 模拟图集遗留的解包状态，验证分配、增量上传和重建纹理都不会读错地址。 */
+    private static void verifyTextureUpload() {
+        int pbo=GL15.glGenBuffers();
+        int[] names={GL11.GL_UNPACK_ALIGNMENT,GL11.GL_UNPACK_ROW_LENGTH,
+                GL11.GL_UNPACK_SKIP_ROWS,GL11.GL_UNPACK_SKIP_PIXELS,GL11.GL_UNPACK_SWAP_BYTES};
+        int[] dirty={8,1024,17,23,1};
+        try {
+            GL15.glBindBuffer(GL21.GL_PIXEL_UNPACK_BUFFER,pbo);
+            GL15.glBufferData(GL21.GL_PIXEL_UNPACK_BUFFER,16L,GL15.GL_STATIC_DRAW);
+            for(int i=0;i<names.length;i++)GL11.glPixelStorei(names[i],dirty[i]);
+            for(int cycle=0;cycle<3;cycle++) {
+                int texture=GL11.glGenTextures();
+                try {
+                    GL11.glBindTexture(GL11.GL_TEXTURE_2D,texture);
+                    for(int update=0;update<2;update++) {
+                        var data=BufferUtils.createFloatBuffer(16);
+                        for(int i=0;i<16;i++)data.put(i+cycle*100+update*20+0.25f);
+                        data.flip();
+                        GhostTextureUpload.rgba32f(2,2,data,update==0);
+                        for(int i=0;i<names.length;i++)if(GL11.glGetInteger(names[i])!=dirty[i])
+                            throw new AssertionError("Unpack state not restored: "+names[i]);
+                        if(GL11.glGetInteger(GL21.GL_PIXEL_UNPACK_BUFFER_BINDING)!=pbo)
+                            throw new AssertionError("Unpack buffer binding not restored");
+                        var actual=BufferUtils.createFloatBuffer(16);
+                        GL11.glGetTexImage(GL11.GL_TEXTURE_2D,0,GL11.GL_RGBA,GL11.GL_FLOAT,actual);
+                        for(int i=0;i<16;i++)if(actual.get(i)!=data.get(i))
+                            throw new AssertionError("Texture upload corrupted at "+i);
+                        if(GL11.glGetError()!=GL11.GL_NO_ERROR)throw new AssertionError("Texture upload GL error");
+                    }
+                } finally {GL11.glDeleteTextures(texture);}
+            }
+            System.out.println("RGBA32F upload passed: dirty unpack state, PBO, allocation, subimage and recreation");
+        } finally {
+            for(int i=0;i<names.length;i++)GL11.glPixelStorei(names[i],i==0?4:0);
+            GL15.glBindBuffer(GL21.GL_PIXEL_UNPACK_BUFFER,0);GL15.glDeleteBuffers(pbo);
+        }
     }
     /** 实际绘制六个像素并回读，验证天空、远景、区域表面和内部相机的遮罩语义。 */
     private static void verifyIsolationVisibility(Path core) {

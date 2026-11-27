@@ -21,6 +21,7 @@ import com.qidate.qisplan2.core.*;
 import com.qidate.qisplan2.client.hud.DeathCurseHudOverlay;
 
 import com.qidate.qisplan2.ghost.isolation.client.ClientGhostIsolationChunkHandler;
+import com.qidate.qisplan2.ghost.isolation.client.ClientGhostIsolationEvents;
 import com.qidate.qisplan2.ghost.tombstone.client.GhostTombstoneBlockEntityRenderer;
 import net.minecraft.client.model.HumanoidModel;
 import net.minecraft.client.model.geom.builders.CubeDeformation;
@@ -121,6 +122,7 @@ public class QisPlan2Client {
         NeoForge.EVENT_BUS.register(
                 ClientGhostIsolationChunkHandler.class
         );
+        NeoForge.EVENT_BUS.register(ClientGhostIsolationEvents.class);
 
         // 注册客户端诅咒
 
