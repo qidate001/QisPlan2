@@ -8,7 +8,6 @@ import com.qidate.qisplan2.core.ModEntityAttributes;
 import com.qidate.qisplan2.core.ModRegistries;
 import com.qidate.qisplan2.core.QisConfig;
 import com.qidate.qisplan2.event.GhostBlockInteractionHandler;
-import com.qidate.qisplan2.event.GhostBreakoutHandler;
 import com.qidate.qisplan2.event.GhostLayerCombatHandler;
 import com.qidate.qisplan2.ghost.domain.GhostDomainEntityEvents;
 import com.qidate.qisplan2.ghost.domain.GhostDomainPlayerLogout;
@@ -70,11 +69,6 @@ public class QisPlan2 {
         // 厉鬼看见事件
         NeoForge.EVENT_BUS.register(
                 GhostPerceptionHandler.class
-        );
-
-        // 厉鬼破体而出
-        NeoForge.EVENT_BUS.register(
-                GhostBreakoutHandler.class
         );
 
         // 鬼域实体追踪事件

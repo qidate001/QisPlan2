@@ -1,7 +1,6 @@
 package com.qidate.qisplan2.event;
 
 import com.qidate.qisplan2.QisPlan2;
-import com.qidate.qisplan2.core.ModAttachments;
 import com.qidate.qisplan2.death.SupernaturalEntity;
 import com.qidate.qisplan2.ghost.module.*;
 import com.qidate.qisplan2.ghost.module.event.MeleeHitEvent;
@@ -14,7 +13,6 @@ import net.minecraft.world.entity.player.Player;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.entity.living.LivingDamageEvent;
-import net.neoforged.neoforge.event.entity.player.PlayerEvent;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -40,9 +38,5 @@ public final class DeathCurseHandler {
                 && GhostModuleCombatState.available(entry)));
         if (active) event.setNewDamage(event.getEntity() instanceof SupernaturalEntity ? 0 : 1);
         GhostModuleRuntime.dispatch(hosts,new MeleeHitEvent(event.getEntity()));
-    }
-    /** 保留旧规则：死亡重生后不继承共享诅咒层数。 */
-    @SubscribeEvent public static void onPlayerClone(PlayerEvent.Clone event) {
-        event.getEntity().removeData(ModAttachments.DEATH_CURSE_COUNT.get());
     }
 }

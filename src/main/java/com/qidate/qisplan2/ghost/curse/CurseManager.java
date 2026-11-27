@@ -367,11 +367,6 @@ public final class CurseManager {
             if(CURSES.get(curse.getId())!=curse)continue;
             var body=target(server,curse.getTarget());
             var declaration=CurseRegistry.get(curse.getType());
-            // 旁观者死亡等路径可能跳过掉落阶段；在服务端 tick 中对已死亡目标兜底。
-            if(body!=null && !body.isAlive() && (declaration==null || !declaration.persistsAfterDeath())) {
-                remove(server,curse.getId());
-                continue;
-            }
             if(body!=null){
                 var offer=declaration==null||curse.status(server)!=Curse.Status.RUNNING?null:declaration.suppression().offer(1,curse.getStrength());
                 if(offer==null)GhostPersistentSuppression.remove(body,curse.getId());

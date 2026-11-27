@@ -5,7 +5,7 @@ import com.qidate.qisplan2.ghost.module.GhostModuleRuntime;
 import com.qidate.qisplan2.ghost.module.event.ModuleTickEvent;
 import com.qidate.qisplan2.ghost.module.host.ModuleGhostDomains;
 import com.qidate.qisplan2.ghost.possession.manager.GhostSuppressionAllocationHandler;
-import com.qidate.qisplan2.event.GhostBreakoutHandler;
+import com.qidate.qisplan2.core.ModEntities;
 import com.qidate.qisplan2.death.QisDeathHandler;
 import net.minecraft.server.level.ServerPlayer;
 import com.qidate.qisplan2.ghost.module.GhostModuleCombatState;
@@ -68,8 +68,29 @@ public final class PlayerGhostModuleHost
     /** 复苏判断由运行时统一完成；此适配器只落实玩家身体的破体与死亡。 */
     @Override public void onControlLost(ResourceLocation module) {
         if (player instanceof ServerPlayer server && server.isAlive()) {
-            GhostBreakoutHandler.breakout(server);
             QisDeathHandler.forceKillAndCleanup(server);
+        }
+    }
+
+    /** 死亡时释放当前身体驾驭的模块；成功生成实体后才移除承载，保留原有沉睡换算。 */
+    public void releaseOnDeath() {
+        if (!(player instanceof ServerPlayer server)) return;
+        var host = new PlayerGhostModuleHost(player);
+        var entries = List.copyOf(host.getModules());
+        for (var entry : entries) {
+            var ghost = ModEntities.MODULAR_GHOST.get().create(server.serverLevel());
+            if (ghost == null) continue;
+            if (!ghost.importGhostModule(entry)) continue;
+            var module = GhostModuleRegistry.get(entry.id());
+            double max = module == null ? 100 : Math.max(1, module.getMaxRevival());
+            int delay = (int)Math.max(0, Math.round((1 - entry.revival() / max) * 1000L));
+            int previous = GhostModuleCombatState.sleepTicks(entry);
+            GhostModuleCombatState.sleep(ghost, entry, Math.max(previous, delay));
+            ghost.moveTo(player.getX(), player.getY(), player.getZ(), player.getYRot(), player.getXRot());
+            if (server.serverLevel().addFreshEntity(ghost)) {
+                // 成功放入世界后才从玩家移除，避免创建失败时丢失模块。
+                new PlayerGhostModuleHost(player).release( entry.id());
+            }
         }
     }
 
