@@ -150,24 +150,41 @@
 
 ## 鸣谢
 
-| 类别 | 致谢 |
-| :--- | :--- |
-| 🎨 **美术** | [一只屑System32](https://github.com/uzjhf-836/) —— 绘制的“必死诅咒之剑”纹理 |
-| 🎨 **美术** | [文森/亿森](https://www.qidate001.com/) —— 绘制的“喊人鬼”与“敲门鬼”模型与纹理 |
-| 🏯 **建筑** | [何喻逸林](https://space.bilibili.com/275630606/) —— 鬼寺庙 [建筑原型](https://www.bilibili.com/video/BV1uH4y157X4/) |
-| 🏯 **建筑** | [Pixel轩](https://space.bilibili.com/275630606/) —— 鬼灶台木屋 [建筑原型](https://www.bilibili.com/video/BV1F8Nu6GECy/) |
-| 🏯 **建筑** | [天涯共磁石](https://space.bilibili.com/525276096) —— 鬼庄园 [建筑原型](https://www.bilibili.com/video/BV1F8Nu6GECy/) |
-| 🏯 **建筑** | [mysticat](https://www.youtube.com/@mysticat) —— 鬼坟场 [墙壁建筑原型](https://www.youtube.com/watch?v=3ILX78Bc00E) |
-| 🛠️ **贡献** | [一只屑System32](https://github.com/uzjhf-836/) —— 必死诅咒之剑 HUD 与材质 |
-| 🧪 **测试** | [一只屑System32](https://github.com/uzjhf-836/) —— 模组测试与反馈 |
-| 💡 **灵感** | [卯未](https://www.douyin.com/user/MS4wLjABAAAAMEa0gKD6lwmdbVtaNam39gfozSKVdglng_46zjLmOcg) —— 鬼雨伞副作用建议 |
-| 💡 **灵感** | [执掌83个圈子之人](https://space.bilibili.com/3690999347939733) —— 模组实现方案的众多建议与陪伴~ |
-| 💡 **灵感** | [小迪之](https://space.bilibili.com/3546981603478187) —— 参与模组开发探讨与提出的众多建议与陪伴~ |
-| 💡 **灵感** | [文森/亿森](https://www.qidate001.com/) —— 参与模组开发探讨与提出的众多建议与陪伴~ |
-| 💡 **灵感** | [牢大/红尘仙](https://www.qidate001.com/) —— 参与模组开发探讨与提出的众多建议与陪伴~ |
-| 💡 **灵感** | [我叫小鸟awa](https://space.bilibili.com/3546846593026382) —— 参与模组开发探讨与陪伴~ |
-| 📖 **灵感** | [《神秘复苏》](https://www.qidian.com/book/1012584111/) 作者 佛前献花 —— 为本模组的灵异世界观提供了深厚的土壤 |
-| ❤️ **陪伴** | 所有陪我慢慢完成这个模组的朋友，没有你们的支持，不会有今天的 Qis Plan 2 ~ |
+> 没有你们的帮助与陪伴，就没有今天的 **Qis Plan 2**。
+
+| 🙌 贡献者 | 🏷️ 身份 | 📝 贡献内容 |
+| :---: | :---: | :--- |
+| [**一只屑System32**](https://github.com/uzjhf-836/) | 🎨 🛠️ 🧪 | 绘制「必死诅咒之剑」纹理；制作剑的 HUD 与材质；参与模组测试与反馈 |
+| [**文森 / 亿森**](https://www.qidate001.com/) | 🎨 💡 | 绘制「喊人鬼」「敲门鬼」模型与纹理；参与开发探讨与建议 |
+| [**何喻逸林**](https://space.bilibili.com/275630606/) | 🏯 | 鬼寺庙 [建筑原型](https://www.bilibili.com/video/BV1uH4y157X4/) |
+| [**Pixel轩**](https://space.bilibili.com/275630606/) | 🏯 | 鬼灶台木屋 [建筑原型](https://www.bilibili.com/video/BV1F8Nu6GECy/) |
+| [**天涯共磁石**](https://space.bilibili.com/525276096) | 🏯 | 鬼庄园 [建筑原型](https://www.bilibili.com/video/BV1F8Nu6GECy/) |
+| [**mysticat**](https://www.youtube.com/@mysticat) | 🏯 | 鬼坟场 [墙壁建筑原型](https://www.youtube.com/watch?v=3ILX78Bc00E) |
+| [**卯未**](https://www.douyin.com/user/MS4wLjABAAAAMEa0gKD6lwmdbVtaNam39gfozSKVdglng_46zjLmOcg) | 💡 | 提出「鬼雨伞」副作用建议 |
+| [**执掌83个圈子之人**](https://space.bilibili.com/3690999347939733) | 💡 | 模组实现方案的众多建议与陪伴 |
+| [**小迪之**](https://space.bilibili.com/3546981603478187) | 💡 | 参与开发探讨，提出众多建议与陪伴 |
+| [**牢大 / 红尘仙**](https://www.qidate001.com/) | 💡 | 参与开发探讨，提出众多建议与陪伴 |
+| [**我叫小鸟awa**](https://space.bilibili.com/3546846593026382) | 💡 | 参与开发探讨与陪伴 |
+| [**《神秘复苏》**](https://www.qidian.com/book/1012584111/) · 佛前献花 | 📖 | 为模组的灵异世界观提供了深厚的土壤 |
+| ❤️ **每一位陪伴的朋友** | ❤️ | 陪我慢慢完成这个模组，是你们让 Qis Plan 2 走到今天 |
+
+<sub>图例：🎨 美术 · 🏯 建筑 · 🛠️ 贡献 · 🧪 测试 · 💡 灵感 · 📖 世界观 · ❤️ 陪伴</sub>
+
+---
+
+## 开发人员
+
+<div align="center">
+  <a href="https://github.com/qidate001">
+    <img src="https://github.com/qidate001.png?size=200" width="110" alt="齐" />
+  </a>
+  <h3>齐</h3>
+  <a href="https://github.com/qidate001">
+    <img src="https://img.shields.io/badge/GitHub-@qidate001-181717?style=flat-square&logo=github&logoColor=white" alt="GitHub" />
+  </a>
+  <br />
+  <sub>✨ 想把 <b>Qis Plan 2</b> 变得更好？欢迎提交 Issue / PR，或进入 <a href="https://qm.qq.com/q/4OGrCC2gpO">粉丝群</a> 探讨哝。</sub>
+</div>
 
 ---
 
