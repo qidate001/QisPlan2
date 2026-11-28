@@ -5,7 +5,6 @@ import com.qidate.qisplan2.death.ModDamageTypes;
 import com.qidate.qisplan2.ghost.module.*;
 import com.qidate.qisplan2.ghost.module.ability.*;
 import com.qidate.qisplan2.ghost.module.data.GhostModuleInitialData;
-import com.qidate.qisplan2.ghost.module.environment.GhostBehavior;
 import com.qidate.qisplan2.ghost.module.event.*;
 import com.qidate.qisplan2.ghost.module.influence.GhostInfluenceType;
 import net.minecraft.resources.ResourceLocation;
@@ -23,8 +22,6 @@ public final class CallingGhostModule implements GhostModule {
     public static final double INITIAL_INTENSITY = 30;
     /** 标识工具不包含宿主信息。 */
     private static ResourceLocation id(String name) { return ResourceLocation.fromNamespaceAndPath("qisplan2", name); }
-    /** 自主实体行为只负责选目标和取得移动控制。 */
-    public GhostBehavior behavior() { return context -> { var actor=context.world().actor(); if(actor==null)return List.of(); CallingGhostState.initialize(actor); return List.of(new CallingGhostBehavior(actor)); }; }
     /** 返回能力或模块的稳定标识。 */
     public ResourceLocation getId() { return ID; }
     /** 提供新实例的初始强度和复苏。 */
@@ -38,48 +35,55 @@ public final class CallingGhostModule implements GhostModule {
     public static float turnAmount(int call) { return Math.min(180, Math.max(0, call) * 70F); }
 
     /** 公开喊名要求可移动、可追踪；私有袭击只能针对真实看见来源事件中的当前目标。 */
-    public List<GhostMedium> getMedia() { return List.of(new GhostMedium() {
-        /** 返回能力或模块的稳定标识。 */
-        public ResourceLocation getId() { return id("calling_ghost/target_medium"); }
-        /** 校验硬性媒介，不产生世界效果。 */
-        public boolean allows(GhostAbilityContext c) {
-            if (c.abilityId().equals(CANCEL)) return true;
-            var world = c.getModuleContext().world();
-            if (c.abilityId().equals(FOLLOW) && c.source() == GhostAbilityContext.Source.POSSESSION
-                    && world.aimedTarget(32) == null) return true;
-            LivingEntity target = c.source() == GhostAbilityContext.Source.POSSESSION ? world.aimedTarget(32) : world.target();
-            if (!world.present() || !world.canTrack(target)) return false;
-            if (c.abilityId().equals(FOLLOW)) return world.canMove();
-            return c.event() instanceof SourceSeenEvent turn && turn.observer() == target
-                    && world.sourceVisibleTo(target) && world.validTarget(target);
-        }
-    }); }
+    public List<GhostMedium> getMedia() {
+        return List.of(new GhostMedium() {
+            /** 返回能力或模块的稳定标识。 */
+            public ResourceLocation getId() { return id("calling_ghost/target_medium"); }
+            /** 校验硬性媒介，不产生世界效果。 */
+            public boolean allows(GhostAbilityContext c) {
+                if (c.abilityId().equals(CANCEL)) return true;
+                var world = c.getModuleContext().world();
+                if (c.abilityId().equals(FOLLOW) && c.source() == GhostAbilityContext.Source.POSSESSION
+                        && world.aimedTarget(32) == null) return true;
+                LivingEntity target = c.source() == GhostAbilityContext.Source.POSSESSION ? world.aimedTarget(32) : world.target();
+                if (!world.present() || !world.canTrack(target)) return false;
+                if (c.abilityId().equals(FOLLOW)) return world.canMove();
+                return c.event() instanceof SourceSeenEvent turn && turn.observer() == target
+                        && world.sourceVisibleTo(target) && world.validTarget(target);
+            }
+        });
+    }
 
     /** 自主喊名观察到目标看见来源后，在当前规则批次提交袭击。 */
     public List<GhostRule> getRules() {
-        return List.of(new GhostRule() {
-            /** 返回能力或模块的稳定标识。 */
-            public ResourceLocation getId() { return id("calling_ghost/turn_rule"); }
+        return List.of(GhostRule.autonomous(ResourceLocation.fromNamespaceAndPath(ID.getNamespace(), ID.getPath() + "/activity"),
+                context -> {
+                    var actor = context.world().actor();
+                    if (actor == null) return List.of(); CallingGhostState.initialize(actor);
+                    return List.of(new CallingGhostBehavior(actor));
+                }), new GhostRule() {
+                    /** 返回能力或模块的稳定标识。 */
+                    public ResourceLocation getId() { return id("calling_ghost/turn_rule"); }
 
-            /** 只筛选本规则能处理的语义事件。 */
-            public Set<Class<? extends GhostEvent>> eventTypes() { return Set.of(SourceSeenEvent.class,ModuleTickEvent.class); }
+                    /** 只筛选本规则能处理的语义事件。 */
+                    public Set<Class<? extends GhostEvent>> eventTypes() { return Set.of(SourceSeenEvent.class,ModuleTickEvent.class); }
 
+                    /** 判定本事件是否应触发自动规则。 */
+                    public boolean canTrigger(GhostRuleContext c, GhostEvent e) { return e instanceof SourceSeenEvent && !c.getModuleContext().getCustomData().getBoolean("manualCalling"); }
 
-            /** 判定本事件是否应触发自动规则。 */
-            public boolean canTrigger(GhostRuleContext c, GhostEvent e) { return e instanceof SourceSeenEvent && !c.getModuleContext().getCustomData().getBoolean("manualCalling"); }
+                    /** 沉睡后停止跟随和扭头，但仍观察原目标是否真正看见来源。 */
+                    public boolean disturbedWhileSleeping(GhostRuleContext c, GhostEvent e) {
+                        var m = c.getModuleContext(); var target = m.world().target();
+                        return target != null && m.world().validTarget(target) && m.world().sourceVisibleTo(target);
+                    }
 
-            /** 沉睡后停止跟随和扭头，但仍观察原目标是否真正看见来源。 */
-            public boolean disturbedWhileSleeping(GhostRuleContext c, GhostEvent e) {
-                var m = c.getModuleContext(); var target = m.world().target();
-                return target != null && m.world().validTarget(target) && m.world().sourceVisibleTo(target);
-            }
-
-            /** 在当前事件会话中提交能力影响。 */
-            public void onTrigger(GhostRuleContext c, GhostEvent e) {
-                var turn = (SourceSeenEvent)e;
-                c.submitAbilityInfluence(ATTACK, turn, turn.observer().getUUID(), GhostInfluenceType.ATTACK, c.getModuleContext().intensity());
-            }
-        });
+                    /** 在当前事件会话中提交能力影响。 */
+                    public void onTrigger(GhostRuleContext c, GhostEvent e) {
+                        var turn = (SourceSeenEvent)e;
+                        c.submitAbilityInfluence(ATTACK, turn, turn.observer().getUUID(), GhostInfluenceType.ATTACK, c.getModuleContext().intensity());
+                    }
+                }
+        );
     }
 
     /** 持续主动喊名不依赖自动规则开关；目标失效或遇到空间阻隔时结束。 */

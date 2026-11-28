@@ -5,7 +5,6 @@ import com.qidate.qisplan2.ghost.module.ability.GhostAbilityInfluence;
 import com.qidate.qisplan2.ghost.module.ability.GhostAbilityStimulation;
 import net.minecraft.core.BlockPos;
 import com.qidate.qisplan2.ghost.module.ability.GhostAbility;
-import com.qidate.qisplan2.ghost.module.environment.GhostBehavior;
 
 import com.qidate.qisplan2.death.ModDamageTypes;
 import com.qidate.qisplan2.ghost.bearing.SpiritualPart;
@@ -46,13 +45,6 @@ public final class KnockingGhostModule implements GhostModule {
      */
     @Override public GhostModuleInitialData getInitialData() { return new GhostModuleInitialData(INITIAL_INTENSITY, 0); }
 
-    /**
-     * 声明需要的自主行动类型。
-     * 具体 Goal 的创建、资源竞争和停止清理由行动适配层负责。
-     */
-    @Override public GhostBehavior behavior() { return context -> { var actor=context.world().actor(); return actor==null?List.of():KnockingGhostBehavior.create(actor); }; }
-
-
     /** 玩家敲门产生的后续袭击属于主动能力链，不重新经过自动听声规则。 */
 
     @Override public List<GhostMedium> getMedia() {
@@ -82,44 +74,50 @@ public final class KnockingGhostModule implements GhostModule {
      * 声明本厉鬼响应的语义事件及对应规则。
      * 规则负责决定何时发起能力或提交影响，不绕过执行器直接完成袭击。
      */
-    @Override public List<GhostRule> getRules() {
-        return List.of(new GhostRule() {
-            /**
-             * 获取当前定义的唯一标识。
-             * 注册、能力查找和规则分发使用此标识，不代表某个运行时实例。
-             */
-            @Override public ResourceLocation getId() { return RULE; }
+    @Override
+    public List<GhostRule> getRules() {
+        return List.of(GhostRule.autonomous(ResourceLocation.fromNamespaceAndPath(ID.getNamespace(), ID.getPath() + "/activity"),
+                context -> {
+                    var actor = context.world().actor();
+                    return actor == null ? List.of() : KnockingGhostBehavior.create(actor);
+                }), new GhostRule() {
+                    /**
+                     * 获取当前定义的唯一标识。
+                     * 注册、能力查找和规则分发使用此标识，不代表某个运行时实例。
+                     */
+                    @Override public ResourceLocation getId() { return RULE; }
 
-            /**
-             * 判断当前语义事件是否属于本规则处理的范围。
-             * 这里只筛选事件种类或语义，不执行能力和世界操作。
-             */
-            @Override public Set<Class<? extends GhostEvent>> eventTypes() { return Set.of(DoorKnockHeardEvent.class); }
+                    /**
+                     * 判断当前语义事件是否属于本规则处理的范围。
+                     * 这里只筛选事件种类或语义，不执行能力和世界操作。
+                     */
+                    @Override public Set<Class<? extends GhostEvent>> eventTypes() { return Set.of(DoorKnockHeardEvent.class); }
 
 
-            /**
-             * 检查当前事实和模块上下文是否满足规则触发条件。
-             * 返回 false 时跳过本规则，不提交能力或灵异影响。
-             */
-            @Override public boolean canTrigger(GhostRuleContext c, GhostEvent e) {
-                return c.getModuleContext().world().present()
-                        && e instanceof DoorKnockHeardEvent heard && c.getModuleContext().world().isOrigin(heard.source());
-            }
+                    /**
+                     * 检查当前事实和模块上下文是否满足规则触发条件。
+                     * 返回 false 时跳过本规则，不提交能力或灵异影响。
+                     */
+                    @Override public boolean canTrigger(GhostRuleContext c, GhostEvent e) {
+                        return c.getModuleContext().world().present()
+                                && e instanceof DoorKnockHeardEvent heard && c.getModuleContext().world().isOrigin(heard.source());
+                    }
 
-            /**
-             * 响应听见敲门的事实，准备可重新校验的延迟袭击。
-             * 先提交灵异裁决，只有获准后才把袭击加入延迟队列。
-             */
-            @Override public void onTrigger(GhostRuleContext c, GhostEvent event) {
-                DoorKnockHeardEvent e = (DoorKnockHeardEvent) event;
-                // 听见声音时立即处理规则并提交裁决。获准效果安排延迟能力调用，
-                // 延迟结束不再制造事件；执行器会重新检查模块、媒介与能力。
-                Runnable attack = c.prepareAbility(ATTACK, e);
-                if (attack != null) c.submitInfluence(e.target().getUUID(), GhostInfluenceType.ATTACK,
-                        c.getModuleContext().effectiveIntensity(),
-                        () -> c.getModuleContext().world().scheduleKnockAttack(attack));
-            }
-        });
+                    /**
+                     * 响应听见敲门的事实，准备可重新校验的延迟袭击。
+                     * 先提交灵异裁决，只有获准后才把袭击加入延迟队列。
+                     */
+                    @Override public void onTrigger(GhostRuleContext c, GhostEvent event) {
+                        DoorKnockHeardEvent e = (DoorKnockHeardEvent) event;
+                        // 听见声音时立即处理规则并提交裁决。获准效果安排延迟能力调用，
+                        // 延迟结束不再制造事件；执行器会重新检查模块、媒介与能力。
+                        Runnable attack = c.prepareAbility(ATTACK, e);
+                        if (attack != null) c.submitInfluence(e.target().getUUID(), GhostInfluenceType.ATTACK,
+                                c.getModuleContext().effectiveIntensity(),
+                                () -> c.getModuleContext().world().scheduleKnockAttack(attack));
+                    }
+                }
+        );
     }
 
     /**
@@ -136,6 +134,7 @@ public final class KnockingGhostModule implements GhostModule {
              * 注册、能力查找和规则分发使用此标识，不代表某个运行时实例。
              */
             @Override public ResourceLocation getId() { return KNOCK; }
+
             /** 主动使用复苏代价由模块声明；规则与行为调用不重复收取。 */
             @Override public GhostAbilityStimulation getStimulation(GhostAbilityContext c) {
                 if (c.source() != GhostAbilityContext.Source.POSSESSION) return GhostAbilityStimulation.none();

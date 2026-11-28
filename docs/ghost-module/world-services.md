@@ -30,7 +30,7 @@
 
 ### 行为、声音、鬼域与蔓延
 
-- **自主行为**：`behavior()` 当前仍返回 `GhostBehavior`，已有 `NONE / NIGHT_HUNT / KNOCK_DOORS / FOLLOW_CALL / WANDER`。这是现有 Goal 适配入口，不能误称能力预设枚举已经删除，所以所有其他系统也都自动开放。全新行为需要补齐对应适配与调度。
+- **自主行为**：由 `getRules()` 中的规则任务声明，使用 `GhostRuleServices` 和 `GhostActor` 接口。框架没有按厉鬼名称区分的行为枚举；任务通过 `GhostRuleExecution` 调度，实体适配器只落实资源接管。
 - **语义规则**：自主移动如何发现目标由行为/采集层处理；发现后的语义事实交给规则。行为内部资源维护不要都列成技能。
 - **声音**：`getSounds()` 声明 `GhostSoundDefinition`，真实传播和听声变化由声音系统处理；白烛造成的中断应沿用真实语义链，不手工广播一个假的“已听见”。
 - **鬼域**：通过 `domainDefinition()` 声明鬼域身体，`world().domain()` 是当前模块的运行时操作接口。统一适配器负责所有宿主的创建、维护和清理；不再添加独立的鬼域控制器、类型注册或客户端效果注册。旧驭鬼界面的兼容视图由 `PlayerGhostData` 根据声明与实例数据派生；模块接口不再提供 `initialDomainData()` 或依赖驭鬼专用数据对象。

@@ -5,7 +5,7 @@ import com.qidate.qisplan2.ghost.GhostAvoidanceSystem;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.entity.ai.goal.Goal;
+import com.qidate.qisplan2.ghost.module.GhostRuleTask;
 import java.util.Comparator;
 import java.util.EnumSet;
 
@@ -13,7 +13,7 @@ import java.util.EnumSet;
  * 每个宿主独立的夜间行为。Goal 只负责调度，击杀数、计时和目标 UUID
  * 均由模块 customData 承载；不在行为对象内缓存第二份持久状态。
  */
-public final class NightWandererBehavior extends Goal {
+public final class NightWandererBehavior extends GhostRuleTask {
     private final GhostActor host;
 
     /**
@@ -45,7 +45,7 @@ public final class NightWandererBehavior extends Goal {
     /**
      * 推进当前 tick 的行为或待处理任务；具体执行受本方法的有效性检查约束。
      */
-    @Override public void tick() { if(host.isActive()&&!host.level().isDay())tickActivity(host); }
+    @Override public void tick() { if (host.isActive() && !host.level().isDay()) tickActivity(host); }
 
     /**
      * 停止当前行为，释放移动控制并清理该行为持有的临时目标。

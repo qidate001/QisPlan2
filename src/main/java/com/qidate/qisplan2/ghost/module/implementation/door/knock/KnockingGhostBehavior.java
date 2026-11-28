@@ -1,11 +1,11 @@
 package com.qidate.qisplan2.ghost.module.implementation.door.knock;
 
 import com.qidate.qisplan2.ghost.module.environment.GhostActor;
-import com.qidate.qisplan2.ghost.module.environment.GhostWanderGoal;
+import com.qidate.qisplan2.ghost.module.environment.GhostWanderTask;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.world.entity.ai.goal.Goal;
+import com.qidate.qisplan2.ghost.module.GhostRuleTask;
 import java.util.EnumSet;
 import java.util.List;
 import com.qidate.qisplan2.ghost.module.ability.DoorKnockParameters;
@@ -22,8 +22,8 @@ public final class KnockingGhostBehavior {
     /**
      * 为敲门鬼创建独立的找门行为与游荡行为，避免跨实体共享临时目标。
      */
-    public static List<Goal> create(GhostActor ghost) {
-        return List.of(new KnockDoorGoal(ghost, 1.0D), new GhostWanderGoal(ghost, 0.7D) {
+    public static List<GhostRuleTask> create(GhostActor ghost) {
+        return List.of(new KnockDoorTask(ghost, 1.0D), new GhostWanderTask(ghost, 0.7D) {
             /**
              * 判断当前行为是否可以开始执行。
              * 检查行为需要的模块状态、环境或目标条件，交由 Goal 调度器决定是否取得控制。
@@ -198,13 +198,16 @@ public final class KnockingGhostBehavior {
      * ============================================================
      */
 
-    private static class KnockDoorGoal
-            extends Goal {
+    private static class KnockDoorTask
+            extends GhostRuleTask {
 
         private final GhostActor ghost;
 
         private final double speedModifier;
 
+        /** 本轮行为阶段只属于当前任务实例，不会在两只厉鬼之间共享。 */
+        private enum Phase { SEARCHING, APPROACHING, COOLDOWN }
+        private Phase phase = Phase.SEARCHING;
         private BlockPos targetDoor;
 
         private int cooldown = 0;
@@ -213,7 +216,7 @@ public final class KnockingGhostBehavior {
          * 为指定实体建立独立的找门行为，并保存寻路速度倍率。
          * 声明移动与视线控制，目标门和短暂行为冷却保存在本 Goal 实例中。
          */
-        public KnockDoorGoal(
+        public KnockDoorTask(
                 GhostActor ghost,
                 double speedModifier
         ) {
@@ -249,6 +252,7 @@ public final class KnockingGhostBehavior {
              * 敲门冷却。
              */
             if (cooldown > 0) {
+                phase = Phase.COOLDOWN;
                 cooldown--;
 
                 return false;
@@ -257,10 +261,12 @@ public final class KnockingGhostBehavior {
             /*
              * 寻找目标门。
              */
+            phase = Phase.SEARCHING;
             targetDoor =
                     findNearestDoor(ghost);
 
-            return targetDoor != null;
+            if (targetDoor != null) phase = Phase.APPROACHING;
+            return phase == Phase.APPROACHING && targetDoor != null;
         }
 
         /*
@@ -276,7 +282,7 @@ public final class KnockingGhostBehavior {
                 return false;
             }
 
-            return targetDoor != null;
+            return phase == Phase.APPROACHING && targetDoor != null;
         }
 
         /*
@@ -442,6 +448,7 @@ public final class KnockingGhostBehavior {
                  * 下一次寻找前短暂冷却。
                  */
                 cooldown = KNOCK_COOLDOWN;
+                phase = Phase.COOLDOWN;
 
                 return;
             }

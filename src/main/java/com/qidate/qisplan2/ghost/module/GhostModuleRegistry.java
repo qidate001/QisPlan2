@@ -16,6 +16,8 @@ import com.qidate.qisplan2.ghost.module.implementation.door.knock.KnockingGhostM
 import com.qidate.qisplan2.ghost.module.implementation.mist.GhostMistModule;
 import com.qidate.qisplan2.ghost.module.implementation.nightwanderer.NightWandererModule;
 import java.util.*;
+
+import com.qidate.qisplan2.ghost.module.implementation.umbrella.GhostUmbrellaModule;
 import net.minecraft.resources.ResourceLocation;
 
 /**

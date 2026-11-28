@@ -343,6 +343,9 @@ public class ModularGhostEntity extends PathfinderMob
     @Override
     public void remove(RemovalReason reason) {
         if (!level().isClientSide) {
+            // 主动停止任务后再释放模块资源，不能把 stop 留给已卸载实体的下一次 AI tick。
+            moduleGoals.values().forEach(goals -> goals.forEach(goalSelector::removeGoal));
+            moduleGoals.clear();
             GhostModuleSoundManager.unregisterEntityHost(this);
             for (var entry : List.copyOf(getModules())) {
                 GhostModule module = GhostModuleRegistry.get(entry.id());

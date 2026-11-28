@@ -3,7 +3,6 @@ package com.qidate.qisplan2.ghost.module.implementation.nightwanderer;
 import java.util.Set;
 import com.qidate.qisplan2.ghost.module.ability.GhostAbilityInfluence;
 import com.qidate.qisplan2.ghost.module.ability.GhostAbility;
-import com.qidate.qisplan2.ghost.module.environment.GhostBehavior;
 
 import com.qidate.qisplan2.death.ModDamageTypes;
 import com.qidate.qisplan2.ghost.bearing.SpiritualPart;
@@ -27,11 +26,6 @@ import static com.qidate.qisplan2.QisPlan2.MODID;
  * 击杀数和各项计时由 NightWandererState 写入模块 customData。
  */
 public final class NightWandererModule implements GhostModule {
-    /**
-     * 声明需要的自主行动类型。
-     * 具体 Goal 的创建、资源竞争和停止清理由行动适配层负责。
-     */
-    @Override public GhostBehavior behavior() { return context -> { var actor=context.world().actor(); if(actor==null)return List.of(); NightWandererState.initialize(actor); return List.of(new NightWandererBehavior(actor)); }; }
     public static final ResourceLocation ID = id("night_wanderer");
     public static final double INITIAL_INTENSITY = 5.0D;
     public static final ResourceLocation ATTACK = id("night_wanderer/attack");
@@ -83,7 +77,7 @@ public final class NightWandererModule implements GhostModule {
      * 规则负责决定何时发起能力或提交影响，不绕过执行器直接完成袭击。
      */
     @Override public List<GhostRule> getRules() {
-        return List.of(new GhostRule() {
+        return List.of(GhostRule.autonomous(ResourceLocation.fromNamespaceAndPath(ID.getNamespace(), ID.getPath()+"/activity"), context -> { var actor=context.world().actor(); if(actor==null)return List.of(); NightWandererState.initialize(actor); return List.of(new NightWandererBehavior(actor)); }), new GhostRule() {
             /**
              * 获取当前定义的唯一标识。
              * 注册、能力查找和规则分发使用此标识，不代表某个运行时实例。

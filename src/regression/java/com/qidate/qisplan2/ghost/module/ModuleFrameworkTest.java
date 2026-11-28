@@ -5,7 +5,6 @@ import com.qidate.qisplan2.ghost.module.host.GhostLivingHosts;
 import com.qidate.qisplan2.ghost.bearing.SpiritualPart;
 import com.qidate.qisplan2.ghost.corrosion.GhostCorrosion;
 import com.qidate.qisplan2.ghost.module.data.GhostModuleData;
-import com.qidate.qisplan2.ghost.module.environment.GhostBehavior;
 import com.qidate.qisplan2.ghost.module.event.ModuleTickEvent;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.resources.ResourceLocation;
@@ -43,7 +42,7 @@ public final class ModuleFrameworkTest {
         GhostModule definition=new GhostModule(){
             public ResourceLocation getId(){return ID;}
             public GhostCorrosion corrosion(){return GhostCorrosion.builder().add(SpiritualPart.GLOBAL,20).build();}
-            public GhostBehavior behavior(){return context->{factories++;return List.of();};}
+            public List<GhostRule> getRules(){return List.of(GhostRule.autonomous(ID,context->{factories++;return List.of();}));}
         };
         GhostModuleRegistry.register(definition);
         Host first=new Host(),second=new OtherHost();
@@ -66,7 +65,7 @@ public final class ModuleFrameworkTest {
         first.controlled=true;second.controlled=true;
         equal(GhostHostProperties.effectiveStrength(first,ID),GhostHostProperties.effectiveStrength(second,ID),"受控关系也必须跨宿主一致");
         for(var host:List.of(first,second)){
-            definition.behavior().create(new GhostModuleContext(host,ID));
+            definition.getRules().getFirst().createTasks(GhostRuleRuntime.services(host,ID,ID));
             GhostModuleOperations.addRevivalReserve(host,10);
             new GhostModuleContext(host,ID).addRevival(15);
             equal(host.entry.revival(),5,"缓冲在所有宿主统一抵消复苏");

@@ -1,7 +1,7 @@
 package com.qidate.qisplan2.ghost.module.environment;
 
 import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.entity.ai.goal.Goal;
+import com.qidate.qisplan2.ghost.module.GhostRuleTask;
 import net.minecraft.world.entity.ai.util.LandRandomPos;
 
 import java.util.EnumSet;
@@ -16,7 +16,7 @@ import java.util.EnumSet;
  * 3. 到达后等待一段时间。
  * 4. 不主动寻找或攻击生物。
  */
-public class GhostWanderGoal extends Goal {
+public class GhostWanderTask extends GhostRuleTask {
 
     protected final GhostActor mob;
 
@@ -48,7 +48,7 @@ public class GhostWanderGoal extends Goal {
     /**
      * 默认配置。
      */
-    public GhostWanderGoal(
+    public GhostWanderTask(
             GhostActor mob,
             double speedModifier
     ) {
@@ -65,7 +65,7 @@ public class GhostWanderGoal extends Goal {
     /**
      * 完整配置。
      */
-    public GhostWanderGoal(
+    public GhostWanderTask(
             GhostActor mob,
             double speedModifier,
             int horizontalDistance,
@@ -183,7 +183,7 @@ public class GhostWanderGoal extends Goal {
      * 停止当前行为，释放移动控制并清理该行为持有的临时目标。
      */
     @Override public void stop() {
-        if (candleTarget != null) mob.getNavigation().stop();
+        mob.getNavigation().stop();
         candleTarget = null;
     }
 

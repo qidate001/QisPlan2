@@ -2,124 +2,46 @@ package com.qidate.qisplan2.entity.ai;
 
 import com.qidate.qisplan2.entity.ModularGhostEntity;
 import com.qidate.qisplan2.ghost.module.GhostModuleCombatState;
+import com.qidate.qisplan2.ghost.module.GhostRuleExecution;
+import com.qidate.qisplan2.ghost.module.GhostRuleTask;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.ai.goal.Goal;
+import java.util.EnumSet;
 import java.util.List;
 import java.util.function.Supplier;
 
-/**
- * 按模块实时强度协调共享宿主的行为控制。
- *
- * 仅比较控制标记重叠的行为。高强度达到低强度两倍，或差值至少 100 时，
- * 高强度模块可以持续占用；较弱模块仅在强者没有可执行的冲突行为时运行。
- * 未达到压倒门槛的同级行为按 100 tick 轮换。模块内部保留列表顺序。
- */
+/** 实体与通用规则调度器之间的薄适配层，不实现厉鬼行为或强度竞争算法。 */
 public final class ModuleScheduledGoal extends Goal {
-    private static final long MAX_RUN_TICKS = 100;
-    private static final long YIELD_TICKS = 6;
-    private final ModularGhostEntity host;
-    private final ResourceLocation moduleId;
-    private final int order;
-    private final Goal delegate;
-    private final Supplier<List<ModuleScheduledGoal>> peers;
-    private long startedAt;
-    private long eligibleAt;
-    private long checkedAt = Long.MIN_VALUE;
-    private boolean ready;
-    private boolean running;
-    private boolean yielded;
-
-    public ModuleScheduledGoal(ModularGhostEntity host, ResourceLocation moduleId, int order,
-            Goal delegate, Supplier<List<ModuleScheduledGoal>> peers) {
-        this.host = host;
-        this.moduleId = moduleId;
-        this.order = order;
-        this.delegate = delegate;
-        this.peers = peers;
-        setFlags(delegate.getFlags());
+    private final GhostRuleExecution execution;
+    /** 把实体状态转换为通用事实；模块任务不会取得来源实体。 */
+    public ModuleScheduledGoal(ModularGhostEntity host, ResourceLocation module, int order,
+            GhostRuleTask task, Supplier<List<ModuleScheduledGoal>> peers) {
+        var flags=EnumSet.noneOf(Goal.Flag.class);
+        for(var flag:task.getFlags())flags.add(Goal.Flag.valueOf(flag.name()));
+        setFlags(flags);
+        execution=new GhostRuleExecution(module,order,task,
+                () -> host.isAlive() && !host.isSupernaturallyStunned()
+                        && host.carriesModule(module) && host.suppression(module).canAct()
+                        && host.suppression(module).canRunRules()
+                        && host.getModules().stream().anyMatch(e -> e.id().equals(module) && GhostModuleCombatState.available(e)),
+                () -> host.getModules().stream().filter(e -> e.id().equals(module)).mapToDouble(e -> e.intensity()).findFirst().orElse(0),
+                () -> host.level().getGameTime(),
+                () -> peers.get().stream().map(peer -> peer.execution).toList());
     }
-
-    /** 严格要求强者更强，避免零对零也被当作两倍优势。 */
-    public static boolean dominates(double stronger, double weaker) {
-        return stronger > weaker && (stronger >= weaker * 2.0D || stronger - weaker >= 100.0D);
-    }
-
-    private double intensity() {
-        return host.getModules().stream().filter(e -> e.id().equals(moduleId))
-                .mapToDouble(e -> e.intensity()).findFirst().orElse(0);
-    }
-
-    /**
-     * 每个游戏刻只探测一次原行为，避免多个竞争者反复调用 canUse，
-     * 造成找门重复扫描或行为内部冷却在一刻内减少多次。
-     */
-    private boolean hasDemand() {
-        if (!host.isAlive() || host.isSupernaturallyStunned() || !host.suppression(moduleId).canAct()
-                || host.getModules().stream().noneMatch(e -> e.id().equals(moduleId)
-                        && GhostModuleCombatState.available(e))) return false;
-        long now = host.level().getGameTime();
-        if (checkedAt != now) {
-            checkedAt = now;
-            ready = running ? delegate.canContinueToUse() : delegate.canUse();
-        }
-        return ready;
-    }
-
-    private boolean conflicts(ModuleScheduledGoal other) {
-        return other != this && getFlags().stream().anyMatch(other.getFlags()::contains);
-    }
-
-    /** 只有有实际执行需求的冲突行为才能阻止当前行为，不能仅凭持有强模块就封锁弱模块。 */
-    private boolean isBlocked() {
-        double own = intensity();
-        for (var other : peers.get()) {
-            if (!conflicts(other) || !other.hasDemand()) continue;
-            if (moduleId.equals(other.moduleId)) {
-                if (other.order < order) return true;
-            } else {
-                double theirs = other.intensity();
-                if (dominates(theirs, own)) return true;
-                if (!dominates(own, theirs) && other.order < order) return true;
-            }
-        }
-        return false;
-    }
-
-    private boolean hasRotationPeer() {
-        double own = intensity();
-        return peers.get().stream().anyMatch(other -> conflicts(other)
-                && !moduleId.equals(other.moduleId) && other.order == order
-                && !dominates(own, other.intensity()) && !dominates(other.intensity(), own)
-                && other.hasDemand());
-    }
-
-    @Override public boolean canUse() {
-        return host.level().getGameTime() >= eligibleAt && hasDemand() && !isBlocked();
-    }
-    @Override public boolean canContinueToUse() {
-        // 强度运行中发生变化时，弱者释放控制；无需重装模块或重启实体。
-        if (!hasDemand() || isBlocked()) return false;
-        if (delegate.isInterruptable() && hasRotationPeer()
-                && host.level().getGameTime() - startedAt >= MAX_RUN_TICKS) {
-            yielded = true;
-            return false;
-        }
-        return true;
-    }
-    @Override public void start() {
-        running = true;
-        yielded = false;
-        checkedAt = Long.MIN_VALUE;
-        startedAt = host.level().getGameTime();
-        delegate.start();
-    }
-    @Override public void stop() {
-        if (yielded || hasRotationPeer()) eligibleAt = host.level().getGameTime() + YIELD_TICKS;
-        running = false;
-        delegate.stop();
-        checkedAt = Long.MIN_VALUE;
-    }
-    @Override public void tick() { delegate.tick(); }
-    @Override public boolean isInterruptable() { return delegate.isInterruptable(); }
-    @Override public boolean requiresUpdateEveryTick() { return delegate.requiresUpdateEveryTick(); }
+    /** 保留现有调用者使用的强度比较入口，算法由规则框架提供。 */
+    public static boolean dominates(double stronger,double weaker){return GhostRuleExecution.dominates(stronger,weaker);}
+    /** 原版仅负责实体资源接管，启动决策由规则运行时产生。 */
+    public boolean canUse(){return execution.canUse();}
+    /** 运行中重新评估规则状态与竞争。 */
+    public boolean canContinueToUse(){return execution.canContinueToUse();}
+    /** 取得资源后启动规则。 */
+    public void start(){execution.start();}
+    /** 每次停止只释放一次任务资源。 */
+    public void stop(){execution.stop();}
+    /** 将推进请求交给规则运行时。 */
+    public void tick(){execution.tick();}
+    /** 读取规则的抢占声明。 */
+    public boolean isInterruptable(){return execution.isInterruptable();}
+    /** 读取规则的更新频率。 */
+    public boolean requiresUpdateEveryTick(){return execution.requiresUpdateEveryTick();}
 }

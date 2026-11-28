@@ -84,7 +84,7 @@
 - 当前鬼烛效果消费端还检查点燃和模块可用状态。新增“脱离点燃规则持续主动维持”的能力，需要同步定义持续期、代价及效果查询逻辑，不能仅调用一次 `emit()` 就认为已经完成。
 - 题字仍依赖题字能力出口和可题字对象，注册到玩家模块列表不会自动获得该物理交互能力。
 - 规则按语义事件共享裁决批次；主动能力按调用建立裁决批次，详见[灵异裁决与对抗](adjudication-combat.md)。
-- `customData` 并非所有宿主都可读写，`GhostBehavior` 是模块声明的行为工厂，只有提供 `GhostActor` 端口的宿主才能运行对应 Goal。
+- `customData` 并非所有宿主都可读写，持续任务由规则的 `createTasks()` 工厂创建，运动任务要求 `GhostActor` 端口；模块不得引用原版 Goal 或具体宿主。
 
 这些是当前实现需要明确面对的边界，不是建议在模块里绕过接口。后续扩展时应沿用“模块声明规则与效果，接口提供环境能力，宿主落实物理行为”的分工。
 
@@ -124,3 +124,5 @@
 | 技能目录与网络 | `ghost/module/ability/GhostAbilityCatalog.java`、`network/GhostAbilityNetwork.java` |
 | 轮盘 | `client/screen/AbilityWheelScreen.java`、`AbilityWheelLayout.java` |
 | 宿主承载 | `ghost/bearing/`；另见本文关联的承载文档 |
+
+- `RuleLifecycleTest` 验证多入口、持久状态隔离、死机阻断、强度竞争、时间片轮换及中断只清理一次。

@@ -56,6 +56,7 @@ public final class FrameworkRegressionTest {
         DomainConflictTest.run();
         DomainEffectExtensionTest.run();
         ModuleFrameworkTest.run();
+        RuleLifecycleTest.run();
         CurseComponentTest.run();
         GhostModuleRegistry.register(new GhostModule() {
             /**

@@ -1,4 +1,4 @@
-package com.qidate.qisplan2.ghost.module.implementation;
+package com.qidate.qisplan2.ghost.module.implementation.umbrella;
 
 import java.util.Set;
 import com.qidate.qisplan2.death.ModDamageTypes;
@@ -8,7 +8,6 @@ import com.qidate.qisplan2.ghost.module.ability.*;
 import com.qidate.qisplan2.ghost.module.data.GhostModuleInitialData;
 import com.qidate.qisplan2.ghost.module.domain.GhostDomainDefinition;
 import com.qidate.qisplan2.ghost.module.domain.GhostDomainShaderEffect;
-import com.qidate.qisplan2.ghost.module.implementation.umbrella.GhostRainEffect;
 import com.qidate.qisplan2.ghost.module.event.*;
 import com.qidate.qisplan2.ghost.module.influence.GhostInfluenceType;
 import net.minecraft.resources.ResourceLocation;

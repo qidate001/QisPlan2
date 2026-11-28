@@ -2,13 +2,13 @@ package com.qidate.qisplan2.ghost.module.host.entity;
 
 import com.qidate.qisplan2.ghost.module.GhostModuleHost;
 import com.qidate.qisplan2.ghost.module.GhostModule;
-import com.qidate.qisplan2.ghost.module.GhostModuleContext;
+import com.qidate.qisplan2.ghost.module.GhostRuleRuntime;
 import com.qidate.qisplan2.ghost.module.host.ModuleGhostDomains;
-import net.minecraft.world.entity.ai.goal.Goal;
+import com.qidate.qisplan2.ghost.module.GhostRuleTask;
 
 import java.util.List;
 
-/** Goal 的实例、控制标记与物理生命周期只由实体适配层管理。 */
+/** 从模块规则声明创建当前实例的持续任务；不包含具体厉鬼的行为分发表。 */
 public final class GhostModuleGoals {
     /**
      * 禁止外部实例化此工具类；功能统一通过静态入口调用。
@@ -16,11 +16,13 @@ public final class GhostModuleGoals {
     private GhostModuleGoals() {}
 
     /**
-     * 调用模块自己声明的工厂创建行为列表，不维护具体厉鬼的选择表。
+     * 调用模块规则声明的任务工厂，不再维护独立的 behavior 入口。
      * 未声明实体行为时返回空列表，调度与强度竞争由实体宿主负责。
      */
-    public static List<Goal> goals(GhostModule module, GhostModuleHost host) {
-        return module.behavior().create(new GhostModuleContext(host, module.getId()));
+    public static List<GhostRuleTask> goals(GhostModule module, GhostModuleHost host) {
+        return module.getRules().stream()
+                .flatMap(rule -> rule.createTasks(GhostRuleRuntime.services(host,module.getId(),rule.getId())).stream())
+                .toList();
     }
 
     /**

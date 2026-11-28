@@ -1,11 +1,10 @@
 package com.qidate.qisplan2.ghost.module.implementation.mist;
 import com.qidate.qisplan2.ghost.module.ability.DefinedGhostAbility;
 import com.qidate.qisplan2.ghost.module.component.GhostSuppressionAura;
-import com.qidate.qisplan2.ghost.module.environment.GhostWanderGoal;
+import com.qidate.qisplan2.ghost.module.environment.GhostWanderTask;
 
 import com.qidate.qisplan2.ghost.module.ability.GhostDomainShortcut;
 import com.qidate.qisplan2.ghost.module.ability.GhostAbility;
-import com.qidate.qisplan2.ghost.module.environment.GhostBehavior;
 import com.qidate.qisplan2.ghost.module.*;
 import com.qidate.qisplan2.ghost.module.ability.*;
 import com.qidate.qisplan2.ghost.module.data.GhostModuleInitialData;
@@ -39,12 +38,6 @@ public final class GhostMistModule implements GhostModule {
         return Optional.of(new GhostDomainDefinition(80, 1, true, SphereDomainShape::new,
                 true, false, 20, true, true, List.of(new GhostDomainShaderEffect(ID, "GhostMist"))).withGrowth(GhostDomainGrowth.STANDARD).withSuppression(new GhostSuppressionAura(1,1)));
     }
-
-    /**
-     * 声明需要的自主行动类型。
-     * 具体 Goal 的创建、资源竞争和停止清理由行动适配层负责。
-     */
-    @Override public GhostBehavior behavior() { return context -> { var actor = context.world().actor(); return actor == null ? List.of() : List.of(new GhostWanderGoal(actor, 0.7D)); }; }
 
     /**
      * 构造或返回本定义使用的资源标识，保持注册与调用入口一致。
@@ -103,41 +96,47 @@ public final class GhostMistModule implements GhostModule {
             context.continueAbility(ATTACK,e);
     }
 
-    @Override public List<GhostRule> getRules() {
-        return List.of(new GhostRule() {
-            /**
-             * 获取当前定义的唯一标识。
-             * 注册、能力查找和规则分发使用此标识，不代表某个运行时实例。
-             */
-            @Override public ResourceLocation getId() { return id("ghost_mist/exposure_rule"); }
+    @Override
+    public List<GhostRule> getRules() {
+        return List.of(GhostRule.autonomous(ResourceLocation.fromNamespaceAndPath(ID.getNamespace(), ID.getPath() + "/activity"),
+                context -> {
+                    var actor = context.world().actor();
+                    return actor == null ? List.of() : List.of(new GhostWanderTask(actor, 0.7D));
+                }), new GhostRule() {
+                    /**
+                     * 获取当前定义的唯一标识。
+                     * 注册、能力查找和规则分发使用此标识，不代表某个运行时实例。
+                     */
+                    @Override public ResourceLocation getId() { return id("ghost_mist/exposure_rule"); }
 
-            /**
-             * 判断当前语义事件是否属于本规则处理的范围。
-             * 这里只筛选事件种类或语义，不执行能力和世界操作。
-             */
-            @Override public Set<Class<? extends GhostEvent>> eventTypes() { return Set.of(GhostDomainExposureEvent.class); }
+                    /**
+                     * 判断当前语义事件是否属于本规则处理的范围。
+                     * 这里只筛选事件种类或语义，不执行能力和世界操作。
+                     */
+                    @Override public Set<Class<? extends GhostEvent>> eventTypes() { return Set.of(GhostDomainExposureEvent.class); }
 
 
-            /**
-             * 检查当前事实和模块上下文是否满足规则触发条件。
-             * 返回 false 时跳过本规则，不提交能力或灵异影响。
-             */
-            @Override public boolean canTrigger(GhostRuleContext c, GhostEvent e) {
-                return e instanceof GhostDomainExposureEvent exposure
-                        && c.getModuleContext().world().validTarget(exposure.target())
-                        && !c.getModuleContext().getCustomData().getBoolean("domainOpen")
-                        && c.getModuleContext().world().containsInDomain(exposure.domainId(), exposure.target());
-            }
+                    /**
+                     * 检查当前事实和模块上下文是否满足规则触发条件。
+                     * 返回 false 时跳过本规则，不提交能力或灵异影响。
+                     */
+                    @Override public boolean canTrigger(GhostRuleContext c, GhostEvent e) {
+                        return e instanceof GhostDomainExposureEvent exposure
+                                && c.getModuleContext().world().validTarget(exposure.target())
+                                && !c.getModuleContext().getCustomData().getBoolean("domainOpen")
+                                && c.getModuleContext().world().containsInDomain(exposure.domainId(), exposure.target());
+                    }
 
-            /**
-             * 处理已满足条件的语义事件，发起对应能力或提交灵异影响。
-             * 需要裁决的效果仅在获准后执行。
-             */
-            @Override public void onTrigger(GhostRuleContext c, GhostEvent event) {
-                var e = (GhostDomainExposureEvent)event;
-                c.getModuleContext().reactAbility(ATTACK, e);
-            }
-        });
+                    /**
+                     * 处理已满足条件的语义事件，发起对应能力或提交灵异影响。
+                     * 需要裁决的效果仅在获准后执行。
+                     */
+                    @Override public void onTrigger(GhostRuleContext c, GhostEvent event) {
+                        var e = (GhostDomainExposureEvent)event;
+                        c.getModuleContext().reactAbility(ATTACK, e);
+                    }
+                }
+        );
     }
 
     /**

@@ -67,6 +67,9 @@ public record GhostRuleContext(
         }
     }
 
+    /** 当前规则独享的服务与状态端口，可供多个语义入口与持续任务共同使用。 */
+    public GhostRuleServices services() { return GhostRuleRuntime.services(host, moduleId, ruleId); }
+
     /**
      * 当前规则是否处于统一灵异影响裁决会话中。
      */

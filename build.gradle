@@ -230,7 +230,7 @@ tasks.register('verifyModuleIsolation') {
     doLast {
         definitions.each { file ->
             def code = file.getText('UTF-8').replaceAll(/(?s)\/\*.*?\*\//, '').replaceAll(/(?m)\/\/.*$/, '')
-            def forbidden = /\.host\s*\(|\b(?:ModularGhostEntity|GhostModuleHosts|GhostModuleHost|PlayerGhostModuleContext|PlayerGhostModuleHost|GhostItemModuleHost)\b|import\s+com\.qidate\.qisplan2\.ghost\.module\.host\./
+            def forbidden = /\.host\s*\(|\b(?:ModularGhostEntity|GhostModuleHosts|GhostModuleHost|PlayerGhostModuleContext|PlayerGhostModuleHost|GhostItemModuleHost)\b|net\.minecraft\.world\.entity\.ai\.goal\.Goal|import\s+com\.qidate\.qisplan2\.ghost\.module\.host\./
             if (code =~ forbidden) throw new GradleException("模块引用了载体实现: " + file.name)
         }
     }

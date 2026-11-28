@@ -1,4 +1,4 @@
-# 规则与语义事件订阅
+# 厉鬼规则、状态机与语义入口
 
 [返回开发指南目录](../ghost-module-development.md)
 
@@ -111,3 +111,32 @@ public List<CarriedItemObservation> carriedItems() {
 也可使用 `CarriedItemSelector.items(id1, id2)` 指定物品 ID；`CarriedItemSelector.food()` 使用食物属性条件，鬼灶台采用此方式。自定义条件实现 `matches(stack, carrier)`，不得通过它识别模块自身宿主。
 
 注册时构建模块 ID 到观察规则的索引。每轮只查询已安装、已承载、未死机且规则未被压制的观察计划；未暴露到世界不查询。同模块相同 AABB 的实体查询复用一次；同一规则声明多个观察条件时按“任一命中”处理，同一目标每轮只投递一次，命中物品条件后直接投递对应规则，和本轮其他事实共享裁决会话，不向所有携带规则广播再过滤。沉睡模块仍观察触犯并复苏，但不会反击。观察声明无需再订阅 `ModuleTickEvent` 或自行生成携带事件。
+
+
+## 规则是行为程序，语义是输入
+
+`getRules()` 是完整厉鬼行为的声明入口。一个规则可以订阅多个语义，也可以通过
+`hasTasks()` / `createTasks(GhostRuleServices)` 声明持续过程。
+收到事件不意味着重新启动：在不同阶段，同一事件可以更新目标、推进阶段或结束行为。
+纯自主规则可以不订阅事件；注册索引不会为了执行任务而伪造语义广播。
+
+瞬时规则继续实现 `canTrigger` 与 `onTrigger`，例如鬼签使用后只随机一次并调用三种能力之一。
+复杂规则可继承 `GhostStateMachineRule`，实现 `initialState()`、`onEvent(context, phase, event)`，
+通过 `transition(context, next, event)` 改变阶段。定义本身不保存任何实例状态。
+
+```java
+@Override
+protected void onEvent(GhostRuleContext context, String phase, GhostEvent event) {
+    if (event instanceof BeginEvent && phase.equals("idle")) {
+        transition(context, "waiting", event);
+    } else if (event instanceof FinishEvent && phase.equals("waiting")) {
+        transition(context, "idle", event);
+    }
+}
+```
+
+这里的 BeginEvent / FinishEvent 仅示意：真实模块应订阅有世界含义的语义，
+不要把内部“进入某阶段”包装成全局事件。状态成功保存后才调用 `onTransition`。
+持久状态只决定行为进度，不构成释放能力的许可；能力执行器始终重新检查媒介与状态。
+沉睡时仍走独立的触犯观察，不调用正常状态转移和攻击效果。
+持续任务与中断清理详见[自主过程](autonomous-behavior.md)。

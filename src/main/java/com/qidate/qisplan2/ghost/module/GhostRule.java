@@ -5,19 +5,39 @@ import com.qidate.qisplan2.ghost.module.event.ModuleTickEvent;
 import net.minecraft.resources.ResourceLocation;
 import java.util.Set;
 import java.util.List;
+import java.util.function.Function;
 
 /**
  * 灵异规则定义。
  *
  * 规则属于 GhostModule。
  *
- * 负责判断语义事件是否满足自身的触发条件，
- * 并在条件满足时执行规则逻辑。
+ * 描述完整行为逻辑：语义输入、自主启动、持续推进和阶段转移。
+ * 定义本身不保存实例状态；持续任务由工厂创建，持久阶段通过规则服务保存。
+ * 一个规则可以有多个语义入口，也可以同时声明持续任务。
  *
  * 规则不直接等同于能力：
  * 规则负责决定何时触发，能力负责产生具体效果。
  */
 public interface GhostRule {
+    /** 是否声明持续过程；注册索引允许这类规则没有语义事件入口。 */
+    default boolean hasTasks() { return false; }
+    /** 为一个模块实例创建持续任务，禁止返回跨实例共享的可变任务。 */
+    default List<GhostRuleTask> createTasks(GhostRuleServices services) { return List.of(); }
+
+    /** 声明仅由自主条件启动的规则；没有行动端口时，工厂可以返回空列表。 */
+    static GhostRule autonomous(ResourceLocation id,
+            Function<GhostRuleServices, List<GhostRuleTask>> factory) {
+        return new GhostRule() {
+            public ResourceLocation getId() { return id; }
+            public Set<Class<? extends GhostEvent>> eventTypes() { return Set.of(); }
+            public boolean hasTasks() { return true; }
+            public List<GhostRuleTask> createTasks(GhostRuleServices services) { return factory.apply(services); }
+            public boolean canTrigger(GhostRuleContext context, GhostEvent event) { return false; }
+            public void onTrigger(GhostRuleContext context, GhostEvent event) {}
+        };
+    }
+
 
     /**
      * 沉睡时观察规则是否被真正触犯，不执行 onTrigger 或任何能力。

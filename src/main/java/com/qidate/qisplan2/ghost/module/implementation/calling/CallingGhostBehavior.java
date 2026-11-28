@@ -1,7 +1,7 @@
 package com.qidate.qisplan2.ghost.module.implementation.calling;
 
 import com.qidate.qisplan2.ghost.module.environment.GhostActor;
-import net.minecraft.world.entity.ai.goal.Goal;
+import com.qidate.qisplan2.ghost.module.GhostRuleTask;
 import net.minecraft.world.phys.Vec3;
 import java.util.EnumSet;
 
@@ -9,7 +9,7 @@ import java.util.EnumSet;
  * 取得移动、朝向控制后才跟随。探测是否可运行不绑定目标，也不修改实体物理状态，
  * 因此强度调度器探测竞争行为时不会抢先产生世界操作。
  */
-public final class CallingGhostBehavior extends Goal {
+public final class CallingGhostBehavior extends GhostRuleTask {
     private final GhostActor host;
     private boolean previousNoPhysics;
     private boolean previousNoGravity;

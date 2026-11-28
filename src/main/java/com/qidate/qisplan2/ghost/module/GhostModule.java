@@ -14,7 +14,6 @@ import com.qidate.qisplan2.ghost.bearing.GhostModuleForm;
 
 import com.qidate.qisplan2.ghost.bearing.SpiritualPart;
 import com.qidate.qisplan2.ghost.module.environment.GhostEnvironmentalEffect;
-import com.qidate.qisplan2.ghost.module.environment.GhostBehavior;
 import com.qidate.qisplan2.ghost.module.environment.GhostBodyEffects;
 import com.qidate.qisplan2.ghost.corrosion.GhostCorrosion;
 import com.qidate.qisplan2.ghost.module.ability.GhostAbility;
@@ -167,12 +166,6 @@ public interface GhostModule {
     default GhostRevivalPolicy getRevivalPolicy() {
         return GhostRevivalPolicy.allowAll();
     }
-
-    /**
-     * 声明需要的自主行动类型。
-     * 具体 Goal 的创建、资源竞争和停止清理由行动适配层负责。
-     */
-    default GhostBehavior behavior() { return GhostBehavior.NONE; }
 
     /** 可被点燃是模块性质，点燃操作由输入适配器提供。 */
     default boolean supportsIgnition() { return false; }

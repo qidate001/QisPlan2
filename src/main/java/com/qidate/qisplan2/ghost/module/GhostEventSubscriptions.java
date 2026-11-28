@@ -51,7 +51,7 @@ public final class GhostEventSubscriptions {
             Set<Class<? extends GhostEvent>> types=Set.copyOf(rule.eventTypes());
             var observations=List.copyOf(rule.carriedItems());
             for(var observation:observations)carried.add(new CarriedSubscription(rule,observation));
-            if(types.isEmpty() && observations.isEmpty())throw new IllegalArgumentException("Rule must declare event subscriptions: "+rule.getId());
+            if(types.isEmpty() && observations.isEmpty() && !rule.hasTasks())throw new IllegalArgumentException("Rule must declare event subscriptions: "+rule.getId());
             for(Class<?> type:types)add(pending,type,new Listener(module,nextOrder,rule,i,false,false));
         }
         for(Class<?> type:Set.copyOf(module.abilityEventTypes()))

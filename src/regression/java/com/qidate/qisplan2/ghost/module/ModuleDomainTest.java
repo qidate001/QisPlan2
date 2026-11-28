@@ -8,7 +8,7 @@ import com.qidate.qisplan2.ghost.module.event.TouchEvent;
 import com.qidate.qisplan2.ghost.module.host.GhostContactEvents;
 import com.qidate.qisplan2.ghost.module.host.ModuleGhostDomains;
 import com.qidate.qisplan2.ghost.module.host.player.PlayerGhostData;
-import com.qidate.qisplan2.ghost.module.implementation.GhostUmbrellaModule;
+import com.qidate.qisplan2.ghost.module.implementation.umbrella.GhostUmbrellaModule;
 import com.qidate.qisplan2.ghost.module.implementation.umbrella.GhostRainEffect;
 import com.qidate.qisplan2.ghost.module.implementation.eye.GhostEyeModule;
 import com.qidate.qisplan2.ghost.module.implementation.mist.GhostMistModule;

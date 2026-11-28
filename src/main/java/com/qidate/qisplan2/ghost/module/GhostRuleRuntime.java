@@ -6,6 +6,9 @@ import com.qidate.qisplan2.ghost.module.influence.GhostInfluenceSession;
 import net.minecraft.resources.ResourceLocation;
 
 import java.util.List;
+import net.minecraft.nbt.CompoundTag;
+import com.qidate.qisplan2.ghost.module.environment.GhostWorldAccess;
+import com.qidate.qisplan2.ghost.module.environment.GhostEnvironment;
 
 /**
  * 灵异规则运行时。
@@ -24,6 +27,24 @@ import java.util.List;
  * 完整事件分发由 GhostModuleRuntime 负责。
  */
 public final class GhostRuleRuntime {
+
+    /** 为当前实例和规则构建服务端口；实现细节只留在框架，不传给模块。 */
+    public static GhostRuleServices services(GhostModuleHost host, ResourceLocation moduleId, ResourceLocation ruleId) {
+        var context = new GhostModuleContext(host, moduleId);
+        return new GhostRuleServices() {
+            public GhostWorldAccess world() { return context.world(); }
+            public GhostEnvironment environment() { return context.environment(); }
+            public CompoundTag state() {
+                return context.getData().customData().getCompound("ruleStates").getCompound(ruleId.toString()).copy();
+            }
+            public boolean saveState(CompoundTag state) {
+                var data=context.getData().customData();
+                var states=data.getCompound("ruleStates");
+                states.put(ruleId.toString(),state.copy());data.put("ruleStates",states);
+                return context.setCustomData(data);
+            }
+        };
+    }
 
     private GhostRuleRuntime() {
     }

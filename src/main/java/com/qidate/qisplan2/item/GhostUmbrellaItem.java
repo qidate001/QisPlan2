@@ -5,7 +5,7 @@ import com.qidate.qisplan2.core.ModItems;
 import com.qidate.qisplan2.ghost.module.data.GhostModuleData;
 import com.qidate.qisplan2.ghost.module.host.item.GhostModuleItem;
 import com.qidate.qisplan2.ghost.module.host.item.GhostItemModuleHost;
-import com.qidate.qisplan2.ghost.module.implementation.GhostUmbrellaModule;
+import com.qidate.qisplan2.ghost.module.implementation.umbrella.GhostUmbrellaModule;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.item.ItemStack;
