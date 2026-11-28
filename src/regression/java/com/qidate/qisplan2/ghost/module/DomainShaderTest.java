@@ -2,6 +2,7 @@ package com.qidate.qisplan2.ghost.module;
 
 import com.mojang.blaze3d.preprocessor.GlslPreprocessor;
 import net.neoforged.neoforge.client.ClientHooks;
+import net.minecraft.ResourceLocationException;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.util.HashSet;
@@ -37,9 +38,18 @@ public final class DomainShaderTest {
             try { preprocess(core,"#version 150\n#moj_import \"domain_conflict.glsl\"\n"); }
             catch(UncheckedIOException expected) { rejected=true; }
             if(!rejected)throw new AssertionError("Missing namespace must not resolve to mod resources");
+            boolean duplicateRejected=false;
+            try { preprocess(core,"#version 150\n#moj_import \"qisplan2:isolation_visibility.glsl\"\n",true); }
+            catch(ResourceLocationException expected) { duplicateRejected=true; }
+            if(!duplicateRejected)throw new AssertionError("Legacy relative import must reproduce duplicate namespace failure");
             for(String name:new String[]{"ghost_eye","ghost_mist","ghost_umbrella","ghost_isolation_region","ghost_isolation_stencil"}) {
                 int vertex=compile(GL20.GL_VERTEX_SHADER,Files.readString(core.resolve((name.equals("ghost_isolation_region")?"ghost_isolation_stencil":name)+".vsh")),name);
-                int fragment=compile(GL20.GL_FRAGMENT_SHADER,preprocess(core,Files.readString(core.resolve(name+".fsh"))),name);
+                String fragmentSource=Files.readString(core.resolve(name+".fsh"));
+                String normal=preprocess(core,fragmentSource);
+                // 兼容层会给相对导入补上当前命名空间；绝对导入不应被再次改写。
+                String compatible=preprocess(core,fragmentSource,true);
+                if(!normal.equals(compatible))throw new AssertionError(name+": namespace completion changed shader source");
+                int fragment=compile(GL20.GL_FRAGMENT_SHADER,compatible,name);
                 int program=GL20.glCreateProgram();GL20.glAttachShader(program,vertex);GL20.glAttachShader(program,fragment);
                 GL20.glLinkProgram(program);
                 if(GL20.glGetProgrami(program,GL20.GL_LINK_STATUS)==0)throw new AssertionError(name+": "+GL20.glGetProgramInfoLog(program));
@@ -98,7 +108,7 @@ public final class DomainShaderTest {
                 """;
         String fragmentSource="""
                 #version 150
-                #moj_import "qisplan2:isolation_visibility.glsl"
+                #moj_import <qisplan2:isolation_visibility.glsl>
                 out vec4 fragColor;
                 void main() {
                     int test=int(gl_FragCoord.x);
@@ -133,10 +143,15 @@ public final class DomainShaderTest {
     }
     /** 使用游戏预处理器与 NeoForge 的实际路径解析，再按资源命名空间读取文件。 */
     private static String preprocess(Path core,String source) {
+        return preprocess(core,source,false);
+    }
+    /** 模拟相对导入的命名空间补全，重现日志中的重复前缀并验证公共 include 可避开它。 */
+    private static String preprocess(Path core,String source,boolean completeRelativeNamespace) {
         Path assets=core.toAbsolutePath().getParent().getParent().getParent();
         return String.join("",new GlslPreprocessor() {
             private final Set<String> imported=new HashSet<>();
             @Override public String applyImport(boolean relative,String path) {
+                if(completeRelativeNamespace && relative)path="qisplan2:"+path;
                 var location=ClientHooks.getShaderImportLocation("shaders/core/",relative,path);
                 if(!imported.add(location.toString()))return null;
                 Path resource=assets.resolve(location.getNamespace()).resolve(location.getPath());

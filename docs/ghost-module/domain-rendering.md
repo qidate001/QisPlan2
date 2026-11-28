@@ -75,8 +75,21 @@ List.of(
 
 标准效果通过 `DomainConflictGeometry / DomainConflictCuts / DomainConflictCount / DomainConflictIndex` 使用共享的实际领地结果。公共 GLSL 沿球体/圆柱交点分段积分，内域扣除外域区段，同源不削弱彼此。不要在效果中仅按相机所在域关闭整个屏幕的另一种效果。
 
-共享导入必须带资源命名空间，例如 `#moj_import "qisplan2:domain_conflict.glsl"`。无命名空间会被解析到 minecraft，不能依赖“与当前 shader 同目录”推断模组命名空间。
+共享导入必须带资源命名空间，例如 `#moj_import <qisplan2:domain_conflict.glsl>`。无命名空间会被解析到 minecraft，不能依赖“与当前 shader 同目录”推断模组命名空间。
 
 隔绝 Region Identity 与 Stencil 都使用 `isolation_visibility.glsl`：外部观察需有实际可见表面落在区域边界附近，不能只因视线穿过远处未绘制的区域就遮掉天空；相机位于区域内时保持保护。该判断只影响画面，不改服务端隔绝规则，也不强制加载区块。
 
 运行 `gradlew.bat domainShaderTest --offline` 可通过游戏预处理器和 NeoForge 实际导入解析，在隐藏 OpenGL 上下文中验证着色器与隔绝像素。它不能替代游戏内多鬼域、区块卸载与内外视角的实测。
+
+
+### 公共 GLSL 片段的导入
+
+公共片段放入 `assets/<命名空间>/shaders/include/`，使用绝对导入：
+
+```glsl
+#moj_import <qisplan2:domain_conflict.glsl>
+```
+
+不要对带命名空间的公共片段使用双引号相对导入。某些兼容层会为相对导入再次补全
+当前着色器的命名空间，形成 `qisplan2:qisplan2:...` 的非法资源路径。
+绝对导入由资源系统从 `shaders/include/` 查找，无需判断安装了哪些模组。

@@ -1,6 +1,6 @@
 #version 150
 
-#moj_import "qisplan2:domain_conflict.glsl"
+#moj_import <qisplan2:domain_conflict.glsl>
 
 uniform sampler2D DiffuseSampler;
 uniform sampler2D MainDepthSampler;

@@ -1,6 +1,6 @@
 #version 150
 
-#moj_import "qisplan2:isolation_visibility.glsl"
+#moj_import <qisplan2:isolation_visibility.glsl>
 
 uniform sampler2D MainDepthSampler;
 
